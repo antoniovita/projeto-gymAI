@@ -1,0 +1,31 @@
+Tabela users
+id: Identificador único do usuário.
+name: Nome do usuário.
+weight: Peso do usuário.
+height: Altura do usuário.
+
+Tabela tasks
+id: Identificador único da tarefa.
+title: Título da tarefa.
+done: Status da tarefa (completa ou não).
+user_id: Relacionamento com o usuário que criou a tarefa.
+
+Tabela workouts
+id: Identificador único do treino.
+title: Título do treino (ex: "Treino A", "Treino de Peito").
+duration: Duração do treino em minutos.
+intensity: Intensidade do treino (ex: leve, moderado, intenso).
+user_id: Relacionamento com o usuário que fez o treino.
+
+Tabela goals
+id: Identificador único da meta.
+user_id: Relacionamento com o usuário.
+goal_type: Tipo de meta (ex: "perder peso", "aumentar resistência").
+target: Valor da meta (ex: peso alvo, número de repetições).
+completed: Status da meta (se foi atingida ou não).
+
+Tabela routine (para relacionar usuários, treinos e metas)
+id: Identificador único da rotina.
+user_id: Relacionamento com o usuário.
+goal_id: Relacionamento com a meta.
+workout_id: Relacionamento com o treino.
