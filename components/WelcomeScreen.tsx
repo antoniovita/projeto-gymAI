@@ -10,7 +10,10 @@ import {
   Keyboard,
   ScrollView
 } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, {
+  FadeIn,
+  SlideInLeft,
+} from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function WelcomeScreen() {
@@ -31,47 +34,71 @@ export default function WelcomeScreen() {
             contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24 }}
             keyboardShouldPersistTaps="handled"
           >
-            <Animated.View
-              entering={FadeIn.duration(800)}
-              className="gap-6 items-center"
-            >
-              <Text className="text-white font-light text-2xl text-center">
+            <View className="gap-6 flex items-center">
+              <Animated.Text
+                entering={SlideInLeft.duration(600)}
+                className="text-white font-light text-xl text-center"
+              >
                 Your journey starts now
-              </Text>
+              </Animated.Text>
 
-              <View className="flex-row items-end gap-1">
-                <Text className="text-white text-4xl font-bold">Let’s</Text>
-                <Text className="text-yellow-500 text-3xl font-bold">be</Text>
-                <Text className="text-yellow-500 text-5xl font-extrabold">Better</Text>
+              <View className="flex-row items-baseline gap-3">
+                <Animated.Text
+                  entering={SlideInLeft.delay(200).duration(500)}
+                  className="text-white text-4xl font-bold"
+                >
+                  Let’s
+                </Animated.Text>
+
+                <View className='flex flex-row items-baseline'>
+                    <Animated.Text
+                    entering={SlideInLeft.delay(400).duration(500)}
+                    className="text-yellow-500 text-3xl font-bold"
+                    >
+                    be
+                    </Animated.Text>
+                    <Animated.Text
+                    entering={SlideInLeft.delay(600).duration(500)}
+                    className="text-yellow-500 text-5xl font-extrabold"
+                    >
+                    Better
+                    </Animated.Text>
+                </View>
               </View>
 
-              <View className="w-full mt-10 items-center gap-3">
-                <Text className="text-white text-lg mb-1">What is your name?</Text>
+              <Animated.View
+                entering={FadeIn.delay(1000).duration(1000)}
+                className="w-full mt-6 items-center"
+              >
 
                 <TextInput
                   value={name}
                   onChangeText={setName}
-                  placeholder="antonio vita"
+                  placeholder="Your name here..."
                   placeholderTextColor="#9CA3AF"
                   onFocus={() => setFocused(true)}
                   onBlur={() => setFocused(false)}
-                  className={`w-[260px] text-center text-xl px-6 py-4 rounded-3xl ${
-                    focused
-                      ? 'bg-neutral-600 border border-yellow-500 text-white'
-                      : 'bg-neutral-700 border border-gray-800 text-white'
-                  }`}
+                  className={'w-[260px] text-center text-2xl text-white font-bold px-6 py-4 rounded-3xl'}
                 />
-              </View>
+              </Animated.View>
 
-              <TouchableOpacity
-                activeOpacity={0.8}
-                className="bg-yellow-500 w-[260px] py-4 rounded-2xl mt-8 shadow-lg shadow-yellow-500/30"
+              <Animated.View
+                entering={SlideInLeft.delay(800).duration(500)}
+                className="w-full items-center"
               >
-                <Text className="text-black text-center text-xl font-bold">
-                  Begin the process
-                </Text>
-              </TouchableOpacity>
-            </Animated.View>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  className="bg-yellow-500 w-[260px] py-4 rounded-2xl mt-6 shadow-lg shadow-yellow-500/30"
+                >
+                  <Text className="text-black text-center text-xl font-bold">
+                    Begin the process
+                  </Text>
+                </TouchableOpacity>
+              </Animated.View>
+            </View>
+
+
+
           </ScrollView>
         </LinearGradient>
       </Pressable>
