@@ -4,7 +4,7 @@ export const runMigrations = async (db: SQLiteDatabase) => {
   // table user
   await db.execAsync(`
     CREATE TABLE IF NOT EXISTS user (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id TEXT PRIMARY KEY,
       name TEXT NOT NULL
     );
   `);
@@ -12,8 +12,8 @@ export const runMigrations = async (db: SQLiteDatabase) => {
   // table routine
   await db.execAsync(`
     CREATE TABLE IF NOT EXISTS routine (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER,
+      id TEXT PRIMARY KEY,
+      user_id TEXT,
       day_of_week TEXT NOT NULL,
       FOREIGN KEY (user_id) REFERENCES user(id)
     );
@@ -22,14 +22,14 @@ export const runMigrations = async (db: SQLiteDatabase) => {
   // table tasks
   await db.execAsync(`
     CREATE TABLE IF NOT EXISTS tasks (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id TEXT PRIMARY KEY,
       title TEXT NOT NULL,
       description TEXT,
       date TEXT,
       type TEXT,
       completed INTEGER DEFAULT 0,
-      user_id INTEGER,
-      routine_id INTEGER,
+      user_id TEXT,
+      routine_id TEXT,
       FOREIGN KEY (routine_id) REFERENCES routine(id),
       FOREIGN KEY (user_id) REFERENCES user(id)
     );
@@ -38,12 +38,11 @@ export const runMigrations = async (db: SQLiteDatabase) => {
   // table goals
   await db.execAsync(`
     CREATE TABLE IF NOT EXISTS goals (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER,
+      id TEXT PRIMARY KEY,
+      user_id TEXT,
       goal_type TEXT,
       completed INTEGER DEFAULT 0,
       FOREIGN KEY (user_id) REFERENCES user(id)
     );
   `);
-
 };

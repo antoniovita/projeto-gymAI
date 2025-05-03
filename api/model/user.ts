@@ -1,24 +1,38 @@
+import { v4 as uuidv4 } from 'uuid';
 import * as SQLite from 'expo-sqlite';
 
 export interface User {
-    id: number;
-    name: string;
-  }
-  
-  export const UserModel = {
+  id: string;
+  name: string;
+}
 
-    // POST create a new user
-    createUser: async (db: SQLite.SQLiteDatabase, name: string) => {
-      const result = await db.runAsync('INSERT INTO user (name) VALUES (?)', name);
-      return result.lastInsertRowId;
-    },
-  
+export const UserModel = {
 
-    // GET the user 
-    getUserById: async (db: SQLite.SQLiteDatabase, id: number) => {
-      const user = await db.getFirstAsync('SELECT * FROM user WHERE id = ?', id);
-      return user;
-    },
-  
-  };
-  
+  // POST create a new user
+  createUser: async (db: SQLite.SQLiteDatabase, name: string) => {
+    const userId = uuidv4();
+
+    const result = await db.runAsync(
+      'INSERT INTO user (id, name) VALUES (?, ?)', 
+      userId, 
+      name
+    );
+    return userId;
+  },
+
+  // GET the user by id
+  getUserById: async (db: SQLite.SQLiteDatabase, id: string) => {
+    const user = await db.getFirstAsync('SELECT * FROM user WHERE id = ?', id);
+    return user;
+  },
+
+  // DELETE user by id
+  deleteUser: async (db: SQLite.SQLiteDatabase, id: string) => {
+    const result = await db.runAsync(
+      'DELETE FROM user WHERE id = ?',
+      id
+    );
+    return result.changes;
+  },
+
+};

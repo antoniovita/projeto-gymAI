@@ -1,31 +1,35 @@
+import { v4 as uuidv4 } from 'uuid';
 import * as SQLite from 'expo-sqlite';
 
 export interface Task {
-  id: number;
+  id: string;
   title: string;
   description: string;
   date: string;
   type?: string;
-  completed: number;
-  user_id: number;
-  routine_id?: number; // pode ser opcional
+  completed: 0 | 1;
+  user_id: string;
+  routine_id?: string;
 }
 
 export const TaskModel = {
 
-    // POST create a new task
+  // POST create a new task
   createTask: async (
     db: SQLite.SQLiteDatabase,
     title: string,
     description: string,
     date: string,
     type: string,
-    userId: number,
-    routineId?: number
+    userId: string,
+    routineId?: string
   ) => {
+    const taskId = uuidv4();
+
     const result = await db.runAsync(
-      `INSERT INTO tasks (title, description, date, type, user_id, routine_id)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO tasks (id, title, description, date, type, user_id, routine_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      taskId, 
       title,
       description,
       date,
@@ -33,17 +37,17 @@ export const TaskModel = {
       userId,
       routineId ?? null
     );
-    return result.lastInsertRowId;
+    return taskId;
   },
 
   // GET all tasks by user_id
-  getTasksByUserId: async (db: SQLite.SQLiteDatabase, userId: number) => {
+  getTasksByUserId: async (db: SQLite.SQLiteDatabase, userId: string) => {
     const tasks = await db.getAllAsync('SELECT * FROM tasks WHERE user_id = ?', userId);
     return tasks;
   },
 
   // GET all tasks by type
-  getTasksByType: async (db: SQLite.SQLiteDatabase, userId: number, type: string) => {
+  getTasksByType: async (db: SQLite.SQLiteDatabase, userId: string, type: string) => {
     const tasks = await db.getAllAsync(
       'SELECT * FROM tasks WHERE user_id = ? AND type = ?',
       userId,
@@ -53,7 +57,7 @@ export const TaskModel = {
   },
 
   // PUT update task by id - 0 = false, 1 = true 
-  updateTaskCompletion: async (db: SQLite.SQLiteDatabase, taskId: number, completed: number) => {
+  updateTaskCompletion: async (db: SQLite.SQLiteDatabase, taskId: string, completed: 0 | 1) => {
     const result = await db.runAsync(
       'UPDATE tasks SET completed = ? WHERE id = ?',
       completed,
@@ -63,7 +67,7 @@ export const TaskModel = {
   },
 
   // DELETE task by id
-  deleteTask: async (db: SQLite.SQLiteDatabase, taskId: number) => {
+  deleteTask: async (db: SQLite.SQLiteDatabase, taskId: string) => {
     const result = await db.runAsync(
       'DELETE FROM tasks WHERE id = ?',
       taskId
@@ -72,7 +76,7 @@ export const TaskModel = {
   },
 
   // DELETE clear all tasks by user_id
-  clearTasksByUser: async (db: SQLite.SQLiteDatabase, userId: number) => {
+  clearTasksByUser: async (db: SQLite.SQLiteDatabase, userId: string) => {
     const result = await db.runAsync(
       'DELETE FROM tasks WHERE user_id = ?',
       userId
