@@ -41,7 +41,6 @@ export const runMigrations = async (db: SQLiteDatabase) => {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER,
       goal_type TEXT,
-      deadline TEXT, -- prazo em formato 'YYYY-MM-DD HH:MM:SS'
       completed INTEGER DEFAULT 0,
       FOREIGN KEY (user_id) REFERENCES user(id)
     );
