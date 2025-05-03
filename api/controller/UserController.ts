@@ -1,16 +1,14 @@
-import { AuthService } from 'api/service/authService';
 import { getDb } from '../../database';
 import { UserModel } from '../model/user';
+import { AuthService } from 'api/service/authService';
 
 export const UserController = {
 
-  // POST create new user
   createUser: async (name: string) => {
     const db = getDb();
     try {
       const userId = await UserModel.createUser(db, name);
       await AuthService.saveUserId(userId);
-
       return { success: true, userId };
     } catch (error) {
       console.error('Erro ao criar usuário:', error);
@@ -18,7 +16,6 @@ export const UserController = {
     }
   },
 
-  // GET info from user
   getUserById: async (userId: string) => {
     const db = getDb();
     try {
@@ -38,7 +35,6 @@ export const UserController = {
     }
   },
 
-  // DELETE user
   deleteUser: async (userId: string) => {
     const db = getDb();
     try {
