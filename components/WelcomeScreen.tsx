@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-
 import {
   View,
   Text,
@@ -15,15 +14,22 @@ import {
 import Animated, { FadeIn, SlideInLeft } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useNavigation } from '@react-navigation/native';
+import type { RootStackParamList } from "../widgets/types"
+
 import { UserService } from 'api/service/userService';
 import { AuthService } from 'api/service/authService';
 import { initDatabase } from 'database';
 
 export default function WelcomeScreen() {
   const [name, setName] = useState('');
-  const [focused, setFocused] = useState(false);
   const [loading, setLoading] = useState(false);
   const [dbReady, setDbReady] = useState(false);
+
+
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
 
   useEffect(() => {
     const prepareDatabase = async () => {
@@ -34,22 +40,30 @@ export default function WelcomeScreen() {
         console.error('Erro ao inicializar o banco de dados:', err);
       }
     };
+
     prepareDatabase();
   }, []);
 
   const handleCreateUser = async () => {
-    if (!name.trim()) {
+    const trimmedName = name.trim();
+    if (!trimmedName) {
       Alert.alert('Nome obrigatório', 'Por favor, digite seu nome.');
       return;
     }
 
     try {
       setLoading(true);
-      const response = await UserService.createUser(name.trim());
-      if (response.success) {
-        console.log('Usuário criado com sucesso:', response);
+      const response = await UserService.createUser(trimmedName);
+
+      if (response.success && response.userId) {
+        await AuthService.saveUserId(response.userId);
+        console.log('Usuário criado e ID salvo com sucesso');
+        
+        navigation.navigate('MainTabs', {
+          screen: 'Home',
+        });
+        
       } else {
-        console.error('Erro ao criar usuário:', response.error);
         Alert.alert('Erro', response.error || 'Falha ao criar usuário.');
       }
     } catch (error) {
@@ -68,15 +82,12 @@ export default function WelcomeScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <Pressable onPress={Keyboard.dismiss} style={{ flex: 1 }}>
-        <LinearGradient
-          colors={['#000000', '#111827']}
-          style={{ flex: 1 }}
-        >
+        <LinearGradient colors={['#000000', '#111827']} style={{ flex: 1 }}>
           <ScrollView
             contentContainerStyle={{
               flexGrow: 1,
               justifyContent: 'center',
-              paddingHorizontal: 24,
+              paddingHorizontal: 24
             }}
             keyboardShouldPersistTaps="handled"
           >
@@ -95,7 +106,6 @@ export default function WelcomeScreen() {
                 >
                   Let’s
                 </Animated.Text>
-
                 <View className="flex flex-row items-baseline">
                   <Animated.Text
                     entering={SlideInLeft.delay(400).duration(500)}
@@ -121,9 +131,8 @@ export default function WelcomeScreen() {
                   onChangeText={setName}
                   placeholder="Your name here..."
                   placeholderTextColor="#9CA3AF"
-                  onFocus={() => setFocused(true)}
-                  onBlur={() => setFocused(false)}
-                  className="w-[260px] text-center text-2xl text-white font-bold px-6 py-4 rounded-3xl"
+                  className={`w-[260px] text-center text-2xl text-white font-bold px-6 py-4 rounded-3xl 
+                  `}
                 />
               </Animated.View>
 

@@ -1,4 +1,5 @@
-import { v4 as uuidv4 } from 'uuid';
+import uuid from 'react-native-uuid';
+
 import * as SQLite from 'expo-sqlite';
 
 export interface User {
@@ -10,7 +11,7 @@ export const UserModel = {
 
   // POST create a new user
   createUser: async (db: SQLite.SQLiteDatabase, name: string) => {
-    const userId = uuidv4();
+    const userId = uuid.v4();
 
     const result = await db.runAsync(
       'INSERT INTO user (id, name) VALUES (?, ?)', 
