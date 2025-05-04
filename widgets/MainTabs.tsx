@@ -20,7 +20,7 @@ export default function MainTabs() {
           backgroundColor: '#000000',
           borderTopWidth: 0,
           height: 70,
-          paddingBottom: 70,
+          paddingBottom: 80,
           paddingTop: 10,
         },
         tabBarIcon: ({ color, focused }) => {
