@@ -2,16 +2,16 @@ import * as SQLite from 'expo-sqlite';
 import { applyPragmas } from './setup';
 import { runMigrations } from './migrations';
 
-let db: SQLite.SQLiteDatabase;
+let db: SQLite.SQLDatabase;
 
 export const initDatabase = async () => {
-  db = await SQLite.openDatabaseAsync('app.db');
+  db = SQLite.openDatabase('beBetter');
   await applyPragmas(db);
   await runMigrations(db);
   return db;
 };
 
-export const getDb = (): SQLite.SQLiteDatabase => {
+export const getDb = (): SQLite.SQLDatabase => {
   if (!db) {
     throw new Error('Database not initialized. Call initDatabase() first.');
   }
