@@ -6,7 +6,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useCallback, useEffect, useState } from 'react';
 import "./global.css";
 
-import WelcomeScreen from 'components/WelcomeScreen';
+import WelcomeScreen from './components/WelcomeScreen';
 import MainTabs from './widgets/MainTabs';
 import { AuthService } from './api/service/authService';
 
@@ -16,7 +16,7 @@ const Stack = createNativeStackNavigator();
 
 export default function App() {
   const [fontsLoaded] = useFonts({
-    Poppins: require('./assets/fonts/Poppins-SemiBold.ttf'),
+    Poppins: require('./assets/fonts/NunitoSans-VariableFont_YTLC,opsz,wdth,wght.ttf'),
   });
 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);

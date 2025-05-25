@@ -14,7 +14,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from "../widgets/types";
 import { useState } from 'react';
 
-export default function HomeScreen() {
+export default function AccountScreen() {
   const [input, setInput] = useState('');
 
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();

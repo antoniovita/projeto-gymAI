@@ -2,9 +2,10 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 
 import HomeScreen from 'components/HomeScreen';
-import SchoolScreen from 'components/SchoolScreen';
-import WorkScreen from 'components/WorkScreen';
-import GymScreen from 'components/GymScreen';
+import WorkoutScreen from 'components/WorkoutScreen';
+import AccountScreen from 'components/AccountScreen';
+import ChatScreen from 'components/ChatScreen';
+
 
 const Tab = createBottomTabNavigator();
 
@@ -17,11 +18,11 @@ export default function MainTabs() {
         tabBarActiveTintColor: '#FFFFFF',
         tabBarInactiveTintColor: '#9CA3AF',
         tabBarStyle: {
-          backgroundColor: '#000000',
+          backgroundColor: '#171717',
           borderTopWidth: 0,
           height: 70,
-          paddingBottom: 80,
-          paddingTop: 10,
+          paddingBottom: 90,
+          paddingTop: 20,
         },
         tabBarIcon: ({ color, focused }) => {
           let iconName: keyof typeof Ionicons.glyphMap;
@@ -30,13 +31,13 @@ export default function MainTabs() {
             case 'Home':
               iconName = focused ? 'home' : 'home-outline';
               break;
-            case 'School':
-              iconName = focused ? 'school' : 'school-outline';
+            case 'Chat':
+              iconName = focused ? 'chatbubble-ellipses' : 'chatbubble-ellipses-outline';
               break;
-            case 'Work':
-              iconName = focused ? 'briefcase' : 'briefcase-outline';
+            case 'Account':
+              iconName = focused ? 'person' : 'person-outline';
               break;
-            case 'Gym':
+            case 'Workout':
               iconName = focused ? 'barbell' : 'barbell-outline';
               break;
             default:
@@ -48,9 +49,9 @@ export default function MainTabs() {
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="School" component={SchoolScreen} />
-      <Tab.Screen name="Work" component={WorkScreen} />
-      <Tab.Screen name="Gym" component={GymScreen} />
+      <Tab.Screen name="Chat" component={ChatScreen} />
+      <Tab.Screen name="Workout" component={WorkoutScreen} />
+      <Tab.Screen name="Account" component={AccountScreen} />
     </Tab.Navigator>
   );
 }
