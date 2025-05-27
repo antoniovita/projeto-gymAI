@@ -3,8 +3,9 @@ import { Ionicons } from '@expo/vector-icons';
 
 import HomeScreen from 'components/HomeScreen';
 import WorkoutScreen from 'components/WorkoutScreen';
-import AccountScreen from 'components/AccountScreen';
+import AccountScreen from 'components/AgendaScreen';
 import ChatScreen from 'components/ChatScreen';
+import AgendaScreen from 'components/AgendaScreen';
 
 
 const Tab = createBottomTabNavigator();
@@ -34,7 +35,7 @@ export default function MainTabs() {
             case 'Chat':
               iconName = focused ? 'chatbubble-ellipses' : 'chatbubble-ellipses-outline';
               break;
-            case 'Account':
+            case 'Agenda':
               iconName = focused ? 'calendar' : 'calendar-outline';
               break;
             case 'Workout':
@@ -51,7 +52,7 @@ export default function MainTabs() {
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Chat" component={ChatScreen} />
       <Tab.Screen name="Workout" component={WorkoutScreen} />
-      <Tab.Screen name="Account" component={AccountScreen} />
+      <Tab.Screen name="Agenda" component={AgendaScreen} />
     </Tab.Navigator>
   );
 }

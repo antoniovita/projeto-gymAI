@@ -8,7 +8,7 @@ import "./global.css";
 
 import WelcomeScreen from './components/WelcomeScreen';
 import MainTabs from './widgets/MainTabs';
-import { AuthService } from './api/service/authService';
+import { AuthService } from 'api/service/authService';
 
 SplashScreen.preventAutoHideAsync();
 
