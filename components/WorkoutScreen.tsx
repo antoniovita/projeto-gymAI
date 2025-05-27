@@ -45,14 +45,8 @@ export default function WorkoutScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-zinc-900">
-      {/* Header */}
-      <View className="flex-row justify-between items-center px-10 py-4">
-        <TouchableOpacity>
-          <Ionicons name="menu" size={24} color="white" />
-        </TouchableOpacity>
-      </View>
 
-      <View className="flex flex-row justify-between px-10 mt-8 mb-6">
+      <View className="flex flex-row justify-between px-10 mt-[80px] mb-6">
         <Text className="text-3xl text-white font-medium font-sans">Your workouts</Text>
 
         <TouchableOpacity
