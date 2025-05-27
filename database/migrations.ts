@@ -1,12 +1,13 @@
 import { SQLiteDatabase } from 'expo-sqlite';
 
 export const runMigrations = async (db: SQLiteDatabase) => {
+
   // table user
   await db.execAsync(`
     CREATE TABLE IF NOT EXISTS user (
       id TEXT PRIMARY KEY,
-      name TEXT NOT NULL
-      subscription BOOL NOT NULL
+      name TEXT NOT NULL,
+      subscription INTEGER NOT NULL
     );
   `);
 
@@ -14,7 +15,7 @@ export const runMigrations = async (db: SQLiteDatabase) => {
   await db.execAsync(`
     CREATE TABLE IF NOT EXISTS routine (
       id TEXT PRIMARY KEY,
-      user_id TEXT,routine
+      user_id TEXT,
       day_of_week TEXT NOT NULL,
       FOREIGN KEY (user_id) REFERENCES user(id)
     );
@@ -43,7 +44,7 @@ export const runMigrations = async (db: SQLiteDatabase) => {
       name TEXT NOT NULL,
       content TEXT,
       date TEXT,
-      type TEXT,
+      type JSON,
       user_id TEXT,
       routine_id TEXT,
       FOREIGN KEY (routine_id) REFERENCES routine(id),

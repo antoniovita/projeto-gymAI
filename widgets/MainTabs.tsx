@@ -35,7 +35,7 @@ export default function MainTabs() {
               iconName = focused ? 'chatbubble-ellipses' : 'chatbubble-ellipses-outline';
               break;
             case 'Account':
-              iconName = focused ? 'person' : 'person-outline';
+              iconName = focused ? 'calendar' : 'calendar-outline';
               break;
             case 'Workout':
               iconName = focused ? 'barbell' : 'barbell-outline';
