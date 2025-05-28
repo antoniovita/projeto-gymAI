@@ -9,6 +9,7 @@ import "./global.css";
 import WelcomeScreen from './components/WelcomeScreen';
 import MainTabs from './widgets/MainTabs';
 import { AuthService } from 'api/service/authService';
+import SettingsScreen from 'components/SettingsScreen';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -46,6 +47,7 @@ export default function App() {
           ) : (
             <Stack.Screen name="Welcome" component={WelcomeScreen} />
           )}
+          <Stack.Screen name="SettingsScreen" component={SettingsScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </View>

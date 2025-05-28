@@ -113,7 +113,7 @@ export default function WorkoutScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-zinc-900">
+    <SafeAreaView className="flex-1 bg-zinc-800">
       <TouchableOpacity
         onPress={handleOpenCreate}
         className="w-[50px] h-[50px] absolute bottom-6 right-6 z-20 rounded-full bg-emerald-600 items-center justify-center shadow-lg"
@@ -125,10 +125,10 @@ export default function WorkoutScreen() {
           elevation: 5,
         }}
       >
-        <Ionicons name="add" size={32} color="white" />
+        <Ionicons name="add" size={32} color="gray-300" />
       </TouchableOpacity>
 
-      <View className="flex flex-row justify-between px-10 mt-[80px] mb-6">
+      <View className="flex flex-row justify-between px-10 mt-[60px] mb-6">
         <Text className="text-3xl text-white font-medium font-sans">Your workouts</Text>
 
         <TouchableOpacity onPress={() => setIsFilterVisible(true)} className="flex flex-row gap-1">
@@ -142,9 +142,10 @@ export default function WorkoutScreen() {
           <TouchableOpacity
             key={item.id}
             onPress={() => handleOpenEdit(item)}
-            className="w-full rounded-2xl px-4 py-4 mb-4 bg-neutral-800"
+            style={{ backgroundColor: '#1e1e1e' }}
+            className="w-full rounded-2xl px-4 py-4 mb-4"
           >
-            <View className="bg-zinc-900 px-3 py-2 rounded-b-xl flex flex-row justify-center items-center absolute left-[85%]">
+            <View className="bg-zinc-800 px-3 py-2 rounded-b-xl flex flex-row justify-center items-center absolute left-[85%]">
               <View className="flex-row gap-1">
                 {item.muscles.slice(0, 2).map((muscle) => (
                   <View
@@ -162,7 +163,7 @@ export default function WorkoutScreen() {
 
             <View className="flex-row justify-between items-center">
               <View className="flex flex-col gap-2">
-                <Text className="text-white text-xl font-sans font-medium">{item.title}</Text>
+                <Text className="text-gray-300 text-xl font-sans font-medium">{item.title}</Text>
                 <Text className="text-neutral-400 text-sm">{item.date}</Text>
               </View>
             </View>
@@ -192,7 +193,7 @@ export default function WorkoutScreen() {
                     }`}
                   >
                     <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: color }} />
-                    <Text className="text-white font-medium">{muscle}</Text>
+                    <Text className="text-gray-300 font-medium">{muscle}</Text>
                   </TouchableOpacity>
                 );
               })}
@@ -202,7 +203,7 @@ export default function WorkoutScreen() {
               onPress={() => setIsFilterVisible(false)}
               className="mt-6 bg-emerald-600 py-3 rounded-xl"
             >
-              <Text className="text-white text-center font-semibold">
+              <Text className="text-gray-300 text-center font-semibold">
                 Aplicar Filtros ({selectedFilters.length} selecionado{selectedFilters.length !== 1 ? 's' : ''})
               </Text>
             </Pressable>
@@ -211,7 +212,7 @@ export default function WorkoutScreen() {
               onPress={() => setSelectedFilters([])}
               className="mt-3 py-2 rounded-xl border border-gray-500"
             >
-              <Text className="text-white text-center">Limpar Filtros</Text>
+              <Text className="text-gray-300 text-center">Limpar Filtros</Text>
             </Pressable>
           </View>
         </View>
@@ -223,7 +224,7 @@ export default function WorkoutScreen() {
         visible={isCreateVisible}
         onRequestClose={() => setIsCreateVisible(false)}
       >
-        <View className="flex-1 py-[50px] bg-zinc-900">
+        <View className="flex-1 py-[50px] bg-zinc-800">
           <View className="flex-row justify-between items-center px-4 py-4">
             <TouchableOpacity
               className="items-center flex flex-row"
@@ -244,7 +245,7 @@ export default function WorkoutScreen() {
               placeholderTextColor="#a1a1aa"
               value={newWorkoutTitle}
               onChangeText={setNewWorkoutTitle}
-              className="text-white text-4xl font-semibold mb-4"
+              className="text-gray-300 text-4xl font-semibold mb-4"
               multiline
             />
 
@@ -262,7 +263,7 @@ export default function WorkoutScreen() {
                     }`}
                   >
                     <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color }} />
-                    <Text className="text-white">{muscle}</Text>
+                    <Text className="text-gray-300">{muscle}</Text>
                   </TouchableOpacity>
                 );
               })}
@@ -271,7 +272,7 @@ export default function WorkoutScreen() {
             <TextInput
               placeholder="Escreva o seu treino aqui"
               placeholderTextColor="#a1a1aa"
-              className="text-white text-lg"
+              className="text-gray-300 text-lg"
               multiline
               style={{ minHeight: 150, textAlignVertical: 'top' }}
             />

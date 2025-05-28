@@ -28,7 +28,9 @@ export default function ChatScreen() {
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View className="flex-1 justify-end">
 
-            <View className="w-full rounded-t-[30px] pt-8 pl-6 pb-6 bg-neutral-900">
+            <View className="w-full rounded-t-[30px] pt-8 pl-6 pb-6"
+             style={{ backgroundColor: '#1e1e1e' }}>
+              
               <View className="flex-row pr-6">
                 <TextInput
                   placeholder="Digite algo..."

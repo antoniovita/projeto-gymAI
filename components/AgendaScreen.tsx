@@ -117,7 +117,7 @@ export default function AgendaScreen() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-zinc-900">
+    <SafeAreaView className="flex-1 bg-zinc-800">
       <TouchableOpacity
         onPress={handleOpenCreate}
         className="w-[50px] h-[50px] absolute bottom-6 right-6 z-20 rounded-full bg-emerald-600 items-center justify-center shadow-lg"
@@ -129,10 +129,10 @@ export default function AgendaScreen() {
           elevation: 5,
         }}
       >
-        <Ionicons name="add" size={32} color="white" />
+        <Ionicons name="add" size={32} color="black" />
       </TouchableOpacity>
 
-      <View className="flex flex-row items-center justify-between px-6 mt-[80px] mb-6">
+      <View className="flex flex-row items-center justify-between px-6 mt-[60px] mb-6">
         <View className='flex flex-row gap-2 items-center'>
           <TouchableOpacity onPress={() => setIsFilterVisible(true)} className="flex flex-row gap-1">
             <Ionicons className="mt-1" name="chevron-back" size={24} color="white" />
@@ -155,7 +155,7 @@ export default function AgendaScreen() {
               <TouchableOpacity className="flex-row justify-between items-center"
               onPress={() => handleOpenEdit(item)}>
                 <View className="flex flex-col gap-2">
-                  <Text className={`text-xl font-sans font-medium ${item.completed ? 'line-through text-neutral-500' : 'text-white'}`}>
+                  <Text className={`text-xl font-sans font-medium ${item.completed ? 'line-through text-neutral-500' : 'text-gray-300'}`}>
                     {item.title}
                   </Text>
                   <Text className="text-neutral-400 text-sm">{item.time}</Text>
@@ -180,14 +180,14 @@ export default function AgendaScreen() {
         visible={isCreateVisible}
         onRequestClose={() => setIsCreateVisible(false)}
       >
-        <View className="flex-1 py-[50px] bg-zinc-900">
+        <View className="flex-1 py-[50px] bg-zinc-800">
           <View className="flex-row justify-between items-center px-4 py-4">
             <TouchableOpacity
               className="items-center flex flex-row"
               onPress={() => setIsCreateVisible(false)}
             >
               <Ionicons name="chevron-back" size={28} color="white" />
-              <Text className="text-white text-lg"> Voltar</Text>
+              <Text className="text-gray-300 text-lg"> Voltar</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={handleSaveWorkout}>
@@ -202,7 +202,7 @@ export default function AgendaScreen() {
               placeholderTextColor="#a1a1aa"
               value={newWorkoutTitle}
               onChangeText={setNewWorkoutTitle}
-              className="text-white text-4xl font-semibold mb-4"
+              className="text-gray-300 text-4xl font-semibold mb-4"
               multiline
             />
 
@@ -227,7 +227,7 @@ export default function AgendaScreen() {
                     }`}
                   >
                     <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color }} />
-                    <Text className="text-white">{categories}</Text>
+                    <Text className="text-gray-300">{categories}</Text>
                   </TouchableOpacity>
                 );
               })}
@@ -237,7 +237,7 @@ export default function AgendaScreen() {
             <TextInput
               placeholder="Escreva o seu treino aqui"
               placeholderTextColor="#a1a1aa"
-              className="text-white text-lg"
+              className="text-gray-300 text-lg"
               multiline
               style={{ minHeight: 150, textAlignVertical: 'top' }}
             />

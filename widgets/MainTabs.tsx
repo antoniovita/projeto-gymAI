@@ -19,7 +19,7 @@ export default function MainTabs() {
         tabBarActiveTintColor: '#FFFFFF',
         tabBarInactiveTintColor: '#9CA3AF',
         tabBarStyle: {
-          backgroundColor: '#171717',
+          backgroundColor: '#1e1e1e',
           borderTopWidth: 0,
           height: 70,
           paddingBottom: 90,
