@@ -52,14 +52,4 @@ export const runMigrations = async (db: SQLiteDatabase) => {
     );
   `);
 
-  // table goals
-  await db.execAsync(`
-    CREATE TABLE IF NOT EXISTS goals (
-      id TEXT PRIMARY KEY,
-      user_id TEXT,
-      goal_type TEXT,
-      completed INTEGER DEFAULT 0,
-      FOREIGN KEY (user_id) REFERENCES user(id)
-    );
-  `);
 };
