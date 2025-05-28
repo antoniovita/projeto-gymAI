@@ -167,7 +167,7 @@ export default function AgendaScreen() {
                 className={`w-[25px] h-[25px] mt-2 border rounded-lg ${item.completed ? 'bg-green-500' : 'border-2 border-neutral-600'}`}
                 style={{ alignItems: 'center', justifyContent: 'center' }}
               >
-                <Ionicons name={item.completed && 'checkmark'} size={20} color="white" />
+                <Ionicons name={item.completed ? 'checkmark' : undefined} size={20} color="white" />
               </TouchableOpacity>
             </View>
           </View>
