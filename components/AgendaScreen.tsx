@@ -13,7 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 const categoriesColors: { [key: string]: string } = {
-  'estudo': '#EF4444',      // Red
+  'estudo': '#EF4444',      
   'academia': '#3B82F6',     // Blue
   'trabalho': '#10B981',     // Green
   'igreja': '#A3E635',  // Lime
@@ -191,7 +191,7 @@ export default function AgendaScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity onPress={handleSaveWorkout}>
-              <Text className="text-emerald-500 text-lg font-semibold">Salvar</Text>
+              <Text className="text-emerald-500 text-lg mr-3 font-semibold">Salvar</Text>
             </TouchableOpacity>
           </View>
 
