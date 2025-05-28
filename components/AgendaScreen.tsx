@@ -12,15 +12,11 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const muscleColors: { [key: string]: string } = {
-  'Peito': '#EF4444',      // Red
-  'Costas': '#3B82F6',     // Blue
-  'Pernas': '#10B981',     // Green
-  'Ombro': '#F59E42',      // Orange
-  'Bíceps': '#6366F1',     // Indigo
-  'Tríceps': '#F472B6',    // Pink
-  'Abdômen': '#FBBF24',    // Yellow
-  'Funcional': '#A3E635',  // Lime
+const categoriesColors: { [key: string]: string } = {
+  'estudo': '#EF4444',      // Red
+  'academia': '#3B82F6',     // Blue
+  'trabalho': '#10B981',     // Green
+  'igreja': '#A3E635',  // Lime
 };
 
 const categories = [
@@ -35,7 +31,7 @@ export default function AgendaScreen() {
   const [isCreateVisible, setIsCreateVisible] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [newWorkoutTitle, setNewWorkoutTitle] = useState('');
-  const [selectedWorkout, setSelectedWorkout] = useState<any | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<any | null>(null);
   const [selectedMusclesForWorkout, setSelectedMusclesForWorkout] = useState<string[]>([]);
   const [workouts, setWorkouts] = useState([
     { id: 1, title: 'Treino de peito e tríceps', time: '16:00-17:00', muscles: ['Peito', 'Tríceps'], completed: false },
@@ -59,14 +55,14 @@ export default function AgendaScreen() {
   };
 
   const handleOpenCreate = () => {
-    setSelectedWorkout(null);
+    setSelectedCategory(null);
     setNewWorkoutTitle('');
     setSelectedMusclesForWorkout([]);
     setIsCreateVisible(true);
   };
 
   const handleOpenEdit = (workout: any) => {
-    setSelectedWorkout(workout);
+    setSelectedCategory(workout);
     setNewWorkoutTitle(workout.title);
     setSelectedMusclesForWorkout(workout.muscles || []);
     setIsCreateVisible(true);
@@ -83,10 +79,10 @@ export default function AgendaScreen() {
       return;
     }
 
-    if (selectedWorkout) {
+    if (selectedCategory) {
       setWorkouts((prev) =>
         prev.map((w) =>
-          w.id === selectedWorkout.id
+          w.id === selectedCategory.id
             ? { ...w, title: newWorkoutTitle, muscles: selectedMusclesForWorkout }
             : w
         )
@@ -103,7 +99,7 @@ export default function AgendaScreen() {
     }
 
     setNewWorkoutTitle('');
-    setSelectedWorkout(null);
+    setSelectedCategory(null);
     setSelectedMusclesForWorkout([]);
     setIsCreateVisible(false);
   };
@@ -151,35 +147,34 @@ export default function AgendaScreen() {
 
       <ScrollView className="flex-1 px-6">
         {filteredWorkouts.map((item) => (
-          <TouchableOpacity
+          <View
             key={item.id}
-            onPress={() => handleOpenEdit(item)}
             className="w-full px-4 py-4 mb-4 border-b border-neutral-700"
           >
             <View className='flex flex-row justify-between'>
-              <View className="flex-row justify-between items-center">
+              <TouchableOpacity className="flex-row justify-between items-center"
+              onPress={() => handleOpenEdit(item)}>
                 <View className="flex flex-col gap-2">
                   <Text className={`text-xl font-sans font-medium ${item.completed ? 'line-through text-neutral-500' : 'text-white'}`}>
                     {item.title}
                   </Text>
                   <Text className="text-neutral-400 text-sm">{item.time}</Text>
                 </View>
-              </View>
+              </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={() => toggleWorkoutCompletion(item.id)}
-                className={`w-[30px] h-[30px] border rounded-full ${item.completed ? 'bg-green-500' : 'bg-neutral-700'}`}
+                className={`w-[25px] h-[25px] mt-2 border rounded-lg ${item.completed ? 'bg-green-500' : 'border-2 border-neutral-600'}`}
                 style={{ alignItems: 'center', justifyContent: 'center' }}
               >
-                <Ionicons name={item.completed ? 'checkmark' : 'close'} size={20} color="white" />
+                <Ionicons name={item.completed && 'checkmark'} size={20} color="white" />
               </TouchableOpacity>
             </View>
-          </TouchableOpacity>
+          </View>
         ))}
       </ScrollView>
 
-      {/* Modal de criação/edição */}
-<Modal
+      <Modal
         transparent
         animationType="slide"
         visible={isCreateVisible}
@@ -213,18 +208,18 @@ export default function AgendaScreen() {
 
             {/* Seção para seleção de grupos musculares */}
             <View className="flex flex-row flex-wrap gap-2 mb-4">
-              {categories.map((muscle) => {
-                const isSelected = selectedMusclesForWorkout.includes(muscle);
-                const color = muscleColors[muscle];
+              {categories.map((categories) => {
+                const isSelected = selectedMusclesForWorkout.includes(categories);
+                const color = categoriesColors[categories];
 
                 return (
                   <TouchableOpacity
-                    key={muscle}
+                    key={categories}
                     onPress={() => {
                       setSelectedMusclesForWorkout((prev) =>
-                        prev.includes(muscle)
-                          ? prev.filter((item) => item !== muscle)
-                          : [...prev, muscle]
+                        prev.includes(categories)
+                          ? prev.filter((item) => item !== categories)
+                          : [...prev, categories]
                       );
                     }}
                     className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${
@@ -232,7 +227,7 @@ export default function AgendaScreen() {
                     }`}
                   >
                     <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color }} />
-                    <Text className="text-white">{muscle}</Text>
+                    <Text className="text-white">{categories}</Text>
                   </TouchableOpacity>
                 );
               })}
