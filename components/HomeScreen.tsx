@@ -67,7 +67,7 @@ export default function HomeScreen() {
           className="h-11 w-11 rounded-full justify-center items-center active:opacity-80"
           onPress={() => navigation.navigate('SettingsScreen')}
         >
-          <Ionicons name="settings-outline" size={24} color="white" />
+          <Ionicons name="settings-outline" size={24} color="#ff7a7f" />
         </TouchableOpacity>
       </View>
 
@@ -109,7 +109,7 @@ export default function HomeScreen() {
                 <Text className='font-sans text-[16px] font-semibold text-white py-2.5'> peito e tríceps</Text>
                 
                 <View className='flex flex-row gap-2'>
-                  <Text className=' font-sans text-[12px] max-w-[100px] text-white py-2.5'> clique aqui para gerar seu treino</Text>
+                  <Text className=' font-sans text-[11px] max-w-[100px] text-white py-2.5'> clique aqui para gerar seu treino</Text>
                   <Ionicons className="mt-3" name="share-outline" size={25} color="white" />
                 </View>
 

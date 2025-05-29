@@ -133,9 +133,9 @@ export default function WorkoutScreen() {
     <SafeAreaView className="flex-1 bg-zinc-800">
       <TouchableOpacity
         onPress={handleOpenCreate}
-        className="w-[50px] h-[50px] absolute bottom-6 right-6 z-20 rounded-full bg-emerald-600 items-center justify-center shadow-lg"
+        className="w-[50px] h-[50px] absolute bottom-6 right-6 z-20 rounded-full bg-rose-400 items-center justify-center shadow-lg"
       >
-        <Ionicons name="add" size={32} color="gray" />
+        <Ionicons name="add" size={32} color="black" />
       </TouchableOpacity>
 
       <View className="flex flex-row justify-between px-10 mt-[60px] mb-6">
@@ -191,8 +191,8 @@ export default function WorkoutScreen() {
         visible={isFilterVisible}
         onRequestClose={() => setIsFilterVisible(false)}
       >
-        <View className="flex-1 bg-black/90 justify-center items-center px-8">
-          <View className="bg-transparent w-full rounded-2xl p-6">
+        <View className="flex-1  bg-zinc-900/95 justify-center items-center px-8">
+          <View className="bg-transparent w-full rounded-2xl p-6 items-center">
             <View className="flex flex-row flex-wrap gap-3 justify-center">
               {muscleGroups.map((muscle) => {
                 const isSelected = selectedFilters.includes(muscle);
@@ -202,8 +202,8 @@ export default function WorkoutScreen() {
                   <TouchableOpacity
                     key={muscle}
                     onPress={() => toggleFilter(muscle)}
-                    className={`flex-row items-center gap-2 px-4 py-2 rounded-xl ${
-                      isSelected ? 'bg-emerald-600' : 'bg-neutral-700'
+                    className={`flex-row items-center gap-2 px-4 py-3 rounded-3xl ${
+                      isSelected ? 'bg-rose-400' : 'bg-neutral-700'
                     }`}
                   >
                     <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: color }} />
@@ -211,23 +211,19 @@ export default function WorkoutScreen() {
                   </TouchableOpacity>
                 );
               })}
+
+              <Pressable
+              onPress={() => setIsFilterVisible(false)}
+              className=" bg-rose-400 h-[40px] w-[40px] rounded-full flex-row items-center justify-center"
+            >
+              <Ionicons name="checkmark" size={24} color="white" />
+            </Pressable>
+
             </View>
 
-            <Pressable
-              onPress={() => setIsFilterVisible(false)}
-              className="mt-6 bg-emerald-600 py-3 rounded-xl"
-            >
-              <Text className="text-gray-300 text-center font-semibold">
-                Aplicar Filtros ({selectedFilters.length} selecionado{selectedFilters.length !== 1 ? 's' : ''})
-              </Text>
-            </Pressable>
+            
 
-            <Pressable
-              onPress={() => setSelectedFilters([])}
-              className="mt-3 py-2 rounded-xl border border-gray-500"
-            >
-              <Text className="text-gray-300 text-center">Limpar Filtros</Text>
-            </Pressable>
+          
           </View>
         </View>
       </Modal>
@@ -250,7 +246,7 @@ export default function WorkoutScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity onPress={handleSaveWorkout}>
-              <Text className="text-emerald-500 text-lg font-semibold">Salvar</Text>
+              <Text className="text-rose-400 text-lg font-semibold">Salvar</Text>
             </TouchableOpacity>
           </View>
 
@@ -274,11 +270,13 @@ export default function WorkoutScreen() {
                     key={muscle}
                     onPress={() => toggleMuscleForWorkout(muscle)}
                     className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${
-                      isSelected ? 'bg-emerald-600' : 'bg-neutral-700'
+                      isSelected ? 'bg-rose-400' : 'bg-neutral-700'
                     }`}
                   >
                     <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color }} />
-                    <Text className="text-gray-300">{muscle}</Text>
+                    <Text className={`${
+                      isSelected ? 'text-black' : 'text-white'
+                    }`}>{muscle}</Text>
                   </TouchableOpacity>
                 );
               })}

@@ -9,7 +9,7 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Nunito', 'System'],
+        sans: ['Poppins'],
       },
     },
   },

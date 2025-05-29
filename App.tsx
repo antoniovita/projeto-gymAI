@@ -19,7 +19,7 @@ const Stack = createNativeStackNavigator();
 
 export default function App() {
   const [fontsLoaded] = useFonts({
-    Poppins: require('./assets/fonts/NunitoSans-VariableFont_YTLC,opsz,wdth,wght.ttf'),
+    Poppins: require('./assets/Poppins/Poppins-Regular.ttf'),
   });
 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);

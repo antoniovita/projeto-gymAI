@@ -120,7 +120,7 @@ export default function AgendaScreen() {
     <SafeAreaView className="flex-1 bg-zinc-800">
       <TouchableOpacity
         onPress={handleOpenCreate}
-        className="w-[50px] h-[50px] absolute bottom-6 right-6 z-20 rounded-full bg-emerald-600 items-center justify-center shadow-lg"
+        className="w-[50px] h-[50px] absolute bottom-6 right-6 z-20 rounded-full bg-rose-400 items-center justify-center shadow-lg"
         style={{
           shadowColor: "#000",
           shadowOffset: { width: 0, height: 2 },
@@ -191,7 +191,7 @@ export default function AgendaScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity onPress={handleSaveWorkout}>
-              <Text className="text-emerald-500 text-lg mr-3 font-semibold">Salvar</Text>
+              <Text className="text-rose-400 text-lg mr-3 font-semibold">Salvar</Text>
             </TouchableOpacity>
           </View>
 
@@ -223,7 +223,7 @@ export default function AgendaScreen() {
                       );
                     }}
                     className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${
-                      isSelected ? 'bg-emerald-600' : 'bg-neutral-700'
+                      isSelected ? 'bg-rose-400' : 'bg-neutral-700'
                     }`}
                   >
                     <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color }} />
