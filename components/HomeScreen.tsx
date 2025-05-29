@@ -55,7 +55,7 @@ export default function HomeScreen() {
   return (
     <SafeAreaView className="flex-1 flex-col bg-zinc-800">
 
-      <View className="flex flex-row justify-between mt-5 px-7">
+      <View className="flex flex-row justify-between mt-[50px] px-7">
         <View className='flex gap-2 flex-row items-center'>
           <View className='flex rounded-full justify-center items-center w-[32px] h-[32px]' style={{ backgroundColor: '#1e1e1e' }}>
             <Text className='font-bold text-white items-center justify-center flex'> AV</Text>
