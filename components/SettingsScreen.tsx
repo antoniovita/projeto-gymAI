@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,45 +7,67 @@ import {
   Modal,
   Pressable,
   Alert,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-function SettingsItem({ icon, color = "white", label, onPress, rightIcon = "chevron-forward" }) {
-  return (
-    <TouchableOpacity
-      className="flex flex-row items-center justify-between py-4 border-b border-zinc-700"
-      onPress={onPress}
-    >
-      <View className="flex flex-row items-center gap-3">
-        <Ionicons name={icon} size={20} color={color} />
-        <Text className="text-white text-[16px]">{label}</Text>
-      </View>
-      <Ionicons name={rightIcon} size={20} color="#a1a1aa" />
-    </TouchableOpacity>
-  );
+type RootStackParamList = {
+  Login: undefined;
+  SettingsScreen: undefined;
+};
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
+type ActionType = 'clearTrainings' | 'clearTasks' | 'logout' | null;
+
+interface SettingsItemProps {
+  icon: keyof typeof Ionicons.glyphMap;
+  color?: string;
+  label: string;
+  onPress: () => void;
+  rightIcon?: keyof typeof Ionicons.glyphMap;
 }
 
+const SettingsItem: React.FC<SettingsItemProps> = ({
+  icon,
+  color = 'white',
+  label,
+  onPress,
+  rightIcon = 'chevron-forward',
+}) => (
+  <TouchableOpacity
+    className="flex flex-row items-center justify-between py-7 border-b border-zinc-700"
+    onPress={onPress}
+  >
+    <View className="flex flex-row items-center gap-3">
+      <Ionicons name={icon} size={20} color={color} />
+      <Text className="text-white text-[16px]">{label}</Text>
+    </View>
+    <Ionicons name={rightIcon} size={20} color="#a1a1aa" />
+  </TouchableOpacity>
+);
+
 export default function SettingsScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp>();
 
-  const [name, setName] = useState("Antônio Vita");
+  const [name] = useState('Antônio Vita');
   const [modalVisible, setModalVisible] = useState(false);
-  const [action, setAction] = useState(null);
+  const [action, setAction] = useState<ActionType>(null);
 
-  const handleAction = (type) => {
+  const handleAction = (type: ActionType) => {
     setAction(type);
     setModalVisible(true);
   };
 
   const confirmAction = () => {
     if (action === 'clearTrainings') {
-      console.log("Treinos limpos");
+      console.log('Treinos limpos');
     } else if (action === 'clearTasks') {
-      console.log("Tasks limpas");
+      console.log('Tasks limpas');
     } else if (action === 'logout') {
-      console.log("Logout");
+      console.log('Logout');
       navigation.navigate('Login');
     }
     setModalVisible(false);
@@ -53,28 +76,23 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-zinc-900">
 
-      {/* Header */}
-      <View className="mt-3 flex flex-row items-center px-5">
+      <View className="mt-[20px] flex flex-row items-center px-2">
         <TouchableOpacity onPress={() => navigation.goBack()} className="flex flex-row items-center">
           <Ionicons name="chevron-back" size={24} color="white" />
           <Text className="text-white font-medium text-[16px] ml-1">Voltar</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Perfil */}
       <View className="flex flex-row items-center gap-3 mt-10 px-6">
         <View className="w-12 h-12 flex items-center justify-center rounded-full bg-zinc-800">
           <Text className="text-lg font-semibold text-white">
-            {name.split(" ").map(n => n[0]).join("").toUpperCase()}
+            {name.split(' ').map((n) => n[0]).join('').toUpperCase()}
           </Text>
         </View>
         <Text className="text-white text-xl font-semibold">{name}</Text>
       </View>
 
-      {/* Opções */}
-      <View className="mt-10 px-6">
-        
-        {/* Conta */}
+      <ScrollView className="flex-1 mt-10 px-6" contentContainerStyle={{ paddingBottom: 40 }}>
         <Text className="text-zinc-400 uppercase text-xs mb-2">Conta</Text>
         <SettingsItem
           icon="person-outline"
@@ -92,7 +110,6 @@ export default function SettingsScreen() {
           onPress={() => Alert.alert('Configurações', 'Gerencie sua privacidade')}
         />
 
-        {/* Dados */}
         <Text className="text-zinc-400 uppercase text-xs mt-6 mb-2">Dados</Text>
         <SettingsItem
           icon="barbell-outline"
@@ -105,7 +122,6 @@ export default function SettingsScreen() {
           onPress={() => handleAction('clearTasks')}
         />
 
-        {/* Ajuda */}
         <Text className="text-zinc-400 uppercase text-xs mt-6 mb-2">Suporte</Text>
         <SettingsItem
           icon="help-circle-outline"
@@ -113,20 +129,17 @@ export default function SettingsScreen() {
           onPress={() => Alert.alert('Ajuda', 'Entre em contato com o suporte')}
         />
 
-        {/* Sair */}
         <Text className="text-zinc-400 uppercase text-xs mt-6 mb-2">Conta</Text>
         <SettingsItem
           icon="log-out-outline"
           color="#ef4444"
           label="Sair"
-          rightIcon="chevron-forward"
           onPress={() => handleAction('logout')}
         />
-      </View>
+      </ScrollView>
 
-      {/* Modal de Confirmação */}
       <Modal
-        transparent={true}
+        transparent
         visible={modalVisible}
         animationType="fade"
         onRequestClose={() => setModalVisible(false)}

@@ -2,14 +2,27 @@ import { getDb } from '../../database';
 import { UserModel } from '../model/User';
 
 export const UserController = {
+
   createUser: async (id: string, name: string) => {
     const db = getDb();
     try {
       const userId = await UserModel.createUser(db, id, name);
       return { success: true, userId };
     } catch (error) {
-      console.error('Erro ao criar usuário no controller:', error);
+      console.error('Erro ao criar usuário com ID externo no controller:', error);
       return { success: false, error: 'Erro ao criar usuário.' };
+    }
+  },
+
+  //modo freemium
+  createUserLocal: async (name: string) => {
+    const db = getDb();
+    try {
+      const userId = await UserModel.createUserLocal(db, name);
+      return { success: true, userId };
+    } catch (error) {
+      console.error('Erro ao criar usuário local no controller:', error);
+      return { success: false, error: 'Erro ao criar usuário local.' };
     }
   },
 

@@ -5,7 +5,7 @@ export const TaskController = {
 
   createTask: async (
     title: string,
-    description: string,
+    content: string,
     date: string,
     type: string,
     userId: string,
@@ -13,7 +13,7 @@ export const TaskController = {
   ) => {
     const db = getDb();
     try {
-      const taskId = await TaskModel.createTask(db, title, description, date, type, userId, routineId);
+      const taskId = await TaskModel.createTask(db, title, content, date, type, userId, routineId);
       return { success: true, taskId };
     } catch (error) {
       console.error('Erro ao criar tarefa no controller:', error);
@@ -47,9 +47,9 @@ export const TaskController = {
     const db = getDb();
     try {
       const changes = await TaskModel.updateTaskCompletion(db, taskId, completed);
-      return { success: changes > 0 };
+      return { success: true, updatedCount: changes };
     } catch (error) {
-      console.error('Erro ao atualizar tarefa no controller:', error);
+      console.error('Erro ao atualizar conclusão da tarefa no controller:', error);
       return { success: false, error: 'Erro ao atualizar tarefa.' };
     }
   },
@@ -74,5 +74,5 @@ export const TaskController = {
       console.error('Erro ao limpar tarefas no controller:', error);
       return { success: false, error: 'Erro ao limpar tarefas.' };
     }
-  },
+  }
 };
