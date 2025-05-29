@@ -10,7 +10,8 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useWorkout } from '../hooks/useWorkout';
 
 export default function WorkoutScreen() {
   const [isFilterVisible, setIsFilterVisible] = useState(false);
@@ -19,6 +20,7 @@ export default function WorkoutScreen() {
   const [newWorkoutTitle, setNewWorkoutTitle] = useState('');
   const [selectedWorkout, setSelectedWorkout] = useState<any | null>(null);
   const [selectedMusclesForWorkout, setSelectedMusclesForWorkout] = useState<string[]>([]);
+  const [content, setContent] = useState('');
 
   const muscleGroups = [
     'Peito',
@@ -42,14 +44,20 @@ export default function WorkoutScreen() {
     'Funcional': '#a3e635',
   };
 
-  const [workouts, setWorkouts] = useState([
-    { id: 1, title: 'Treino de peito e tríceps', date: '26/05/2025', muscles: ['Peito', 'Tríceps'] },
-    { id: 2, title: 'Treino de costas e bíceps', date: '27/05/2025', muscles: ['Costas', 'Bíceps'] },
-    { id: 3, title: 'Treino de pernas', date: '28/05/2025', muscles: ['Pernas'] },
-    { id: 4, title: 'Treino de ombro', date: '29/05/2025', muscles: ['Ombro'] },
-    { id: 5, title: 'Treino de abdômen', date: '30/05/2025', muscles: ['Abdômen'] },
-    { id: 6, title: 'Treino funcional', date: '31/05/2025', muscles: ['Funcional'] },
-  ]);
+  const userId = '123'; // Exemplo, depois pegue do contexto/autenticação
+
+  const {
+    workouts,
+    createWorkout,
+    fetchWorkouts,
+    updateWorkout,
+    loading,
+    error
+  } = useWorkout();
+
+  useEffect(() => {
+    fetchWorkouts(userId);
+  }, []);
 
   const toggleFilter = (muscle: string) => {
     setSelectedFilters((prev) =>
@@ -67,17 +75,19 @@ export default function WorkoutScreen() {
     setSelectedWorkout(null);
     setNewWorkoutTitle('');
     setSelectedMusclesForWorkout([]);
+    setContent('');
     setIsCreateVisible(true);
   };
 
   const handleOpenEdit = (workout: any) => {
     setSelectedWorkout(workout);
-    setNewWorkoutTitle(workout.title);
-    setSelectedMusclesForWorkout(workout.muscles || []);
+    setNewWorkoutTitle(workout.name);
+    setSelectedMusclesForWorkout(workout.type ? workout.type.split(',') : []);
+    setContent(workout.content);
     setIsCreateVisible(true);
   };
 
-  const handleSaveWorkout = () => {
+  const handleSaveWorkout = async () => {
     if (!newWorkoutTitle.trim()) {
       Alert.alert('Erro', 'O título do treino não pode estar vazio.');
       return;
@@ -88,28 +98,35 @@ export default function WorkoutScreen() {
       return;
     }
 
-    if (selectedWorkout) {
-      setWorkouts((prev) =>
-        prev.map((w) =>
-          w.id === selectedWorkout.id
-            ? { ...w, title: newWorkoutTitle, muscles: selectedMusclesForWorkout }
-            : w
-        )
-      );
-    } else {
-      const newWorkout = {
-        id: workouts.length + 1,
-        title: newWorkoutTitle,
-        date: new Date().toLocaleDateString(),
-        muscles: selectedMusclesForWorkout,
-      };
-      setWorkouts((prev) => [newWorkout, ...prev]);
-    }
+    try {
+      const type = selectedMusclesForWorkout.join(',');
+      const date = new Date().toISOString().split('T')[0];
 
-    setNewWorkoutTitle('');
-    setSelectedWorkout(null);
-    setSelectedMusclesForWorkout([]);
-    setIsCreateVisible(false);
+      if (selectedWorkout) {
+        await updateWorkout(selectedWorkout.id, {
+          name: newWorkoutTitle,
+          content,
+          date,
+          type
+        });
+      } else {
+        await createWorkout(
+          newWorkoutTitle,
+          content,
+          date,
+          userId,
+          type
+        );
+      }
+
+      setIsCreateVisible(false);
+      setNewWorkoutTitle('');
+      setSelectedMusclesForWorkout([]);
+      setContent('');
+      await fetchWorkouts(userId);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
@@ -117,15 +134,8 @@ export default function WorkoutScreen() {
       <TouchableOpacity
         onPress={handleOpenCreate}
         className="w-[50px] h-[50px] absolute bottom-6 right-6 z-20 rounded-full bg-emerald-600 items-center justify-center shadow-lg"
-        style={{
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.25,
-          shadowRadius: 3.84,
-          elevation: 5,
-        }}
       >
-        <Ionicons name="add" size={32} color="gray-300" />
+        <Ionicons name="add" size={32} color="gray" />
       </TouchableOpacity>
 
       <View className="flex flex-row justify-between px-10 mt-[60px] mb-6">
@@ -138,39 +148,43 @@ export default function WorkoutScreen() {
       </View>
 
       <ScrollView className="flex-1 px-6">
-        {workouts.map((item) => (
-          <TouchableOpacity
-            key={item.id}
-            onPress={() => handleOpenEdit(item)}
-            style={{ backgroundColor: '#1e1e1e' }}
-            className="w-full rounded-2xl px-4 py-4 mb-4"
-          >
-            <View className="bg-zinc-800 px-3 py-2 rounded-b-xl flex flex-row justify-center items-center absolute left-[85%]">
-              <View className="flex-row gap-1">
-                {item.muscles.slice(0, 2).map((muscle) => (
-                  <View
-                    key={muscle}
-                    style={{
-                      width: 10,
-                      height: 10,
-                      borderRadius: 5,
-                      backgroundColor: muscleColors[muscle],
-                    }}
-                  />
-                ))}
+        {workouts.map((item) => {
+          const muscles = item.type ? item.type.split(',') : [];
+          return (
+            <TouchableOpacity
+              key={item.id}
+              onPress={() => handleOpenEdit(item)}
+              style={{ backgroundColor: '#1e1e1e' }}
+              className="w-full rounded-2xl px-4 py-4 mb-4"
+            >
+              <View className="bg-zinc-800 px-3 py-2 rounded-b-xl flex flex-row justify-center items-center absolute left-[85%]">
+                <View className="flex-row gap-1">
+                  {muscles.slice(0, 2).map((muscle) => (
+                    <View
+                      key={muscle}
+                      style={{
+                        width: 10,
+                        height: 10,
+                        borderRadius: 5,
+                        backgroundColor: muscleColors[muscle] || '#fff',
+                      }}
+                    />
+                  ))}
+                </View>
               </View>
-            </View>
 
-            <View className="flex-row justify-between items-center">
-              <View className="flex flex-col gap-2">
-                <Text className="text-gray-300 text-xl font-sans font-medium">{item.title}</Text>
-                <Text className="text-neutral-400 text-sm">{item.date}</Text>
+              <View className="flex-row justify-between items-center">
+                <View className="flex flex-col gap-2">
+                  <Text className="text-gray-300 text-xl font-sans font-medium">{item.name}</Text>
+                  <Text className="text-neutral-400 text-sm">{item.date}</Text>
+                </View>
               </View>
-            </View>
-          </TouchableOpacity>
-        ))}
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
 
+      {/* Modal de filtro */}
       <Modal
         transparent
         animationType="fade"
@@ -218,6 +232,7 @@ export default function WorkoutScreen() {
         </View>
       </Modal>
 
+      {/* Modal de criação/edição */}
       <Modal
         transparent
         animationType="slide"
@@ -272,6 +287,8 @@ export default function WorkoutScreen() {
             <TextInput
               placeholder="Escreva o seu treino aqui"
               placeholderTextColor="#a1a1aa"
+              value={content}
+              onChangeText={setContent}
               className="text-gray-300 text-lg"
               multiline
               style={{ minHeight: 150, textAlignVertical: 'top' }}

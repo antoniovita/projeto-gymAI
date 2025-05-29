@@ -13,6 +13,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
+import { AuthService } from 'api/service/authService';
+
 type RootStackParamList = {
   Login: undefined;
   SettingsScreen: undefined;
@@ -61,14 +63,21 @@ export default function SettingsScreen() {
     setModalVisible(true);
   };
 
-  const confirmAction = () => {
+  const confirmAction = async () => {
     if (action === 'clearTrainings') {
       console.log('Treinos limpos');
     } else if (action === 'clearTasks') {
       console.log('Tasks limpas');
     } else if (action === 'logout') {
       console.log('Logout');
-      navigation.navigate('Login');
+  
+      try {
+        await AuthService.clearUserId();
+        console.log('User ID limpo da SecureStore');
+      } catch (error) {
+        console.error('Erro ao limpar user ID:', error);
+      }
+  
     }
     setModalVisible(false);
   };

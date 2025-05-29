@@ -3,11 +3,10 @@ import { SQLiteDatabase } from 'expo-sqlite';
 export const runMigrations = async (db: SQLiteDatabase) => {
 
   // table user
-  // pagamento pela app store 
   await db.execAsync(`
     CREATE TABLE IF NOT EXISTS user (
       id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
+      name TEXT NOT NULL
     );
   `);
 
@@ -51,5 +50,4 @@ export const runMigrations = async (db: SQLiteDatabase) => {
       FOREIGN KEY (user_id) REFERENCES user(id)
     );
   `);
-
 };

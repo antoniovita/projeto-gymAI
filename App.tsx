@@ -6,9 +6,11 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useCallback, useEffect, useState } from 'react';
 import "./global.css";
 
+import { AuthService } from 'api/service/authService';
+import { initDatabase, getDb } from 'database';
+
 import WelcomeScreen from './components/WelcomeScreen';
 import MainTabs from './widgets/MainTabs';
-import { AuthService } from 'api/service/authService';
 import SettingsScreen from 'components/SettingsScreen';
 
 SplashScreen.preventAutoHideAsync();
@@ -21,12 +23,13 @@ export default function App() {
   });
 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [isDbReady, setIsDbReady] = useState<boolean>(false);
 
   const onLayoutRootView = useCallback(async () => {
-    if (fontsLoaded && isAuthenticated !== null) {
+    if (fontsLoaded && isAuthenticated !== null && isDbReady) {
       await SplashScreen.hideAsync();
     }
-  }, [fontsLoaded, isAuthenticated]);
+  }, [fontsLoaded, isAuthenticated, isDbReady]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -36,7 +39,21 @@ export default function App() {
     checkAuth();
   }, []);
 
-  if (!fontsLoaded || isAuthenticated === null) return null;
+  useEffect(() => {
+    const initDb = async () => {
+      try {
+        await initDatabase();
+        const db = getDb();
+        console.log('Banco de dados inicializado:', db);
+        setIsDbReady(true);
+      } catch (err) {
+        console.error('Erro ao inicializar o banco de dados:', err);
+      }
+    };
+    initDb();
+  }, []);
+
+  if (!fontsLoaded || isAuthenticated === null || !isDbReady) return null;
 
   return (
     <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
