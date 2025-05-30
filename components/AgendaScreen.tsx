@@ -29,39 +29,42 @@ export default function AgendaScreen() {
   } = useTask();
 
   const [isCreateVisible, setIsCreateVisible] = useState(false);
-  const [newWorkoutTitle, setNewWorkoutTitle] = useState('');
+  const [newTaskTitle, setNewTaskTitle] = useState('');
   const [selectedTask, setSelectedTask] = useState<any | null>(null);
-  const [selectedMusclesForWorkout, setSelectedMusclesForWorkout] = useState<string[]>([]);
-  const [content, setContent] = useState('');
-
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [taskContent, setTaskContent] = useState('');
+  const [date, setDate] = useState(new Date());
 
   useEffect(() => {
     fetchTasks(userId);
   }, []);
 
-  const handleSaveWorkout = async () => {
-    if (!newWorkoutTitle.trim()) {
-      Alert.alert('Erro', 'O título do treino não pode estar vazio.');
+  const handleSaveTask = async () => {
+    if (!newTaskTitle.trim()) {
+      Alert.alert('Erro', 'O título não pode estar vazio.');
       return;
     }
 
-    if (selectedMusclesForWorkout.length === 0) {
-      Alert.alert('Erro', 'Selecione pelo menos um grupo muscular para o treino.');
+    if (selectedCategories.length === 0) {
+      Alert.alert('Erro', 'Selecione pelo menos uma categoria.');
       return;
     }
 
     try {
+      const categoriesString = selectedCategories.join(', ');
+
       if (selectedTask) {
-      await updateTask(selectedTask.id, {
-        title: newWorkoutTitle,
-        content: content
-      });
+        await updateTask(selectedTask.id, {
+          title: newTaskTitle,
+          content: taskContent,
+          type: categoriesString
+        });
       } else {
         await createTask(
-          newWorkoutTitle,
-          selectedMusclesForWorkout.join(', '),
+          newTaskTitle,
+          taskContent,
           new Date().toISOString(),
-          'academia',
+          categoriesString,
           userId
         );
       }
@@ -75,14 +78,14 @@ export default function AgendaScreen() {
 
   const handleOpenEdit = (task: any) => {
     setSelectedTask(task);
-    setNewWorkoutTitle(task.title);
-    setSelectedMusclesForWorkout(task.content?.split(', ') || []);
-    setContent(task.content || '');
+    setNewTaskTitle(task.title);
+    setTaskContent(task.content || '');
+    const parsedCategories = task.type ? task.type.split(', ').map((cat: string) => cat.trim()) : [];
+    setSelectedCategories(parsedCategories);
     setIsCreateVisible(true);
   };
 
-
-  const toggleWorkoutCompletion = async (taskId: string, completed: 0 | 1) => {
+  const toggleTaskCompletion = async (taskId: string, completed: 0 | 1) => {
     try {
       await updateTaskCompletion(taskId, completed === 0 ? 1 : 0);
       await fetchTasks(userId);
@@ -93,25 +96,22 @@ export default function AgendaScreen() {
 
   const resetModal = () => {
     setIsCreateVisible(false);
-    setNewWorkoutTitle('');
-    setSelectedMusclesForWorkout([]);
+    setNewTaskTitle('');
+    setSelectedCategories([]);
     setSelectedTask(null);
-    setContent('');
+    setTaskContent('');
   };
 
-
   const filteredTasks = tasks.filter((task) =>
-    selectedMusclesForWorkout.length === 0 ||
-    selectedMusclesForWorkout.some((cat) => task.content?.includes(cat))
+    selectedCategories.length === 0 ||
+    selectedCategories.some((cat) => task.type?.includes(cat))
   );
 
   return (
     <SafeAreaView className="flex-1 bg-zinc-800">
       <TouchableOpacity
         onPress={() => {
-          setSelectedTask(null);
-          setNewWorkoutTitle('');
-          setSelectedMusclesForWorkout([]);
+          resetModal();
           setIsCreateVisible(true);
         }}
         className="w-[50px] h-[50px] absolute bottom-6 right-6 z-20 rounded-full bg-rose-400 items-center justify-center shadow-lg"
@@ -127,7 +127,7 @@ export default function AgendaScreen() {
       </TouchableOpacity>
 
       <View className="flex flex-row items-center justify-between px-6 mt-[60px] mb-6">
-        <Text className="text-3xl text-white font-medium font-sans">Today</Text>
+        <Text className="text-3xl text-white font-medium font-sans">{ date == }</Text>
       </View>
 
       <ScrollView className="flex-1 px-6">
@@ -143,10 +143,11 @@ export default function AgendaScreen() {
                 </Text>
                 <Text className="text-neutral-400 text-sm">{task.date?.slice(0, 10)}</Text>
                 <Text className="text-neutral-400 line-clamp-1 text-sm">{task.content}</Text>
+                <Text className="text-neutral-500 text-xs">{task.type}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                onPress={() => toggleWorkoutCompletion(task.id, task.completed)}
+                onPress={() => toggleTaskCompletion(task.id, task.completed)}
                 className={`w-[25px] h-[25px] mt-2 border rounded-lg ${task.completed ? 'bg-rose-500' : 'border-2 border-neutral-600'}`}
                 style={{ alignItems: 'center', justifyContent: 'center' }}
               >
@@ -173,7 +174,7 @@ export default function AgendaScreen() {
               <Text className="text-gray-300 text-lg"> Voltar</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={handleSaveWorkout}>
+            <TouchableOpacity onPress={handleSaveTask}>
               <Text className="text-rose-400 text-lg mr-4 font-semibold">Salvar</Text>
             </TouchableOpacity>
           </View>
@@ -182,22 +183,22 @@ export default function AgendaScreen() {
             <TextInput
               placeholder="Título"
               placeholderTextColor="#a1a1aa"
-              value={newWorkoutTitle}
-              onChangeText={setNewWorkoutTitle}
+              value={newTaskTitle}
+              onChangeText={setNewTaskTitle}
               className="text-gray-300 text-4xl font-semibold mb-4"
               multiline
             />
 
             <View className="flex flex-row flex-wrap gap-2 mb-4">
               {categories.map((cat) => {
-                const isSelected = selectedMusclesForWorkout.includes(cat);
+                const isSelected = selectedCategories.includes(cat);
                 const color = categoriesColors[cat];
 
                 return (
                   <TouchableOpacity
                     key={cat}
                     onPress={() =>
-                      setSelectedMusclesForWorkout((prev) =>
+                      setSelectedCategories((prev) =>
                         prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
                       )
                     }
@@ -211,12 +212,12 @@ export default function AgendaScreen() {
             </View>
 
             <TextInput
-              placeholder="Escreva o seu treino aqui"
+              placeholder="Descrição da tarefa"
               placeholderTextColor="#a1a1aa"
               className="text-gray-300 text-lg"
               multiline
-              value={content}
-              onChangeText={setContent}
+              value={taskContent}
+              onChangeText={setTaskContent}
               style={{ minHeight: 150, textAlignVertical: 'top' }}
             />
           </ScrollView>
