@@ -72,7 +72,7 @@ export default function HomeScreen() {
       </View>
 
       <View className="flex flex-col justify-between px-7 mt-[30px] gap-3 mb-6">
-        <Text className='text-xl text-white font-sans font-light'> Você está com {sequence} dias de sequência!</Text>
+        <Text className='text-lg text-white font-sans font-light'> Você está com {sequence} dias de sequência!</Text>
       </View>
 
       <View className='px-6 flex flex-col gap-8'>
@@ -82,11 +82,95 @@ export default function HomeScreen() {
             <View className='border-b-2 justify-center items-center border-neutral-600 py-2.5'>
               <Text className='text-white font-sans text-md'> yesterday </Text>
             </View>
+
+            <View className='flex flex-col items-center'>
+
+
+              <View className='w-[80%] flex items-center '>
+                <View className='flex flex-row gap-2 items-center'>
+                  <View className='mt-1 h-[3px] w-[3px] rounded-full bg-neutral-400'>
+                  </View>
+                  <Text className='text-white font-sans text-[14px] py-2'>
+                  comer piru
+                </Text>
+                </View>
+              </View>
+
+
+              <View className='w-[80%] flex items-center '>
+                <View className='flex flex-row gap-2 items-center'>
+                  <View className='mt-1 h-[3px] w-[3px] rounded-full bg-neutral-400'>
+                  </View>
+                  <Text className='text-white font-sans text-[14px] py-2'>
+                  comer piru
+                </Text>
+                </View>
+              </View>
+
+
+              <View className='w-[80%] flex items-center'>
+                <View className='flex flex-row gap-2 items-center'>
+                  <View className='mt-1 h-[3px] w-[3px] rounded-full bg-neutral-400'>
+                  </View>
+                  <Text className='text-white font-sans text-[14px] py-2'>
+                  comer piru
+                </Text>
+                </View>
+              </View>
+
+              
+
+
+
+
+            </View>
           </View>
 
           <View className='border-r-2 border-l-2 border-neutral-600 h-full w-1/3 '>
             <View className='border-b-2 justify-center items-center border-neutral-600 py-2.5'>
-              <Text className='text-white font-sans text-md'> today </Text>
+              <Text className='text-rose-400 font-sans text-md'> today </Text>
+            </View>
+
+            <View className='flex flex-col items-center'>
+
+
+              <View className='w-[80%] flex items-center '>
+                <View className='flex flex-row gap-2 items-center'>
+                  <View className='mt-1 h-[3px] w-[3px] rounded-full bg-rose-400'>
+                  </View>
+                  <Text className='text-rose-400 font-sans text-[14px] py-2'>
+                  comer rola
+                </Text>
+                </View>
+              </View>
+
+
+              <View className='w-[80%] flex items-center '>
+                <View className='flex flex-row gap-2 items-center'>
+                  <View className='mt-1 h-[3px] w-[3px] rounded-full bg-rose-400'>
+                  </View>
+                  <Text className='text-rose-400 font-sans text-[14px] py-2'>
+                  comer rola
+                </Text>
+                </View>
+              </View>
+
+
+              <View className='w-[80%] flex items-center'>
+                <View className='flex flex-row gap-2 items-center'>
+                  <View className='mt-1 h-[3px] w-[3px] rounded-full bg-rose-400'>
+                  </View>
+                  <Text className='text-rose-400 font-sans text-[14px] py-2'>
+                  comer rola
+                </Text>
+                </View>
+              </View>
+
+              
+
+
+
+
             </View>
           </View>
 
@@ -116,7 +200,7 @@ export default function HomeScreen() {
               </View>
             </TouchableOpacity>
 
-            <View className='w-1/2 h-full rounded-3xl bg-orange-200'></View>
+            <View className='w-1/2 h-full rounded-3xl ' style={{ backgroundColor: '#1e1e1e' }}></View>
 
           </View>
           

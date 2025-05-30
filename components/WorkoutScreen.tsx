@@ -197,7 +197,6 @@ export default function WorkoutScreen() {
         })}
       </ScrollView>
 
-      {/* Modal de filtro */}
       <Modal
         transparent
         animationType="fade"

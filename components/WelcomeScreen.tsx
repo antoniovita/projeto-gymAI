@@ -23,8 +23,8 @@ export default function WelcomeScreen() {
     <View className="flex-1 items-center justify-center relative overflow-hidden">
 
       <MotiView
-        from={{ scale: 1 }}
-        animate={{ scale: 5 }}
+        from={{ scale: 4 }}
+        animate={{ scale: 2 }}
         transition={{
           loop: true,
           type: 'timing',
