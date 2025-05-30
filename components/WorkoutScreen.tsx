@@ -44,12 +44,13 @@ export default function WorkoutScreen() {
     'Funcional': '#a3e635',
   };
 
-  const userId = '123'; // Exemplo, depois pegue do contexto/autenticação
+  const userId = '123';
 
   const {
     workouts,
     createWorkout,
     fetchWorkouts,
+    fetchWorkoutsByType,
     updateWorkout,
     loading,
     error
@@ -128,6 +129,18 @@ export default function WorkoutScreen() {
       console.error(err);
     }
   };
+
+  const applyFilter = async () => {
+    setIsFilterVisible(false);
+  
+    if (selectedFilters.length === 0) {
+      await fetchWorkouts(userId);
+    } else {
+      const type = selectedFilters.join(',');
+      await fetchWorkoutsByType(userId, type);
+    }
+  };
+
 
   return (
     <SafeAreaView className="flex-1 bg-zinc-800">
@@ -213,7 +226,7 @@ export default function WorkoutScreen() {
               })}
 
               <Pressable
-              onPress={() => setIsFilterVisible(false)}
+              onPress={() => applyFilter()}
               className=" bg-rose-400 h-[40px] w-[40px] rounded-full flex-row items-center justify-center"
             >
               <Ionicons name="checkmark" size={24} color="white" />
@@ -246,7 +259,7 @@ export default function WorkoutScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity onPress={handleSaveWorkout}>
-              <Text className="text-rose-400 text-lg font-semibold">Salvar</Text>
+              <Text className="text-rose-400 text-lg font-semibold mr-4">Salvar</Text>
             </TouchableOpacity>
           </View>
 

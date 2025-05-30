@@ -43,7 +43,7 @@ export default function ChatScreen() {
                 />
 
                 <TouchableOpacity
-                  className="w-[28px] h-[28px] rounded-full mr-8 mt-2 bg-white justify-center items-center"
+                  className="w-[28px] h-[28px] rounded-full mr-8 mt-2 bg-rose-400 justify-center items-center"
                   onPress={() => {
                     console.log('Enviar:', input);
                     setInput('');

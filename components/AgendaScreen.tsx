@@ -164,7 +164,7 @@ export default function AgendaScreen() {
 
               <TouchableOpacity
                 onPress={() => toggleWorkoutCompletion(item.id)}
-                className={`w-[25px] h-[25px] mt-2 border rounded-lg ${item.completed ? 'bg-green-500' : 'border-2 border-neutral-600'}`}
+                className={`w-[25px] h-[25px] mt-2 border rounded-lg ${item.completed ? 'bg-rose-500' : 'border-2 border-neutral-600'}`}
                 style={{ alignItems: 'center', justifyContent: 'center' }}
               >
                 <Ionicons name={item.completed ? 'checkmark' : undefined} size={20} color="white" />
@@ -191,7 +191,7 @@ export default function AgendaScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity onPress={handleSaveWorkout}>
-              <Text className="text-rose-400 text-lg mr-3 font-semibold">Salvar</Text>
+              <Text className="text-rose-400 text-lg mr-4 font-semibold">Salvar</Text>
             </TouchableOpacity>
           </View>
 
@@ -227,7 +227,8 @@ export default function AgendaScreen() {
                     }`}
                   >
                     <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color }} />
-                    <Text className="text-gray-300">{categories}</Text>
+                    <Text className={`${
+                      isSelected ? 'text-black' : 'text-white'}`}>{categories}</Text>
                   </TouchableOpacity>
                 );
               })}
