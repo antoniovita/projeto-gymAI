@@ -1,3 +1,4 @@
+import { Task } from 'api/model/Task';
 import { TaskController } from '../controller/taskController';
 
 export const TaskService = {
@@ -55,5 +56,14 @@ export const TaskService = {
       throw new Error(response.error || 'Erro ao limpar tarefas.');
     }
     return response.deletedCount;
+  },
+
+  updateTask: async (taskId: string, updates: Partial<Task>) => {
+  const response = await TaskController.updateTask(taskId, updates);
+  if (!response.success) {
+    throw new Error(response.error || 'Erro ao atualizar tarefa.');
   }
+  return response.updatedCount;
+}
+
 };

@@ -7,7 +7,7 @@ import { useCallback, useEffect, useState } from 'react';
 import "./global.css";
 
 import { AuthService } from 'api/service/authService';
-import { initDatabase, getDb } from 'database';
+import { initDatabase, getDb, deleteDatabase } from 'database';
 
 import WelcomeScreen from './components/WelcomeScreen';
 import MainTabs from './widgets/MainTabs';

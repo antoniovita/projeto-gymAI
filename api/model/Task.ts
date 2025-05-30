@@ -70,6 +70,23 @@ export const TaskModel = {
     return result.changes;
   },
 
+  // PUT update task content
+  updateTask: async (db: SQLite.SQLiteDatabase, taskId: string, updates: Partial<Task>) => {
+    const fields = Object.keys(updates);
+    if (fields.length === 0) return 0;
+
+    const setClause = fields.map(field => `${field} = ?`).join(', ');
+    const values = fields.map(field => (updates as any)[field]);
+
+    const result = await db.runAsync(
+      `UPDATE tasks SET ${setClause} WHERE id = ?`,
+      ...values,
+      taskId
+    );
+
+    return result.changes;
+  },
+
   // DELETE task by id
   deleteTask: async (db: SQLite.SQLiteDatabase, taskId: string) => {
     const result = await db.runAsync(

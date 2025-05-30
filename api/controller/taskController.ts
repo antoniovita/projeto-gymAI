@@ -1,5 +1,5 @@
 import { getDb } from '../../database';
-import { TaskModel } from '../model/Task';
+import { Task, TaskModel } from '../model/Task';
 
 export const TaskController = {
 
@@ -74,5 +74,18 @@ export const TaskController = {
       console.error('Erro ao limpar tarefas no controller:', error);
       return { success: false, error: 'Erro ao limpar tarefas.' };
     }
+  },
+
+
+  updateTask: async (taskId: string, updates: Partial<Task>) => {
+  const db = getDb();
+  try {
+    const changes = await TaskModel.updateTask(db, taskId, updates);
+    return { success: true, updatedCount: changes };
+  } catch (error) {
+    console.error('Erro ao atualizar tarefa no controller:', error);
+    return { success: false, error: 'Erro ao atualizar tarefa.' };
   }
+}
+
 };

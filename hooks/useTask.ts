@@ -96,11 +96,28 @@ export const useTask = () => {
     }
   };
 
+  const updateTask = async (taskId: string, updates: Partial<Task>) => {
+  setLoading(true);
+  setError(null);
+  try {
+    const updatedCount = await TaskService.updateTask(taskId, updates);
+    return updatedCount;
+  } catch (err: any) {
+    setError(err.message);
+    throw err;
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+
   return {
     loading,
     error,
     tasks,
     createTask,
+    updateTask,
     fetchTasks,
     fetchTasksByType,
     updateTaskCompletion,
