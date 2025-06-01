@@ -228,7 +228,7 @@ export default function WorkoutScreen() {
               onPress={() => applyFilter()}
               className=" bg-rose-400 h-[40px] w-[40px] rounded-full flex-row items-center justify-center"
             >
-              <Ionicons name="checkmark" size={24} color="white" />
+              <Ionicons name="checkmark" size={24} color="black" />
             </Pressable>
 
             </View>

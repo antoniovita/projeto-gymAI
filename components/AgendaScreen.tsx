@@ -1,10 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView, SafeAreaView,
-  Modal, TextInput, Alert
+  Modal, TextInput, Alert,
+
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTask } from '../hooks/useTask';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { SwipeListView } from 'react-native-swipe-list-view';
+
 
 const categoriesColors: { [key: string]: string } = {
   'estudo': '#EF4444',
@@ -33,7 +37,9 @@ export default function AgendaScreen() {
   const [selectedTask, setSelectedTask] = useState<any | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [taskContent, setTaskContent] = useState('');
+  
   const [date, setDate] = useState(new Date());
+  const [showPicker, setShowPicker] = useState(false);
 
   useEffect(() => {
     fetchTasks(userId);
@@ -60,13 +66,21 @@ export default function AgendaScreen() {
           type: categoriesString
         });
       } else {
-        await createTask(
-          newTaskTitle,
-          taskContent,
-          new Date().toISOString(),
-          categoriesString,
-          userId
-        );
+      await createTask(
+        newTaskTitle,
+        taskContent,
+        `${date.toLocaleTimeString('pt-BR', {
+          hour: '2-digit',
+          minute: '2-digit',
+        })} - ${date.toLocaleDateString('pt-BR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+        })}`,
+        categoriesString,
+        userId
+      );
+
       }
 
       await fetchTasks(userId);
@@ -127,36 +141,56 @@ export default function AgendaScreen() {
       </TouchableOpacity>
 
       <View className="flex flex-row items-center justify-between px-6 mt-[60px] mb-6">
-        <Text className="text-3xl text-white font-medium font-sans">{ date == }</Text>
+        <Text className="text-3xl text-white font-medium font-sans">Today</Text>
       </View>
 
-      <ScrollView className="flex-1 px-6">
-        {filteredTasks.map((task) => (
-          <View
-            key={task.id}
-            className="w-full px-4 py-4 mb-4 border-b border-neutral-700"
-          >
+      <SwipeListView
+        data={filteredTasks}
+        keyExtractor={(item) => item.id.toString()}
+
+        renderItem={({ item }) => (
+          <View className="w-full px-6 py-4 mb-4 border-b border-neutral-700 bg-zinc-800">
             <View className="flex flex-row justify-between">
-              <TouchableOpacity onPress={() => handleOpenEdit(task)}>
-                <Text className={`text-xl font-sans font-medium ${task.completed ? 'line-through text-neutral-500' : 'text-gray-300'}`}>
-                  {task.title}
+              <TouchableOpacity className="flex flex-col gap-1" onPress={() => handleOpenEdit(item)}>
+                <Text className={`text-xl font-sans font-medium ${item.completed ? 'line-through text-neutral-500' : 'text-gray-300'}`}>
+                  {item.title}
                 </Text>
-                <Text className="text-neutral-400 text-sm">{task.date?.slice(0, 10)}</Text>
-                <Text className="text-neutral-400 line-clamp-1 text-sm">{task.content}</Text>
-                <Text className="text-neutral-500 text-xs">{task.type}</Text>
+                <Text className="text-neutral-400 text-sm">{item.date}</Text>
+                <Text className="text-neutral-500 text-xs">{item.type}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                onPress={() => toggleTaskCompletion(task.id, task.completed)}
-                className={`w-[25px] h-[25px] mt-2 border rounded-lg ${task.completed ? 'bg-rose-500' : 'border-2 border-neutral-600'}`}
+                onPress={() => toggleTaskCompletion(item.id, item.completed)}
+                className={`w-[25px] h-[25px] mt-2 border rounded-lg ${item.completed ? 'bg-rose-500' : 'border-2 border-neutral-600'}`}
                 style={{ alignItems: 'center', justifyContent: 'center' }}
               >
-                {task.completed ? <Ionicons name="checkmark" size={20} color="white" /> : null}
+                {item.completed ? <Ionicons name="checkmark" size={20} color="white" /> : null}
               </TouchableOpacity>
             </View>
           </View>
-        ))}
-      </ScrollView>
+        )}
+
+        renderHiddenItem={({ item }) => (
+          <View className="flex-1 flex-row justify-start pl-6 items-center bg-rose-500 mb-4">
+            <TouchableOpacity
+              className="p-3"
+              onPress={async () => {
+                await deleteTask(item.id);
+                await fetchTasks(userId);
+              }}
+            >
+              <Ionicons name="trash" size={24} color="white" />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        leftOpenValue={80}
+        rightOpenValue={0}
+        disableRightSwipe={false}
+        disableLeftSwipe={true}
+      />
+
+
 
       <Modal
         transparent
@@ -180,14 +214,47 @@ export default function AgendaScreen() {
           </View>
 
           <ScrollView className="flex-1 py-4 px-8">
-            <TextInput
-              placeholder="Título"
-              placeholderTextColor="#a1a1aa"
-              value={newTaskTitle}
-              onChangeText={setNewTaskTitle}
-              className="text-gray-300 text-4xl font-semibold mb-4"
-              multiline
-            />
+
+          <View className="flex-row items-center justify-between space-x-4">
+                  <TextInput
+                    placeholder="Título"
+                    placeholderTextColor="#a1a1aa"
+                    value={newTaskTitle}
+                    onChangeText={setNewTaskTitle}
+                    className="flex-1 text-gray-300 text-3xl font-semibold mb-4"
+                    multiline
+                  />
+
+                  <View className="mb-4">
+                    <TouchableOpacity onPress={() => setShowPicker(true)}>
+                      <Ionicons name="calendar-clear-outline" size={22} color="#F25C5C" />
+                    </TouchableOpacity>
+
+                    <Modal
+                      visible={showPicker}
+                      transparent
+                      animationType="fade"
+                      onRequestClose={() => setShowPicker(false)}
+                    >
+                      <View className="flex-1 justify-center items-center bg-black/90">
+                          <DateTimePicker
+                            value={date}
+                            mode="datetime"
+                            display="spinner"
+                            onChange={(event, selectedDate) => {
+                              if (selectedDate) setDate(selectedDate);
+                            }}
+                          />
+                          <TouchableOpacity
+                            onPress={() => setShowPicker(false)}
+                            className="bg-[#F25C5C] rounded-full h-[50px] w-[50px] flex items-center justify-center bottom-[10%] absolute"
+                          >
+                           <Ionicons name="checkmark" size={24} color="white" />
+                          </TouchableOpacity>
+                      </View>
+                    </Modal>
+                  </View>
+                </View>
 
             <View className="flex flex-row flex-wrap gap-2 mb-4">
               {categories.map((cat) => {
