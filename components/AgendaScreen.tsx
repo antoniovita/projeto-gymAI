@@ -149,14 +149,13 @@ export default function AgendaScreen() {
         keyExtractor={(item) => item.id.toString()}
 
         renderItem={({ item }) => (
-          <View className="w-full px-6 py-4 mb-4 border-b border-neutral-700 bg-zinc-800">
+          <View className="w-full flex flex-col justify-center px-6 h-[93px] mb-4 border-b border-neutral-700 bg-zinc-800">
             <View className="flex flex-row justify-between">
               <TouchableOpacity className="flex flex-col gap-1" onPress={() => handleOpenEdit(item)}>
                 <Text className={`text-xl font-sans font-medium ${item.completed ? 'line-through text-neutral-500' : 'text-gray-300'}`}>
                   {item.title}
                 </Text>
-                <Text className="text-neutral-400 text-sm">{item.date}</Text>
-                <Text className="text-neutral-500 text-xs">{item.type}</Text>
+                <Text className="text-neutral-400 text-sm font-sans">{item.date}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity

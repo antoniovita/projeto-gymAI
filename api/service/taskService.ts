@@ -34,6 +34,14 @@ export const TaskService = {
     return response.data;
   },
 
+  getTasksByDate: async (userId: string, date: string) => {
+    const response = await TaskController.getTasksByDate(userId, date);
+    if (!response.success) {
+      throw new Error(response.error || 'Erro ao buscar tarefas por data.');
+    }
+    return response.data;
+  },
+
   updateTaskCompletion: async (taskId: string, completed: 0 | 1) => {
     const response = await TaskController.updateCompletion(taskId, completed);
     if (!response.success) {

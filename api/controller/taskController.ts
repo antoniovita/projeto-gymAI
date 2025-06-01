@@ -43,6 +43,17 @@ export const TaskController = {
     }
   },
 
+  getTasksByDate: async (userId: string, date: string) => {
+    const db = getDb();
+    try {
+      const tasks = await TaskModel.getTasksByDate(db, userId, date);
+      return { success: true, data: tasks };
+    } catch (error) {
+      console.error('Erro ao buscar tarefas por data no controller:', error);
+      return { success: false, error: 'Erro ao buscar tarefas por data.' };
+    }
+  },
+
   updateCompletion: async (taskId: string, completed: 0 | 1) => {
     const db = getDb();
     try {

@@ -60,6 +60,15 @@ export const TaskModel = {
     return tasks as Task[];
   },
 
+  getTasksByDate: async (db: SQLite.SQLiteDatabase, userId: string, date: string) => {
+    const tasks = await db.getAllAsync(
+      'SELECT * FROM tasks WHERE user_id = ? AND date = ?',
+      userId,
+      date
+    );
+    return tasks as Task[];
+  },
+
   // PUT update task completion by id
   updateTaskCompletion: async (db: SQLite.SQLiteDatabase, taskId: string, completed: 0 | 1) => {
     const result = await db.runAsync(

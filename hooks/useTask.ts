@@ -54,6 +54,19 @@ export const useTask = () => {
     }
   };
 
+  const fetchTasksByDate = async (userId: string, date: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await TaskService.getTasksByDate(userId, date);
+      setTasks(data || []);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const updateTaskCompletion = async (taskId: string, completed: 0 | 1) => {
     setLoading(true);
     setError(null);
