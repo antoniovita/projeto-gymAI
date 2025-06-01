@@ -27,6 +27,7 @@ export const runMigrations = async (db: SQLiteDatabase) => {
       title TEXT NOT NULL,
       content TEXT,
       date TEXT,
+      time TEXT, 
       type TEXT,
       completed INTEGER DEFAULT 0,
       user_id TEXT,

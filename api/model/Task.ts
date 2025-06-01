@@ -5,7 +5,8 @@ export interface Task {
   id: string;
   title: string;
   content: string;
-  date: string;
+  date: string;   // YYYY-MM-DD
+  time: string;   // HH:MM
   type?: string;
   completed: 0 | 1;
   user_id: string;
@@ -14,12 +15,12 @@ export interface Task {
 
 export const TaskModel = {
 
-  // POST create a new task
   createTask: async (
     db: SQLite.SQLiteDatabase,
     title: string,
     content: string,
     date: string,
+    time: string,
     type: string,
     userId: string,
     routineId?: string
@@ -27,21 +28,21 @@ export const TaskModel = {
     const taskId = uuid.v4();
 
     const result = await db.runAsync(
-      `INSERT INTO tasks (id, title, content, date, type, completed, user_id, routine_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO tasks (id, title, content, date, time, type, completed, user_id, routine_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       taskId,
       title,
       content,
-      date,
+      date,    
+      time,    
       type ?? null,
-      0, // completed default
+      0,       // completed default
       userId,
       routineId ?? null
     );
     return taskId;
   },
 
-  // GET all tasks by user_id
   getTasksByUserId: async (db: SQLite.SQLiteDatabase, userId: string) => {
     const tasks = await db.getAllAsync(
       'SELECT * FROM tasks WHERE user_id = ?',
@@ -50,7 +51,6 @@ export const TaskModel = {
     return tasks as Task[];
   },
 
-  // GET all tasks by type
   getTasksByType: async (db: SQLite.SQLiteDatabase, userId: string, type: string) => {
     const tasks = await db.getAllAsync(
       'SELECT * FROM tasks WHERE user_id = ? AND type = ?',
@@ -69,7 +69,6 @@ export const TaskModel = {
     return tasks as Task[];
   },
 
-  // PUT update task completion by id
   updateTaskCompletion: async (db: SQLite.SQLiteDatabase, taskId: string, completed: 0 | 1) => {
     const result = await db.runAsync(
       'UPDATE tasks SET completed = ? WHERE id = ?',
@@ -79,7 +78,6 @@ export const TaskModel = {
     return result.changes;
   },
 
-  // PUT update task content
   updateTask: async (db: SQLite.SQLiteDatabase, taskId: string, updates: Partial<Task>) => {
     const fields = Object.keys(updates);
     if (fields.length === 0) return 0;
@@ -96,7 +94,6 @@ export const TaskModel = {
     return result.changes;
   },
 
-  // DELETE task by id
   deleteTask: async (db: SQLite.SQLiteDatabase, taskId: string) => {
     const result = await db.runAsync(
       'DELETE FROM tasks WHERE id = ?',
@@ -105,7 +102,6 @@ export const TaskModel = {
     return result.changes;
   },
 
-  // DELETE clear all tasks by user_id
   clearTasksByUser: async (db: SQLite.SQLiteDatabase, userId: string) => {
     const result = await db.runAsync(
       'DELETE FROM tasks WHERE user_id = ?',

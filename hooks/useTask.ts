@@ -10,15 +10,16 @@ export const useTask = () => {
   const createTask = async (
     title: string,
     content: string,
-    date: string,
-    type: string,
+    date: string,   // YYYY-MM-DD
+    time: string,   // HH:MM
     userId: string,
+    type?: string,
     routineId?: string
   ) => {
     setLoading(true);
     setError(null);
     try {
-      const taskId = await TaskService.createTask(title, content, date, type, userId, routineId);
+      const taskId = await TaskService.createTask(title, content, date, time, type, userId, routineId);
       return taskId;
     } catch (err: any) {
       setError(err.message);
@@ -110,20 +111,18 @@ export const useTask = () => {
   };
 
   const updateTask = async (taskId: string, updates: Partial<Task>) => {
-  setLoading(true);
-  setError(null);
-  try {
-    const updatedCount = await TaskService.updateTask(taskId, updates);
-    return updatedCount;
-  } catch (err: any) {
-    setError(err.message);
-    throw err;
-  } finally {
-    setLoading(false);
-  }
-};
-
-
+    setLoading(true);
+    setError(null);
+    try {
+      const updatedCount = await TaskService.updateTask(taskId, updates);
+      return updatedCount;
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return {
     loading,
@@ -133,6 +132,7 @@ export const useTask = () => {
     updateTask,
     fetchTasks,
     fetchTasksByType,
+    fetchTasksByDate,
     updateTaskCompletion,
     deleteTask,
     clearTasksByUser,

@@ -6,14 +6,15 @@ export const TaskController = {
   createTask: async (
     title: string,
     content: string,
-    date: string,
+    date: string,   // YYYY-MM-DD
+    time: string,   // HH:MM
     type: string,
     userId: string,
     routineId?: string
   ) => {
     const db = getDb();
     try {
-      const taskId = await TaskModel.createTask(db, title, content, date, type, userId, routineId);
+      const taskId = await TaskModel.createTask(db, title, content, date, time, type, userId, routineId);
       return { success: true, taskId };
     } catch (error) {
       console.error('Erro ao criar tarefa no controller:', error);
@@ -87,16 +88,15 @@ export const TaskController = {
     }
   },
 
-
   updateTask: async (taskId: string, updates: Partial<Task>) => {
-  const db = getDb();
-  try {
-    const changes = await TaskModel.updateTask(db, taskId, updates);
-    return { success: true, updatedCount: changes };
-  } catch (error) {
-    console.error('Erro ao atualizar tarefa no controller:', error);
-    return { success: false, error: 'Erro ao atualizar tarefa.' };
+    const db = getDb();
+    try {
+      const changes = await TaskModel.updateTask(db, taskId, updates);
+      return { success: true, updatedCount: changes };
+    } catch (error) {
+      console.error('Erro ao atualizar tarefa no controller:', error);
+      return { success: false, error: 'Erro ao atualizar tarefa.' };
+    }
   }
-}
 
 };

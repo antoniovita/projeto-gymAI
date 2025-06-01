@@ -3,15 +3,16 @@ import { TaskController } from '../controller/taskController';
 
 export const TaskService = {
 
-    createTask: async (
+  createTask: async (
     title: string,
     content: string,
-    date: string,
+    date: string,   // YYYY-MM-DD
+    time: string,   // HH:MM
     type: string,
     userId: string,
     routineId?: string
   ) => {
-    const response = await TaskController.createTask(title, content, date, type, userId, routineId);
+    const response = await TaskController.createTask(title, content, date, time, type, userId, routineId);
     if (!response.success) {
       throw new Error(response.error || 'Erro ao criar tarefa.');
     }
@@ -67,11 +68,10 @@ export const TaskService = {
   },
 
   updateTask: async (taskId: string, updates: Partial<Task>) => {
-  const response = await TaskController.updateTask(taskId, updates);
-  if (!response.success) {
-    throw new Error(response.error || 'Erro ao atualizar tarefa.');
+    const response = await TaskController.updateTask(taskId, updates);
+    if (!response.success) {
+      throw new Error(response.error || 'Erro ao atualizar tarefa.');
+    }
+    return response.updatedCount;
   }
-  return response.updatedCount;
-}
-
 };

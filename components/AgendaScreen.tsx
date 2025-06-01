@@ -2,13 +2,11 @@ import { useEffect, useState } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView, SafeAreaView,
   Modal, TextInput, Alert,
-
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTask } from '../hooks/useTask';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { SwipeListView } from 'react-native-swipe-list-view';
-
 
 const categoriesColors: { [key: string]: string } = {
   'estudo': '#EF4444',
@@ -19,6 +17,11 @@ const categoriesColors: { [key: string]: string } = {
 
 const categories = ['estudo', 'academia', 'trabalho', 'igreja'];
 
+function getTodayDateISO() {
+  const now = new Date();
+  return now.toISOString().split('T')[0];
+}
+
 export default function AgendaScreen() {
   const userId = 'user-id-123'; // trocar depois com o auth context
   const {
@@ -26,10 +29,9 @@ export default function AgendaScreen() {
     createTask,
     updateTask,
     fetchTasks,
+    fetchTasksByDate,
     updateTaskCompletion,
-    deleteTask,
-    loading,
-    error
+    deleteTask
   } = useTask();
 
   const [isCreateVisible, setIsCreateVisible] = useState(false);
@@ -37,12 +39,15 @@ export default function AgendaScreen() {
   const [selectedTask, setSelectedTask] = useState<any | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [taskContent, setTaskContent] = useState('');
-  
+
   const [date, setDate] = useState(new Date());
-  const [showPicker, setShowPicker] = useState(false);
+  const [time, setTime] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
   useEffect(() => {
-    fetchTasks(userId);
+    const todayDate = getTodayDateISO();
+    fetchTasksByDate(userId, todayDate);
   }, []);
 
   const handleSaveTask = async () => {
@@ -59,28 +64,26 @@ export default function AgendaScreen() {
     try {
       const categoriesString = selectedCategories.join(', ');
 
+      const formattedDate = date.toISOString();
+      const formattedTime = time.toISOString();
+
       if (selectedTask) {
         await updateTask(selectedTask.id, {
           title: newTaskTitle,
           content: taskContent,
-          type: categoriesString
+          type: categoriesString,
+          date: formattedDate,
+          time: formattedTime
         });
       } else {
-      await createTask(
-        newTaskTitle,
-        taskContent,
-        `${date.toLocaleTimeString('pt-BR', {
-          hour: '2-digit',
-          minute: '2-digit',
-        })} - ${date.toLocaleDateString('pt-BR', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-        })}`,
-        categoriesString,
-        userId
-      );
-
+        await createTask(
+          newTaskTitle,
+          taskContent,
+          formattedDate,
+          formattedTime,
+          userId,
+          categoriesString
+        );
       }
 
       await fetchTasks(userId);
@@ -96,6 +99,8 @@ export default function AgendaScreen() {
     setTaskContent(task.content || '');
     const parsedCategories = task.type ? task.type.split(', ').map((cat: string) => cat.trim()) : [];
     setSelectedCategories(parsedCategories);
+    setDate(new Date(task.date));
+    setTime(new Date(task.time));
     setIsCreateVisible(true);
   };
 
@@ -114,6 +119,8 @@ export default function AgendaScreen() {
     setSelectedCategories([]);
     setSelectedTask(null);
     setTaskContent('');
+    setDate(new Date());
+    setTime(new Date());
   };
 
   const filteredTasks = tasks.filter((task) =>
@@ -147,7 +154,6 @@ export default function AgendaScreen() {
       <SwipeListView
         data={filteredTasks}
         keyExtractor={(item) => item.id.toString()}
-
         renderItem={({ item }) => (
           <View className="w-full flex flex-col justify-center px-6 h-[93px] mb-4 border-b border-neutral-700 bg-zinc-800">
             <View className="flex flex-row justify-between">
@@ -155,7 +161,9 @@ export default function AgendaScreen() {
                 <Text className={`text-xl font-sans font-medium ${item.completed ? 'line-through text-neutral-500' : 'text-gray-300'}`}>
                   {item.title}
                 </Text>
-                <Text className="text-neutral-400 text-sm font-sans">{item.date}</Text>
+                <Text className="text-rose-400c text-sm font-sans">
+                  {new Date(item.date).toLocaleDateString('pt-BR')} - {new Date(item.time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -168,7 +176,6 @@ export default function AgendaScreen() {
             </View>
           </View>
         )}
-
         renderHiddenItem={({ item }) => (
           <View className="flex-1 flex-row justify-start pl-6 items-center bg-rose-500 mb-4">
             <TouchableOpacity
@@ -182,14 +189,11 @@ export default function AgendaScreen() {
             </TouchableOpacity>
           </View>
         )}
-
         leftOpenValue={80}
         rightOpenValue={0}
         disableRightSwipe={false}
         disableLeftSwipe={true}
       />
-
-
 
       <Modal
         transparent
@@ -213,47 +217,67 @@ export default function AgendaScreen() {
           </View>
 
           <ScrollView className="flex-1 py-4 px-8">
+            <TextInput
+              placeholder="Título"
+              placeholderTextColor="#a1a1aa"
+              value={newTaskTitle}
+              onChangeText={setNewTaskTitle}
+              className="text-gray-300 text-3xl font-semibold mb-4"
+              multiline
+            />
 
-          <View className="flex-row items-center justify-between space-x-4">
-                  <TextInput
-                    placeholder="Título"
-                    placeholderTextColor="#a1a1aa"
-                    value={newTaskTitle}
-                    onChangeText={setNewTaskTitle}
-                    className="flex-1 text-gray-300 text-3xl font-semibold mb-4"
-                    multiline
+            <View className="flex-row space-x-4 flex gap-3 mb-4">
+              <TouchableOpacity onPress={() => setShowDatePicker(true)} className="flex-row items-center">
+                <Ionicons name="calendar-outline" size={20} color="#F25C5C" />
+                <Text className="text-rose-400 ml-2">{date.toLocaleDateString('pt-BR')}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={() => setShowTimePicker(true)} className="flex-row items-center">
+                <Ionicons name="time-outline" size={20} color="#F25C5C" />
+                <Text className="text-rose-400 ml-1">{time.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</Text>
+              </TouchableOpacity>
+            </View>
+
+            {showDatePicker && (
+              <Modal visible={showDatePicker} transparent animationType="fade">
+                <View className="flex-1 justify-center items-center bg-black/90">
+                  <DateTimePicker
+                    value={date}
+                    mode="date"
+                    display="spinner"
+                    onChange={(event, selectedDate) => {
+                      if (selectedDate) setDate(selectedDate);
+                    }}
                   />
 
-                  <View className="mb-4">
-                    <TouchableOpacity onPress={() => setShowPicker(true)}>
-                      <Ionicons name="calendar-clear-outline" size={22} color="#F25C5C" />
-                    </TouchableOpacity>
-
-                    <Modal
-                      visible={showPicker}
-                      transparent
-                      animationType="fade"
-                      onRequestClose={() => setShowPicker(false)}
-                    >
-                      <View className="flex-1 justify-center items-center bg-black/90">
-                          <DateTimePicker
-                            value={date}
-                            mode="datetime"
-                            display="spinner"
-                            onChange={(event, selectedDate) => {
-                              if (selectedDate) setDate(selectedDate);
-                            }}
-                          />
-                          <TouchableOpacity
-                            onPress={() => setShowPicker(false)}
-                            className="bg-[#F25C5C] rounded-full h-[50px] w-[50px] flex items-center justify-center bottom-[10%] absolute"
-                          >
-                           <Ionicons name="checkmark" size={24} color="white" />
-                          </TouchableOpacity>
-                      </View>
-                    </Modal>
-                  </View>
+                  <TouchableOpacity className='bg-rose-400 rounded-full p-3 absolute bottom-[10%]'
+                  onPress={() => setShowDatePicker(false)}>
+                    <Ionicons name="checkmark" size={24} color="#black" />
+                  </TouchableOpacity>
                 </View>
+              </Modal>
+            )}
+
+            {showTimePicker && (
+              <Modal visible={showTimePicker} transparent animationType="fade">
+                <View className="flex-1 justify-center items-center bg-black/90">
+                  <DateTimePicker
+                    value={time}
+                    mode="time"
+                    display="spinner"
+                    onChange={(event, selectedTime) => {
+                      if (selectedTime) setTime(selectedTime);
+                      setShowTimePicker(false);
+                    }}
+                  />
+                </View>
+
+                <TouchableOpacity className='bg-rose-400 rounded-full p-3 absolute right-[45%] bottom-[10%]'
+                  onPress={() => setShowTimePicker(false)}>
+                    <Ionicons name="checkmark" size={24} color="#black" />
+                  </TouchableOpacity>
+              </Modal>
+            )}
 
             <View className="flex flex-row flex-wrap gap-2 mb-4">
               {categories.map((cat) => {
