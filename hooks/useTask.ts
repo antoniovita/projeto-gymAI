@@ -19,7 +19,15 @@ export const useTask = () => {
     setLoading(true);
     setError(null);
     try {
-      const taskId = await TaskService.createTask(title, content, date, time, type, userId, routineId);
+      const taskId = await TaskService.createTask(
+        title,
+        content,
+        date,
+        time,
+        type ?? '',
+        userId,
+        routineId ?? ''
+      );
       return taskId;
     } catch (err: any) {
       setError(err.message);

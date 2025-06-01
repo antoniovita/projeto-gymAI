@@ -59,7 +59,12 @@ export default function App() {
     <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
       <NavigationContainer>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="MainTabs" component={MainTabs} />          
+          {isAuthenticated ? ( 
+            <Stack.Screen name="WelcomeScreen" component={WelcomeScreen} />
+          ) : (
+            <Stack.Screen name="MainTabs" component={MainTabs} />
+
+          )}
           <Stack.Screen name="SettingsScreen" component={SettingsScreen} />
         </Stack.Navigator>
       </NavigationContainer>
