@@ -30,6 +30,7 @@ export default function AgendaScreen() {
     updateTask,
     fetchTasks,
     fetchTasksByDate,
+    fetchTasksByType,
     updateTaskCompletion,
     deleteTask
   } = useTask();
@@ -39,6 +40,7 @@ export default function AgendaScreen() {
   const [selectedTask, setSelectedTask] = useState<any | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [taskContent, setTaskContent] = useState('');
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
 
   const [date, setDate] = useState(new Date());
   const [time, setTime] = useState(new Date());
@@ -49,6 +51,11 @@ export default function AgendaScreen() {
     const todayDate = getTodayDateISO();
     fetchTasksByDate(userId, todayDate);
   }, []);
+
+  useEffect(() => {
+    fetchTasksByType(userId, selectedTypes.join(', '));
+  }, [selectedTypes]);
+
 
   const handleSaveTask = async () => {
     if (!newTaskTitle.trim()) {
@@ -151,17 +158,39 @@ export default function AgendaScreen() {
         <Text className="text-3xl text-white font-medium font-sans">Today</Text>
       </View>
 
+      <View className=' flex flex-row flex-wrap gap-2 px-6 pb-3'>
+        {categories.map((cat) => {
+                const isSelected = selectedTypes.includes(cat);
+                const color = categoriesColors[cat];
+
+                return (
+                  <TouchableOpacity
+                    key={cat}
+                    onPress={() =>
+                      setSelectedTypes((prev) =>
+                        prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
+                      )
+                    }
+                    className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${isSelected ? 'bg-rose-400' : 'bg-neutral-700'}`}
+                  >
+                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color }} />
+                    <Text className={`${isSelected ? 'text-black' : 'text-white'}`}>{cat}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+      </View>
+
       <SwipeListView
         data={filteredTasks}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
-          <View className="w-full flex flex-col justify-center px-6 h-[93px] mb-4 border-b border-neutral-700 bg-zinc-800">
+          <View className="w-full flex flex-col justify-center px-6 h-[90px] pb-4 border-b border-neutral-700 bg-zinc-800">
             <View className="flex flex-row justify-between">
               <TouchableOpacity className="flex flex-col gap-1" onPress={() => handleOpenEdit(item)}>
                 <Text className={`text-xl font-sans font-medium ${item.completed ? 'line-through text-neutral-500' : 'text-gray-300'}`}>
                   {item.title}
                 </Text>
-                <Text className="text-rose-400c text-sm font-sans">
+                <Text className="text-rose-400 text-sm font-sans">
                   {new Date(item.date).toLocaleDateString('pt-BR')} - {new Date(item.time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                 </Text>
               </TouchableOpacity>
@@ -176,8 +205,9 @@ export default function AgendaScreen() {
             </View>
           </View>
         )}
-        renderHiddenItem={({ item }) => (
-          <View className="flex-1 flex-row justify-start pl-6 items-center bg-rose-500 mb-4">
+      renderHiddenItem={({ item }) => (
+        <View className="w-full flex flex-col justify-center px-6 border-b border-neutral-700 bg-rose-500">
+          <View className="flex flex-row justify-start items-center h-full">
             <TouchableOpacity
               className="p-3"
               onPress={async () => {
@@ -188,7 +218,8 @@ export default function AgendaScreen() {
               <Ionicons name="trash" size={24} color="white" />
             </TouchableOpacity>
           </View>
-        )}
+        </View>
+      )}
         leftOpenValue={80}
         rightOpenValue={0}
         disableRightSwipe={false}

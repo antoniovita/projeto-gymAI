@@ -101,7 +101,7 @@ export default function WorkoutScreen() {
 
     try {
       const type = selectedMusclesForWorkout.join(',');
-      const date = new Date().toISOString().split('T')[0];
+      const date = new Date('2025-12-15').toLocaleDateString('pt-BR');
 
       if (selectedWorkout) {
         await updateWorkout(selectedWorkout.id, {
@@ -240,7 +240,6 @@ export default function WorkoutScreen() {
         </View>
       </Modal>
 
-      {/* Modal de criação/edição */}
       <Modal
         transparent
         animationType="slide"
