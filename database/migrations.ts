@@ -37,6 +37,23 @@ export const runMigrations = async (db: SQLiteDatabase) => {
     );
   `);
 
+    // table expenses
+    // amount in cents (INTEGER)
+    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS expenses (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        date TEXT,
+        time TEXT,
+        amount INTEGER NOT NULL, 
+        type TEXT,
+        user_id TEXT,
+        routine_id TEXT,
+        FOREIGN KEY (routine_id) REFERENCES routine(id),
+        FOREIGN KEY (user_id) REFERENCES user(id)
+      );
+    `);
+
   // table workouts
   await db.execAsync(`
     CREATE TABLE IF NOT EXISTS workouts (
