@@ -62,6 +62,7 @@ export default function AgendaScreen() {
   const [time, setTime] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [showDeleteCategoryModal, setShowDeleteCategoryModal] = useState(false);
   
 
 
@@ -240,7 +241,21 @@ export default function AgendaScreen() {
 
       <View className="flex flex-row items-center justify-between px-6 mt-[60px] mb-6">
         <Text className="text-3xl text-white font-medium font-sans">Today</Text>
+        <TouchableOpacity onPress={() => setShowDeleteCategoryModal(true)} className=''>
+          <Ionicons name="options-outline" size={20} color="#F25C5C" />
+        </TouchableOpacity>
       </View>
+
+      <Modal
+        transparent
+        animationType="fade"
+        visible={showDeleteCategoryModal}
+        onRequestClose={resetModal}>
+
+          <View className='flex-1 bg-black/80'>
+          </View>
+
+        </Modal>
 
       <View className=' flex flex-row flex-wrap gap-2 px-6 pb-3'>
         {categories.map((cat) => {
@@ -341,16 +356,18 @@ export default function AgendaScreen() {
               multiline
             />
 
-            <View className="flex-row space-x-4 flex gap-3 mb-4">
-              <TouchableOpacity onPress={() => setShowDatePicker(true)} className="flex-row items-center">
-                <Ionicons name="calendar-outline" size={20} color="#F25C5C" />
-                <Text className="text-rose-400 ml-2">{date.toLocaleDateString('pt-BR')}</Text>
-              </TouchableOpacity>
+            <View className='flex flex-row justify-between'>
+              <View className="flex-row space-x-4 flex gap-3 mb-4">
+                <TouchableOpacity onPress={() => setShowDatePicker(true)} className="flex-row items-center">
+                  <Ionicons name="calendar-outline" size={20} color="#F25C5C" />
+                  <Text className="text-rose-400 ml-2">{date.toLocaleDateString('pt-BR')}</Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity onPress={() => setShowTimePicker(true)} className="flex-row items-center">
-                <Ionicons name="time-outline" size={20} color="#F25C5C" />
-                <Text className="text-rose-400 ml-1">{time.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</Text>
-              </TouchableOpacity>
+                <TouchableOpacity onPress={() => setShowTimePicker(true)} className="flex-row items-center">
+                  <Ionicons name="time-outline" size={20} color="#F25C5C" />
+                  <Text className="text-rose-400 ml-1">{time.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</Text>
+                </TouchableOpacity>
+              </View>
             </View>
 
             {showDatePicker && (
@@ -424,24 +441,6 @@ export default function AgendaScreen() {
               </TouchableOpacity>
             </View>
 
-            <Modal
-              transparent
-              animationType="fade"
-              visible={isCategoryModalVisible}
-              onRequestClose={() => setIsCategoryModalVisible(false)}
-            >
-              <View className="flex-1 justify-center items-center bg-black/90 px-8">
-                <View className="bg-zinc-800 px-6 py-4 rounded-3xl w-full items-center">
-                  <TextInput
-                    placeholder="Nome da categoria"
-                    placeholderTextColor="#a1a1aa"
-                    value={newCategoryName}
-                    onChangeText={setNewCategoryName}
-                    className="text-white font-sans p-3 mb-4 w-full rounded-md border border-neutral-600"
-                  />
-
-                  <Text className="text-white mb-2 font-sans text-center">Escolha a cor:</Text>
-
                   <Modal
                     transparent
                     animationType="fade"
@@ -450,17 +449,15 @@ export default function AgendaScreen() {
                   >
                     <View className="flex-1 justify-center items-center bg-black/90 px-8">
                       <View className="bg-zinc-800 p-6 rounded-2xl w-full">
-                        <Text className="text-white text-xl mb-4">Nova Categoria</Text>
 
                         <TextInput
                           placeholder="Nome da categoria"
                           placeholderTextColor="#a1a1aa"
                           value={newCategoryName}
                           onChangeText={setNewCategoryName}
-                          className="text-white border border-neutral-700 p-2 rounded mb-4"
+                          className="text-white font-sans font-3xl p-2 rounded mb-4"
                         />
 
-                        <Text className="text-white mb-2">Escolha uma cor:</Text>
                         <View className="flex flex-row flex-wrap gap-2 mb-4">
                           {colorOptions.map((color) => (
                             <TouchableOpacity
@@ -480,43 +477,20 @@ export default function AgendaScreen() {
 
                         <TouchableOpacity
                           onPress={handleAddCategory}
-                          className="bg-rose-400 p-3 rounded-xl items-center"
+                          className="bg-rose-400 p-3 mt-3 rounded-xl items-center"
                         >
-                          <Text className="text-black font-semibold">Adicionar Categoria</Text>
+                          <Text className="text-black font-semibold font-sans">Adicionar Categoria</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
                           onPress={() => setIsCategoryModalVisible(false)}
                           className="mt-4 p-2"
                         >
-                          <Text className="text-neutral-400 text-center">Cancelar</Text>
+                          <Text className="text-neutral-400 text-center font-sans">Cancelar</Text>
                         </TouchableOpacity>
                       </View>
                     </View>
                   </Modal>
-
-
-                  <View
-                    style={{
-                      backgroundColor: newCategoryColor,
-                      width: 60,
-                      height: 60,
-                      borderRadius: 30,
-                      marginBottom: 16,
-                      borderWidth: 1,
-                      borderColor: '#fff'
-                    }}
-                  />
-
-                  <TouchableOpacity
-                    onPress={handleAddCategory}
-                    className="bg-rose-400 h-[40px] w-full flex items-center justify-center rounded-full"
-                  >
-                    <Text className="text-white font-semibold text-lg">Adicionar Categoria</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </Modal>
 
             <TextInput
               placeholder="Descrição da tarefa"
