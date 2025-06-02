@@ -8,14 +8,29 @@ import { useTask } from '../hooks/useTask';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { SwipeListView } from 'react-native-swipe-list-view';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+
+const colorOptions = [
+  '#EF4444', // Vermelho
+  '#F97316', // Laranja
+  '#EAB308', // Amarelo
+  '#10B981', // Verde
+  '#3B82F6', // Azul
+  '#6366F1', // Índigo
+  '#8B5CF6', // Roxo
+  '#EC4899', // Rosa
+  '#F43F5E', // Rosa escuro
+  '#6B7280', // Cinza
+];
+
+
 const categoriesColors: { [key: string]: string } = {
   'estudo': '#EF4444',
   'academia': '#3B82F6',
   'trabalho': '#10B981',
   'igreja': '#A3E635',
 };
-
-const categories = ['estudo', 'academia', 'trabalho', 'igreja'];
 
 function getTodayDateISO() {
   const now = new Date();
@@ -35,6 +50,7 @@ export default function AgendaScreen() {
     deleteTask
   } = useTask();
 
+
   const [isCreateVisible, setIsCreateVisible] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [selectedTask, setSelectedTask] = useState<any | null>(null);
@@ -46,6 +62,74 @@ export default function AgendaScreen() {
   const [time, setTime] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  
+
+
+  const [extraCategories, setExtraCategories] = useState<{ name: string; color: string }[]>([]);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryColor, setNewCategoryColor] = useState('#EF4444');
+  const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
+
+  const categories = Array.from(
+    new Set([
+      ...tasks
+        .flatMap((task) => task.type?.split(',').map((s: string) => s.trim()) ?? [])
+        .filter((t) => t.length > 0),
+      ...extraCategories.map(cat => cat.name), // usar só o nome para categorias no filtro
+    ])
+  );
+  const getCategoryColor = (catName: string) => {
+    if (categoriesColors[catName]) return categoriesColors[catName];
+    const extraCat = extraCategories.find(c => c.name === catName);
+    return extraCat ? extraCat.color : '#999999';
+  };
+
+  const handleAddCategory = () => {
+    if (!newCategoryName.trim()) {
+      Alert.alert('Erro', 'O nome da categoria não pode ser vazio.');
+      return;
+    }
+    
+    if (extraCategories.find(cat => cat.name.toLowerCase() === newCategoryName.trim().toLowerCase())) {
+      Alert.alert('Erro', 'Essa categoria já existe.');
+      return;
+    }
+
+    setExtraCategories(prev => [
+      ...prev,
+      { name: newCategoryName.trim(), color: newCategoryColor }
+    ]);
+    setNewCategoryName('');
+    setNewCategoryColor('#EF4444'); // resetar cor
+    setIsCategoryModalVisible(false);
+  };
+
+  
+  useEffect(() => {
+    async function loadCategories() {
+      try {
+        const stored = await AsyncStorage.getItem('extraCategories');
+        if (stored) {
+          setExtraCategories(JSON.parse(stored));
+        }
+      } catch (err) {
+        console.log('Erro ao carregar categorias extras:', err);
+      }
+    }
+    loadCategories();
+  }, []);
+
+  useEffect(() => {
+    async function saveCategories() {
+      try {
+        await AsyncStorage.setItem('extraCategories', JSON.stringify(extraCategories));
+      } catch (err) {
+        console.log('Erro ao salvar categorias extras:', err);
+      }
+    }
+    saveCategories();
+  }, [extraCategories]);
+
 
   useEffect(() => {
     const todayDate = getTodayDateISO();
@@ -161,7 +245,7 @@ export default function AgendaScreen() {
       <View className=' flex flex-row flex-wrap gap-2 px-6 pb-3'>
         {categories.map((cat) => {
                 const isSelected = selectedTypes.includes(cat);
-                const color = categoriesColors[cat];
+                const color = getCategoryColor(cat);
 
                 return (
                   <TouchableOpacity
@@ -313,7 +397,7 @@ export default function AgendaScreen() {
             <View className="flex flex-row flex-wrap gap-2 mb-4">
               {categories.map((cat) => {
                 const isSelected = selectedCategories.includes(cat);
-                const color = categoriesColors[cat];
+                const color = getCategoryColor(cat);
 
                 return (
                   <TouchableOpacity
@@ -326,11 +410,113 @@ export default function AgendaScreen() {
                     className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${isSelected ? 'bg-rose-400' : 'bg-neutral-700'}`}
                   >
                     <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color }} />
-                    <Text className={`${isSelected ? 'text-black' : 'text-white'}`}>{cat}</Text>
+                    <Text className={`font-sans text-sm ${isSelected ? 'text-black' : 'text-white'}`}>{cat}</Text>
                   </TouchableOpacity>
                 );
               })}
+
+              <TouchableOpacity
+                onPress={() => setIsCategoryModalVisible(true)}
+                className="flex-row items-center gap-2 px-3 py-1 rounded-xl bg-neutral-700"
+              >
+                <Ionicons name="add" size={16} color="white" />
+                <Text className="text-white text-sm font-sans">Nova Categoria</Text>
+              </TouchableOpacity>
             </View>
+
+            <Modal
+              transparent
+              animationType="fade"
+              visible={isCategoryModalVisible}
+              onRequestClose={() => setIsCategoryModalVisible(false)}
+            >
+              <View className="flex-1 justify-center items-center bg-black/90 px-8">
+                <View className="bg-zinc-800 px-6 py-4 rounded-3xl w-full items-center">
+                  <TextInput
+                    placeholder="Nome da categoria"
+                    placeholderTextColor="#a1a1aa"
+                    value={newCategoryName}
+                    onChangeText={setNewCategoryName}
+                    className="text-white font-sans p-3 mb-4 w-full rounded-md border border-neutral-600"
+                  />
+
+                  <Text className="text-white mb-2 font-sans text-center">Escolha a cor:</Text>
+
+                  <Modal
+                    transparent
+                    animationType="fade"
+                    visible={isCategoryModalVisible}
+                    onRequestClose={() => setIsCategoryModalVisible(false)}
+                  >
+                    <View className="flex-1 justify-center items-center bg-black/90 px-8">
+                      <View className="bg-zinc-800 p-6 rounded-2xl w-full">
+                        <Text className="text-white text-xl mb-4">Nova Categoria</Text>
+
+                        <TextInput
+                          placeholder="Nome da categoria"
+                          placeholderTextColor="#a1a1aa"
+                          value={newCategoryName}
+                          onChangeText={setNewCategoryName}
+                          className="text-white border border-neutral-700 p-2 rounded mb-4"
+                        />
+
+                        <Text className="text-white mb-2">Escolha uma cor:</Text>
+                        <View className="flex flex-row flex-wrap gap-2 mb-4">
+                          {colorOptions.map((color) => (
+                            <TouchableOpacity
+                              key={color}
+                              onPress={() => setNewCategoryColor(color)}
+                              style={{
+                                backgroundColor: color,
+                                width: 40,
+                                height: 40,
+                                borderRadius: 20,
+                                borderWidth: newCategoryColor === color ? 3 : 1,
+                                borderColor: newCategoryColor === color ? '#fff' : '#333',
+                              }}
+                            />
+                          ))}
+                        </View>
+
+                        <TouchableOpacity
+                          onPress={handleAddCategory}
+                          className="bg-rose-400 p-3 rounded-xl items-center"
+                        >
+                          <Text className="text-black font-semibold">Adicionar Categoria</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                          onPress={() => setIsCategoryModalVisible(false)}
+                          className="mt-4 p-2"
+                        >
+                          <Text className="text-neutral-400 text-center">Cancelar</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </Modal>
+
+
+                  <View
+                    style={{
+                      backgroundColor: newCategoryColor,
+                      width: 60,
+                      height: 60,
+                      borderRadius: 30,
+                      marginBottom: 16,
+                      borderWidth: 1,
+                      borderColor: '#fff'
+                    }}
+                  />
+
+                  <TouchableOpacity
+                    onPress={handleAddCategory}
+                    className="bg-rose-400 h-[40px] w-full flex items-center justify-center rounded-full"
+                  >
+                    <Text className="text-white font-semibold text-lg">Adicionar Categoria</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </Modal>
 
             <TextInput
               placeholder="Descrição da tarefa"
