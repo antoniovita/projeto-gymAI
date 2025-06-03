@@ -28,14 +28,6 @@ const colorOptions = [
 ];
 
 
-const categoriesColors: { [key: string]: string } = {
-  'estudo': '#EF4444',
-  'academia': '#3B82F6',
-  'trabalho': '#10B981',
-  'igreja': '#A3E635',
-};
-
-
 export default function AgendaScreen() {
   const userId = 'user-id-123'; // trocar depois com o auth context
   const {
@@ -44,8 +36,6 @@ export default function AgendaScreen() {
     updateTask,
     debugAllTasks,
     fetchTasks,
-    fetchTasksByDate,
-    fetchTasksByTypeAndDate,
     updateTaskCompletion,
     deleteTask
   } = useTask();
@@ -83,11 +73,12 @@ export default function AgendaScreen() {
       ...extraCategories.map(cat => cat.name), // usar só o nome para categorias no filtro
     ])
   );
+
   const getCategoryColor = (catName: string) => {
-    if (categoriesColors[catName]) return categoriesColors[catName];
-    const extraCat = extraCategories.find(c => c.name === catName);
-    return extraCat ? extraCat.color : '#999999';
+  const extraCat = extraCategories.find(c => c.name === catName);
+  return extraCat ? extraCat.color : '#999999';
   };
+
 
   const handleAddCategory = () => {
     if (!newCategoryName.trim()) {
@@ -109,9 +100,7 @@ export default function AgendaScreen() {
     setIsCategoryModalVisible(false);
   };
 
-  
-// 1️⃣ Carrega categorias extras do AsyncStorage ao montar o componente
-useEffect(() => {
+  useEffect(() => {
   const loadCategories = async () => {
     try {
       const stored = await AsyncStorage.getItem('extraCategories');
@@ -126,8 +115,6 @@ useEffect(() => {
   loadCategories();
 }, []);
 
-
-// 2️⃣ Salva categorias extras sempre que forem alteradas
 useEffect(() => {
   const saveCategories = async () => {
     try {
@@ -149,73 +136,81 @@ useEffect(() => {
 
 
 useEffect(() => {
-  const fetchTasksByFilters = async () => {
-    const dateISO = dateFilter.toISOString().split('T')[0];
-    console.log('🟡 Buscando tarefas');
-    console.log('🗓 Date:', dateISO);
-    console.log('🏷 Types:', selectedTypes);
-
+  const fetchAllTasks = async () => {
     try {
-      if (selectedTypes.length > 0) {
-        await fetchTasksByTypeAndDate(userId, selectedTypes, dateISO);
-      } else {
-        await fetchTasksByDate(userId, dateISO);
-      }
+      await fetchTasks(userId);
     } catch (err) {
-      console.error('Erro ao buscar tarefas com filtros:', err);
+      console.error('Erro ao buscar tarefas:', err);
     }
   };
 
-  fetchTasksByFilters();
-}, [dateFilter, selectedTypes]);
+  fetchAllTasks();
+}, []);
 
 
 
-
+  const combineDateAndTime = (date: Date, time: Date): Date => {
+    const combined = new Date(date);
+    combined.setHours(time.getHours());
+    combined.setMinutes(time.getMinutes());
+    combined.setSeconds(0);
+    combined.setMilliseconds(0);
+    return combined;
+  };
 
 
   const handleSaveTask = async () => {
-    if (!newTaskTitle.trim()) {
-      Alert.alert('Erro', 'O título não pode estar vazio.');
-      return;
+  if (!newTaskTitle.trim()) {
+    Alert.alert('Erro', 'O título não pode estar vazio.');
+    return;
+  }
+
+  if (selectedCategories.length === 0) {
+    Alert.alert('Erro', 'Selecione pelo menos uma categoria.');
+    return;
+  }
+
+  try {
+    const categoriesString = selectedCategories.join(', ');
+
+    const combinedDateTime = combineDateAndTime(date, time);
+
+    console.log('📅 Hoje:', new Date().toISOString);
+    console.log('📤 Data selecionada:', date.toISOString());
+    console.log('⏰ Hora selecionada:', time.toISOString());
+    console.log('📦 Data e hora combinadas:', combinedDateTime.toISOString());
+
+    const formattedDate = combinedDateTime.toISOString().split('T')[0];
+    const adjustedDate = new Date(combinedDateTime.getTime() - (combinedDateTime.getTimezoneOffset() * 60000));
+    const formattedTime = adjustedDate.toISOString();
+
+
+    if (selectedTask) {
+      await updateTask(selectedTask.id, {
+        title: newTaskTitle,
+        content: taskContent,
+        type: categoriesString,
+        date: formattedDate,
+        time: formattedTime,
+      });
+    } else {
+      await createTask(
+        newTaskTitle,
+        taskContent,
+        formattedDate,
+        formattedTime,
+        userId,
+        categoriesString
+      );
     }
 
-    if (selectedCategories.length === 0) {
-      Alert.alert('Erro', 'Selecione pelo menos uma categoria.');
-      return;
-    }
+    await fetchTasks(userId);
+    resetModal();
+  } catch (err) {
+    Alert.alert('Erro', 'Falha ao salvar tarefa.');
+  }
+};
 
-    try {
-      const categoriesString = selectedCategories.join(', ');
-
-      const formattedDate = date.toISOString();
-      const formattedTime = time.toISOString();
-
-      if (selectedTask) {
-        await updateTask(selectedTask.id, {
-          title: newTaskTitle,
-          content: taskContent,
-          type: categoriesString,
-          date: formattedDate,
-          time: formattedTime
-        });
-      } else {
-        await createTask(
-          newTaskTitle,
-          taskContent,
-          formattedDate,
-          formattedTime,
-          userId,
-          categoriesString
-        );
-      }
-
-      await fetchTasks(userId);
-      resetModal();
-    } catch (err) {
-      Alert.alert('Erro', 'Falha ao salvar tarefa.');
-    }
-  };
   
 
 const handleDeleteCategory = () => {
@@ -269,10 +264,18 @@ const handleDeleteCategory = () => {
     setTime(new Date());
   };
 
-  const filteredTasks = tasks.filter((task) =>
-    selectedCategories.length === 0 ||
-    selectedCategories.some((cat) => task.type?.includes(cat))
-  );
+  const filteredTasks = tasks.filter((task) => {
+    const taskDate = new Date(task.date).toISOString().split('T')[0];
+    const selectedDate = dateFilter.toISOString().split('T')[0];
+
+    const dateMatches = taskDate === selectedDate;
+
+    const types = task.type?.split(',').map((t: string) => t.trim()) || [];
+    const categoryMatches =
+      selectedTypes.length === 0 || selectedTypes.some((cat) => types.includes(cat));
+
+    return dateMatches && categoryMatches;
+  });
 
 
   const showDatePickerDateFilter = () => setDatePickerVisibility(true);
@@ -302,7 +305,7 @@ const handleDeleteCategory = () => {
       </TouchableOpacity>
 
         <View className="flex flex-row items-center justify-between px-6 mt-[60px] mb-6">
-          <Text className="text-3xl text-white font-medium font-sans">Today</Text>
+          <Text className="text-3xl text-white font-medium font-sans">Agenda</Text>
 
 
 
@@ -345,7 +348,6 @@ const handleDeleteCategory = () => {
 
                 <ScrollView className="mb-4">
                   {categories.map((cat) => {
-                    const isFixedCategory = !!categoriesColors[cat];
                     const color = getCategoryColor(cat);
 
                     return (
@@ -364,8 +366,6 @@ const handleDeleteCategory = () => {
                           />
                           <Text className="text-white font-sans text-lg">{cat}</Text>
                         </View>
-
-                        {!isFixedCategory && (
                           <TouchableOpacity
                             onPress={() => {
                               setCategoryToDelete(cat);
@@ -375,7 +375,6 @@ const handleDeleteCategory = () => {
                           >
                             <Ionicons name="trash" size={24} color="red" />
                           </TouchableOpacity>
-                        )}
                       </View>
                     );
                   })}
@@ -457,18 +456,18 @@ const handleDeleteCategory = () => {
         renderItem={({ item }) => (
           <View className="w-full flex flex-col justify-center px-6 h-[90px] pb-4 border-b border-neutral-700 bg-zinc-800">
             <View className="flex flex-row justify-between">
-              <TouchableOpacity className="flex flex-col gap-1" onPress={() => handleOpenEdit(item)}>
+              <TouchableOpacity className="flex flex-col gap-1 mt-1" onPress={() => handleOpenEdit(item)}>
                 <Text className={`text-xl font-sans font-medium ${item.completed ? 'line-through text-neutral-500' : 'text-gray-300'}`}>
                   {item.title}
                 </Text>
-                <Text className="text-rose-400 text-sm font-sans">
-                  {new Date(item.date).toLocaleDateString('pt-BR')} - {new Date(item.time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                <Text className="text-neutral-400 text-sm mt-1 font-sans">
+                    {format(new Date(item.date + 'T00:00:00'), 'dd/MM/yyyy')} - {item.time}
                 </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={() => toggleTaskCompletion(item.id, item.completed)}
-                className={`w-[25px] h-[25px] mt-2 border rounded-lg ${item.completed ? 'bg-rose-500' : 'border-2 border-neutral-600'}`}
+                className={`w-[25px] h-[25px] mt-4 border rounded-lg ${item.completed ? 'bg-rose-500' : 'border-2 border-neutral-600'}`}
                 style={{ alignItems: 'center', justifyContent: 'center' }}
               >
                 {item.completed ? <Ionicons name="checkmark" size={20} color="white" /> : null}
