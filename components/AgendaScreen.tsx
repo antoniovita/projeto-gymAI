@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView, SafeAreaView,
-  Modal, TextInput, Alert,
+  Modal, TextInput, Alert, Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTask } from '../hooks/useTask';
@@ -9,6 +9,9 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { SwipeListView } from 'react-native-swipe-list-view';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import { format } from 'date-fns';
+
 
 
 const colorOptions = [
@@ -32,10 +35,6 @@ const categoriesColors: { [key: string]: string } = {
   'igreja': '#A3E635',
 };
 
-function getTodayDateISO() {
-  const now = new Date();
-  return now.toISOString().split('T')[0];
-}
 
 export default function AgendaScreen() {
   const userId = 'user-id-123'; // trocar depois com o auth context
@@ -43,9 +42,10 @@ export default function AgendaScreen() {
     tasks,
     createTask,
     updateTask,
+    debugAllTasks,
     fetchTasks,
     fetchTasksByDate,
-    fetchTasksByType,
+    fetchTasksByTypeAndDate,
     updateTaskCompletion,
     deleteTask
   } = useTask();
@@ -71,6 +71,9 @@ export default function AgendaScreen() {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('#EF4444');
   const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
+
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+  const [dateFilter, setDateFilter] = useState(new Date());
 
   const categories = Array.from(
     new Set([
@@ -107,40 +110,68 @@ export default function AgendaScreen() {
   };
 
   
-  useEffect(() => {
-    async function loadCategories() {
-      try {
-        const stored = await AsyncStorage.getItem('extraCategories');
-        if (stored) {
-          setExtraCategories(JSON.parse(stored));
-        }
-      } catch (err) {
-        console.log('Erro ao carregar categorias extras:', err);
+// 1️⃣ Carrega categorias extras do AsyncStorage ao montar o componente
+useEffect(() => {
+  const loadCategories = async () => {
+    try {
+      const stored = await AsyncStorage.getItem('extraCategories');
+      if (stored) {
+        setExtraCategories(JSON.parse(stored));
       }
+    } catch (err) {
+      console.error('Erro ao carregar categorias extras:', err);
     }
-    loadCategories();
-  }, []);
+  };
 
-  useEffect(() => {
-    async function saveCategories() {
-      try {
-        await AsyncStorage.setItem('extraCategories', JSON.stringify(extraCategories));
-      } catch (err) {
-        console.log('Erro ao salvar categorias extras:', err);
-      }
+  loadCategories();
+}, []);
+
+
+// 2️⃣ Salva categorias extras sempre que forem alteradas
+useEffect(() => {
+  const saveCategories = async () => {
+    try {
+      await AsyncStorage.setItem('extraCategories', JSON.stringify(extraCategories));
+    } catch (err) {
+      console.error('Erro ao salvar categorias extras:', err);
     }
+  };
+
+  if (extraCategories.length > 0) {
     saveCategories();
-  }, [extraCategories]);
+  }
+}, [extraCategories]);
 
 
-  useEffect(() => {
-    const todayDate = getTodayDateISO();
-    fetchTasksByDate(userId, todayDate);
-  }, []);
+useEffect(() => {
+  debugAllTasks();
+}, []);
 
-  useEffect(() => {
-    fetchTasksByType(userId, selectedTypes.join(', '));
-  }, [selectedTypes]);
+
+useEffect(() => {
+  const fetchTasksByFilters = async () => {
+    const dateISO = dateFilter.toISOString().split('T')[0];
+    console.log('🟡 Buscando tarefas');
+    console.log('🗓 Date:', dateISO);
+    console.log('🏷 Types:', selectedTypes);
+
+    try {
+      if (selectedTypes.length > 0) {
+        await fetchTasksByTypeAndDate(userId, selectedTypes, dateISO);
+      } else {
+        await fetchTasksByDate(userId, dateISO);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar tarefas com filtros:', err);
+    }
+  };
+
+  fetchTasksByFilters();
+}, [dateFilter, selectedTypes]);
+
+
+
+
 
 
   const handleSaveTask = async () => {
@@ -185,6 +216,28 @@ export default function AgendaScreen() {
       Alert.alert('Erro', 'Falha ao salvar tarefa.');
     }
   };
+  
+
+const handleDeleteCategory = () => {
+  if (!categoryToDelete) return;
+
+  const isCategoryInUse = tasks.some(task =>
+    task.type?.split(',').map((t: string) => t.trim()).includes(categoryToDelete)
+  );
+
+  if (isCategoryInUse) {
+    Alert.alert('Erro', 'Esta categoria está associada a uma ou mais tarefas e não pode ser excluída.');
+    setShowConfirmDeleteModal(false);
+    setCategoryToDelete(null);
+    return;
+  }
+
+  setExtraCategories((prev) =>
+    prev.filter((cat) => cat.name !== categoryToDelete)
+  );
+  setShowConfirmDeleteModal(false);
+  setCategoryToDelete(null);
+};
 
   const handleOpenEdit = (task: any) => {
     setSelectedTask(task);
@@ -221,6 +274,14 @@ export default function AgendaScreen() {
     selectedCategories.some((cat) => task.type?.includes(cat))
   );
 
+
+  const showDatePickerDateFilter = () => setDatePickerVisibility(true);
+  const hideDatePicker = () => setDatePickerVisibility(false);
+  const handleConfirm = (date: Date) => {
+  setDateFilter(date);
+  hideDatePicker();
+};
+
   return (
     <SafeAreaView className="flex-1 bg-zinc-800">
       <TouchableOpacity
@@ -240,12 +301,38 @@ export default function AgendaScreen() {
         <Ionicons name="add" size={32} color="black" />
       </TouchableOpacity>
 
-      <View className="flex flex-row items-center justify-between px-6 mt-[60px] mb-6">
-        <Text className="text-3xl text-white font-medium font-sans">Today</Text>
-        <TouchableOpacity onPress={() => setShowDeleteCategoryModal(true)} className=''>
-          <Ionicons name="options-outline" size={20} color="#F25C5C" />
-        </TouchableOpacity>
-      </View>
+        <View className="flex flex-row items-center justify-between px-6 mt-[60px] mb-6">
+          <Text className="text-3xl text-white font-medium font-sans">Today</Text>
+
+
+
+          <View className="flex flex-row items-center gap-[20px]">
+
+            <TouchableOpacity onPress={showDatePickerDateFilter}>
+              <Text className="text-[#F25C5C] text-base border rounded-lg px-3 py-1 font-sans border-[#F25C5C]">
+                {format(dateFilter, 'dd/MM/yyyy')}
+              </Text>
+            </TouchableOpacity>
+
+
+            <TouchableOpacity onPress={() => setShowDeleteCategoryModal(true)}>
+              <Ionicons name="options-outline" size={24} color="#F25C5C" />
+            </TouchableOpacity>
+
+
+            <DateTimePickerModal
+              isVisible={isDatePickerVisible}
+              mode="date"
+              date={dateFilter}
+              onConfirm={handleConfirm}
+              onCancel={hideDatePicker}
+              themeVariant="light" // ou 'dark' se quiser forçar
+              locale="pt-BR"
+            />
+          </View>
+        </View>
+
+
 
       <Modal
           transparent
@@ -330,15 +417,7 @@ export default function AgendaScreen() {
                       </TouchableOpacity>
 
                       <TouchableOpacity
-                        onPress={() => {
-                          if (categoryToDelete) {
-                            setExtraCategories((prev) =>
-                              prev.filter((cat) => cat.name !== categoryToDelete)
-                            );
-                          }
-                          setShowConfirmDeleteModal(false);
-                          setCategoryToDelete(null);
-                        }}
+                        onPress={handleDeleteCategory}
                         className="flex-1 bg-rose-500 py-3 rounded-xl items-center"
                       >
                         <Text className="text-black font-sans font-semibold">Apagar</Text>

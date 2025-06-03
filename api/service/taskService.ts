@@ -1,5 +1,6 @@
-import { Task } from 'api/model/Task';
+import { Task, TaskModel } from 'api/model/Task';
 import { TaskController } from '../controller/taskController';
+import { getDb } from 'database';
 
 export const TaskService = {
 
@@ -26,6 +27,16 @@ export const TaskService = {
     }
     return response.data;
   },
+
+  getTasksByTypeAndDate: async (userId: string, types: string[], date: string) => {
+    const response = await TaskController.getTasksByTypeAndDate(userId, types, date);
+    if (!response.success) {
+      throw new Error(response.error || 'Erro ao buscar tarefas por tipo e data.');
+    }
+    return response.data;
+  },
+
+
 
   getTasksByType: async (userId: string, type: string) => {
     const response = await TaskController.getTasksByType(userId, type);
@@ -73,5 +84,11 @@ export const TaskService = {
       throw new Error(response.error || 'Erro ao atualizar tarefa.');
     }
     return response.updatedCount;
-  }
+  },
+
+debugAllTasks: async () => {
+  const db = getDb();
+  return TaskModel.getAllTasksDebug(db);
+}
+
 };

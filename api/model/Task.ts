@@ -14,7 +14,6 @@ export interface Task {
 }
 
 export const TaskModel = {
-
   createTask: async (
     db: SQLite.SQLiteDatabase,
     title: string,
@@ -25,48 +24,61 @@ export const TaskModel = {
     userId: string,
     routineId?: string
   ) => {
-    const taskId = uuid.v4();
+    const taskId = uuid.v4() as string;
 
-    const result = await db.runAsync(
+    const formattedDate = new Date(date).toISOString().split('T')[0];      // YYYY-MM-DD
+    const formattedTime = new Date(time).toISOString().split('T')[1].slice(0, 5); // HH:MM
+
+    await db.runAsync(
       `INSERT INTO tasks (id, title, content, date, time, type, completed, user_id, routine_id)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       taskId,
       title,
       content,
-      date,    
-      time,    
+      formattedDate,
+      formattedTime,
       type ?? null,
-      0,       // completed default
+      0,
       userId,
       routineId ?? null
     );
+
     return taskId;
   },
 
   getTasksByUserId: async (db: SQLite.SQLiteDatabase, userId: string) => {
-    const tasks = await db.getAllAsync(
-      'SELECT * FROM tasks WHERE user_id = ?',
-      userId
-    );
-    return tasks as Task[];
+    return await db.getAllAsync('SELECT * FROM tasks WHERE user_id = ?', userId) as Task[];
   },
 
   getTasksByType: async (db: SQLite.SQLiteDatabase, userId: string, type: string) => {
-    const tasks = await db.getAllAsync(
-      'SELECT * FROM tasks WHERE user_id = ? AND type = ?',
-      userId,
-      type
-    );
-    return tasks as Task[];
+    return await db.getAllAsync('SELECT * FROM tasks WHERE user_id = ? AND type = ?', userId, type) as Task[];
+  },
+
+  getTasksByTypeAndDate: async (
+    db: SQLite.SQLiteDatabase,
+    userId: string,
+    types: string[],
+    date: string
+  ) => {
+    if (types.length === 0) return [];
+
+    const placeholders = types.map(() => 'type LIKE ?').join(' OR ');
+    const query = `
+      SELECT * FROM tasks
+      WHERE user_id = ?
+      AND date(date) = ?
+      AND (${placeholders})
+    `;
+    const params = [userId, date, ...types.map((type) => `%${type}%`)];
+    return await db.getAllAsync(query, ...params) as Task[];
   },
 
   getTasksByDate: async (db: SQLite.SQLiteDatabase, userId: string, date: string) => {
-    const tasks = await db.getAllAsync(
-      'SELECT * FROM tasks WHERE user_id = ? AND date = ?',
+    return await db.getAllAsync(
+      'SELECT * FROM tasks WHERE user_id = ? AND date(date) = ?',
       userId,
       date
-    );
-    return tasks as Task[];
+    ) as Task[];
   },
 
   updateTaskCompletion: async (db: SQLite.SQLiteDatabase, taskId: string, completed: 0 | 1) => {
@@ -95,18 +107,23 @@ export const TaskModel = {
   },
 
   deleteTask: async (db: SQLite.SQLiteDatabase, taskId: string) => {
-    const result = await db.runAsync(
-      'DELETE FROM tasks WHERE id = ?',
-      taskId
-    );
+    const result = await db.runAsync('DELETE FROM tasks WHERE id = ?', taskId);
     return result.changes;
   },
 
   clearTasksByUser: async (db: SQLite.SQLiteDatabase, userId: string) => {
-    const result = await db.runAsync(
-      'DELETE FROM tasks WHERE user_id = ?',
-      userId
-    );
+    const result = await db.runAsync('DELETE FROM tasks WHERE user_id = ?', userId);
     return result.changes;
+  },
+
+  getAllTasksDebug: async (db: SQLite.SQLiteDatabase) => {
+    try {
+      const tasks = await db.getAllAsync('SELECT * FROM tasks');
+      console.log('[DEBUG] Todas as tarefas no banco:', tasks);
+      return tasks;
+    } catch (err) {
+      console.error('[DEBUG] Erro ao listar tarefas:', err);
+      return [];
+    }
   }
 };

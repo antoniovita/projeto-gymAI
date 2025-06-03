@@ -55,6 +55,19 @@ export const TaskController = {
     }
   },
 
+getTasksByTypeAndDate: async (userId: string, types: string[], date: string) => {
+  const db = getDb();
+  try {
+    const tasks = await TaskModel.getTasksByTypeAndDate(db, userId, types, date);
+    return { success: true, data: tasks };
+  } catch (error) {
+    console.error('Erro ao buscar tarefas por tipo e data no controller:', error);
+    return { success: false, error: 'Erro ao buscar tarefas por tipo e data.' };
+  }
+},
+
+
+
   updateCompletion: async (taskId: string, completed: 0 | 1) => {
     const db = getDb();
     try {
