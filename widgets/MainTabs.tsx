@@ -1,7 +1,6 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 
-import HomeScreen from 'components/HomeScreen';
 import WorkoutScreen from 'components/WorkoutScreen';
 import ChatScreen from 'components/ChatScreen';
 import AgendaScreen from 'components/AgendaScreen';
@@ -29,9 +28,6 @@ export default function MainTabs() {
           let iconName: keyof typeof Ionicons.glyphMap;
 
           switch (route.name) {
-            case 'Home':
-              iconName = focused ? 'home' : 'home-outline';
-              break;
             case 'Chat':
               iconName = focused ? 'chatbubble-ellipses' : 'chatbubble-ellipses-outline';
               break;
@@ -52,9 +48,8 @@ export default function MainTabs() {
         },
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Agenda" component={AgendaScreen} />
       <Tab.Screen name="Chat" component={ChatScreen} />
+      <Tab.Screen name="Agenda" component={AgendaScreen} />
       <Tab.Screen name="Expenses" component={ExpensesScreen} />
       <Tab.Screen name="Workout" component={WorkoutScreen} />
 
