@@ -36,9 +36,7 @@ export const useExpenses = () => {
     setLoading(true);
     setError(null);
     try {
-      console.log('[fetchExpenses] Buscando todas as despesas do usuário:', userId);
       const data = await ExpenseService.getExpenses(userId);
-      console.log('[fetchExpenses] Despesas retornadas:', data);
       setExpenses(data || []);
     } catch (err: any) {
       setError(err.message);

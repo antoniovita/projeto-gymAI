@@ -1,33 +1,35 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView, SafeAreaView,
   Modal, TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SwipeListView } from 'react-native-swipe-list-view';
-import { useExpenses } from '../hooks/useExpenses'; // Importando o hook useExpenses
+import { useExpenses } from '../hooks/useExpenses';
 
 export default function ExpensesScreen() {
-  const [isCreateVisible, setIsCreateVisible] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [taskContent, setTaskContent] = useState('');
-  const [date, setDate] = useState(new Date());
-  const [time, setTime] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
   const [expenseValue, setExpenseValue] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState(''); // Variável para categoria selecionada
-  const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false); // Modal de categorias
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
-  const [newCategoryColor, setNewCategoryColor] = useState('#FF6347'); // Cor da categoria
-  const [colorOptions] = useState(['#FF6347', '#4CAF50']); // Apenas duas opções de cor
+  const [newCategoryColor, setNewCategoryColor] = useState('#FF6347');
+  const [colorOptions] = useState(['#FF6347', '#4CAF50', '#3B82F6', '#F59E0B']);
   const [gains, setGains] = useState(0);
-  const [losses, setLosses] = useState(0); 
+  const [losses, setLosses] = useState(0);
 
-  const { createExpense, loading, error, expenses } = useExpenses();
+  const [currentExpense, setCurrentExpense] = useState<any>(null);
 
-  const categories = ['Ganhos', 'Perdas', ...selectedCategories]; // Categorias padrão + novas categorias
+  const [isCreateVisible, setIsCreateVisible] = useState(false);
+  const [isEditVisible, setIsEditVisible] = useState(false);
+
+  const { createExpense, fetchExpenses, expenses, deleteExpense, updateExpense } = useExpenses();
+
+  const userId = 'user-id-123'; // Simulação de ID de usuário, deve ser dinâmico na aplicação real
+
+  const categories = ['Ganhos', 'Perdas', ...selectedCategories];
 
   const handleCreateExpense = async () => {
     try {
@@ -40,61 +42,184 @@ export default function ExpensesScreen() {
       const expenseId = await createExpense(
         newTaskTitle,
         amount,
-        'user-id-123', // Esse valor pode ser alterado para o ID do usuário real
-        date.toLocaleDateString('pt-BR'),
-        time.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-        selectedCategory, // Seleção da categoria (Ganhos ou Perdas)
+        userId,
+        new Date().toISOString().split('T')[0],
+        new Date().toISOString(),
+        selectedCategory,
       );
 
       alert(`Despesa criada com ID: ${expenseId}`);
-      setIsCreateVisible(false);  // Fechar modal após criar
+      setIsCreateVisible(false);
+      resetForm();
     } catch (err) {
-      if (err instanceof Error) {
-        alert('Erro ao criar despesa: ' + err.message);
-      } else {
-        alert('Erro ao criar despesa: ' + String(err));
-      }
+      alert('Erro ao criar despesa: ' + (err instanceof Error ? err.message : String(err)));
     }
+  };
+
+  const handleUpdateExpense = async () => {
+    try {
+      if (!currentExpense) return;
+
+      const updatedExpense = {
+        ...currentExpense,
+        name: newTaskTitle,
+        amount: parseFloat(expenseValue),
+        type: selectedCategory,
+      };
+
+      await updateExpense(currentExpense.id, updatedExpense);
+      alert('Despesa atualizada com sucesso.');
+      setIsEditVisible(false);
+      setCurrentExpense(null);
+      resetForm();
+    } catch (err) {
+      alert('Erro ao atualizar despesa: ' + (err instanceof Error ? err.message : String(err)));
+    }
+  };
+
+  const resetForm = () => {
+    setNewTaskTitle('');
+    setExpenseValue('');
+    setTaskContent('');
+    setSelectedCategory('');
+  };
+
+  const openCreateModal = () => {
+    resetForm();
+    setCurrentExpense(null);
+    setIsCreateVisible(true);
+  };
+
+  const openEditModal = (expense: any) => {
+    setNewTaskTitle(expense.name);
+    setExpenseValue(String(expense.amount));
+    setTaskContent('');
+    setSelectedCategory(expense.type);
+    setCurrentExpense(expense);
+    setIsEditVisible(true);
   };
 
   const handleCategorySelection = (category: string) => {
     setSelectedCategory(category);
-    setIsCreateVisible(true); // Fechar o modal de criação ao selecionar categoria
   };
 
   const handleAddCategory = () => {
-    // Lógica para adicionar a nova categoria
     if (!newCategoryName.trim()) {
       alert('Nome da categoria não pode ser vazio.');
       return;
     }
-
     setSelectedCategories(prev => [...prev, newCategoryName]);
     setIsCategoryModalVisible(false);
     setNewCategoryName('');
     setNewCategoryColor('#FF6347');
   };
 
-  // Função para retornar a cor da categoria
   const getCategoryColor = (category: string) => {
-    if (category === 'Ganhos') return '#34D399'; // Cor para Ganhos
-    if (category === 'Perdas') return '#FF6347'; // Cor para Perdas
-    return '#FF6347'; // Cor padrão para outras categorias
+    if (category === 'Ganhos') return '#34D399';
+    if (category === 'Perdas') return '#FF6347';
+    return newCategoryColor; // ou pode mapear uma cor fixa para cada nova categoria
   };
 
-  const handleDeleteCategory = (category: string) => {
-    if (category === 'Ganhos' || category === 'Perdas') {
-      alert('Não é permitido excluir a categoria ' + category);
-      return;
+  const handleDeleteExpense = async (expenseId: string) => {
+    try {
+      await deleteExpense(expenseId);
+      alert('Despesa excluída com sucesso.');
+    } catch (err) {
+      alert('Erro ao excluir despesa: ' + (err instanceof Error ? err.message : String(err)));
     }
+  };
 
-    setSelectedCategories(prev => prev.filter(item => item !== category));
+  useEffect(() => {
+    const totalGains = expenses
+      .filter(exp => exp.type === 'Ganhos')
+      .reduce((sum, exp) => sum + Number(exp.amount), 0);
+
+    const totalLosses = expenses
+      .filter(exp => exp.type === 'Perdas')
+      .reduce((sum, exp) => sum + Number(exp.amount), 0);
+
+    setGains(totalGains);
+    setLosses(totalLosses);
+  }, [expenses]);
+
+  useEffect(() => {
+    fetchExpenses(userId).catch(err => console.error('Erro ao buscar despesas: ', err));
+  }, [expenses]);
+  
+  const renderModal = (isVisible: boolean, onClose: () => void, onSave: () => void) => (
+    <Modal transparent animationType="slide" visible={isVisible} onRequestClose={onClose}>
+      <View className="flex-1 py-[50px] bg-zinc-800">
+        <View className="flex-row justify-between items-center px-4 py-4">
+          <TouchableOpacity onPress={onClose} className="items-center flex flex-row">
+            <Ionicons name="chevron-back" size={28} color="white" />
+            <Text className="text-gray-300 text-lg">Voltar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={onSave}>
+            <Text className="text-rose-400 text-lg mr-4 font-semibold">Salvar</Text>
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView className="flex-1 py-4 px-8">
+          <TextInput
+            placeholder="Título"
+            placeholderTextColor="#a1a1aa"
+            value={newTaskTitle}
+            onChangeText={setNewTaskTitle}
+            className="text-gray-300 text-3xl font-semibold mb-4"
+            multiline
+          />
+
+          <View className="flex flex-row flex-wrap gap-2 mb-4">
+            {categories.map((category) => {
+              const isSelected = selectedCategory === category;
+              const color = getCategoryColor(category);
+              return (
+                <TouchableOpacity
+                  key={category}
+                  onPress={() => setSelectedCategory(category)}
+                  className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${isSelected ? 'bg-rose-400' : 'bg-neutral-700'}`}
+                >
+                  <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color }} />
+                  <Text className={`${isSelected ? 'text-black' : 'text-white'}`}>{category}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          <View className='flex flex-row items-center mt-4 mb-4'>
+            <Text className='font-sans text-2xl text-white'>R$</Text>
+            <TextInput
+              placeholder="00,00"
+              placeholderTextColor="#a1a1aa"
+              className="text-white text-2xl font-sans"
+              keyboardType="numeric"
+              value={expenseValue}
+              onChangeText={setExpenseValue}
+            />
+          </View>
+
+          <TextInput
+            placeholder="Descrição da tarefa"
+            placeholderTextColor="#a1a1aa"
+            className="text-gray-300 text-lg"
+            multiline
+            value={taskContent}
+            onChangeText={setTaskContent}
+            style={{ minHeight: 150, textAlignVertical: 'top' }}
+          />
+        </ScrollView>
+      </View>
+    </Modal>
+  );
+
+  const currencyFormat = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
   };
 
   return (
     <SafeAreaView className="flex-1 bg-zinc-800">
       <TouchableOpacity
-        onPress={() => setIsCreateVisible(true)}
+        onPress={openCreateModal}
         className="w-[50px] h-[50px] absolute bottom-6 right-6 z-20 rounded-full bg-rose-400 items-center justify-center shadow-lg"
         style={{
           shadowColor: "#000",
@@ -109,19 +234,16 @@ export default function ExpensesScreen() {
 
       <View className="flex flex-row items-center justify-between px-6 mt-[60px] mb-6">
         <Text className="text-3xl text-white font-medium font-sans">Expenses</Text>
-
         <View className='flex flex-row items-center gap-4 border border-neutral-700 rounded-lg px-3 py-1'>
-          <Text className='text-[#FF6347] text-lg font-sans'>R$ {losses.toFixed(2)} </Text>
-          <Text className='text-emerald-400 text-lg font-sans'>R$ {gains.toFixed(2)}</Text>
+          <Text className='text-[#FF6347] text-lg font-sans'>{currencyFormat(losses)}</Text>
+          <Text className='text-emerald-400 text-lg font-sans'>{currencyFormat(gains)}</Text>
         </View>
       </View>
 
-      <View className=' flex flex-row flex-wrap gap-2 px-6 pb-3'>
-
+      <View className='flex flex-row flex-wrap gap-2 px-6 pb-3'>
         {categories.map((category) => {
           const isSelected = selectedCategory === category;
           const color = getCategoryColor(category);
-
           return (
             <TouchableOpacity
               key={category}
@@ -134,7 +256,6 @@ export default function ExpensesScreen() {
           );
         })}
 
-        {/* Botão para adicionar nova categoria */}
         <TouchableOpacity
           onPress={() => setIsCategoryModalVisible(true)}
           className="flex-row items-center gap-2 px-3 py-1 rounded-xl bg-neutral-700"
@@ -146,27 +267,24 @@ export default function ExpensesScreen() {
 
       <SwipeListView
         data={expenses}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => String(item.id)}
         renderItem={({ item }) => (
           <View className="w-full flex flex-col justify-center px-6 h-[90px] pb-4 border-b border-neutral-700 bg-zinc-800">
             <View className="flex flex-row justify-between">
-              <TouchableOpacity className="flex flex-col gap-1 mt-1">
-                <Text className="text-xl font-sans font-medium text-gray-300">
-                  {item.name}
-                </Text>
+              <TouchableOpacity className="flex flex-col gap-1 mt-1" onPress={() => openEditModal(item)}>
+                <Text className="text-xl font-sans font-medium text-gray-300">{item.name}</Text>
                 <Text className="text-neutral-400 text-sm mt-1 font-sans">
                   {new Date(item.date ?? '').toLocaleDateString('pt-BR')} - {new Date(item.time ?? '').toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                 </Text>
               </TouchableOpacity>
-
-              <Text className='font-sans text-emerald-400 text-2xl mt-6'> R$ {item.amount}</Text>
+              <Text className='font-sans text-emerald-400 text-2xl mt-6'>{currencyFormat(Number(item.amount))}</Text>
             </View>
           </View>
         )}
         renderHiddenItem={({ item }) => (
           <View className="w-full flex flex-col justify-center px-6 border-b border-neutral-700 bg-rose-500">
             <View className="flex flex-row justify-start items-center h-full">
-              <TouchableOpacity className="p-3">
+              <TouchableOpacity className="p-3" onPress={() => handleDeleteExpense(item.id)}>
                 <Ionicons name="trash" size={24} color="white" />
               </TouchableOpacity>
             </View>
@@ -178,83 +296,9 @@ export default function ExpensesScreen() {
         disableLeftSwipe={true}
       />
 
-      {/* Modal de criação de despesa */}
-      <Modal
-        transparent
-        animationType="slide"
-        visible={isCreateVisible}
-        onRequestClose={() => setIsCreateVisible(false)}
-      >
-        <View className="flex-1 py-[50px] bg-zinc-800">
-          <View className="flex-row justify-between items-center px-4 py-4">
-            <TouchableOpacity
-              className="items-center flex flex-row"
-              onPress={() => setIsCreateVisible(false)}
-            >
-              <Ionicons name="chevron-back" size={28} color="white" />
-              <Text className="text-gray-300 text-lg"> Voltar</Text>
-            </TouchableOpacity>
+      {renderModal(isCreateVisible, () => setIsCreateVisible(false), handleCreateExpense)}
+      {renderModal(isEditVisible, () => setIsEditVisible(false), handleUpdateExpense)}
 
-            <TouchableOpacity onPress={handleCreateExpense}>
-              <Text className="text-rose-400 text-lg mr-4 font-semibold">Salvar</Text>
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView className="flex-1 py-4 px-8">
-            <TextInput
-              placeholder="Título"
-              placeholderTextColor="#a1a1aa"
-              value={newTaskTitle}
-              onChangeText={setNewTaskTitle}
-              className="text-gray-300 text-3xl font-semibold mb-4"
-              multiline
-            />
-
-            {/* Modal para selecionar a categoria */}
-            <View className="flex flex-row flex-wrap gap-2 mb-4">
-              {categories.map((category) => {
-                const isSelected = selectedCategory === category;
-                const color = getCategoryColor(category);
-
-                return (
-                  <TouchableOpacity
-                    key={category}
-                    onPress={() => setSelectedCategory(category)}
-                    className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${isSelected ? 'bg-rose-400' : 'bg-neutral-700'}`}
-                  >
-                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color }} />
-                    <Text className={`${isSelected ? 'text-black' : 'text-white'}`}>{category}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            <View className='flex flex-row items-center mt-4 mb-4'>
-              <Text className='font-sans text-2xl text-white'> R$ </Text>
-              <TextInput
-                placeholder="00,00"
-                placeholderTextColor="#a1a1aa"
-                className="text-white text-2xl font-sans"
-                keyboardType="numeric"
-                value={expenseValue}
-                onChangeText={setExpenseValue}
-              />
-            </View>
-
-            <TextInput
-              placeholder="Descrição da tarefa"
-              placeholderTextColor="#a1a1aa"
-              className="text-gray-300 text-lg"
-              multiline
-              value={taskContent}
-              onChangeText={setTaskContent}
-              style={{ minHeight: 150, textAlignVertical: 'top' }}
-            />
-          </ScrollView>
-        </View>
-      </Modal>
-
-      {/* Modal para adicionar nova categoria */}
       <Modal
         transparent
         animationType="fade"
@@ -295,16 +339,12 @@ export default function ExpensesScreen() {
               <Text className="text-black font-semibold font-sans">Adicionar Categoria</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              onPress={() => setIsCategoryModalVisible(false)}
-              className="mt-4 p-2"
-            >
+            <TouchableOpacity onPress={() => setIsCategoryModalVisible(false)} className="mt-4 p-2">
               <Text className="text-neutral-400 text-center font-sans">Cancelar</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
-
     </SafeAreaView>
   );
 }
