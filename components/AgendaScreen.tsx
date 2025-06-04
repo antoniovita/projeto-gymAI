@@ -312,7 +312,7 @@ const handleDeleteCategory = () => {
           <View className="flex flex-row items-center gap-[20px]">
 
             <TouchableOpacity onPress={showDatePickerDateFilter}>
-              <Text className="text-[#F25C5C] text-base border rounded-lg px-3 py-1 font-sans border-[#F25C5C]">
+              <Text className="text-[#F25C5C] text-base border rounded-lg px-3 py-1 font-sans border-neutral-700">
                 {format(dateFilter, 'dd/MM/yyyy')}
               </Text>
             </TouchableOpacity>
@@ -329,7 +329,7 @@ const handleDeleteCategory = () => {
               date={dateFilter}
               onConfirm={handleConfirm}
               onCancel={hideDatePicker}
-              themeVariant="light" // ou 'dark' se quiser forçar
+              themeVariant="light"
               locale="pt-BR"
             />
           </View>
