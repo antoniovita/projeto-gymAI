@@ -27,7 +27,7 @@ export default function ExpensesScreen() {
 
   const { createExpense, fetchExpenses, expenses, deleteExpense, updateExpense } = useExpenses();
 
-  const userId = 'user-id-123'; // Simulação de ID de usuário, deve ser dinâmico na aplicação real
+  const userId = 'user-id-123';
 
   const categories = ['Ganhos', 'Perdas', ...selectedCategories];
 
@@ -48,11 +48,9 @@ export default function ExpensesScreen() {
         selectedCategory,
       );
 
-      alert(`Despesa criada com ID: ${expenseId}`);
       setIsCreateVisible(false);
       resetForm();
     } catch (err) {
-      alert('Erro ao criar despesa: ' + (err instanceof Error ? err.message : String(err)));
     }
   };
 
@@ -68,7 +66,6 @@ export default function ExpensesScreen() {
       };
 
       await updateExpense(currentExpense.id, updatedExpense);
-      alert('Despesa atualizada com sucesso.');
       setIsEditVisible(false);
       setCurrentExpense(null);
       resetForm();
@@ -117,15 +114,13 @@ export default function ExpensesScreen() {
   const getCategoryColor = (category: string) => {
     if (category === 'Ganhos') return '#34D399';
     if (category === 'Perdas') return '#FF6347';
-    return newCategoryColor; // ou pode mapear uma cor fixa para cada nova categoria
+    return newCategoryColor;
   };
 
   const handleDeleteExpense = async (expenseId: string) => {
     try {
       await deleteExpense(expenseId);
-      alert('Despesa excluída com sucesso.');
     } catch (err) {
-      alert('Erro ao excluir despesa: ' + (err instanceof Error ? err.message : String(err)));
     }
   };
 
