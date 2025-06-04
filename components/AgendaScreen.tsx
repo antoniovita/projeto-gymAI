@@ -241,7 +241,12 @@ const handleDeleteCategory = () => {
     const parsedCategories = task.type ? task.type.split(', ').map((cat: string) => cat.trim()) : [];
     setSelectedCategories(parsedCategories);
     setDate(new Date(task.date));
-    setTime(new Date(task.time));
+    const [hours, minutes] = task.time.split(':');
+    const today = new Date();
+    today.setHours(parseInt(hours));
+    today.setMinutes(parseInt(minutes));
+    today.setSeconds(0);
+    setTime(today);
     setIsCreateVisible(true);
   };
 

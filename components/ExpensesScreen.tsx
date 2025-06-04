@@ -186,7 +186,7 @@ export default function ExpensesScreen() {
             })}
           </View>
 
-          <View className='flex flex-row items-center mt-4 mb-4'>
+          <View className='flex flex-row items-center mt-4 gap-2 mb-4'>
             <Text className='font-sans text-2xl text-white'>R$</Text>
             <TextInput
               placeholder="00,00"
