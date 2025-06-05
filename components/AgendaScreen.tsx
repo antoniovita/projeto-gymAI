@@ -453,6 +453,65 @@ const handleDeleteCategory = () => {
                   </TouchableOpacity>
                 );
               })}
+
+        <TouchableOpacity
+          onPress={() => setIsCategoryModalVisible(true)}
+          className="flex-row items-center gap-2 px-3 py-1 rounded-xl bg-neutral-700"
+        >
+          <Ionicons name="add" size={16} color="white" />
+          <Text className="text-white text-sm font-sans">Nova Categoria</Text>
+        </TouchableOpacity>
+
+        <Modal
+                    transparent
+                    animationType="fade"
+                    visible={isCategoryModalVisible}
+                    onRequestClose={() => setIsCategoryModalVisible(false)}
+                  >
+                    <View className="flex-1 justify-center items-center bg-black/90 px-8">
+                      <View className="bg-zinc-800 p-6 rounded-2xl w-full">
+
+                        <TextInput
+                          placeholder="Nome da categoria"
+                          placeholderTextColor="#a1a1aa"
+                          value={newCategoryName}
+                          onChangeText={setNewCategoryName}
+                          className="text-white font-sans font-3xl p-2 rounded mb-4"
+                        />
+
+                        <View className="flex flex-row flex-wrap gap-2 mb-4">
+                          {colorOptions.map((color) => (
+                            <TouchableOpacity
+                              key={color}
+                              onPress={() => setNewCategoryColor(color)}
+                              style={{
+                                backgroundColor: color,
+                                width: 40,
+                                height: 40,
+                                borderRadius: 20,
+                                borderWidth: newCategoryColor === color ? 3 : 1,
+                                borderColor: newCategoryColor === color ? '#fff' : '#333',
+                              }}
+                            />
+                          ))}
+                        </View>
+
+                        <TouchableOpacity
+                          onPress={handleAddCategory}
+                          className="bg-rose-400 p-3 mt-3 rounded-xl items-center"
+                        >
+                          <Text className="text-black font-semibold font-sans">Adicionar Categoria</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                          onPress={() => setIsCategoryModalVisible(false)}
+                          className="mt-4 p-2"
+                        >
+                          <Text className="text-neutral-400 text-center font-sans">Cancelar</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </Modal>
       </View>
 
       <SwipeListView
@@ -607,66 +666,7 @@ const handleDeleteCategory = () => {
                   </TouchableOpacity>
                 );
               })}
-
-              <TouchableOpacity
-                onPress={() => setIsCategoryModalVisible(true)}
-                className="flex-row items-center gap-2 px-3 py-1 rounded-xl bg-neutral-700"
-              >
-                <Ionicons name="add" size={16} color="white" />
-                <Text className="text-white text-sm font-sans">Nova Categoria</Text>
-              </TouchableOpacity>
             </View>
-
-                  <Modal
-                    transparent
-                    animationType="fade"
-                    visible={isCategoryModalVisible}
-                    onRequestClose={() => setIsCategoryModalVisible(false)}
-                  >
-                    <View className="flex-1 justify-center items-center bg-black/90 px-8">
-                      <View className="bg-zinc-800 p-6 rounded-2xl w-full">
-
-                        <TextInput
-                          placeholder="Nome da categoria"
-                          placeholderTextColor="#a1a1aa"
-                          value={newCategoryName}
-                          onChangeText={setNewCategoryName}
-                          className="text-white font-sans font-3xl p-2 rounded mb-4"
-                        />
-
-                        <View className="flex flex-row flex-wrap gap-2 mb-4">
-                          {colorOptions.map((color) => (
-                            <TouchableOpacity
-                              key={color}
-                              onPress={() => setNewCategoryColor(color)}
-                              style={{
-                                backgroundColor: color,
-                                width: 40,
-                                height: 40,
-                                borderRadius: 20,
-                                borderWidth: newCategoryColor === color ? 3 : 1,
-                                borderColor: newCategoryColor === color ? '#fff' : '#333',
-                              }}
-                            />
-                          ))}
-                        </View>
-
-                        <TouchableOpacity
-                          onPress={handleAddCategory}
-                          className="bg-rose-400 p-3 mt-3 rounded-xl items-center"
-                        >
-                          <Text className="text-black font-semibold font-sans">Adicionar Categoria</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                          onPress={() => setIsCategoryModalVisible(false)}
-                          className="mt-4 p-2"
-                        >
-                          <Text className="text-neutral-400 text-center font-sans">Cancelar</Text>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  </Modal>
 
             <TextInput
               placeholder="Descrição da tarefa"
