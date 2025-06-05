@@ -9,7 +9,7 @@ import { useExpenses } from '../hooks/useExpenses';
 
 export default function ExpensesScreen() {
   const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<{ name: string, color: string }[]>([]);
   const [taskContent, setTaskContent] = useState('');
   const [expenseValue, setExpenseValue] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -19,6 +19,13 @@ export default function ExpensesScreen() {
   const [colorOptions] = useState(['#FF6347', '#4CAF50', '#3B82F6', '#F59E0B']);
   const [gains, setGains] = useState(0);
   const [losses, setLosses] = useState(0);
+  const [filteredExpenses, setFilteredExpenses] = useState<any[]>([]);
+
+  const [showDeleteCategoryModal, setShowDeleteCategoryModal] = useState(false);
+  const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<{ name: string, color: string } | null>(null);
+
+
 
   const [currentExpense, setCurrentExpense] = useState<any>(null);
 
@@ -29,15 +36,22 @@ export default function ExpensesScreen() {
 
   const userId = 'user-id-123';
 
-  const categories = ['Ganhos', 'Perdas', ...selectedCategories];
-
+  const categories = [
+    { name: 'Ganhos', color: '#34D399' },
+    { name: 'Perdas', color: '#FF6347' },
+    ...selectedCategories
+  ];
+  
   const handleCreateExpense = async () => {
     try {
-      const amount = parseFloat(expenseValue);
+
+      const sanitizedValue = expenseValue.replace(',', '.').replace(/[^0-9.]/g, '');
+      const amount = parseFloat(sanitizedValue);
       if (isNaN(amount)) {
         alert("Valor inválido para despesa.");
         return;
       }
+      
 
       const expenseId = await createExpense(
         newTaskTitle,
@@ -54,17 +68,41 @@ export default function ExpensesScreen() {
     }
   };
 
+  const handleDeleteCategory = () => {
+    if (!categoryToDelete) return;
+  
+    setSelectedCategories(prev =>
+      prev.filter(cat => cat.name !== categoryToDelete.name)
+    );
+  
+    if (selectedCategory === categoryToDelete.name) {
+      setSelectedCategory('');
+    }
+  
+    setCategoryToDelete(null);
+    setShowConfirmDeleteModal(false);
+  };
+  
+
   const handleUpdateExpense = async () => {
     try {
       if (!currentExpense) return;
-
+  
+      const sanitizedValue = expenseValue.replace(',', '.').replace(/[^0-9.]/g, '');
+      const amount = parseFloat(sanitizedValue);
+  
+      if (isNaN(amount)) {
+        alert('Valor inválido para despesa.');
+        return;
+      }
+  
       const updatedExpense = {
         ...currentExpense,
         name: newTaskTitle,
-        amount: parseFloat(expenseValue),
+        amount,
         type: selectedCategory,
       };
-
+  
       await updateExpense(currentExpense.id, updatedExpense);
       setIsEditVisible(false);
       setCurrentExpense(null);
@@ -73,6 +111,7 @@ export default function ExpensesScreen() {
       alert('Erro ao atualizar despesa: ' + (err instanceof Error ? err.message : String(err)));
     }
   };
+  
 
   const resetForm = () => {
     setNewTaskTitle('');
@@ -96,26 +135,34 @@ export default function ExpensesScreen() {
     setIsEditVisible(true);
   };
 
-  const handleCategorySelection = (category: string) => {
-    setSelectedCategory(category);
+  const handleCategorySelection = (categoryName: string) => {
+    setSelectedCategory((prev) => (prev === categoryName ? '' : categoryName));
   };
+  
 
   const handleAddCategory = () => {
-    if (!newCategoryName.trim()) {
+    const trimmedName = newCategoryName.trim();
+  
+    if (!trimmedName) {
       alert('Nome da categoria não pode ser vazio.');
       return;
     }
-    setSelectedCategories(prev => [...prev, newCategoryName]);
+  
+    const alreadyExists = selectedCategories.some(
+      (cat) => cat.name.trim().toLowerCase() === trimmedName.toLowerCase()
+    );
+  
+    if (alreadyExists || ['Ganhos', 'Perdas'].includes(trimmedName)) {
+      alert('Essa categoria já existe.');
+      return;
+    }
+  
+    setSelectedCategories(prev => [...prev, { name: trimmedName, color: newCategoryColor }]);
     setIsCategoryModalVisible(false);
     setNewCategoryName('');
     setNewCategoryColor('#FF6347');
   };
-
-  const getCategoryColor = (category: string) => {
-    if (category === 'Ganhos') return '#34D399';
-    if (category === 'Perdas') return '#FF6347';
-    return newCategoryColor;
-  };
+  
 
   const handleDeleteExpense = async (expenseId: string) => {
     try {
@@ -140,6 +187,16 @@ export default function ExpensesScreen() {
   useEffect(() => {
     fetchExpenses(userId).catch(err => console.error('Erro ao buscar despesas: ', err));
   }, [expenses]);
+
+  useEffect(() => {
+    if (selectedCategory) {
+      const filtered = expenses.filter((exp) => exp.type === selectedCategory);
+      setFilteredExpenses(filtered);
+    } else {
+      setFilteredExpenses(expenses);
+    }
+  }, [selectedCategory, expenses]);
+  
   
   const renderModal = (isVisible: boolean, onClose: () => void, onSave: () => void) => (
     <Modal transparent animationType="slide" visible={isVisible} onRequestClose={onClose}>
@@ -165,20 +222,19 @@ export default function ExpensesScreen() {
           />
 
           <View className="flex flex-row flex-wrap gap-2 mb-4">
-            {categories.map((category) => {
-              const isSelected = selectedCategory === category;
-              const color = getCategoryColor(category);
-              return (
-                <TouchableOpacity
-                  key={category}
-                  onPress={() => setSelectedCategory(category)}
-                  className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${isSelected ? 'bg-rose-400' : 'bg-neutral-700'}`}
-                >
-                  <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color }} />
-                  <Text className={`${isSelected ? 'text-black' : 'text-white'}`}>{category}</Text>
-                </TouchableOpacity>
-              );
-            })}
+          {categories.map((category) => {
+            const isSelected = selectedCategory === category.name;
+            return (
+              <TouchableOpacity
+                key={category.name}
+                onPress={() => handleCategorySelection(category.name)}
+                className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${isSelected ? 'bg-rose-400' : 'bg-neutral-700'}`}
+              >
+                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: category.color }} />
+                <Text className={`${isSelected ? 'text-black' : 'text-white'}`}>{category.name}</Text>
+              </TouchableOpacity>
+            );
+          })}
           </View>
 
           <View className='flex flex-row items-center mt-4 gap-2 mb-4'>
@@ -227,29 +283,128 @@ export default function ExpensesScreen() {
         <Ionicons name="add" size={32} color="black" />
       </TouchableOpacity>
 
+
       <View className="flex flex-row items-center justify-between px-6 mt-[60px] mb-6">
         <Text className="text-3xl text-white font-medium font-sans">Expenses</Text>
         <View className='flex flex-row items-center gap-4 border border-neutral-700 rounded-lg px-3 py-1'>
           <Text className='text-[#FF6347] text-lg font-sans'>{currencyFormat(losses)}</Text>
           <Text className='text-emerald-400 text-lg font-sans'>{currencyFormat(gains)}</Text>
         </View>
+
+        <TouchableOpacity onPress={() => setShowDeleteCategoryModal(true)}>
+          <Ionicons name="options-outline" size={24} color="#F25C5C" />
+        </TouchableOpacity>
+
+    <Modal
+      transparent
+      animationType="fade"
+      visible={showDeleteCategoryModal}
+      onRequestClose={() => setShowDeleteCategoryModal(false)}
+    >
+      <View className="flex-1 bg-black/80 justify-center items-center px-6">
+        <View className="bg-zinc-800 rounded-2xl w-full max-h-[80%] p-4">
+          <ScrollView className="mb-4">
+            {categories.map((cat) => (
+              <View
+                key={cat.name}
+                className="flex-row justify-between items-center py-2 border-b border-neutral-700"
+              >
+                <View className="flex-row items-center gap-3">
+                  <View
+                    style={{
+                      width: 15,
+                      height: 15,
+                      borderRadius: 7.5,
+                      backgroundColor: cat.color,
+                    }}
+                  />
+                  <Text className="text-white font-sans text-lg">{cat.name}</Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => {
+                    if (cat.name !== "Ganhos" && cat.name !== "Perdas") {
+                      setCategoryToDelete(cat);
+                      setShowConfirmDeleteModal(true);
+                    }
+                  }}
+                  className={`p-2 ${cat.name === "Ganhos" || cat.name === "Perdas" ? "bg-yellow-300" : "bg-rose-400"} rounded-full`}
+                >
+                  {cat.name === "Ganhos" || cat.name === "Perdas" ? (
+                    <Ionicons name="warning" size={20} color="black" />
+                  ) : (
+                    <Ionicons name="trash" size={20} color="red" />
+                  )}
+                </TouchableOpacity>
+              </View>
+            ))}
+          </ScrollView>
+
+          <TouchableOpacity
+            onPress={() => setShowDeleteCategoryModal(false)}
+            className="bg-neutral-700 rounded-xl p-3 items-center"
+          >
+            <Text className="text-white text-lg font-sans font-semibold">Fechar</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+    <Modal
+      transparent
+      animationType="fade"
+      visible={showConfirmDeleteModal}
+      onRequestClose={() => setShowConfirmDeleteModal(false)}
+    >
+      <View className="flex-1 bg-black/80 justify-center items-center px-8">
+        <View className="bg-zinc-800 w-full rounded-2xl p-6 items-center shadow-lg">
+          <Ionicons name="alert-circle" size={48} color="#F25C5C" className="mb-4" />
+
+          <Text className="text-white text-xl font-semibold mb-2 font-sans text-center">
+            Apagar Categoria
+          </Text>
+
+          <Text className="text-neutral-400 font-sans text-center mb-6">
+            {categoryToDelete
+              ? `Tem certeza que deseja apagar a categoria "${categoryToDelete.name}"? Esta ação não pode ser desfeita.`
+              : 'Tem certeza que deseja apagar esta categoria? Esta ação não pode ser desfeita.'}
+          </Text>
+
+          <View className="flex-row w-full justify-between gap-3">
+            <TouchableOpacity
+              onPress={() => setShowConfirmDeleteModal(false)}
+              className="flex-1 bg-neutral-700 py-3 rounded-xl items-center"
+            >
+              <Text className="text-white font-semibold font-sans">Cancelar</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={handleDeleteCategory}
+              className="flex-1 bg-rose-500 py-3 rounded-xl items-center"
+            >
+              <Text className="text-black font-sans font-semibold">Apagar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+    </Modal>
+
+
       </View>
 
       <View className='flex flex-row flex-wrap gap-2 px-6 pb-3'>
-        {categories.map((category) => {
-          const isSelected = selectedCategory === category;
-          const color = getCategoryColor(category);
-          return (
-            <TouchableOpacity
-              key={category}
-              onPress={() => handleCategorySelection(category)}
-              className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${isSelected ? 'bg-rose-400' : 'bg-neutral-700'}`}
-            >
-              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color }} />
-              <Text className={`${isSelected ? 'text-black' : 'text-white'}`}>{category}</Text>
-            </TouchableOpacity>
-          );
-        })}
+      {categories.map((category) => {
+        const isSelected = selectedCategory === category.name;
+        return (
+          <TouchableOpacity
+            key={category.name}
+            onPress={() => handleCategorySelection(category.name)}
+            className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${isSelected ? 'bg-rose-400' : 'bg-neutral-700'}`}
+          >
+            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: category.color }} />
+            <Text className={`${isSelected ? 'text-black' : 'text-white'}`}>{category.name}</Text>
+          </TouchableOpacity>
+        );
+      })}
 
         <TouchableOpacity
           onPress={() => setIsCategoryModalVisible(true)}
@@ -261,7 +416,7 @@ export default function ExpensesScreen() {
       </View>
 
       <SwipeListView
-        data={expenses}
+        data={filteredExpenses}
         keyExtractor={(item) => String(item.id)}
         renderItem={({ item }) => (
           <View className="w-full flex flex-col justify-center px-6 h-[90px] pb-4 border-b border-neutral-700 bg-zinc-800">
@@ -272,7 +427,7 @@ export default function ExpensesScreen() {
                   {new Date(item.date ?? '').toLocaleDateString('pt-BR')} - {new Date(item.time ?? '').toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                 </Text>
               </TouchableOpacity>
-              <Text className='font-sans text-emerald-400 text-2xl mt-6'>{currencyFormat(Number(item.amount))}</Text>
+              <Text className={`font-sans ${item.type == "Ganhos" ? "text-emerald-400" : "text-[#FF6347]"} text-2xl mt-6`}>{currencyFormat(Number(item.amount))}</Text>
             </View>
           </View>
         )}
