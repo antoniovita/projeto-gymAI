@@ -6,6 +6,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { SwipeListView } from 'react-native-swipe-list-view';
 import { useExpenses } from '../hooks/useExpenses';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function ExpensesScreen() {
   const [newTaskTitle, setNewTaskTitle] = useState('');
@@ -27,6 +28,7 @@ export default function ExpensesScreen() {
 
 
 
+
   const [currentExpense, setCurrentExpense] = useState<any>(null);
 
   const [isCreateVisible, setIsCreateVisible] = useState(false);
@@ -41,6 +43,28 @@ export default function ExpensesScreen() {
     { name: 'Perdas', color: '#FF6347' },
     ...selectedCategories
   ];
+
+  const CATEGORIES_KEY = '@categories';
+
+  const saveCategoriesToStorage = async (categories: { name: string, color: string }[]) => {
+    try {
+      await AsyncStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories));
+    } catch (error) {
+      console.error('Erro ao salvar categorias:', error);
+    }
+  };
+
+  const loadCategoriesFromStorage = async () => {
+    try {
+      const storedCategories = await AsyncStorage.getItem(CATEGORIES_KEY);
+      if (storedCategories) {
+        setSelectedCategories(JSON.parse(storedCategories));
+      }
+    } catch (error) {
+      console.error('Erro ao carregar categorias:', error);
+    }
+  };
+
   
   const handleCreateExpense = async () => {
     try {
@@ -71,9 +95,12 @@ export default function ExpensesScreen() {
   const handleDeleteCategory = () => {
     if (!categoryToDelete) return;
   
-    setSelectedCategories(prev =>
-      prev.filter(cat => cat.name !== categoryToDelete.name)
+    const updatedCategories = selectedCategories.filter(
+      cat => cat.name !== categoryToDelete.name
     );
+  
+    setSelectedCategories(updatedCategories);
+    saveCategoriesToStorage(updatedCategories);
   
     if (selectedCategory === categoryToDelete.name) {
       setSelectedCategory('');
@@ -82,6 +109,11 @@ export default function ExpensesScreen() {
     setCategoryToDelete(null);
     setShowConfirmDeleteModal(false);
   };
+
+  useEffect(() => {
+    loadCategoriesFromStorage();
+  }, []);
+  
   
 
   const handleUpdateExpense = async () => {
@@ -157,11 +189,16 @@ export default function ExpensesScreen() {
       return;
     }
   
-    setSelectedCategories(prev => [...prev, { name: trimmedName, color: newCategoryColor }]);
+    const updatedCategories = [...selectedCategories, { name: trimmedName, color: newCategoryColor }];
+  
+    setSelectedCategories(updatedCategories);
+    saveCategoriesToStorage(updatedCategories);
+  
     setIsCategoryModalVisible(false);
     setNewCategoryName('');
     setNewCategoryColor('#FF6347');
   };
+  
   
 
   const handleDeleteExpense = async (expenseId: string) => {
@@ -327,10 +364,10 @@ export default function ExpensesScreen() {
                       setShowConfirmDeleteModal(true);
                     }
                   }}
-                  className={`p-2 ${cat.name === "Ganhos" || cat.name === "Perdas" ? "bg-yellow-300" : "bg-rose-400"} rounded-full`}
+                  className={`p-2 bg-rose-200 rounded-full`}
                 >
                   {cat.name === "Ganhos" || cat.name === "Perdas" ? (
-                    <Ionicons name="warning" size={20} color="black" />
+                    <Ionicons name="ban" size={20} color="red" />
                   ) : (
                     <Ionicons name="trash" size={20} color="red" />
                   )}

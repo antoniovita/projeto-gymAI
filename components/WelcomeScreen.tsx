@@ -199,7 +199,7 @@ export default function WelcomeScreen() {
             <Text className="text-neutral-400 font-sans text-[15px]">• 3 usos por dia</Text>
             <Text className="text-neutral-400 font-sans text-[15px]">• Sem suporte prioritário</Text>
           </View>
-          <Text className="text-white font-sans text-xl mt-4">R$ 0,00</Text>
+          <Text className="text-white font-sans text-xl mt-4 mb-7">R$ 0,00</Text>
         </TouchableOpacity>
 
         {/* Plano Premium */}
