@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView, SafeAreaView,
   Modal, TextInput,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SwipeListView } from 'react-native-swipe-list-view';
@@ -200,13 +201,30 @@ export default function ExpensesScreen() {
   };
   
   
-
   const handleDeleteExpense = async (expenseId: string) => {
-    try {
-      await deleteExpense(expenseId);
-    } catch (err) {
-    }
+    Alert.alert(
+      'Excluir despesa',
+      'Tem certeza que deseja excluir esta despesa?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteExpense(expenseId);
+              await fetchExpenses(userId); // (caso esteja usando essa função de atualização)
+            } catch (err) {
+              console.error(err);
+              Alert.alert('Erro', 'Não foi possível excluir a despesa.');
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
+  
 
   useEffect(() => {
     const totalGains = expenses

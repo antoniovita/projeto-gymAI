@@ -22,7 +22,7 @@ export default function WelcomeScreen() {
   const [pin, setPin] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [subscriptionModalVisible, setSubscriptionModalVisible] = useState(false);
-
+  const [selectedPlan, setSelectedPlan] = useState<'Free' | 'Premium' | null>(null);
   const CELL_COUNT = 6;
   const ref = useBlurOnFulfill({ value: pin, cellCount: CELL_COUNT });
   const [props, getCellOnLayoutHandler] = useClearByFocusCell({ value: pin, setValue: setPin });
@@ -178,76 +178,76 @@ export default function WelcomeScreen() {
               <Ionicons name="chevron-forward-outline" size={20} color="white" />
             </TouchableOpacity>
 
-
             <Modal visible={subscriptionModalVisible} transparent={true} animationType="slide">
-  <View className="flex-1 justify-center items-center bg-neutral-800">
-    <View className="flex h-screen z-20 mt-[300px]">
-      <Text className="text-white font-sans text-2xl mb-4 text-center">Escolha seu plano</Text>
+                <View className="flex-1 justify-center items-center bg-neutral-800">
+                  <View className="flex h-screen z-20 mt-[300px]">
+                    <Text className="text-white font-sans text-2xl mb-4 text-center">Escolha seu plano</Text>
 
-      <View className="flex flex-row gap-4 items-center mt-[50px] justify-center">
-        {/* Plano Free */}
-        <TouchableOpacity 
-          className="bg-neutral-800 w-[170px] h-[370px] p-5 flex flex-col rounded-2xl justify-between items-start "
-          onPress={() => {
-            setSubscriptionModalVisible(false);
-            navigation.navigate('MainTabs', { screen: 'Home', params: { userName: name, pin, plan: 'Free' } });
-          }}
-        >
-          <View className='flex flex-col gap-3'>
-            <Text className="text-white font-sans text-2xl mb-3">Free</Text>
-            <Text className="text-neutral-400 font-sans text-[15px]">• Acesso limitado</Text>
-            <Text className="text-neutral-400 font-sans text-[15px]">• 3 usos por dia</Text>
-            <Text className="text-neutral-400 font-sans text-[15px]">• Sem suporte prioritário</Text>
-          </View>
-          <Text className="text-white font-sans text-xl mt-4 mb-7">R$ 0,00</Text>
-        </TouchableOpacity>
+                    <View className="flex flex-row gap-4 items-center mt-[50px] justify-center">
+                      {/* Plano Free */}
+                      <TouchableOpacity
+                        className={`w-[170px] h-[370px] p-5 flex flex-col rounded-2xl justify-between items-start ${
+                          selectedPlan === 'Free' ? 'border-rose-400 border-[0.5px]' : ''
+                        } bg-neutral-800`}
+                        onPress={() => setSelectedPlan('Free')}
+                      >
+                        <View className='flex flex-col gap-3'>
+                          <Text className="text-white font-sans text-2xl mb-3">Free</Text>
+                          <Text className="text-neutral-400 font-sans text-[15px]">• Acesso limitado</Text>
+                          <Text className="text-neutral-400 font-sans text-[15px]">• 3 usos por dia</Text>
+                          <Text className="text-neutral-400 font-sans text-[15px]">• Sem suporte prioritário</Text>
+                        </View>
+                        <Text className="text-white font-sans text-xl mt-4 mb-7">R$ 0,00</Text>
+                      </TouchableOpacity>
 
-        {/* Plano Premium */}
-        <TouchableOpacity 
-          className="bg-neutral-800 w-[170px] h-[370px] p-5 flex flex-col rounded-2xl justify-between items-start"
-          onPress={() => {
-            setSubscriptionModalVisible(false);
-          }}
-        >
-          <View>
-            <Text className="text-white font-sans text-2xl mb-3">Premium</Text>
-            <Text className="text-neutral-400 font-sans text-sm">• Uso ilimitado</Text>
-            <Text className="text-neutral-400 font-sans text-sm">• Suporte prioritário</Text>
-            <Text className="text-neutral-400 font-sans text-sm">• Novas funções exclusivas</Text>
-          </View>
+                      {/* Plano Premium */}
+                      <TouchableOpacity
+                        className={`w-[170px] h-[370px] p-5 flex flex-col rounded-2xl justify-between items-start ${
+                          selectedPlan === 'Premium' ? 'border-rose-400 border-[0.5px]' : ''
+                        } bg-neutral-800`}
+                        onPress={() => setSelectedPlan('Premium')}
+                      >
+                        <View>
+                          <Text className="text-white font-sans text-2xl mb-3">Premium</Text>
+                          <Text className="text-neutral-400 font-sans text-sm">• Uso ilimitado</Text>
+                          <Text className="text-neutral-400 font-sans text-sm">• Suporte prioritário</Text>
+                          <Text className="text-neutral-400 font-sans text-sm">• Novas funções exclusivas</Text>
+                        </View>
 
-          <View>
-            <Text className="text-white font-sans text-xl mt-4">R$ 9,90/mês</Text>
-            <View className="flex flex-row items-center gap-2 mt-2">
-              <Ionicons name="checkmark-circle" size={20} color="#f43f5e" />
-              <Text className="text-white font-sans text-sm">Recomendado</Text>
-            </View>
-          </View>
-        </TouchableOpacity>
-      </View>
-    </View>
+                        <View>
+                          <Text className="text-white font-sans text-xl mt-4">R$ 9,90/mês</Text>
+                          <View className="flex flex-row items-center gap-2 mt-2">
+                            <Ionicons name="checkmark-circle" size={20} color="#f43f5e" />
+                            <Text className="text-white font-sans text-sm">Recomendado</Text>
+                          </View>
+                        </View>
+                      </TouchableOpacity>
+                    </View>
 
-    <MotiView
-      from={{ scale: 4 }}
-      animate={{ scale: 2 }}
-      transition={{
-        loop: true,
-        type: 'timing',
-        duration: 3000,
-        easing: Easing.inOut(Easing.ease),
-        repeatReverse: true,
-      }}
-      className="absolute w-full h-full"
-    >
-      <LinearGradient
-        colors={['#000000', '#1f1f1f', '#f43f5e']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={{ flex: 1, width: '100%', height: '100%', opacity: 1 }}
-      />
-    </MotiView>
-  </View>
-</Modal>
+
+                  </View>
+
+                  <MotiView
+                    from={{ scale: 4 }}
+                    animate={{ scale: 2 }}
+                    transition={{
+                      loop: true,
+                      type: 'timing',
+                      duration: 3000,
+                      easing: Easing.inOut(Easing.ease),
+                      repeatReverse: true,
+                    }}
+                    className="absolute w-full h-full"
+                  >
+                    <LinearGradient
+                      colors={['#000000', '#1f1f1f', '#f43f5e']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={{ flex: 1, width: '100%', height: '100%', opacity: 1 }}
+                    />
+                  </MotiView>
+                </View>
+              </Modal>
 
 
 

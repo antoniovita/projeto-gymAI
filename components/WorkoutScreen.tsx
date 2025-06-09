@@ -2,15 +2,16 @@ import {
   View,
   Text,
   TouchableOpacity,
-  ScrollView,
   SafeAreaView,
   Modal,
   Pressable,
   TextInput,
   Alert,
+  ScrollView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useState, useEffect } from 'react';
+import { SwipeListView } from 'react-native-swipe-list-view';
 import { useWorkout } from '../hooks/useWorkout';
 
 export default function WorkoutScreen() {
@@ -23,14 +24,7 @@ export default function WorkoutScreen() {
   const [content, setContent] = useState('');
 
   const muscleGroups = [
-    'Peito',
-    'Costas',
-    'Pernas',
-    'Ombro',
-    'Bíceps',
-    'Tríceps',
-    'Abdômen',
-    'Funcional',
+    'Peito', 'Costas', 'Pernas', 'Ombro', 'Bíceps', 'Tríceps', 'Abdômen', 'Funcional',
   ];
 
   const muscleColors: { [key: string]: string } = {
@@ -52,13 +46,12 @@ export default function WorkoutScreen() {
     fetchWorkouts,
     fetchWorkoutsByType,
     updateWorkout,
-    loading,
-    error
+    deleteWorkout,
   } = useWorkout();
 
   useEffect(() => {
     fetchWorkouts(userId);
-  }, []);
+  }, [userId]);
 
   const toggleFilter = (muscle: string) => {
     setSelectedFilters((prev) =>
@@ -101,23 +94,18 @@ export default function WorkoutScreen() {
 
     try {
       const type = selectedMusclesForWorkout.join(',');
-      const date = new Date('2025-12-15').toLocaleDateString('pt-BR');
+      const today = new Date();
+      const formattedDate = today.toISOString().split('T')[0]; // yyyy-mm-dd
 
       if (selectedWorkout) {
         await updateWorkout(selectedWorkout.id, {
           name: newWorkoutTitle,
           content,
-          date,
-          type
+          date: formattedDate,
+          type,
         });
       } else {
-        await createWorkout(
-          newWorkoutTitle,
-          content,
-          date,
-          userId,
-          type
-        );
+        await createWorkout(newWorkoutTitle, content, formattedDate, userId, type);
       }
 
       setIsCreateVisible(false);
@@ -130,9 +118,33 @@ export default function WorkoutScreen() {
     }
   };
 
+  const handleDelete = async (id: string) => {
+    Alert.alert(
+      'Excluir treino',
+      'Tem certeza que deseja excluir este treino?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteWorkout(id);
+              await fetchWorkouts(userId);
+            } catch (err) {
+              console.error(err);
+              Alert.alert('Erro', 'Não foi possível excluir o treino.');
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
   const applyFilter = async () => {
     setIsFilterVisible(false);
-  
+
     if (selectedFilters.length === 0) {
       await fetchWorkouts(userId);
     } else {
@@ -140,7 +152,6 @@ export default function WorkoutScreen() {
       await fetchWorkoutsByType(userId, type);
     }
   };
-
 
   return (
     <SafeAreaView className="flex-1 bg-zinc-800">
@@ -151,51 +162,71 @@ export default function WorkoutScreen() {
         <Ionicons name="add" size={32} color="black" />
       </TouchableOpacity>
 
-      <View className="flex flex-row justify-between px-10 mt-[60px] mb-6">
-        <Text className="text-3xl text-white font-medium font-sans">Your workouts</Text>
+      <View className="flex flex-row justify-between px-6 mt-[60px] mb-6">
+        <Text className="text-3xl text-white font-medium font-sans">Workouts</Text>
 
         <TouchableOpacity onPress={() => setIsFilterVisible(true)} className="flex flex-row gap-1">
           <Text className="text-neutral-400 mt-2">Filtrar</Text>
           <Ionicons className="mt-[9px]" name="chevron-forward" size={13} color="gray" />
         </TouchableOpacity>
       </View>
-
-      <ScrollView className="flex-1 px-6">
-        {workouts.map((item) => {
+      <SwipeListView
+        data={workouts}
+        keyExtractor={(item) => String(item.id)}
+        contentContainerStyle={{ paddingBottom: 24 }}
+        renderItem={({ item }) => {
           const muscles = item.type ? item.type.split(',') : [];
+
           return (
-            <TouchableOpacity
-              key={item.id}
-              onPress={() => handleOpenEdit(item)}
-              style={{ backgroundColor: '#1e1e1e' }}
-              className="w-full rounded-2xl px-4 py-4 mb-4"
-            >
-              <View className="bg-zinc-800 px-3 py-2 rounded-b-xl flex flex-row justify-center items-center absolute left-[85%]">
-                <View className="flex-row gap-1">
-                  {muscles.slice(0, 2).map((muscle) => (
+            <View className="w-full flex flex-col justify-center px-6 h-[100px] pb-4 border-b border-neutral-700 bg-zinc-800">
+              <View className="flex flex-row justify-between">
+                <TouchableOpacity
+                  className="flex flex-col gap-1 mt-1"
+                  onPress={() => handleOpenEdit(item)}
+                >
+                  <Text className="text-xl font-sans font-medium text-gray-300">{item.name}</Text>
+                  <Text className="text-neutral-400 text-sm mt-1 font-sans">
+                    {new Date(item.date ?? '').toLocaleDateString('pt-BR')}
+                  </Text>
+                </TouchableOpacity>
+
+                <View className="flex-row flex-wrap gap-2 justify-end items-start mt-1 ml-4 flex-1 overflow-hidden">
+                  {muscles.map((muscle) => (
                     <View
                       key={muscle}
-                      style={{
-                        width: 10,
-                        height: 10,
-                        borderRadius: 5,
-                        backgroundColor: muscleColors[muscle] || '#fff',
-                      }}
-                    />
+                      className="px-2 py-1 rounded-xl max-w-[80px] overflow-hidden"
+                      style={{ backgroundColor: muscleColors[muscle] ?? '#94a3b8' }}
+                    >
+                      <Text
+                        className="text-xs font-medium text-white font-sans"
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                      >
+                        {muscle}
+                      </Text>
+                    </View>
                   ))}
                 </View>
-              </View>
 
-              <View className="flex-row justify-between items-center">
-                <View className="flex flex-col gap-2">
-                  <Text className="text-gray-300 text-xl font-sans font-medium">{item.name}</Text>
-                  <Text className="text-neutral-400 text-sm">{item.date}</Text>
-                </View>
               </View>
-            </TouchableOpacity>
+            </View>
           );
-        })}
-      </ScrollView>
+        }}
+        renderHiddenItem={({ item }) => (
+          <View className="w-full flex flex-col justify-center px-6 border-b border-neutral-700 bg-rose-500">
+            <View className="flex flex-row justify-start items-center h-full">
+              <TouchableOpacity className="p-3" onPress={() => handleDelete(item.id)}>
+                <Ionicons name="trash" size={24} color="white" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+        leftOpenValue={80}
+        rightOpenValue={0}
+        disableRightSwipe={false}
+        disableLeftSwipe={true}
+      />
+
 
       <Modal
         transparent
@@ -203,8 +234,8 @@ export default function WorkoutScreen() {
         visible={isFilterVisible}
         onRequestClose={() => setIsFilterVisible(false)}
       >
-        <View className="flex-1  bg-zinc-900/95 justify-center items-center px-8">
-          <View className="bg-transparent w-full rounded-2xl p-6 items-center">
+        <View className="flex-1 bg-zinc-900/95 justify-center items-center px-8">
+          <View className="w-full rounded-2xl p-6 items-center">
             <View className="flex flex-row flex-wrap gap-3 justify-center">
               {muscleGroups.map((muscle) => {
                 const isSelected = selectedFilters.includes(muscle);
@@ -218,24 +249,21 @@ export default function WorkoutScreen() {
                       isSelected ? 'bg-rose-400' : 'bg-neutral-700'
                     }`}
                   >
-                    <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: color }} />
-                    <Text className="text-gray-300 font-medium">{muscle}</Text>
+                    <View style={{ width: 10, height: 10, borderRadius: 6, backgroundColor: color }} />
+                    <Text className={`font-sans font-medium ${
+                      isSelected ? 'text-black' : 'text-white'
+                    }`}>{muscle}</Text>
                   </TouchableOpacity>
                 );
               })}
 
               <Pressable
-              onPress={() => applyFilter()}
-              className=" bg-rose-400 h-[40px] w-[40px] rounded-full flex-row items-center justify-center"
-            >
-              <Ionicons name="checkmark" size={24} color="black" />
-            </Pressable>
-
+                onPress={applyFilter}
+                className="bg-rose-400 h-[40px] w-[40px] rounded-full flex-row items-center justify-center"
+              >
+                <Ionicons name="checkmark" size={24} color="black" />
+              </Pressable>
             </View>
-
-            
-
-          
           </View>
         </View>
       </Modal>
@@ -285,9 +313,7 @@ export default function WorkoutScreen() {
                     }`}
                   >
                     <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color }} />
-                    <Text className={`${
-                      isSelected ? 'text-black' : 'text-white'
-                    }`}>{muscle}</Text>
+                    <Text className={`${isSelected ? 'text-black' : 'text-white'}`}>{muscle}</Text>
                   </TouchableOpacity>
                 );
               })}
