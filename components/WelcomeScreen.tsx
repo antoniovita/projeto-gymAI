@@ -184,7 +184,6 @@ export default function WelcomeScreen() {
                     <Text className="text-white font-sans text-2xl mb-4 text-center">Escolha seu plano</Text>
 
                     <View className="flex flex-row gap-4 items-center mt-[50px] justify-center">
-                      {/* Plano Free */}
                       <TouchableOpacity
                         className={`w-[170px] h-[370px] p-5 flex flex-col rounded-2xl justify-between items-start ${
                           selectedPlan === 'Free' ? 'border-rose-400 border-[0.5px]' : ''
@@ -247,6 +246,16 @@ export default function WelcomeScreen() {
                     />
                   </MotiView>
                 </View>
+
+                  <TouchableOpacity
+                className="bg-rose-500 rounded-full h-[50px] bottom-[10%] left-[25%] flex  absolute flex-row w-[200px] items-center justify-center"
+                onPress={handleNextStep}
+                disabled={name.trim().length === 0 || pin.length !== CELL_COUNT}
+              >
+                <Text className="text-white font-sans font-medium text-xl px-3">Finish</Text>
+                <Ionicons name="chevron-forward-outline" size={20} color="white" />
+              </TouchableOpacity>
+              
               </Modal>
 
 
