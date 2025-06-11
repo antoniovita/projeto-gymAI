@@ -17,8 +17,8 @@ export default function ExpensesScreen() {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
-  const [newCategoryColor, setNewCategoryColor] = useState('#FF6347');
-  const [colorOptions] = useState(['#FF6347', '#4CAF50', '#3B82F6', '#F59E0B']);
+  const [newCategoryColor, setNewCategoryColor] = useState('#ff7a7f');
+  const [colorOptions] = useState(['#ff7a7f', '#4CAF50', '#3B82F6', '#F59E0B']);
   const [gains, setGains] = useState(0);
   const [losses, setLosses] = useState(0);
   const [filteredExpenses, setFilteredExpenses] = useState<any[]>([]);
@@ -41,7 +41,7 @@ export default function ExpensesScreen() {
 
   const categories = [
     { name: 'Ganhos', color: '#34D399' },
-    { name: 'Perdas', color: '#FF6347' },
+    { name: 'Perdas', color: '#ff7a7f' },
     ...selectedCategories
   ];
 
@@ -197,7 +197,7 @@ export default function ExpensesScreen() {
   
     setIsCategoryModalVisible(false);
     setNewCategoryName('');
-    setNewCategoryColor('#FF6347');
+    setNewCategoryColor('#ff7a7f');
   };
   
   
@@ -342,7 +342,7 @@ export default function ExpensesScreen() {
       <View className="flex flex-row items-center justify-between px-6 mt-[60px] mb-6">
         <Text className="text-3xl text-white font-medium font-sans">Expenses</Text>
         <View className='flex flex-row items-center gap-4 border border-neutral-700 rounded-lg px-3 py-1'>
-          <Text className='text-[#FF6347] text-lg font-sans'>{currencyFormat(losses)}</Text>
+          <Text className='text-[#ff7a7f] text-lg font-sans'>{currencyFormat(losses)}</Text>
           <Text className='text-emerald-400 text-lg font-sans'>{currencyFormat(gains)}</Text>
         </View>
 
@@ -482,7 +482,7 @@ export default function ExpensesScreen() {
                   {new Date(item.date ?? '').toLocaleDateString('pt-BR')} - {new Date(item.time ?? '').toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                 </Text>
               </TouchableOpacity>
-              <Text className={`font-sans ${item.type == "Ganhos" ? "text-emerald-400" : "text-[#FF6347]"} text-2xl mt-6`}>{currencyFormat(Number(item.amount))}</Text>
+              <Text className={`font-sans ${item.type == "Ganhos" ? "text-emerald-400" : "text-[#ff7a7f]"} text-2xl mt-6`}>{currencyFormat(Number(item.amount))}</Text>
             </View>
           </View>
         )}

@@ -317,14 +317,14 @@ const handleDeleteCategory = () => {
           <View className="flex flex-row items-center gap-[20px]">
 
             <TouchableOpacity onPress={showDatePickerDateFilter}>
-              <Text className="text-[#F25C5C] text-base border rounded-lg px-3 py-1 font-sans border-neutral-700">
+              <Text className="text-[#ff7a7f] text-lg border rounded-lg px-3 py-1 font-sans border-neutral-700">
                 {format(dateFilter, 'dd/MM/yyyy')}
               </Text>
             </TouchableOpacity>
 
 
             <TouchableOpacity onPress={() => setShowDeleteCategoryModal(true)}>
-              <Ionicons name="options-outline" size={24} color="#F25C5C" />
+              <Ionicons name="options-outline" size={24} color="#ff7a7f" />
             </TouchableOpacity>
 
 
@@ -334,7 +334,11 @@ const handleDeleteCategory = () => {
               date={dateFilter}
               onConfirm={handleConfirm}
               onCancel={hideDatePicker}
-              themeVariant="light"
+              textColor="#ff0000"
+              accentColor="#ff7a7f"
+              buttonTextColorIOS='#ff7a7f'
+              themeVariant='light'
+              display='inline'
               locale="pt-BR"
             />
           </View>
@@ -400,7 +404,7 @@ const handleDeleteCategory = () => {
               >
                 <View className="flex-1 bg-black/80 justify-center items-center px-8">
                   <View className="bg-zinc-800 w-full rounded-2xl p-6 items-center shadow-lg">
-                    <Ionicons name="alert-circle" size={48} color="#F25C5C" className="mb-4" />
+                    <Ionicons name="alert-circle" size={48} color="#ff7a7f" className="mb-4" />
 
                     <Text className="text-white text-xl font-semibold mb-2 font-sans text-center">
                       Apagar Categoria
@@ -594,12 +598,12 @@ const handleDeleteCategory = () => {
             <View className='flex flex-row justify-between'>
               <View className="flex-row space-x-4 flex gap-3 mb-4">
                 <TouchableOpacity onPress={() => setShowDatePicker(true)} className="flex-row items-center">
-                  <Ionicons name="calendar-outline" size={20} color="#F25C5C" />
+                  <Ionicons name="calendar-outline" size={20} color="#ff7a7f" />
                   <Text className="text-rose-400 ml-2">{date.toLocaleDateString('pt-BR')}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity onPress={() => setShowTimePicker(true)} className="flex-row items-center">
-                  <Ionicons name="time-outline" size={20} color="#F25C5C" />
+                  <Ionicons name="time-outline" size={20} color="#ff7a7f" />
                   <Text className="text-rose-400 ml-1">{time.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</Text>
                 </TouchableOpacity>
               </View>

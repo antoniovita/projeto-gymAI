@@ -162,7 +162,7 @@ export default function WorkoutScreen() {
         <Ionicons name="add" size={32} color="black" />
       </TouchableOpacity>
 
-      <View className="flex flex-row justify-between px-6 mt-[60px] mb-6">
+      <View className="flex flex-row justify-between px-6 mt-[60px] mb-5">
         <Text className="text-3xl text-white font-medium font-sans">Workouts</Text>
 
         <TouchableOpacity onPress={() => setIsFilterVisible(true)} className="flex flex-row gap-1">
@@ -178,7 +178,7 @@ export default function WorkoutScreen() {
           const muscles = item.type ? item.type.split(',') : [];
 
           return (
-            <View className="w-full flex flex-col justify-center px-6 h-[100px] pb-4 border-b border-neutral-700 bg-zinc-800">
+            <View className="w-full flex flex-col justify-center px-6 h-[100px] pt-1 pb-4 border-b border-neutral-700 bg-zinc-800">
               <View className="flex flex-row justify-between">
                 <TouchableOpacity
                   className="flex flex-col gap-1 mt-1"
@@ -189,12 +189,13 @@ export default function WorkoutScreen() {
                     {new Date(item.date ?? '').toLocaleDateString('pt-BR')}
                   </Text>
                 </TouchableOpacity>
+              </View>
 
-                <View className="flex-row flex-wrap gap-2 justify-end items-start mt-1 ml-4 flex-1 overflow-hidden">
+              <View className="flex-row flex-wrap gap-2 justify-start mt-3 items-start flex-1 overflow-hidden">
                   {muscles.map((muscle) => (
                     <View
                       key={muscle}
-                      className="px-2 py-1 rounded-xl max-w-[80px] overflow-hidden"
+                      className="px-3 py-1 rounded-xl max-w-[80px] overflow-hidden"
                       style={{ backgroundColor: muscleColors[muscle] ?? '#94a3b8' }}
                     >
                       <Text
@@ -207,8 +208,6 @@ export default function WorkoutScreen() {
                     </View>
                   ))}
                 </View>
-
-              </View>
             </View>
           );
         }}

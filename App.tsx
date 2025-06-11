@@ -60,11 +60,10 @@ export default function App() {
       <NavigationContainer>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           {isAuthenticated ? ( 
+            <Stack.Screen name="WelcomeScreen" component={WelcomeScreen} />
+          ) : (
             <Stack.Screen name="MainTabs" component={MainTabs} />
 
-
-          ) : (
-            <Stack.Screen name="WelcomeScreen" component={WelcomeScreen} />
           )}
           <Stack.Screen name="SettingsScreen" component={SettingsScreen} />
         </Stack.Navigator>
