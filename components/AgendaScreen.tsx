@@ -179,10 +179,13 @@ useEffect(() => {
     console.log('📤 Data selecionada:', date.toISOString());
     console.log('⏰ Hora selecionada:', time.toISOString());
     console.log('📦 Data e hora combinadas:', combinedDateTime.toISOString());
+    const adjustedDate = new Date(combinedDateTime.getTime() - combinedDateTime.getTimezoneOffset() * 60000);
 
-    const formattedDate = combinedDateTime.toISOString().split('T')[0];
-    const adjustedDate = new Date(combinedDateTime.getTime() - (combinedDateTime.getTimezoneOffset() * 60000));
+    const datePlusOneDay = new Date(adjustedDate.getTime() + 24 * 60 * 60 * 1000);  
+    const formattedDate = datePlusOneDay.toISOString().split('T')[0];
     const formattedTime = adjustedDate.toISOString();
+    
+    
 
 
     if (selectedTask) {
@@ -529,7 +532,7 @@ const handleDeleteCategory = () => {
                   {item.title}
                 </Text>
                 <Text className="text-neutral-400 text-sm mt-1 font-sans">
-                    {format(new Date(item.date + 'T00:00:00'), 'dd/MM/yyyy')} - {item.time}
+                    {format(new Date(item.date), 'dd/MM/yyyy')} - {item.time}
                 </Text>
               </TouchableOpacity>
 
@@ -609,46 +612,41 @@ const handleDeleteCategory = () => {
               </View>
             </View>
 
-            {showDatePicker && (
-              <Modal visible={showDatePicker} transparent animationType="fade">
-                <View className="flex-1 justify-center items-center bg-black/90">
-                  <DateTimePicker
-                    value={date}
-                    mode="date"
-                    display="spinner"
-                    onChange={(event, selectedDate) => {
-                      if (selectedDate) setDate(selectedDate);
-                    }}
-                  />
+            <DateTimePickerModal
+              isVisible={showDatePicker}
+              mode="date"
+              date={date}
+              onConfirm={(selectedDate) => {
+                setDate(selectedDate);
+                setShowDatePicker(false);
+              }}
+              onCancel={() => {
+                setShowDatePicker(false);
+              }}
+              textColor="#ff0000"
+              accentColor="#ff7a7f"
+              buttonTextColorIOS='#ff7a7f'
+              themeVariant='light'
+              display='inline'
+              locale="pt-BR"
+            />
+            
 
-                  <TouchableOpacity className='bg-rose-400 rounded-full p-3 absolute bottom-[10%]'
-                  onPress={() => setShowDatePicker(false)}>
-                    <Ionicons name="checkmark" size={24} color="#black" />
-                  </TouchableOpacity>
-                </View>
-              </Modal>
-            )}
-
-            {showTimePicker && (
-              <Modal visible={showTimePicker} transparent animationType="fade">
-                <View className="flex-1 justify-center items-center bg-black/90">
-                  <DateTimePicker
-                    value={time}
-                    mode="time"
-                    display="spinner"
-                    onChange={(event, selectedTime) => {
-                      if (selectedTime) setTime(selectedTime);
-                      setShowTimePicker(false);
-                    }}
-                  />
-                </View>
-
-                <TouchableOpacity className='bg-rose-400 rounded-full p-3 absolute right-[45%] bottom-[10%]'
-                  onPress={() => setShowTimePicker(false)}>
-                    <Ionicons name="checkmark" size={24} color="#black" />
-                  </TouchableOpacity>
-              </Modal>
-            )}
+            <DateTimePickerModal
+              isVisible={showTimePicker}
+              mode="time"
+              date={time}
+              onConfirm={(selectedTime) => {
+                setTime(selectedTime);
+                setShowTimePicker(false);
+              }}
+              onCancel={() => setShowTimePicker(false)}
+              textColor="#ff0000"
+              accentColor="#ff7a7f"
+              buttonTextColorIOS="#ff7a7f"
+              themeVariant="light"
+              locale="pt-BR"
+            />
 
             <View className="flex flex-row flex-wrap gap-2 mb-4">
               {categories.map((cat) => {
