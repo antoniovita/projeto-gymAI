@@ -35,27 +35,18 @@ export default function ChatScreen() {
         className="flex-1"
       >
         <TouchableOpacity
-          className="bg-transparent h-[30px] w-[30px] absolute top-5 right-5 justify-center items-center z-10"
+          className="bg-transparent h-[30px] w-[30px] absolute top-[6%] right-5 justify-center items-center z-10"
           onPress={() => navigation.navigate('SettingsScreen')}
         >
           <Ionicons name="cog" size={30} color="#ff7a7f" />
         </TouchableOpacity>
 
         <TouchableOpacity
-          className="bg-transparent h-[30px] w-[30px] absolute top-5 right-[15%] justify-center items-center z-10"
+          className="bg-transparent h-[30px] w-[30px] absolute top-[6%] right-[15%] justify-center items-center z-10"
           onPress={() => setSettingsVisible(true)}
         >
           <Ionicons name="notifications-circle-outline" size={30} color="#ff7a7f" />
         </TouchableOpacity>
-
-        <View className="absolute top-[-3%] left-[2%] z-10">
-          <Image
-            source={require('../assets/dayo.png')}
-            className="w-[120px] h-[120px]"
-            resizeMode="contain"
-          />
-        </View>
-
 
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View className="flex-1 justify-end">
@@ -88,7 +79,6 @@ export default function ChatScreen() {
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
 
-      {/* Modal de Configurações */}
       <Modal
         visible={settingsVisible}
         transparent
