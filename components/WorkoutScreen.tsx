@@ -294,7 +294,7 @@ export default function WorkoutScreen() {
               placeholderTextColor="#a1a1aa"
               value={newWorkoutTitle}
               onChangeText={setNewWorkoutTitle}
-              className="text-gray-300 text-4xl font-semibold mb-4"
+              className="text-gray-300 text-3xl font-semibold mb-4"
               multiline
             />
 

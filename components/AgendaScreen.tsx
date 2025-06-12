@@ -257,7 +257,6 @@ export default function AgendaScreen() {
     setTime(new Date());
   };
 
-  // Filtra as tarefas por data e categorias selecionadas no filtro
   const filteredTasks = tasks.filter((task) => {
     if (!task.datetime) return false;
 
@@ -277,6 +276,40 @@ export default function AgendaScreen() {
     setDateFilter(date);
     hideDatePicker();
   };
+
+
+  const handleDeleteTask = (
+    taskId: string,
+    userId: string,
+    deleteTask: (id: string) => Promise<boolean | void>,
+    fetchTasks: (id: string) => Promise<void>
+  ) => {
+    Alert.alert(
+      'Confirmar exclusão',
+      'Tem certeza que deseja deletar essa tarefa?',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Deletar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteTask(taskId);
+              await fetchTasks(userId);
+            } catch (error) {
+              console.error('Erro ao deletar tarefa:', error);
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+  
+
 
   return (
     <SafeAreaView className="flex-1 bg-zinc-800">
@@ -534,15 +567,12 @@ export default function AgendaScreen() {
       renderHiddenItem={({ item }) => (
         <View className="w-full flex flex-col justify-center px-6 border-b border-neutral-700 bg-rose-500">
           <View className="flex flex-row justify-start items-center h-full">
-            <TouchableOpacity
-              className="p-3"
-              onPress={async () => {
-                await deleteTask(item.id);
-                await fetchTasks(userId);
-              }}
-            >
-              <Ionicons name="trash" size={24} color="white" />
-            </TouchableOpacity>
+          <TouchableOpacity
+            className="p-3"
+            onPress={() => handleDeleteTask(item.id, userId, deleteTask, fetchTasks)}
+          >
+            <Ionicons name="trash" size={24} color="white" />
+          </TouchableOpacity>
           </View>
         </View>
       )}
