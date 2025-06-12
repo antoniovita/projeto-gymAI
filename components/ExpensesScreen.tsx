@@ -213,7 +213,7 @@ export default function ExpensesScreen() {
           onPress: async () => {
             try {
               await deleteExpense(expenseId);
-              await fetchExpenses(userId); // (caso esteja usando essa função de atualização)
+              await fetchExpenses(userId);
             } catch (err) {
               console.error(err);
               Alert.alert('Erro', 'Não foi possível excluir a despesa.');
@@ -339,7 +339,7 @@ export default function ExpensesScreen() {
       </TouchableOpacity>
 
 
-      <View className="flex flex-row items-center justify-between px-6 mt-[60px] mb-6">
+      <View className="flex flex-row items-center justify-between px-6 mt-[40px] mb-6">
         <Text className="text-3xl text-white font-medium font-sans">Expenses</Text>
         <View className='flex flex-row items-center gap-4 border border-neutral-700 rounded-lg px-3 py-1'>
           <Text className='text-[#ff7a7f] text-lg font-sans'>{currencyFormat(losses)}</Text>
@@ -347,7 +347,7 @@ export default function ExpensesScreen() {
         </View>
 
         <TouchableOpacity onPress={() => setShowDeleteCategoryModal(true)}>
-          <Ionicons name="options-outline" size={24} color="#F25C5C" />
+          <Ionicons name="options-outline" size={24} color="#ff7a7f" />
         </TouchableOpacity>
 
     <Modal

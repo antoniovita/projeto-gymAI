@@ -10,6 +10,7 @@ import {
   SafeAreaView,
   Modal,
   Switch,
+  Image,
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -37,15 +38,23 @@ export default function ChatScreen() {
           className="bg-transparent h-[30px] w-[30px] absolute top-5 right-5 justify-center items-center z-10"
           onPress={() => navigation.navigate('SettingsScreen')}
         >
-          <Ionicons name="settings-outline" size={24} color="#ff7a7f" />
+          <Ionicons name="cog" size={30} color="#ff7a7f" />
         </TouchableOpacity>
 
         <TouchableOpacity
           className="bg-transparent h-[30px] w-[30px] absolute top-5 right-[15%] justify-center items-center z-10"
           onPress={() => setSettingsVisible(true)}
         >
-          <Ionicons name="notifications-outline" size={24} color="#ff7a7f" />
+          <Ionicons name="notifications-circle-outline" size={30} color="#ff7a7f" />
         </TouchableOpacity>
+
+        <View className="absolute top-[-3%] left-[2%] z-10">
+          <Image
+            source={require('../assets/dayo.png')}
+            className="w-[120px] h-[120px]"
+            resizeMode="contain"
+          />
+        </View>
 
 
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>

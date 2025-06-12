@@ -330,7 +330,7 @@ export default function AgendaScreen() {
         <Ionicons name="add" size={32} color="black" />
       </TouchableOpacity>
 
-        <View className="flex flex-row items-center justify-between px-6 mt-[60px] mb-6">
+        <View className="flex flex-row items-center justify-between px-6 mt-[40px] mb-6">
           <Text className="text-3xl text-white font-medium font-sans">Agenda</Text>
 
 
