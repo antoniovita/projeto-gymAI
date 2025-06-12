@@ -42,6 +42,7 @@ export default function App() {
   useEffect(() => {
     const initDb = async () => {
       try {
+        await deleteDatabase();
         await initDatabase();
         const db = getDb();
         console.log('Banco de dados inicializado:', db);

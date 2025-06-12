@@ -7,13 +7,12 @@ export const TaskService = {
   createTask: async (
     title: string,
     content: string,
-    date: string,   // YYYY-MM-DD
-    time: string,   // HH:MM
+    datetime: string,  // string ISO: "2025-06-12T07:12:00.000Z"
     type: string,
     userId: string,
     routineId?: string
   ) => {
-    const response = await TaskController.createTask(title, content, date, time, type, userId, routineId);
+    const response = await TaskController.createTask(title, content, datetime, type, userId, routineId);
     if (!response.success) {
       throw new Error(response.error || 'Erro ao criar tarefa.');
     }
@@ -35,8 +34,6 @@ export const TaskService = {
     }
     return response.data;
   },
-
-
 
   getTasksByType: async (userId: string, type: string) => {
     const response = await TaskController.getTasksByType(userId, type);
@@ -86,9 +83,8 @@ export const TaskService = {
     return response.updatedCount;
   },
 
-debugAllTasks: async () => {
-  const db = getDb();
-  return TaskModel.getAllTasksDebug(db);
-}
-
+  debugAllTasks: async () => {
+    const db = getDb();
+    return TaskModel.getAllTasksDebug(db);
+  }
 };

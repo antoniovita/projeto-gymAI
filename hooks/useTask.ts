@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { TaskService } from '../api/service/taskService';
 import { Task } from '../api/model/Task';
+import { parseISO, formatISO } from 'date-fns';
 
 export const useTask = () => {
   const [loading, setLoading] = useState(false);
@@ -10,8 +11,7 @@ export const useTask = () => {
   const createTask = async (
     title: string,
     content: string,
-    date: string,
-    time: string,
+    datetimeISO: string, 
     userId: string,
     type?: string,
     routineId?: string
@@ -19,12 +19,13 @@ export const useTask = () => {
     setLoading(true);
     setError(null);
     try {
-      console.log('[createTask] Criando task com:', { title, content, date, time, userId, type, routineId });
+      const datetime = formatISO(parseISO(datetimeISO));
+
+      console.log('[createTask] Criando task com datetime:', datetime);
       const taskId = await TaskService.createTask(
         title,
         content,
-        date,
-        time,
+        datetime,
         type ?? '',
         userId,
         routineId ?? ''
@@ -156,10 +157,15 @@ export const useTask = () => {
     }
   };
 
+ 
   const updateTask = async (taskId: string, updates: Partial<Task>) => {
     setLoading(true);
     setError(null);
     try {
+      if (updates.datetime) {
+        updates.datetime = formatISO(parseISO(updates.datetime));
+      }
+
       console.log('[updateTask] Atualizando tarefa:', { taskId, updates });
       const updatedCount = await TaskService.updateTask(taskId, updates);
       console.log('[updateTask] Tarefa atualizada:', updatedCount);
@@ -174,10 +180,9 @@ export const useTask = () => {
   };
 
   const debugAllTasks = async () => {
-  const all = await TaskService.debugAllTasks();
-  console.log('[HOOK] Tarefas no banco:', all);
-};
-
+    const all = await TaskService.debugAllTasks();
+    console.log('[HOOK] Tarefas no banco:', all);
+  };
 
   return {
     loading,

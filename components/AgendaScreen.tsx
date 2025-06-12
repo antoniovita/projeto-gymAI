@@ -5,12 +5,10 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTask } from '../hooks/useTask';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { SwipeListView } from 'react-native-swipe-list-view';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import { formatDate, formatTime } from '../utils/dateFormat';
 import { format } from 'date-fns';
 
 
@@ -28,7 +26,6 @@ const colorOptions = [
   '#6B7280', // Cinza
 ];
 
-
 export default function AgendaScreen() {
   const userId = 'user-id-123';
   const {
@@ -38,9 +35,8 @@ export default function AgendaScreen() {
     debugAllTasks,
     fetchTasks,
     updateTaskCompletion,
-    deleteTask
+    deleteTask,
   } = useTask();
-
 
   const [isCreateVisible, setIsCreateVisible] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
@@ -71,22 +67,21 @@ export default function AgendaScreen() {
       ...tasks
         .flatMap((task) => task.type?.split(',').map((s: string) => s.trim()) ?? [])
         .filter((t) => t.length > 0),
-      ...extraCategories.map(cat => cat.name), // usar só o nome para categorias no filtro
+      ...extraCategories.map(cat => cat.name),
     ])
   );
 
   const getCategoryColor = (catName: string) => {
-  const extraCat = extraCategories.find(c => c.name === catName);
-  return extraCat ? extraCat.color : '#999999';
+    const extraCat = extraCategories.find(c => c.name === catName);
+    return extraCat ? extraCat.color : '#999999';
   };
-
 
   const handleAddCategory = () => {
     if (!newCategoryName.trim()) {
       Alert.alert('Erro', 'O nome da categoria não pode ser vazio.');
       return;
     }
-    
+
     if (extraCategories.find(cat => cat.name.toLowerCase() === newCategoryName.trim().toLowerCase())) {
       Alert.alert('Erro', 'Essa categoria já existe.');
       return;
@@ -97,209 +92,191 @@ export default function AgendaScreen() {
       { name: newCategoryName.trim(), color: newCategoryColor }
     ]);
     setNewCategoryName('');
-    setNewCategoryColor('#EF4444'); // resetar cor
+    setNewCategoryColor('#EF4444'); // resetar cor padrão
     setIsCategoryModalVisible(false);
   };
 
   useEffect(() => {
-  const loadCategories = async () => {
-    try {
-      const stored = await AsyncStorage.getItem('extraCategories');
-      if (stored) {
-        setExtraCategories(JSON.parse(stored));
+    const loadCategories = async () => {
+      try {
+        const stored = await AsyncStorage.getItem('extraCategories');
+        if (stored) {
+          setExtraCategories(JSON.parse(stored));
+        }
+      } catch (err) {
+        console.error('Erro ao carregar categorias extras:', err);
       }
-    } catch (err) {
-      console.error('Erro ao carregar categorias extras:', err);
+    };
+
+    loadCategories();
+  }, []);
+
+  useEffect(() => {
+    const saveCategories = async () => {
+      try {
+        await AsyncStorage.setItem('extraCategories', JSON.stringify(extraCategories));
+      } catch (err) {
+        console.error('Erro ao salvar categorias extras:', err);
+      }
+    };
+
+    if (extraCategories.length > 0) {
+      saveCategories();
     }
-  };
+  }, [extraCategories]);
 
-  loadCategories();
-}, []);
+  const handleDeleteCategory = () => {
+    if (!categoryToDelete) return;
 
-useEffect(() => {
-  const saveCategories = async () => {
-    try {
-      await AsyncStorage.setItem('extraCategories', JSON.stringify(extraCategories));
-    } catch (err) {
-      console.error('Erro ao salvar categorias extras:', err);
-    }
-  };
-
-  if (extraCategories.length > 0) {
-    saveCategories();
-  }
-}, [extraCategories]);
-
-const handleDeleteCategory = () => {
-  if (!categoryToDelete) return;
-
-  const isCategoryInUse = tasks.some(task =>
-    task.type?.split(',').map((t: string) => t.trim()).includes(categoryToDelete)
-  );
-
-  if (isCategoryInUse) {
-    Alert.alert('Erro', 'Esta categoria está associada a uma ou mais tarefas e não pode ser excluída.');
-    setShowConfirmDeleteModal(false);
-    setCategoryToDelete(null);
-    return;
-  }
-
-  setExtraCategories((prev) =>
-    prev.filter((cat) => cat.name !== categoryToDelete)
-  );
-  setShowConfirmDeleteModal(false);
-  setCategoryToDelete(null);
-};
-
-
-useEffect(() => {
-  debugAllTasks();
-}, []);
-
-
-useEffect(() => {
-  const fetchAllTasks = async () => {
-    try {
-      await fetchTasks(userId);
-    } catch (err) {
-      console.error('Erro ao buscar tarefas:', err);
-    }
-  };
-
-  fetchAllTasks();
-}, []);
-
-
-
-const combineDateAndTime = (date: Date, time: Date): Date => {
-  const combined = new Date(date);
-  combined.setHours(time.getHours());
-  combined.setMinutes(time.getMinutes());
-  combined.setSeconds(0);
-  combined.setMilliseconds(0);
-  return combined;
-};
-
-
-const handleSaveTask = async () => {
-  if (!newTaskTitle.trim()) {
-    Alert.alert('Erro', 'O título não pode estar vazio.');
-    return;
-  }
-
-  if (selectedCategories.length === 0) {
-    Alert.alert('Erro', 'Selecione pelo menos uma categoria.');
-    return;
-  }
-
-  try {
-    const categoriesString = selectedCategories.join(', ');
-
-    const combinedDateTime = combineDateAndTime(date, time);
-
-    // Ajusta para o timezone local (para evitar deslocamentos errados)
-    const adjustedDate = new Date(
-      combinedDateTime.getTime() - combinedDateTime.getTimezoneOffset() * 60000
+    const isCategoryInUse = tasks.some(task =>
+      task.type?.split(',').map((t: string) => t.trim()).includes(categoryToDelete)
     );
 
-    // Formata a data e hora separados no padrão solicitado
-    const formattedDate = formatDate(adjustedDate); // 'dd/MM/yyyy'
-    const formattedTime = formatTime(adjustedDate); // 'HH:mm'
-
-    if (selectedTask) {
-      await updateTask(selectedTask.id, {
-        title: newTaskTitle,
-        content: taskContent,
-        type: categoriesString,
-        date: formattedDate,
-        time: formattedTime,
-      });
-    } else {
-      await createTask(
-        newTaskTitle,
-        taskContent,
-        formattedDate,
-        formattedTime,
-        userId,
-        categoriesString
-      );
+    if (isCategoryInUse) {
+      Alert.alert('Erro', 'Esta categoria está associada a uma ou mais tarefas e não pode ser excluída.');
+      setShowConfirmDeleteModal(false);
+      setCategoryToDelete(null);
+      return;
     }
 
-    await fetchTasks(userId);
-    resetModal();
-  } catch (err) {
-    Alert.alert('Erro', 'Falha ao salvar tarefa.');
-  }
-};
+    setExtraCategories((prev) =>
+      prev.filter((cat) => cat.name !== categoryToDelete)
+    );
+    setShowConfirmDeleteModal(false);
+    setCategoryToDelete(null);
+  };
+
+  useEffect(() => {
+    debugAllTasks();
+  }, []);
+
+  useEffect(() => {
+    const fetchAllTasks = async () => {
+      try {
+        await fetchTasks(userId);
+      } catch (err) {
+        console.error('Erro ao buscar tarefas:', err);
+      }
+    };
+
+    fetchAllTasks();
+  }, []);
+
+  // Combina as partes de data e hora em um objeto Date único
+  const combineDateAndTime = (date: Date, time: Date): Date => {
+    const combined = new Date(date);
+    combined.setHours(time.getHours());
+    combined.setMinutes(time.getMinutes());
+    combined.setSeconds(0);
+    combined.setMilliseconds(0);
+    return combined;
+  };
 
 
-const handleOpenEdit = (task: any) => {
-  setSelectedTask(task);
-  setNewTaskTitle(task.title);
-  setTaskContent(task.content || '');
-  const parsedCategories = task.type
-    ? task.type.split(', ').map((cat: string) => cat.trim())
-    : [];
-  setSelectedCategories(parsedCategories);
+  const handleSaveTask = async () => {
+    if (!newTaskTitle.trim()) {
+      Alert.alert('Erro', 'O título não pode estar vazio.');
+      return;
+    }
 
-  // Parse da data e hora string 'dd/MM/yyyy' e 'HH:mm' para Date
-  const [day, month, year] = task.date.split('/');
-  const [hour, minute] = task.time.split(':');
+    if (selectedCategories.length === 0) {
+      Alert.alert('Erro', 'Selecione pelo menos uma categoria.');
+      return;
+    }
 
-  // Criar objeto Date com ano, mês (0-based), dia, hora, minuto
-  const dateObj = new Date(
-    Number(year),
-    Number(month) - 1,
-    Number(day),
-    Number(hour),
-    Number(minute),
-    0,
-    0
-  );
+    try {
+      const categoriesString = selectedCategories.join(', ');
 
-  setDate(dateObj);
-  setTime(dateObj);
+      const combinedDateTime = combineDateAndTime(date, time);
+      const datetimeISO = combinedDateTime.toISOString(); // Exemplo: "2025-06-12T14:30:00.000Z"
 
-  setIsCreateVisible(true);
-};
+      if (selectedTask) {
+        await updateTask(selectedTask.id, {
+          title: newTaskTitle,
+          content: taskContent,
+          type: categoriesString,
+          datetime: datetimeISO,
+        });
+      } else {
+        await createTask(
+          newTaskTitle,
+          taskContent,
+          datetimeISO, 
+          userId,
+          categoriesString
+        );
+      }
 
+      await fetchTasks(userId);
+      resetModal();
+    } catch (err) {
+      console.error('[handleSaveTask] Erro:', err);
+      Alert.alert('Erro', 'Falha ao salvar tarefa.');
+    }
+  };
 
-const toggleTaskCompletion = async (taskId: string, completed: 0 | 1) => {
-  try {
-    await updateTaskCompletion(taskId, completed === 0 ? 1 : 0);
-    await fetchTasks(userId);
-  } catch (err) {
-    Alert.alert('Erro', 'Não foi possível atualizar o status.');
-  }
-};
+  // Abre modal para editar, preenchendo os campos corretamente
+  const handleOpenEdit = (task: any) => {
+    setSelectedTask(task);
+    setNewTaskTitle(task.title);
+    setTaskContent(task.content || '');
+    const parsedCategories = task.type
+      ? task.type.split(',').map((cat: string) => cat.trim())
+      : [];
+    setSelectedCategories(parsedCategories);
 
-const resetModal = () => {
-  setIsCreateVisible(false);
-  setNewTaskTitle('');
-  setSelectedCategories([]);
-  setSelectedTask(null);
-  setTaskContent('');
-  setDate(new Date());
-  setTime(new Date());
-};
+    // Parse datetime ISO para Date para preencher o date e time
+    if (task.datetime) {
+      const dateObj = new Date(task.datetime);
+      setDate(dateObj);
+      setTime(dateObj);
+    } else {
+      setDate(new Date());
+      setTime(new Date());
+    }
 
-const filteredTasks = tasks.filter((task) => {
-  const taskDateISO = task.date; // 'yyyy-MM-dd'
-  const selectedDateISO = dateFilter.toISOString().split('T')[0]; // 'yyyy-MM-dd'
+    setIsCreateVisible(true);
+  };
 
-  const types = task.type?.split(',').map((t: string) => t.trim()) || [];
-  const categoryMatches =
-    selectedTypes.length === 0 || selectedTypes.some((cat) => types.includes(cat));
+  const toggleTaskCompletion = async (taskId: string, completed: 0 | 1) => {
+    try {
+      await updateTaskCompletion(taskId, completed === 0 ? 1 : 0);
+      await fetchTasks(userId);
+    } catch (err) {
+      Alert.alert('Erro', 'Não foi possível atualizar o status.');
+    }
+  };
 
-  return taskDateISO === selectedDateISO && categoryMatches;
-});
+  const resetModal = () => {
+    setIsCreateVisible(false);
+    setNewTaskTitle('');
+    setSelectedCategories([]);
+    setSelectedTask(null);
+    setTaskContent('');
+    setDate(new Date());
+    setTime(new Date());
+  };
 
-const showDatePickerDateFilter = () => setDatePickerVisibility(true);
-const hideDatePicker = () => setDatePickerVisibility(false);
-const handleConfirm = (date: Date) => {
-  setDateFilter(date);
-  hideDatePicker();
-};
+  // Filtra as tarefas por data e categorias selecionadas no filtro
+  const filteredTasks = tasks.filter((task) => {
+    if (!task.datetime) return false;
+
+    const taskDateISO = task.datetime.split('T')[0]; // 'yyyy-MM-dd'
+    const selectedDateISO = dateFilter.toISOString().split('T')[0]; // 'yyyy-MM-dd'
+
+    const types = task.type?.split(',').map((t: string) => t.trim()) || [];
+    const categoryMatches =
+      selectedTypes.length === 0 || selectedTypes.some((cat) => types.includes(cat));
+
+    return taskDateISO === selectedDateISO && categoryMatches;
+  });
+
+  const showDatePickerDateFilter = () => setDatePickerVisibility(true);
+  const hideDatePicker = () => setDatePickerVisibility(false);
+  const handleConfirm = (date: Date) => {
+    setDateFilter(date);
+    hideDatePicker();
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-zinc-800">
@@ -540,7 +517,7 @@ const handleConfirm = (date: Date) => {
                   {item.title}
                 </Text>
                 <Text className="text-neutral-400 text-sm mt-1 font-sans">
-                    {format(new Date(item.date), 'dd/MM/yyyy')} - {item.time}
+                {format(item.datetime, 'dd/MM/yyyy')}  - {format(item.datetime, 'HH:mm')}
                 </Text>
               </TouchableOpacity>
 

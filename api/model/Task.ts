@@ -5,8 +5,7 @@ export interface Task {
   id: string;
   title: string;
   content: string;
-  date: string;   // YYYY-MM-DD
-  time: string;   // HH:MM
+  datetime: string; // ISO string: "2025-06-12T07:12:00.000Z"
   type?: string;
   completed: 0 | 1;
   user_id: string;
@@ -14,29 +13,41 @@ export interface Task {
 }
 
 export const TaskModel = {
+  init: async (db: SQLite.SQLiteDatabase) => {
+    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS tasks (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        content TEXT,
+        datetime TEXT NOT NULL,
+        type TEXT,
+        completed INTEGER DEFAULT 0,
+        user_id TEXT,
+        routine_id TEXT,
+        FOREIGN KEY (routine_id) REFERENCES routine(id),
+        FOREIGN KEY (user_id) REFERENCES user(id)
+      );
+    `);
+  },
+
   createTask: async (
     db: SQLite.SQLiteDatabase,
     title: string,
     content: string,
-    date: string,
-    time: string,
+    datetime: string, // ISO string
     type: string,
     userId: string,
     routineId?: string
   ) => {
     const taskId = uuid.v4() as string;
 
-    const formattedDate = new Date(date).toISOString().split('T')[0];      // YYYY-MM-DD
-    const formattedTime = new Date(time).toISOString().split('T')[1].slice(0, 5); // HH:MM
-
     await db.runAsync(
-      `INSERT INTO tasks (id, title, content, date, time, type, completed, user_id, routine_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO tasks (id, title, content, datetime, type, completed, user_id, routine_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       taskId,
       title,
       content,
-      formattedDate,
-      formattedTime,
+      datetime,
       type ?? null,
       0,
       userId,
@@ -47,18 +58,25 @@ export const TaskModel = {
   },
 
   getTasksByUserId: async (db: SQLite.SQLiteDatabase, userId: string) => {
-    return await db.getAllAsync('SELECT * FROM tasks WHERE user_id = ?', userId) as Task[];
+    return await db.getAllAsync(
+      'SELECT * FROM tasks WHERE user_id = ?',
+      userId
+    ) as Task[];
   },
 
   getTasksByType: async (db: SQLite.SQLiteDatabase, userId: string, type: string) => {
-    return await db.getAllAsync('SELECT * FROM tasks WHERE user_id = ? AND type = ?', userId, type) as Task[];
+    return await db.getAllAsync(
+      'SELECT * FROM tasks WHERE user_id = ? AND type = ?',
+      userId,
+      type
+    ) as Task[];
   },
 
   getTasksByTypeAndDate: async (
     db: SQLite.SQLiteDatabase,
     userId: string,
     types: string[],
-    date: string
+    date: string // formato: "YYYY-MM-DD"
   ) => {
     if (types.length === 0) return [];
 
@@ -66,7 +84,7 @@ export const TaskModel = {
     const query = `
       SELECT * FROM tasks
       WHERE user_id = ?
-      AND date(date) = ?
+      AND DATE(datetime) = ?
       AND (${placeholders})
     `;
     const params = [userId, date, ...types.map((type) => `%${type}%`)];
@@ -75,7 +93,7 @@ export const TaskModel = {
 
   getTasksByDate: async (db: SQLite.SQLiteDatabase, userId: string, date: string) => {
     return await db.getAllAsync(
-      'SELECT * FROM tasks WHERE user_id = ? AND date(date) = ?',
+      'SELECT * FROM tasks WHERE user_id = ? AND DATE(datetime) = ?',
       userId,
       date
     ) as Task[];

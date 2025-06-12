@@ -2,19 +2,31 @@ import { getDb } from '../../database';
 import { Task, TaskModel } from '../model/Task';
 
 export const TaskController = {
-
   createTask: async (
     title: string,
     content: string,
-    date: string,   // YYYY-MM-DD
-    time: string,   // HH:MM
+    datetime: string,  // ISO string, ex: "2025-06-12T07:12:00.000Z"
     type: string,
     userId: string,
     routineId?: string
   ) => {
     const db = getDb();
     try {
-      const taskId = await TaskModel.createTask(db, title, content, date, time, type, userId, routineId);
+      const isoDate = new Date(datetime);
+      if (isNaN(isoDate.getTime())) {
+        throw new RangeError('Datetime inválido');
+      }
+
+      const taskId = await TaskModel.createTask(
+        db,
+        title,
+        content,
+        isoDate.toISOString(),
+        type,
+        userId,
+        routineId
+      );
+
       return { success: true, taskId };
     } catch (error) {
       console.error('Erro ao criar tarefa no controller:', error);
@@ -55,18 +67,16 @@ export const TaskController = {
     }
   },
 
-getTasksByTypeAndDate: async (userId: string, types: string[], date: string) => {
-  const db = getDb();
-  try {
-    const tasks = await TaskModel.getTasksByTypeAndDate(db, userId, types, date);
-    return { success: true, data: tasks };
-  } catch (error) {
-    console.error('Erro ao buscar tarefas por tipo e data no controller:', error);
-    return { success: false, error: 'Erro ao buscar tarefas por tipo e data.' };
-  }
-},
-
-
+  getTasksByTypeAndDate: async (userId: string, types: string[], date: string) => {
+    const db = getDb();
+    try {
+      const tasks = await TaskModel.getTasksByTypeAndDate(db, userId, types, date);
+      return { success: true, data: tasks };
+    } catch (error) {
+      console.error('Erro ao buscar tarefas por tipo e data no controller:', error);
+      return { success: false, error: 'Erro ao buscar tarefas por tipo e data.' };
+    }
+  },
 
   updateCompletion: async (taskId: string, completed: 0 | 1) => {
     const db = getDb();
@@ -111,5 +121,4 @@ getTasksByTypeAndDate: async (userId: string, types: string[], date: string) => 
       return { success: false, error: 'Erro ao atualizar tarefa.' };
     }
   }
-
 };
