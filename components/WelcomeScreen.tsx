@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -6,15 +6,17 @@ import {
   Modal,
   TextInput,
   Image,
+  Alert,
 } from 'react-native';
 import { MotiView, MotiImage } from 'moti';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../widgets/types';
-import Animated, { Easing } from 'react-native-reanimated';
+import { Easing } from 'react-native-reanimated';
 import { CodeField, Cursor, useBlurOnFulfill, useClearByFocusCell } from 'react-native-confirmation-code-field';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../hooks/useAuth'; 
 
 export default function WelcomeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -22,7 +24,9 @@ export default function WelcomeScreen() {
   const [pin, setPin] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [subscriptionModalVisible, setSubscriptionModalVisible] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<'Free' | 'Premium' | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<'free' | 'premium' | null>(null);
+  const { register } = useAuth();
+
   const CELL_COUNT = 6;
   const ref = useBlurOnFulfill({ value: pin, cellCount: CELL_COUNT });
   const [props, getCellOnLayoutHandler] = useClearByFocusCell({ value: pin, setValue: setPin });
@@ -35,11 +39,34 @@ export default function WelcomeScreen() {
     setSubscriptionModalVisible(true);
   };
 
-  const handleSubscriptionChoice = (type: 'free' | 'premium') => {
+  const handleFinish = async () => {
+  console.log('Tentando finalizar...');
+  if (!selectedPlan) {
+    Alert.alert('Atenção', 'Selecione um plano para continuar.');
+    return;
+  }
+
+  try {
+    await register(name);
+    console.log('Usuário registrado com sucesso!');
     setSubscriptionModalVisible(false);
     setModalVisible(false);
-    navigation.navigate('MainTabs', { screen: 'Home', params: { userName: name, pin, subscription: type } });
-  };
+
+    navigation.navigate('MainTabs', {
+      screen: 'Chat',
+      params: {
+        userName: name,
+        pin,
+        subscription: selectedPlan.toLowerCase() as 'free' | 'premium',
+      },
+    });
+
+  } catch (error: any) {
+    console.error('Erro no registro:', error.message);
+    Alert.alert('Erro', error.message || 'Erro ao registrar');
+  }
+};
+
 
   return (
     <View className="flex-1 items-center justify-center relative overflow-hidden">
@@ -150,7 +177,6 @@ export default function WelcomeScreen() {
                 rootStyle={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 10 }}
                 keyboardType="number-pad"
                 textContentType="oneTimeCode"
-                placeholder="0"
                 renderCell={({ index, symbol, isFocused }) => (
                   <View
                     key={index}
@@ -179,87 +205,80 @@ export default function WelcomeScreen() {
             </TouchableOpacity>
 
             <Modal visible={subscriptionModalVisible} transparent={true} animationType="slide">
-                <View className="flex-1 justify-center items-center bg-neutral-800">
-                  <View className="flex h-screen z-20 mt-[300px]">
-                    <Text className="text-white font-sans text-2xl mb-4 text-center">Escolha seu plano</Text>
+              <View className="flex-1 justify-center items-center bg-neutral-800">
+                <View className="flex h-screen z-20 mt-[300px]">
+                  <Text className="text-white font-sans text-2xl mb-4 text-center">Escolha seu plano</Text>
 
-                    <View className="flex flex-row gap-4 items-center mt-[50px] justify-center">
-                      <TouchableOpacity
-                        className={`w-[170px] h-[370px] p-5 flex flex-col rounded-2xl justify-between items-start ${
-                          selectedPlan === 'Free' ? 'border-rose-400 border-[0.5px]' : ''
-                        } bg-neutral-800`}
-                        onPress={() => setSelectedPlan('Free')}
-                      >
-                        <View className='flex flex-col gap-3'>
-                          <Text className="text-white font-sans text-2xl mb-3">Free</Text>
-                          <Text className="text-neutral-400 font-sans text-[15px]">• Acesso limitado</Text>
-                          <Text className="text-neutral-400 font-sans text-[15px]">• 3 usos por dia</Text>
-                          <Text className="text-neutral-400 font-sans text-[15px]">• Sem suporte prioritário</Text>
+                  <View className="flex flex-row gap-4 items-center mt-[50px] justify-center">
+                    {/* free */}
+                    <TouchableOpacity
+                      className={`w-[170px] h-[370px] p-5 flex flex-col rounded-2xl justify-between items-start ${
+                        selectedPlan === 'free' ? 'border-rose-400 border-[0.5px]' : ''
+                      } bg-neutral-800`}
+                      onPress={() => setSelectedPlan('free')}
+                    >
+                      <View className='flex flex-col gap-3'>
+                        <Text className="text-white font-sans text-2xl mb-3">free</Text>
+                        <Text className="text-neutral-400 font-sans text-[15px]">• Acesso limitado</Text>
+                        <Text className="text-neutral-400 font-sans text-[15px]">• 3 usos por dia</Text>
+                        <Text className="text-neutral-400 font-sans text-[15px]">• Sem suporte prioritário</Text>
+                      </View>
+                      <Text className="text-white font-sans text-xl mt-4 mb-7">R$ 0,00</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      className={`w-[170px] h-[370px] p-5 flex flex-col rounded-2xl justify-between items-start ${
+                        selectedPlan === 'premium' ? 'border-rose-400 border-[0.5px]' : ''
+                      } bg-neutral-800`}
+                      onPress={() => setSelectedPlan('premium')}
+                    >
+                      <View>
+                        <Text className="text-white font-sans text-2xl mb-3">premium</Text>
+                        <Text className="text-neutral-400 font-sans text-sm">• Uso ilimitado</Text>
+                        <Text className="text-neutral-400 font-sans text-sm">• Suporte prioritário</Text>
+                        <Text className="text-neutral-400 font-sans text-sm">• Novas funções exclusivas</Text>
+                      </View>
+
+                      <View>
+                        <Text className="text-white font-sans text-xl mt-4">R$ 9,90/mês</Text>
+                        <View className="flex flex-row items-center gap-2 mt-2">
+                          <Ionicons name="checkmark-circle" size={20} color="#f43f5e" />
+                          <Text className="text-white font-sans text-sm">Recomendado</Text>
                         </View>
-                        <Text className="text-white font-sans text-xl mt-4 mb-7">R$ 0,00</Text>
-                      </TouchableOpacity>
-
-                      {/* Plano Premium */}
-                      <TouchableOpacity
-                        className={`w-[170px] h-[370px] p-5 flex flex-col rounded-2xl justify-between items-start ${
-                          selectedPlan === 'Premium' ? 'border-rose-400 border-[0.5px]' : ''
-                        } bg-neutral-800`}
-                        onPress={() => setSelectedPlan('Premium')}
-                      >
-                        <View>
-                          <Text className="text-white font-sans text-2xl mb-3">Premium</Text>
-                          <Text className="text-neutral-400 font-sans text-sm">• Uso ilimitado</Text>
-                          <Text className="text-neutral-400 font-sans text-sm">• Suporte prioritário</Text>
-                          <Text className="text-neutral-400 font-sans text-sm">• Novas funções exclusivas</Text>
-                        </View>
-
-                        <View>
-                          <Text className="text-white font-sans text-xl mt-4">R$ 9,90/mês</Text>
-                          <View className="flex flex-row items-center gap-2 mt-2">
-                            <Ionicons name="checkmark-circle" size={20} color="#f43f5e" />
-                            <Text className="text-white font-sans text-sm">Recomendado</Text>
-                          </View>
-                        </View>
-                      </TouchableOpacity>
-                    </View>
-
-
+                      </View>
+                    </TouchableOpacity>
                   </View>
-
-                  <MotiView
-                    from={{ scale: 4 }}
-                    animate={{ scale: 2 }}
-                    transition={{
-                      loop: true,
-                      type: 'timing',
-                      duration: 3000,
-                      easing: Easing.inOut(Easing.ease),
-                      repeatReverse: true,
-                    }}
-                    className="absolute w-full h-full"
+                  <TouchableOpacity
+                    className="bg-rose-500 rounded-full h-[50px] mt-8 flex flex-row w-[200px] items-center justify-center"
+                    onPress={handleFinish}
+                    disabled={!selectedPlan}
                   >
-                    <LinearGradient
-                      colors={['#000000', '#1f1f1f', '#f43f5e']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={{ flex: 1, width: '100%', height: '100%', opacity: 1 }}
-                    />
-                  </MotiView>
+                    <Text className="text-white font-sans font-medium text-xl px-3">Finish</Text>
+                    <Ionicons name="chevron-forward-outline" size={20} color="white" />
+                  </TouchableOpacity>
                 </View>
 
-                  <TouchableOpacity
-                className="bg-rose-500 rounded-full h-[50px] bottom-[10%] left-[25%] flex  absolute flex-row w-[200px] items-center justify-center"
-                onPress={handleNextStep}
-                disabled={name.trim().length === 0 || pin.length !== CELL_COUNT}
-              >
-                <Text className="text-white font-sans font-medium text-xl px-3">Finish</Text>
-                <Ionicons name="chevron-forward-outline" size={20} color="white" />
-              </TouchableOpacity>
-              
-              </Modal>
-
-
-
+                <MotiView
+                  from={{ scale: 4 }}
+                  animate={{ scale: 2 }}
+                  transition={{
+                    loop: true,
+                    type: 'timing',
+                    duration: 3000,
+                    easing: Easing.inOut(Easing.ease),
+                    repeatReverse: true,
+                  }}
+                  className="absolute w-full h-full"
+                >
+                  <LinearGradient
+                    colors={['#000000', '#1f1f1f', '#f43f5e']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={{ flex: 1, width: '100%', height: '100%', opacity: 1 }}
+                  />
+                </MotiView>
+              </View>
+            </Modal>
           </View>
         </View>
       </Modal>

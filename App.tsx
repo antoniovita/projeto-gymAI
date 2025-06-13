@@ -5,10 +5,8 @@ import { View } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { useCallback, useEffect, useState } from 'react';
 import "./global.css";
-
 import { AuthService } from 'api/service/authService';
 import { initDatabase, getDb, deleteDatabase } from 'database';
-
 import WelcomeScreen from './components/WelcomeScreen';
 import MainTabs from './widgets/MainTabs';
 import SettingsScreen from 'components/SettingsScreen';
@@ -42,7 +40,6 @@ export default function App() {
   useEffect(() => {
     const initDb = async () => {
       try {
-        await deleteDatabase();
         await initDatabase();
         const db = getDb();
         console.log('Banco de dados inicializado:', db);
@@ -61,9 +58,11 @@ export default function App() {
       <NavigationContainer>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           {isAuthenticated ? ( 
-            <Stack.Screen name="WelcomeScreen" component={WelcomeScreen} />
-          ) : (
             <Stack.Screen name="MainTabs" component={MainTabs} />
+
+          ) : (
+            <Stack.Screen name="WelcomeScreen" component={WelcomeScreen} />
+
 
           )}
           <Stack.Screen name="SettingsScreen" component={SettingsScreen} />

@@ -10,14 +10,18 @@ import {
   SafeAreaView,
   Modal,
   Switch,
-  Image,
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { RootStackParamList } from "../widgets/types";
+import type { RootStackParamList } from '../widgets/types';
 import { useState } from 'react';
+
+import { parseInputToTask } from '../resources/parser';
+import { useTask } from '../hooks/useTask';
+import { useAuth } from '../hooks/useAuth';
+
 
 export default function ChatScreen() {
   const [input, setInput] = useState('');
@@ -27,6 +31,34 @@ export default function ChatScreen() {
   const [fontSize, setFontSize] = useState<'small' | 'medium' | 'large'>('medium');
 
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { createTask } = useTask();
+  const { userId } = useAuth(); // deve retornar { userId: string | null, loading: boolean, isLoggedIn: boolean, register: (name: string) => Promise<void>, login: (id: string) => Promise<void>, logout: () => Promise<void> }
+
+  const handleInputSubmit = async () => {
+    if (!input.trim()) return;
+
+    const parsed = parseInputToTask(input);
+    if (!parsed) {
+      console.warn('Não foi possível interpretar a data. Tente outra frase.');
+      setInput('');
+      return;
+    }
+
+    if (!userId) {
+      console.warn('Usuário não autenticado.');
+      setInput('');
+      return;
+    }
+
+    try {
+      await createTask(parsed.title, '', parsed.datetimeISO, userId);
+      console.log('[Chat] Tarefa criada:', parsed);
+    } catch (err) {
+      console.error('[Chat] Erro ao criar tarefa:', err);
+    }
+
+    setInput('');
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-zinc-800">
@@ -66,10 +98,7 @@ export default function ChatScreen() {
                 />
                 <TouchableOpacity
                   className="w-[28px] h-[28px] rounded-full mr-8 mt-2 bg-rose-400 justify-center items-center"
-                  onPress={() => {
-                    console.log('Enviar:', input);
-                    setInput('');
-                  }}
+                  onPress={handleInputSubmit}
                 >
                   <Ionicons name="caret-forward" size={18} color="black" />
                 </TouchableOpacity>
@@ -170,7 +199,6 @@ export default function ChatScreen() {
           <TouchableOpacity
             className="bg-rose-500 py-3 rounded-xl items-center mb-4"
             onPress={() => {
-              // Salvar configurações: aplicar tema, notificações etc.
               setSettingsVisible(false);
             }}
           >

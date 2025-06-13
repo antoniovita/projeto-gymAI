@@ -2,14 +2,30 @@ import { NavigatorScreenParams } from '@react-navigation/native';
 
 export type RootStackParamList = {
   Welcome: undefined;
-  MainTabs:  NavigatorScreenParams<MainTabsParamList>;
-  SettingsScreen: undefined
+  MainTabs: NavigatorScreenParams<MainTabsParamList>;
+  SettingsScreen: undefined;
 };
-
 
 export type MainTabsParamList = {
-  Home: undefined;
-  Chat: undefined;
-  Workout: undefined;
-  Agenda: undefined;
+  Chat: {
+    userName: string;
+    pin: string;
+    subscription: 'free' | 'premium';
+  };
+  Workout: {
+    userName: string;
+    pin: string;
+    subscription: 'free' | 'premium';
+  };
+  Task: {
+    userName: string;
+    pin: string;
+    subscription: 'free' | 'premium';
+  };
+  Agenda: {
+    userName: string;
+    pin: string;
+    subscription: 'free' | 'premium';
+  };
 };
+

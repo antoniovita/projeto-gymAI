@@ -4,25 +4,20 @@ import {
   Text,
   TouchableOpacity,
   SafeAreaView,
-  Modal,
-  Pressable,
   Alert,
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-
-import { AuthService } from 'api/service/authService';
+import { useAuth } from 'hooks/useAuth';
 
 type RootStackParamList = {
-  Login: undefined;
+  Chat: undefined;
   SettingsScreen: undefined;
 };
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
-
-type ActionType = 'clearTrainings' | 'clearTasks' | 'logout' | null;
 
 interface SettingsItemProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -53,38 +48,56 @@ const SettingsItem: React.FC<SettingsItemProps> = ({
 
 export default function SettingsScreen() {
   const navigation = useNavigation<NavigationProp>();
-
   const [name] = useState('Antônio Vita');
-  const [modalVisible, setModalVisible] = useState(false);
-  const [action, setAction] = useState<ActionType>(null);
+  const { logout } = useAuth();
 
-  const handleAction = (type: ActionType) => {
-    setAction(type);
-    setModalVisible(true);
+  const confirmClearTrainings = () => {
+    Alert.alert(
+      'Tem certeza?',
+      'Isso irá remover todos os dados de treinos.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Confirmar', style: 'destructive', onPress: () => console.log('Treinos limpos') },
+      ]
+    );
   };
 
-  const confirmAction = async () => {
-    if (action === 'clearTrainings') {
-      console.log('Treinos limpos');
-    } else if (action === 'clearTasks') {
-      console.log('Tasks limpas');
-    } else if (action === 'logout') {
-      console.log('Logout');
-  
-      try {
-        await AuthService.clearUserId();
-        console.log('User ID limpo da SecureStore');
-      } catch (error) {
-        console.error('Erro ao limpar user ID:', error);
-      }
-  
-    }
-    setModalVisible(false);
+  const confirmClearTasks = () => {
+    Alert.alert(
+      'Tem certeza?',
+      'Isso irá remover todos os dados de tarefas.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Confirmar', style: 'destructive', onPress: () => console.log('Tasks limpas') },
+      ]
+    );
+  };
+
+  const confirmLogout = () => {
+    Alert.alert(
+      'Tem certeza?',
+      'Você deseja sair da sua conta?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Confirmar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await logout();
+              navigation.replace('Chat');
+            } catch (error) {
+              console.error('Erro ao fazer logout:', error);
+              Alert.alert('Erro', 'Não foi possível sair da conta.');
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
     <SafeAreaView className="flex-1 bg-zinc-900">
-
       <View className="mt-[20px] flex flex-row items-center px-2">
         <TouchableOpacity onPress={() => navigation.goBack()} className="flex flex-row items-center">
           <Ionicons name="chevron-back" size={24} color="white" />
@@ -123,12 +136,12 @@ export default function SettingsScreen() {
         <SettingsItem
           icon="barbell-outline"
           label="Dados de Treinos"
-          onPress={() => handleAction('clearTrainings')}
+          onPress={confirmClearTrainings}
         />
         <SettingsItem
           icon="checkmark-done-outline"
           label="Dados de Tarefas"
-          onPress={() => handleAction('clearTasks')}
+          onPress={confirmClearTasks}
         />
 
         <Text className="text-zinc-400 uppercase text-xs mt-6 mb-2">Suporte</Text>
@@ -143,35 +156,9 @@ export default function SettingsScreen() {
           icon="log-out-outline"
           color="#ef4444"
           label="Sair"
-          onPress={() => handleAction('logout')}
+          onPress={confirmLogout}
         />
       </ScrollView>
-
-      <Modal
-        transparent
-        visible={modalVisible}
-        animationType="fade"
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View className="flex-1 justify-center items-center bg-black/50">
-          <View className="bg-zinc-800 p-6 rounded-xl w-3/4">
-            <Text className="text-white text-xl font-bold mb-4">Tem certeza?</Text>
-            <Text className="text-zinc-300 mb-6">
-              {action === 'logout' && 'Você deseja sair da sua conta?'}
-              {action === 'clearTrainings' && 'Isso irá remover todos os dados de treinos.'}
-              {action === 'clearTasks' && 'Isso irá remover todos os dados de tarefas.'}
-            </Text>
-            <View className="flex flex-row justify-end gap-4">
-              <Pressable onPress={() => setModalVisible(false)}>
-                <Text className="text-zinc-400 text-lg">Cancelar</Text>
-              </Pressable>
-              <Pressable onPress={confirmAction}>
-                <Text className="text-red-500 text-lg">Confirmar</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }
