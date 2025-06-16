@@ -341,15 +341,20 @@ export default function ExpensesScreen() {
 
       <View className="flex flex-row items-center justify-between px-6 mt-[40px] mb-6">
         <Text className="text-3xl text-white font-medium font-sans">Expenses</Text>
+        
+
+        <View className='flex flex-row gap-4 items-center'>
+
         <View className='flex flex-row items-center gap-4 border border-neutral-700 rounded-lg px-3 py-1'>
-          <Text className='text-[#ff7a7f] text-lg font-sans'>{currencyFormat(losses)}</Text>
-          <Text className='text-emerald-400 text-lg font-sans'>{currencyFormat(gains)}</Text>
+          <Text className='text-emerald-300 text-lg font-sans'>{currencyFormat(gains - losses)}</Text>
         </View>
 
         <TouchableOpacity onPress={() => setShowDeleteCategoryModal(true)}>
           <Ionicons name="options-outline" size={24} color="#ff7a7f" />
         </TouchableOpacity>
 
+        </View>
+        
     <Modal
       transparent
       animationType="fade"

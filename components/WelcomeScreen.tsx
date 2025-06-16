@@ -59,7 +59,7 @@ export default function WelcomeScreen() {
         pin,
         subscription: selectedPlan.toLowerCase() as 'free' | 'premium',
       },
-    });
+    });    
 
   } catch (error: any) {
     console.error('Erro no registro:', error.message);

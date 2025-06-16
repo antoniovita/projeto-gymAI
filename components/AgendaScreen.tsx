@@ -338,7 +338,7 @@ export default function AgendaScreen() {
           <View className="flex flex-row items-center gap-[20px]">
 
             <TouchableOpacity onPress={showDatePickerDateFilter}>
-              <Text className="text-[#ff7a7f] text-lg border rounded-lg px-3 py-1 font-sans border-neutral-700">
+              <Text className="text-neutral-300 text-lg border rounded-lg px-3 py-1 font-sans border-neutral-700">
                 {format(dateFilter, 'dd/MM/yyyy')}
               </Text>
             </TouchableOpacity>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -11,21 +11,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from 'hooks/useAuth';
+import { RootStackParamList } from 'widgets/types';
 
-type RootStackParamList = {
-  Chat: undefined;
-  SettingsScreen: undefined;
-};
-
-type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
-
-interface SettingsItemProps {
+type SettingsItemProps = {
   icon: keyof typeof Ionicons.glyphMap;
   color?: string;
   label: string;
   onPress: () => void;
   rightIcon?: keyof typeof Ionicons.glyphMap;
-}
+};
 
 const SettingsItem: React.FC<SettingsItemProps> = ({
   icon,
@@ -47,9 +41,11 @@ const SettingsItem: React.FC<SettingsItemProps> = ({
 );
 
 export default function SettingsScreen() {
-  const navigation = useNavigation<NavigationProp>();
-  const [name] = useState('Antônio Vita');
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { logout } = useAuth();
+
+  // Substitua este valor pelo nome real vindo do contexto ou props
+  const userName = 'Usuário';
 
   const confirmClearTrainings = () => {
     Alert.alert(
@@ -85,7 +81,7 @@ export default function SettingsScreen() {
           onPress: async () => {
             try {
               await logout();
-              navigation.replace('Chat');
+              navigation.replace('Welcome');
             } catch (error) {
               console.error('Erro ao fazer logout:', error);
               Alert.alert('Erro', 'Não foi possível sair da conta.');
@@ -108,10 +104,10 @@ export default function SettingsScreen() {
       <View className="flex flex-row items-center gap-3 mt-10 px-6">
         <View className="w-12 h-12 flex items-center justify-center rounded-full bg-zinc-800">
           <Text className="text-lg font-semibold text-white">
-            {name.split(' ').map((n) => n[0]).join('').toUpperCase()}
+            {userName.split(' ').map((n) => n[0]).join('').toUpperCase()}
           </Text>
         </View>
-        <Text className="text-white text-xl font-semibold">{name}</Text>
+        <Text className="text-white text-xl font-semibold">{userName}</Text>
       </View>
 
       <ScrollView className="flex-1 mt-10 px-6" contentContainerStyle={{ paddingBottom: 40 }}>
