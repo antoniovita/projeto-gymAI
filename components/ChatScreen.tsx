@@ -18,9 +18,9 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../widgets/types';
 import { useState } from 'react';
 
-import { parseInputToTask } from '../resources/parser';
-import { useTask } from '../hooks/useTask';
 import { useAuth } from '../hooks/useAuth';
+import { useMessageParser } from '../hooks/useMessageParser'; // novo
+
 
 
 export default function ChatScreen() {
@@ -31,30 +31,18 @@ export default function ChatScreen() {
   const [fontSize, setFontSize] = useState<'small' | 'medium' | 'large'>('medium');
 
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { createTask } = useTask();
-  const { userId } = useAuth(); // deve retornar { userId: string | null, loading: boolean, isLoggedIn: boolean, register: (name: string) => Promise<void>, login: (id: string) => Promise<void>, logout: () => Promise<void> }
+
+  const { userId } = useAuth();
+  const { processMessage } = useMessageParser(userId);
+
 
   const handleInputSubmit = async () => {
     if (!input.trim()) return;
 
-    const parsed = parseInputToTask(input);
-    if (!parsed) {
-      console.warn('Não foi possível interpretar a data. Tente outra frase.');
-      setInput('');
-      return;
-    }
+    const intent = await processMessage(input);
 
-    if (!userId) {
-      console.warn('Usuário não autenticado.');
-      setInput('');
-      return;
-    }
-
-    try {
-      await createTask(parsed.title, '', parsed.datetimeISO, userId);
-      console.log('[Chat] Tarefa criada:', parsed);
-    } catch (err) {
-      console.error('[Chat] Erro ao criar tarefa:', err);
+    if (intent === 'unknown') {
+      console.warn('Não consegui entender sua mensagem.');
     }
 
     setInput('');

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView, SafeAreaView,
   Modal, TextInput,
@@ -8,6 +8,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { SwipeListView } from 'react-native-swipe-list-view';
 import { useExpenses } from '../hooks/useExpenses';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../hooks/useAuth';
+import { useFocusEffect } from '@react-navigation/native';
+
 
 export default function ExpensesScreen() {
   const [newTaskTitle, setNewTaskTitle] = useState('');
@@ -35,9 +38,9 @@ export default function ExpensesScreen() {
   const [isCreateVisible, setIsCreateVisible] = useState(false);
   const [isEditVisible, setIsEditVisible] = useState(false);
 
-  const { createExpense, fetchExpenses, expenses, deleteExpense, updateExpense } = useExpenses();
+  const { createExpense, fetchExpenses, expenses, deleteExpense, updateExpense, debugAllExpenses } = useExpenses();
 
-  const userId = 'user-id-123';
+  const { userId, loading } = useAuth();
 
   const categories = [
     { name: 'Ganhos', color: '#34D399' },
@@ -78,6 +81,10 @@ export default function ExpensesScreen() {
       }
       
 
+      if (!userId) {
+        alert("User not logged in.");
+        return;
+      }
       const expenseId = await createExpense(
         newTaskTitle,
         amount,
@@ -86,6 +93,7 @@ export default function ExpensesScreen() {
         new Date().toISOString(),
         selectedCategory,
       );
+      await fetchExpenses(userId!);
 
       setIsCreateVisible(false);
       resetForm();
@@ -110,11 +118,6 @@ export default function ExpensesScreen() {
     setCategoryToDelete(null);
     setShowConfirmDeleteModal(false);
   };
-
-  useEffect(() => {
-    loadCategoriesFromStorage();
-  }, []);
-  
   
 
   const handleUpdateExpense = async () => {
@@ -137,6 +140,8 @@ export default function ExpensesScreen() {
       };
   
       await updateExpense(currentExpense.id, updatedExpense);
+      await fetchExpenses(userId!);
+
       setIsEditVisible(false);
       setCurrentExpense(null);
       resetForm();
@@ -212,8 +217,8 @@ export default function ExpensesScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await deleteExpense(expenseId);
-              await fetchExpenses(userId);
+            if (userId) await deleteExpense(expenseId);
+            if (userId) await fetchExpenses(userId);
             } catch (err) {
               console.error(err);
               Alert.alert('Erro', 'Não foi possível excluir a despesa.');
@@ -225,6 +230,10 @@ export default function ExpensesScreen() {
     );
   };
   
+  useEffect(() => {
+    loadCategoriesFromStorage();
+  }, []);
+
 
   useEffect(() => {
     const totalGains = expenses
@@ -239,9 +248,15 @@ export default function ExpensesScreen() {
     setLosses(totalLosses);
   }, [expenses]);
 
-  useEffect(() => {
-    fetchExpenses(userId).catch(err => console.error('Erro ao buscar despesas: ', err));
-  }, [expenses]);
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!loading && userId) {
+        fetchExpenses(userId).catch(err => console.error('Erro ao buscar despesas: ', err));
+      }
+    }, [loading, userId])
+  );
+
+
 
   useEffect(() => {
     if (selectedCategory) {
@@ -251,6 +266,10 @@ export default function ExpensesScreen() {
       setFilteredExpenses(expenses);
     }
   }, [selectedCategory, expenses]);
+
+    useEffect(() => {
+    debugAllExpenses();
+  }, []);
   
   
   const renderModal = (isVisible: boolean, onClose: () => void, onSave: () => void) => (
@@ -346,7 +365,9 @@ export default function ExpensesScreen() {
         <View className='flex flex-row gap-4 items-center'>
 
         <View className='flex flex-row items-center gap-4 border border-neutral-700 rounded-lg px-3 py-1'>
-          <Text className='text-emerald-300 text-lg font-sans'>{currencyFormat(gains - losses)}</Text>
+          <Text className={`${gains - losses >= 0 ? 'text-emerald-300' : 'text-[#ff7a7f]'} text-lg font-sans`}>
+            {currencyFormat(Math.abs(gains - losses))}
+          </Text>
         </View>
 
         <TouchableOpacity onPress={() => setShowDeleteCategoryModal(true)}>
