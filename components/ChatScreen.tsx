@@ -11,69 +11,129 @@ import {
   Modal,
   Switch,
   ScrollView,
+  FlatList,
+  Image
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../widgets/types';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Feather } from '@expo/vector-icons';
 
 import { useAuth } from '../hooks/useAuth';
-import { useMessageParser } from '../hooks/useMessageParser'; // novo
+import { useMessageParser } from '../hooks/useMessageParser';
 
+type ChatMessage = {
+  role: 'user' | 'ai';
+  text: string;
+};
 
+const STORAGE_KEY = '@chat_messages';
 
 export default function ChatScreen() {
   const [input, setInput] = useState('');
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [fontSize, setFontSize] = useState<'small' | 'medium' | 'large'>('medium');
 
+  
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-
   const { userId } = useAuth();
   const { processMessage } = useMessageParser(userId);
 
+  useEffect(() => {
+    (async () => {
+      const stored = await AsyncStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        setMessages(JSON.parse(stored));
+      }
+    })();
+  }, []);
+
+  const saveMessages = async (updated: ChatMessage[]) => {
+    setMessages(updated);
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  };
+
+  const clearMessages = async () => {
+    await AsyncStorage.removeItem(STORAGE_KEY);
+    setMessages([]);
+  };
 
   const handleInputSubmit = async () => {
     if (!input.trim()) return;
 
+    const userMessage: ChatMessage = { role: 'user', text: input };
+    const updatedMessages = [...messages, userMessage];
+    await saveMessages(updatedMessages);
+
     const intent = await processMessage(input);
 
-    if (intent === 'unknown') {
-      console.warn('Não consegui entender sua mensagem.');
-    }
+    const systemReply: ChatMessage = {
+      role: 'ai',
+      text:
+        intent === 'expense'
+          ? 'Despesa registrada com sucesso!'
+          : intent === 'task'
+          ? 'Tarefa registrada com sucesso!'
+          : 'Não entendi sua mensagem.',
+    };
 
+    const finalMessages = [...updatedMessages, systemReply];
+    await saveMessages(finalMessages);
     setInput('');
   };
 
   return (
     <SafeAreaView className="flex-1 bg-zinc-800">
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1"
-      >
+
+          <View className="absolute self-center top-[6%]">
+            <Image
+              source={require('../assets/dayo.png')}
+              className="w-[130px] h-[130px]"
+              resizeMode="contain"
+            />
+          </View>
+
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
         <TouchableOpacity
-          className="bg-transparent h-[30px] w-[30px] absolute top-[6%] right-5 justify-center items-center z-10"
+          className="absolute top-[6%] right-5 z-10 h-[30px] w-[30px] justify-center items-center"
           onPress={() => navigation.navigate('SettingsScreen')}
         >
-          <Ionicons name="cog" size={30} color="#ff7a7f" />
+           <Feather name="settings" size={22} color="#ff7a7f" />
         </TouchableOpacity>
 
         <TouchableOpacity
-          className="bg-transparent h-[30px] w-[30px] absolute top-[6%] right-[15%] justify-center items-center z-10"
+          className="absolute top-[6%] right-[15%] z-10 h-[30px] w-[30px] justify-center items-center"
           onPress={() => setSettingsVisible(true)}
         >
-          <Ionicons name="notifications-circle-outline" size={30} color="#ff7a7f" />
+          <Ionicons name="options-outline" size={24} color="#ff7a7f" />
         </TouchableOpacity>
 
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View className="flex-1 justify-end">
-            <View
-              className="w-full rounded-t-[30px] pt-8 pl-6 pb-6"
-              style={{ backgroundColor: '#1e1e1e' }}
-            >
+          <View className="flex-1 justify-between mt-[100px]">
+            <FlatList
+              data={messages}
+              keyExtractor={(_, i) => i.toString()}
+              contentContainerStyle={{ padding: 16 }}
+              renderItem={({ item }) => (
+                <View className={`mb-6 ${item.role === 'user' ? 'items-end' : 'items-start'}`}>
+                  <View
+                    className={`rounded-2xl px-4 py-2 ${
+                      item.role === 'user' ? 'bg-rose-500' : 'bg-zinc-700'
+                    }`}
+                  >
+                    <Text className="text-white text-lg font-sans ">{item.text}</Text>
+                  </View>
+                </View>
+              )}
+            />
+
+            <View className="w-full rounded-t-[30px] pt-8 pl-6 pb-6" style={{ backgroundColor: '#1e1e1e' }}>
               <View className="flex-row pr-6">
                 <TextInput
                   placeholder="Digite algo..."
@@ -154,11 +214,7 @@ export default function ChatScreen() {
                         fontSize === size ? 'font-semibold' : 'font-light'
                       }`}
                     >
-                      {size === 'small'
-                        ? 'Pequena'
-                        : size === 'medium'
-                        ? 'Média'
-                        : 'Grande'}
+                      {size === 'small' ? 'Pequena' : size === 'medium' ? 'Média' : 'Grande'}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -174,21 +230,27 @@ export default function ChatScreen() {
                     key={color}
                     onPress={() => console.log('Tema alterado para', color)}
                     className="w-8 h-8 rounded-full border-2"
-                    style={{
-                      backgroundColor: color,
-                      borderColor: input ? undefined : '#fff',
-                    }}
+                    style={{ backgroundColor: color, borderColor: input ? undefined : '#fff' }}
                   />
                 ))}
               </View>
+            </View>
+
+            {/* Limpar mensagens */}
+            <View className="py-3">
+              <Text className="text-gray-300 text-lg mb-2">Histórico</Text>
+              <TouchableOpacity
+                onPress={clearMessages}
+                className="bg-rose-600 py-2 px-4 rounded-xl items-center"
+              >
+                <Text className="text-white">Limpar Conversa</Text>
+              </TouchableOpacity>
             </View>
           </ScrollView>
 
           <TouchableOpacity
             className="bg-rose-500 py-3 rounded-xl items-center mb-4"
-            onPress={() => {
-              setSettingsVisible(false);
-            }}
+            onPress={() => setSettingsVisible(false)}
           >
             <Text className="text-white text-lg font-semibold">Salvar</Text>
           </TouchableOpacity>
