@@ -1,4 +1,6 @@
-import { useEffect, useState } from 'react';
+
+import { useFocusEffect } from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView, SafeAreaView,
   Modal, TextInput, Alert,
@@ -10,6 +12,9 @@ import { SwipeListView } from 'react-native-swipe-list-view';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { format } from 'date-fns';
+import { useAuth } from 'hooks/useAuth';
+import { Task } from 'api/model/Task';
+import RefreshButton from './comps/refreshButton';
 
 
 
@@ -27,7 +32,9 @@ const colorOptions = [
 ];
 
 export default function AgendaScreen() {
-  const userId = 'user-id-123';
+
+  const { userId, loading } = useAuth();
+
   const {
     tasks,
     createTask,
@@ -62,6 +69,8 @@ export default function AgendaScreen() {
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [dateFilter, setDateFilter] = useState(new Date());
 
+  const [filteredTasks, setFilteredTasks] = useState<Task[]>([]); // 
+
   const categories = Array.from(
     new Set([
       ...tasks
@@ -92,7 +101,7 @@ export default function AgendaScreen() {
       { name: newCategoryName.trim(), color: newCategoryColor }
     ]);
     setNewCategoryName('');
-    setNewCategoryColor('#EF4444'); // resetar cor padrão
+    setNewCategoryColor('#EF4444'); 
     setIsCategoryModalVisible(false);
   };
 
@@ -150,19 +159,25 @@ export default function AgendaScreen() {
     debugAllTasks();
   }, []);
 
-  useEffect(() => {
-    const fetchAllTasks = async () => {
-      try {
-        await fetchTasks(userId);
-      } catch (err) {
-        console.error('Erro ao buscar tarefas:', err);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (userId) {
+        const fetchAllTasks = async () => {
+          try {
+            await fetchTasks(userId); 
+            setFilteredTasks(tasks); 
+          } catch (err) {
+            console.error('Erro ao buscar tarefas:', err);
+          }
+        };
+  
+        fetchAllTasks();
       }
-    };
+    }, [userId, tasks])
+  );
+  
 
-    fetchAllTasks();
-  }, []);
-
-  // Combina as partes de data e hora em um objeto Date único
   const combineDateAndTime = (date: Date, time: Date): Date => {
     const combined = new Date(date);
     combined.setHours(time.getHours());
@@ -176,11 +191,6 @@ export default function AgendaScreen() {
   const handleSaveTask = async () => {
     if (!newTaskTitle.trim()) {
       Alert.alert('Erro', 'O título não pode estar vazio.');
-      return;
-    }
-
-    if (selectedCategories.length === 0) {
-      Alert.alert('Erro', 'Selecione pelo menos uma categoria.');
       return;
     }
 
@@ -202,12 +212,12 @@ export default function AgendaScreen() {
           newTaskTitle,
           taskContent,
           datetimeISO, 
-          userId,
+          userId!,
           categoriesString
         );
       }
 
-      await fetchTasks(userId);
+      await fetchTasks(userId!);
       resetModal();
     } catch (err) {
       console.error('[handleSaveTask] Erro:', err);
@@ -241,7 +251,7 @@ export default function AgendaScreen() {
   const toggleTaskCompletion = async (taskId: string, completed: 0 | 1) => {
     try {
       await updateTaskCompletion(taskId, completed === 0 ? 1 : 0);
-      await fetchTasks(userId);
+      await fetchTasks(userId!);
     } catch (err) {
       Alert.alert('Erro', 'Não foi possível atualizar o status.');
     }
@@ -257,18 +267,26 @@ export default function AgendaScreen() {
     setTime(new Date());
   };
 
-  const filteredTasks = tasks.filter((task) => {
-    if (!task.datetime) return false;
+  useEffect(() => {
+    const filtered = tasks.filter(task => {
+      if (!task.datetime) return false;
+  
+      const taskDateISO = task.datetime.split('T')[0]; // 'yyyy-MM-dd'
+      const selectedDateISO = dateFilter.toISOString().split('T')[0]; // 'yyyy-MM-dd'
+  
+      const types = task.type?.split(',').map(t => t.trim()) || [];
+      const categoryMatches =
+        selectedTypes.length === 0 || selectedTypes.some(cat => types.includes(cat));
+  
+      return taskDateISO === selectedDateISO && categoryMatches;
+    });
+  
+    setFilteredTasks(filtered);
+  }, [tasks, dateFilter, selectedTypes]);
 
-    const taskDateISO = task.datetime.split('T')[0]; // 'yyyy-MM-dd'
-    const selectedDateISO = dateFilter.toISOString().split('T')[0]; // 'yyyy-MM-dd'
-
-    const types = task.type?.split(',').map((t: string) => t.trim()) || [];
-    const categoryMatches =
-      selectedTypes.length === 0 || selectedTypes.some((cat) => types.includes(cat));
-
-    return taskDateISO === selectedDateISO && categoryMatches;
-  });
+  const showAllTasks = () => {
+    setFilteredTasks(tasks); 
+  };
 
   const showDatePickerDateFilter = () => setDatePickerVisibility(true);
   const hideDatePicker = () => setDatePickerVisibility(false);
@@ -338,11 +356,13 @@ export default function AgendaScreen() {
           <View className="flex flex-row items-center gap-[20px]">
 
             <TouchableOpacity onPress={showDatePickerDateFilter}>
-              <Text className="text-neutral-300 text-lg border rounded-lg px-3 py-1 font-sans border-neutral-700">
+              <Text className="text-[#ff7a7f] text-lg border rounded-lg px-3 py-1 font-sans border-neutral-700">
                 {format(dateFilter, 'dd/MM/yyyy')}
               </Text>
             </TouchableOpacity>
 
+
+            <RefreshButton onPress={showAllTasks} />
 
             <TouchableOpacity onPress={() => setShowDeleteCategoryModal(true)}>
               <Ionicons name="options-outline" size={24} color="#ff7a7f" />
@@ -569,7 +589,7 @@ export default function AgendaScreen() {
           <View className="flex flex-row justify-start items-center h-full">
           <TouchableOpacity
             className="p-3"
-            onPress={() => handleDeleteTask(item.id, userId, deleteTask, fetchTasks)}
+            onPress={() => handleDeleteTask(item.id, userId!, deleteTask, fetchTasks)}
           >
             <Ionicons name="trash" size={24} color="white" />
           </TouchableOpacity>

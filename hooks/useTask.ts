@@ -48,7 +48,13 @@ export const useTask = () => {
       console.log('[fetchTasks] Buscando todas as tarefas do usuário:', userId);
       const data = await TaskService.getTasks(userId);
       console.log('[fetchTasks] Tarefas retornadas:', data);
-      setTasks(data || []);
+  
+      setTasks(oldTasks => {
+        if (JSON.stringify(oldTasks) === JSON.stringify(data)) {
+          return oldTasks;
+        }
+        return data || [];
+      });
     } catch (err: any) {
       setError(err.message);
       console.error('[fetchTasks] Erro:', err);
@@ -56,6 +62,7 @@ export const useTask = () => {
       setLoading(false);
     }
   };
+  
 
   const fetchTasksByTypeAndDate = async (userId: string, types: string[], date: string) => {
     setLoading(true);
