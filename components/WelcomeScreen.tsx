@@ -52,14 +52,8 @@ export default function WelcomeScreen() {
     setSubscriptionModalVisible(false);
     setModalVisible(false);
 
-    navigation.navigate('MainTabs', {
-      screen: 'Chat',
-      params: {
-        userName: name,
-        pin,
-        subscription: selectedPlan.toLowerCase() as 'free' | 'premium',
-      },
-    });    
+    navigation.navigate('MainTabs');
+
 
   } catch (error: any) {
     console.error('Erro no registro:', error.message);

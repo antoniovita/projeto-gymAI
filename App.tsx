@@ -6,14 +6,15 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useCallback, useEffect, useState } from 'react';
 import "./global.css";
 import { AuthService } from 'api/service/authService';
-import { initDatabase, getDb, deleteDatabase } from 'database';
+import { initDatabase, getDb } from 'database';
 import WelcomeScreen from './components/WelcomeScreen';
 import MainTabs from './widgets/MainTabs';
 import SettingsScreen from 'components/SettingsScreen';
+import { RootStackParamList } from 'widgets/types';
 
 SplashScreen.preventAutoHideAsync();
 
-const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -56,12 +57,12 @@ export default function App() {
   return (
     <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
       <NavigationContainer>
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-          {isAuthenticated ? ( 
-            <Stack.Screen name="MainTabs" component={MainTabs} />
-          ) : (
-            <Stack.Screen name="WelcomeScreen" component={WelcomeScreen} />
-          )}
+        <Stack.Navigator
+          initialRouteName={isAuthenticated ? 'MainTabs' : 'WelcomeScreen'}
+          screenOptions={{ headerShown: false }}
+        >
+          <Stack.Screen name="WelcomeScreen" component={WelcomeScreen} />
+          <Stack.Screen name="MainTabs" component={MainTabs} />
           <Stack.Screen name="SettingsScreen" component={SettingsScreen} />
         </Stack.Navigator>
       </NavigationContainer>

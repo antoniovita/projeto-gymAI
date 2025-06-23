@@ -35,7 +35,7 @@ const SettingsItem: React.FC<SettingsItemProps> = ({
   >
     <View className="flex flex-row items-center gap-3">
       <Ionicons name={icon} size={20} color={color} />
-      <Text className="text-white text-[16px]">{label}</Text>
+      <Text className="text-white text-[16px] font-sans">{label}</Text>
     </View>
     <Ionicons name={rightIcon} size={20} color="#a1a1aa" />
   </TouchableOpacity>
@@ -96,7 +96,7 @@ export default function SettingsScreen() {
           onPress: async () => {
             try {
               await logout();
-              navigation.replace('Welcome');
+              navigation.navigate('WelcomeScreen');
             } catch (error) {
               console.error('Erro ao fazer logout:', error);
               Alert.alert('Erro', 'Não foi possível sair da conta.');
@@ -118,19 +118,19 @@ export default function SettingsScreen() {
       <View className="mt-[20px] flex flex-row items-center px-2">
         <TouchableOpacity onPress={() => navigation.goBack()} className="flex flex-row items-center">
           <Ionicons name="chevron-back" size={24} color="white" />
-          <Text className="text-white font-medium text-[16px] ml-1">Voltar</Text>
+          <Text className="text-white font-sans text-[16px] ml-1">Voltar</Text>
         </TouchableOpacity>
       </View>
 
       <View className="flex flex-row items-center gap-3 mt-10 px-6">
         <View className="w-12 h-12 flex items-center justify-center rounded-full bg-zinc-800">
-          <Text className="text-lg font-semibold text-white">{initials}</Text>
+          <Text className="text-lg font-sans text-white">{initials}</Text>
         </View>
-        <Text className="text-white text-xl font-semibold">{userName}</Text>
+        <Text className="text-white text-xl font-sans">{userName}</Text>
       </View>
 
       <ScrollView className="flex-1 mt-10 px-6" contentContainerStyle={{ paddingBottom: 40 }}>
-        <Text className="text-zinc-400 uppercase text-xs mb-2">Conta</Text>
+        <Text className="text-zinc-400 uppercase font-sans text-xs mb-2">Conta</Text>
         <SettingsItem
           icon="person-outline"
           label="Informações"
@@ -147,7 +147,7 @@ export default function SettingsScreen() {
           onPress={() => Alert.alert('Configurações', 'Gerencie sua privacidade')}
         />
 
-        <Text className="text-zinc-400 uppercase text-xs mt-6 mb-2">Dados</Text>
+        <Text className="text-zinc-400 font-sans uppercase text-xs mt-6 mb-2">Dados</Text>
         <SettingsItem
           icon="barbell-outline"
           label="Dados de Treinos"

@@ -8,11 +8,7 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   SafeAreaView,
-  Modal,
-  Switch,
-  ScrollView,
   FlatList,
-  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -24,6 +20,7 @@ import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../hooks/useAuth';
 import { useMessageParser } from '../hooks/useMessageParser';
 import { SettingsModal } from './comps/configModal';
+
 
 type ChatMessage = {
   role: 'user' | 'ai';
