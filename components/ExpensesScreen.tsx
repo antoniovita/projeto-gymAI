@@ -503,7 +503,10 @@ export default function ExpensesScreen() {
           <View className="w-full flex flex-col justify-center px-6 h-[90px] pb-4 border-b border-neutral-700 bg-zinc-800">
             <View className="flex flex-row justify-between">
               <TouchableOpacity className="flex flex-col gap-1 mt-1" onPress={() => openEditModal(item)}>
-                <Text className="text-xl font-sans font-medium text-gray-300">{item.name}</Text>
+                <Text className="text-xl font-sans font-medium text-gray-300 max-w-[250px]">
+                  {item.name.split(' ').slice(0, 6).join(' ')}
+                  {item.name.split(' ').length > 6 ? '...' : ''}
+                </Text>
                 <Text className="text-neutral-400 text-sm mt-1 font-sans">
                   {new Date(item.date ?? '').toLocaleDateString('pt-BR')} - {new Date(item.time ?? '').toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                 </Text>

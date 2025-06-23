@@ -23,6 +23,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../hooks/useAuth';
 import { useMessageParser } from '../hooks/useMessageParser';
+import { SettingsModal } from './comps/configModal';
 
 type ChatMessage = {
   role: 'user' | 'ai';
@@ -241,107 +242,19 @@ export default function ChatScreen() {
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
 
-      {/* Modal de configurações */}
-      <Modal
+      <SettingsModal
         visible={settingsVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setSettingsVisible(false)}
-      >
-        <TouchableWithoutFeedback onPress={() => setSettingsVisible(false)}>
-          <View className="flex-1 bg-black/60 justify-end" />
-        </TouchableWithoutFeedback>
+        onClose={() => setSettingsVisible(false)}
+        darkMode={darkMode}
+        setDarkMode={setDarkMode}
+        notificationsEnabled={notificationsEnabled}
+        setNotificationsEnabled={setNotificationsEnabled}
+        fontSize={fontSize}
+        setFontSize={setFontSize}
+        clearMessages={clearMessages}
+      />
 
-        <View className="bg-zinc-800 rounded-t-3xl p-6 max-h-[80%]">
-          <View className="flex-row justify-between items-center mb-4">
-            <Text className="text-white text-2xl font-bold">Configurações</Text>
-            <TouchableOpacity onPress={() => setSettingsVisible(false)}>
-              <Ionicons name="close" size={28} color="white" />
-            </TouchableOpacity>
-          </View>
 
-          <ScrollView className="mb-4">
-            {/* Modo escuro */}
-            <View className="flex-row justify-between items-center py-3 border-b border-zinc-700">
-              <Text className="text-gray-300 text-lg">Modo Escuro</Text>
-              <Switch
-                value={darkMode}
-                onValueChange={setDarkMode}
-                trackColor={{ false: '#767577', true: '#f43f5e' }}
-                thumbColor={darkMode ? '#ff7a7f' : '#f4f3f4'}
-              />
-            </View>
-
-            {/* Notificações */}
-            <View className="flex-row justify-between items-center py-3 border-b border-zinc-700">
-              <Text className="text-gray-300 text-lg">Notificações</Text>
-              <Switch
-                value={notificationsEnabled}
-                onValueChange={setNotificationsEnabled}
-                trackColor={{ false: '#767577', true: '#f43f5e' }}
-                thumbColor={notificationsEnabled ? '#ff7a7f' : '#f4f3f4'}
-              />
-            </View>
-
-            {/* Fonte */}
-            <View className="py-3 border-b border-zinc-700">
-              <Text className="text-gray-300 text-lg mb-2">Tamanho da Fonte</Text>
-              <View className="flex-row items-center justify-between">
-                {['small', 'medium', 'large'].map((size) => (
-                  <TouchableOpacity
-                    key={size}
-                    onPress={() => setFontSize(size as any)}
-                    className={`px-4 py-1 rounded-full border-2 ${
-                      fontSize === size ? 'border-rose-400' : 'border-zinc-700'
-                    }`}
-                  >
-                    <Text
-                      className={`text-white ${
-                        fontSize === size ? 'font-semibold' : 'font-light'
-                      }`}
-                    >
-                      {size === 'small' ? 'Pequena' : size === 'medium' ? 'Média' : 'Grande'}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            {/* Tema */}
-            <View className="py-3">
-              <Text className="text-gray-300 text-lg mb-2">Tema</Text>
-              <View className="flex-row gap-3">
-                {['#ff7a7f', '#22d3ee', '#f59e0b', '#a3e635'].map((color) => (
-                  <TouchableOpacity
-                    key={color}
-                    onPress={() => console.log('Tema alterado para', color)}
-                    className="w-8 h-8 rounded-full border-2"
-                    style={{ backgroundColor: color, borderColor: input ? undefined : '#fff' }}
-                  />
-                ))}
-              </View>
-            </View>
-
-            {/* Histórico */}
-            <View className="py-3">
-              <Text className="text-gray-300 text-lg mb-2">Histórico</Text>
-              <TouchableOpacity
-                onPress={clearMessages}
-                className="bg-rose-600 py-2 px-4 rounded-xl items-center"
-              >
-                <Text className="text-white">Limpar Conversa</Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
-
-          <TouchableOpacity
-            className="bg-rose-500 py-3 rounded-xl items-center mb-4"
-            onPress={() => setSettingsVisible(false)}
-          >
-            <Text className="text-white text-lg font-semibold">Salvar</Text>
-          </TouchableOpacity>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }

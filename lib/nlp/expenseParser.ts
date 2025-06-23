@@ -18,22 +18,22 @@ export async function parseExpense(text: string): Promise<ParsedExpense | null> 
   const price = parseFloat(numbers[0]);
   if (isNaN(price)) return null;
 
-  const type = detectExpenseType(translated);
+  let type = detectExpenseType(translated);
 
-  const cleaned = translated
-    .replace(numbers[0], '')
-    .replace(/(bought|spent|paid|for|on|received|won|reais|real|r\$|by|from|earned|gain|got|found|salary|sold|pix received|paid me|lost|in|at|na|no|de|do|da|por)/gi, '')
-    .trim();
+  if (!type || type !== 'Ganhos') {
+    if (/\b(gastei|paguei|comprei|perdi|investi)\b/.test(translated)) {
+      type = 'Perdas';
+    } else if (/\b(recebi|ganhei|vendi|entrou|salário)\b/.test(translated)) {
+      type = 'Ganhos';
+    }
+  }
 
-  const nouns = nlp(cleaned).nouns().out('array');
-  let title = nouns.length > 0
-    ? nouns[nouns.length - 1]
-    : cleaned || 'Entrada/Saída';
+  const cleanedTitle = text.trim().replace(/\s+/g, ' ');
 
-  title = title.replace(/\s+/g, ' ').trim();
+  const capitalizedTitle = cleanedTitle.charAt(0).toUpperCase() + cleanedTitle.slice(1);
 
   return {
-    title,
+    title: capitalizedTitle,
     price,
     type,
   };
