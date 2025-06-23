@@ -12,16 +12,15 @@ import {
   Switch,
   ScrollView,
   FlatList,
-  Image
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../widgets/types';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Feather } from '@expo/vector-icons';
-
 import { useAuth } from '../hooks/useAuth';
 import { useMessageParser } from '../hooks/useMessageParser';
 
@@ -39,11 +38,13 @@ export default function ChatScreen() {
   const [darkMode, setDarkMode] = useState(true);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [fontSize, setFontSize] = useState<'small' | 'medium' | 'large'>('medium');
+  const [isTyping, setIsTyping] = useState(false);
+  const [typingText, setTypingText] = useState('');
 
-  
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { userId } = useAuth();
   const { processMessage } = useMessageParser(userId);
+  const flatListRef = useRef<FlatList<ChatMessage>>(null);
 
   useEffect(() => {
     (async () => {
@@ -57,11 +58,22 @@ export default function ChatScreen() {
   const saveMessages = async (updated: ChatMessage[]) => {
     setMessages(updated);
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    scrollToBottom();
   };
 
   const clearMessages = async () => {
     await AsyncStorage.removeItem(STORAGE_KEY);
     setMessages([]);
+  };
+
+  const scrollToBottom = () => {
+    setTimeout(() => {
+      flatListRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+  };
+
+  const randomFrom = (options: string[]) => {
+    return options[Math.floor(Math.random() * options.length)];
   };
 
   const handleInputSubmit = async () => {
@@ -71,66 +83,139 @@ export default function ChatScreen() {
     const updatedMessages = [...messages, userMessage];
     await saveMessages(updatedMessages);
 
-    const intent = await processMessage(input);
-
-    const systemReply: ChatMessage = {
-      role: 'ai',
-      text:
-        intent === 'expense'
-          ? 'Despesa registrada com sucesso!'
-          : intent === 'task'
-          ? 'Tarefa registrada com sucesso!'
-          : 'Não entendi sua mensagem.',
-    };
-
-    const finalMessages = [...updatedMessages, systemReply];
-    await saveMessages(finalMessages);
     setInput('');
+    setIsTyping(true);
+
+    const lowerInput = input.trim().toLowerCase();
+
+    const isThanks = ['obrigado', 'valeu', 'agradecido', 'obrigada'].some((word) =>
+      lowerInput.includes(word)
+    );
+
+    const intent = isThanks ? 'thanks' : await processMessage(input);
+
+    setTimeout(async () => {
+      const expenseResponses = [
+        'Despesa registrada com sucesso!',
+        'Anotado: uma nova despesa!',
+        'Gasto adicionado à sua lista.',
+        'Sua despesa foi salva.',
+      ];
+
+      const taskResponses = [
+        'Tarefa registrada com sucesso!',
+        'Nova tarefa adicionada!',
+        'Está na lista! Tarefa salva.',
+        'Tarefa anotada com sucesso!',
+      ];
+
+      const thanksResponses = [
+        'De nada! Sempre por aqui. 😊',
+        'Disponha!',
+        'Fico feliz em ajudar!',
+        'Sempre que precisar, estou aqui.',
+      ];
+
+      const fallbackResponses = [
+        'Não entendi sua mensagem.',
+        'Você pode reformular?',
+        'Não consegui identificar o tipo de registro.',
+        'Tente novamente com mais detalhes.',
+      ];
+
+      const finalText =
+        intent === 'expense'
+          ? randomFrom(expenseResponses)
+          : intent === 'task'
+          ? randomFrom(taskResponses)
+          : intent === 'thanks'
+          ? randomFrom(thanksResponses)
+          : randomFrom(fallbackResponses);
+
+      let index = 0;
+      setTypingText('');
+
+      const interval = setInterval(() => {
+        setTypingText((prev) => {
+          const next = finalText.slice(0, index + 1);
+          index++;
+
+          if (index === finalText.length) {
+            clearInterval(interval);
+            const systemReply: ChatMessage = { role: 'ai', text: finalText };
+            const finalMessages = [...updatedMessages, systemReply];
+            saveMessages(finalMessages);
+            setIsTyping(false);
+            setTypingText('');
+          }
+
+          return next;
+        });
+      }, 25);
+    }, 1000);
   };
 
   return (
     <SafeAreaView className="flex-1 bg-zinc-800">
+      <View className="flex flex-col px-6 mt-[40px]">
+        <Text className="text-3xl text-white font-medium font-sans mb-4">Your Chat</Text>
 
-          <View className="absolute self-center top-[6%]">
-            <Image
-              source={require('../assets/dayo.png')}
-              className="w-[130px] h-[130px]"
-              resizeMode="contain"
-            />
-          </View>
+        <View className="flex-row items-center gap-2 mt-2">
+          <TouchableOpacity
+            onPress={() => setSettingsVisible(true)}
+            className="flex-row items-center gap-2 bg-neutral-700 rounded-xl px-3 py-1"
+          >
+            <Ionicons name="options-outline" size={15} color="#ff7a7f" />
+            <Text className="text-[#ff7a7f] font-sans font-medium text-sm">Opções</Text>
+          </TouchableOpacity>
 
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
-        <TouchableOpacity
-          className="absolute top-[6%] right-5 z-10 h-[30px] w-[30px] justify-center items-center"
-          onPress={() => navigation.navigate('SettingsScreen')}
-        >
-           <Feather name="settings" size={22} color="#ff7a7f" />
-        </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('SettingsScreen')}
+            className="flex-row items-center gap-2 bg-zinc-700 rounded-xl px-3 py-1"
+          >
+            <Feather name="settings" size={14} color="white" />
+            <Text className="text-white font-sans font-medium text-sm">Configurações</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
 
-        <TouchableOpacity
-          className="absolute top-[6%] right-[15%] z-10 h-[30px] w-[30px] justify-center items-center"
-          onPress={() => setSettingsVisible(true)}
-        >
-          <Ionicons name="options-outline" size={24} color="#ff7a7f" />
-        </TouchableOpacity>
-
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        className="flex-1"
+      >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View className="flex-1 justify-between mt-[100px]">
+          <View className="flex-1 justify-between mt-[20px]">
             <FlatList
+              ref={flatListRef}
               data={messages}
               keyExtractor={(_, i) => i.toString()}
               contentContainerStyle={{ padding: 16 }}
               renderItem={({ item }) => (
                 <View className={`mb-6 ${item.role === 'user' ? 'items-end' : 'items-start'}`}>
                   <View
-                    className={`rounded-2xl px-4 py-2 ${
+                    className={`rounded-3xl px-4 py-3 ${
                       item.role === 'user' ? 'bg-rose-500' : 'bg-zinc-700'
                     }`}
                   >
-                    <Text className="text-white text-lg font-sans ">{item.text}</Text>
+                    <Text className="text-white text-[15px] font-sans">{item.text}</Text>
                   </View>
                 </View>
               )}
+              ListFooterComponent={
+                isTyping ? (
+                  <View className="mb-6 items-start">
+                    <View className="rounded-3xl px-4 py-3 bg-zinc-700">
+                      <Text className="text-white text-[15px] font-sans">
+                        {typingText ? (
+                          <Text className="text-white text-[15px] font-sans">{typingText}</Text>
+                        ) : (
+                          <Ionicons name="ellipsis-horizontal" size={20} color="#white" />
+                        )}
+                      </Text>
+                    </View>
+                  </View>
+                ) : null
+              }
             />
 
             <View className="w-full rounded-t-[30px] pt-8 pl-6 pb-6" style={{ backgroundColor: '#1e1e1e' }}>
@@ -156,6 +241,7 @@ export default function ChatScreen() {
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
 
+      {/* Modal de configurações */}
       <Modal
         visible={settingsVisible}
         transparent
@@ -175,7 +261,7 @@ export default function ChatScreen() {
           </View>
 
           <ScrollView className="mb-4">
-            {/* Dark Mode */}
+            {/* Modo escuro */}
             <View className="flex-row justify-between items-center py-3 border-b border-zinc-700">
               <Text className="text-gray-300 text-lg">Modo Escuro</Text>
               <Switch
@@ -197,7 +283,7 @@ export default function ChatScreen() {
               />
             </View>
 
-            {/* Tamanho da Fonte */}
+            {/* Fonte */}
             <View className="py-3 border-b border-zinc-700">
               <Text className="text-gray-300 text-lg mb-2">Tamanho da Fonte</Text>
               <View className="flex-row items-center justify-between">
@@ -221,7 +307,7 @@ export default function ChatScreen() {
               </View>
             </View>
 
-            {/* Cores de Tema */}
+            {/* Tema */}
             <View className="py-3">
               <Text className="text-gray-300 text-lg mb-2">Tema</Text>
               <View className="flex-row gap-3">
@@ -236,7 +322,7 @@ export default function ChatScreen() {
               </View>
             </View>
 
-            {/* Limpar mensagens */}
+            {/* Histórico */}
             <View className="py-3">
               <Text className="text-gray-300 text-lg mb-2">Histórico</Text>
               <TouchableOpacity

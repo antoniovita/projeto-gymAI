@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from 'hooks/useAuth';
 import { RootStackParamList } from 'widgets/types';
+import { UserService } from 'api/service/userService';
 
 type SettingsItemProps = {
   icon: keyof typeof Ionicons.glyphMap;
@@ -42,10 +43,24 @@ const SettingsItem: React.FC<SettingsItemProps> = ({
 
 export default function SettingsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { logout } = useAuth();
+  const { logout, userId, loading } = useAuth();
+  const [userName, setUserName] = useState<string>('Usuário');
 
-  // Substitua este valor pelo nome real vindo do contexto ou props
-  const userName = 'Usuário';
+  useEffect(() => {
+    const fetchUserName = async () => {
+      if (userId) {
+        try {
+          const user = await UserService.getUserById(userId);
+          if (user?.name) {
+            setUserName(user.name);
+          }
+        } catch (error) {
+          console.error('Erro ao buscar nome do usuário:', error);
+        }
+      }
+    };
+    fetchUserName();
+  }, [userId]);
 
   const confirmClearTrainings = () => {
     Alert.alert(
@@ -92,6 +107,12 @@ export default function SettingsScreen() {
     );
   };
 
+  const initials = userName
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase();
+
   return (
     <SafeAreaView className="flex-1 bg-zinc-900">
       <View className="mt-[20px] flex flex-row items-center px-2">
@@ -103,9 +124,7 @@ export default function SettingsScreen() {
 
       <View className="flex flex-row items-center gap-3 mt-10 px-6">
         <View className="w-12 h-12 flex items-center justify-center rounded-full bg-zinc-800">
-          <Text className="text-lg font-semibold text-white">
-            {userName.split(' ').map((n) => n[0]).join('').toUpperCase()}
-          </Text>
+          <Text className="text-lg font-semibold text-white">{initials}</Text>
         </View>
         <Text className="text-white text-xl font-semibold">{userName}</Text>
       </View>
