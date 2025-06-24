@@ -1,12 +1,24 @@
 import * as chrono from 'chrono-node';
 import nlp from 'compromise';
 import nlpDates from 'compromise-dates';
-import { translateKeywordLocally } from './translator'; 
+import { translateKeywordLocally } from './translator';
 
 nlp.plugin(nlpDates);
 
+function normalizeText(text: string): string {
+  return text
+    .replace(/\bamn\b/gi, 'amanhã')
+    .replace(/\bamnh\b/gi, 'amanhã')
+    .replace(/\bdps\b/gi, 'depois')
+    .replace(/\bhj\b/gi, 'hoje')
+    .replace(/\bagr\b/gi, 'agora')
+    .replace(/\bont\b/gi, 'ontem');
+}
+
 export async function parseDate(text: string): Promise<{ datetimeISO: string, rawText: string } | null> {
-  const chronoResult = chrono.pt.parse(text);
+  const normalizedText = normalizeText(text);
+
+  const chronoResult = chrono.pt.parse(normalizedText);
   if (chronoResult.length > 0) {
     const date = chronoResult[0].date();
     return {
@@ -15,7 +27,7 @@ export async function parseDate(text: string): Promise<{ datetimeISO: string, ra
     };
   }
 
-  const translated = translateKeywordLocally(text); 
+  const translated = translateKeywordLocally(normalizedText);
   const doc = nlp(translated);
   const dates = (doc as any).dates().json();
 

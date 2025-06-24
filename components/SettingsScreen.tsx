@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -10,9 +10,11 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
 import { useAuth } from 'hooks/useAuth';
+import { useTask } from 'hooks/useTask';
+import { useWorkout } from 'hooks/useWorkout';
 import { RootStackParamList } from 'widgets/types';
-import { UserService } from 'api/service/userService';
 
 type SettingsItemProps = {
   icon: keyof typeof Ionicons.glyphMap;
@@ -43,24 +45,9 @@ const SettingsItem: React.FC<SettingsItemProps> = ({
 
 export default function SettingsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { logout, userId, loading } = useAuth();
-  const [userName, setUserName] = useState<string>('Usuário');
-
-  useEffect(() => {
-    const fetchUserName = async () => {
-      if (userId) {
-        try {
-          const user = await UserService.getUserById(userId);
-          if (user?.name) {
-            setUserName(user.name);
-          }
-        } catch (error) {
-          console.error('Erro ao buscar nome do usuário:', error);
-        }
-      }
-    };
-    fetchUserName();
-  }, [userId]);
+  const { logout, userId, userName } = useAuth();
+  const { clearTasksByUser } = useTask();
+  const { clearWorkoutsByUser } = useWorkout();
 
   const confirmClearTrainings = () => {
     Alert.alert(
@@ -68,7 +55,19 @@ export default function SettingsScreen() {
       'Isso irá remover todos os dados de treinos.',
       [
         { text: 'Cancelar', style: 'cancel' },
-        { text: 'Confirmar', style: 'destructive', onPress: () => console.log('Treinos limpos') },
+        {
+          text: 'Confirmar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await clearWorkoutsByUser(userId!);
+              Alert.alert('Sucesso', 'Todos os treinos foram removidos com sucesso.');
+            } catch (error) {
+              console.error('Erro ao limpar treinos:', error);
+              Alert.alert('Erro', 'Não foi possível remover os treinos.');
+            }
+          },
+        },
       ]
     );
   };
@@ -79,7 +78,19 @@ export default function SettingsScreen() {
       'Isso irá remover todos os dados de tarefas.',
       [
         { text: 'Cancelar', style: 'cancel' },
-        { text: 'Confirmar', style: 'destructive', onPress: () => console.log('Tasks limpas') },
+        {
+          text: 'Confirmar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await clearTasksByUser(userId!);
+              Alert.alert('Sucesso', 'Todas as tarefas foram removidas com sucesso.');
+            } catch (error) {
+              console.error('Erro ao limpar tarefas:', error);
+              Alert.alert('Erro', 'Não foi possível remover as tarefas.');
+            }
+          },
+        },
       ]
     );
   };
@@ -107,11 +118,14 @@ export default function SettingsScreen() {
     );
   };
 
-  const initials = userName
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase();
+const initials = userName
+  ? userName
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+  : '';
+
 
   return (
     <SafeAreaView className="flex-1 bg-zinc-900">
@@ -150,12 +164,12 @@ export default function SettingsScreen() {
         <Text className="text-zinc-400 font-sans uppercase text-xs mt-6 mb-2">Dados</Text>
         <SettingsItem
           icon="barbell-outline"
-          label="Dados de Treinos"
+          label="Remover dados de Treinos"
           onPress={confirmClearTrainings}
         />
         <SettingsItem
           icon="checkmark-done-outline"
-          label="Dados de Tarefas"
+          label="Remover dados de Tarefas"
           onPress={confirmClearTasks}
         />
 
@@ -169,7 +183,7 @@ export default function SettingsScreen() {
         <Text className="text-zinc-400 uppercase text-xs mt-6 mb-2">Conta</Text>
         <SettingsItem
           icon="log-out-outline"
-          color="#ef4444"
+          color="#ff7a7f"
           label="Sair"
           onPress={confirmLogout}
         />

@@ -33,7 +33,7 @@ const colorOptions = [
 
 export default function AgendaScreen() {
 
-  const { userId, loading } = useAuth();
+  const { userId } = useAuth();
 
   const {
     tasks,
@@ -388,95 +388,106 @@ export default function AgendaScreen() {
 
 
       <Modal
-          transparent
-          animationType="fade"
-          visible={showDeleteCategoryModal}
-          onRequestClose={() => setShowDeleteCategoryModal(false)}
-        >
-            <View className="flex-1 bg-black/80 justify-center items-center px-6">
-              <View className="bg-zinc-800 rounded-2xl w-full max-h-[80%] p-4">
+      transparent
+      animationType="fade"
+      visible={showDeleteCategoryModal}
+      onRequestClose={() => setShowDeleteCategoryModal(false)}
+    >
+      <View className="flex-1 bg-black/80 justify-center items-center px-6">
+        <View className="bg-zinc-800 rounded-2xl w-full max-h-[80%] p-4">
 
-                <ScrollView className="mb-4">
-                  {categories.map((cat) => {
-                    const color = getCategoryColor(cat);
-
-                    return (
-                      <View
-                        key={cat}
-                        className="flex-row justify-between items-center py-2 border-b border-neutral-700"
-                      >
-                        <View className="flex-row items-center gap-3">
-                          <View
-                            style={{
-                              width: 15,
-                              height: 15,
-                              borderRadius: 7.5,
-                              backgroundColor: color,
-                            }}
-                          />
-                          <Text className="text-white font-sans text-lg">{cat}</Text>
-                        </View>
-                          <TouchableOpacity
-                            onPress={() => {
-                              setCategoryToDelete(cat);
-                              setShowConfirmDeleteModal(true);
-                            }}
-                            className="p-2 bg-rose-300 rounded-full"
-                          >
-                            <Ionicons name="trash" size={24} color="red" />
-                          </TouchableOpacity>
-                      </View>
-                    );
-                  })}
-                </ScrollView>
-
-                <TouchableOpacity
-                  onPress={() => setShowDeleteCategoryModal(false)}
-                  className="bg-neutral-700 rounded-xl p-3 items-center"
-                >
-                  <Text className="text-white text-lg font-sans font-semibold">Fechar</Text>
-                </TouchableOpacity>
+          <ScrollView className="mb-4">
+            {categories.length === 0 ? (
+              <View className="items-center py-10">
+                <Ionicons name="folder-open-outline" size={64} color="#aaa" className="mb-4" />
+                <Text className="text-neutral-400 text-center font-sans text-lg">
+                  Você ainda não criou categorias.
+                </Text>
               </View>
-              <Modal
-                transparent
-                animationType="fade"
-                visible={showConfirmDeleteModal}
-                onRequestClose={() => setShowConfirmDeleteModal(false)}
-              >
-                <View className="flex-1 bg-black/80 justify-center items-center px-8">
-                  <View className="bg-zinc-800 w-full rounded-2xl p-6 items-center shadow-lg">
-                    <Ionicons name="alert-circle" size={48} color="#ff7a7f" className="mb-4" />
+            ) : (
+              categories.map((cat) => {
+                const color = getCategoryColor(cat);
 
-                    <Text className="text-white text-xl font-semibold mb-2 font-sans text-center">
-                      Apagar Categoria
-                    </Text>
-
-                    <Text className="text-neutral-400 font-sans text-center mb-6">
-                      {categoryToDelete
-                        ? `Tem certeza que deseja apagar a categoria "${categoryToDelete}"? Esta ação não pode ser desfeita.`
-                        : 'Tem certeza que deseja apagar esta categoria? Esta ação não pode ser desfeita.'}
-                    </Text>
-
-                    <View className="flex-row w-full justify-between gap-3">
-                      <TouchableOpacity
-                        onPress={() => setShowConfirmDeleteModal(false)}
-                        className="flex-1 bg-neutral-700 py-3 rounded-xl items-center"
-                      >
-                        <Text className="text-white font-semibold font-sans">Cancelar</Text>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        onPress={handleDeleteCategory}
-                        className="flex-1 bg-rose-500 py-3 rounded-xl items-center"
-                      >
-                        <Text className="text-black font-sans font-semibold">Apagar</Text>
-                      </TouchableOpacity>
+                return (
+                  <View
+                    key={cat}
+                    className="flex-row justify-between items-center py-2 border-b border-neutral-700"
+                  >
+                    <View className="flex-row items-center gap-3">
+                      <View
+                        style={{
+                          width: 15,
+                          height: 15,
+                          borderRadius: 7.5,
+                          backgroundColor: color,
+                        }}
+                      />
+                      <Text className="text-white font-sans text-lg">{cat}</Text>
                     </View>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setCategoryToDelete(cat);
+                        setShowConfirmDeleteModal(true);
+                      }}
+                      className="p-2 bg-rose-200 rounded-full"
+                    >
+                      <Ionicons name="trash" size={24} color="red" />
+                    </TouchableOpacity>
+                  </View>
+                );
+              })
+            )}
+          </ScrollView>
+
+          <TouchableOpacity
+            onPress={() => setShowDeleteCategoryModal(false)}
+            className="bg-neutral-700 rounded-xl p-3 items-center"
+          >
+            <Text className="text-white text-lg font-sans font-semibold">Fechar</Text>
+          </TouchableOpacity>
+        </View>
+
+            <Modal
+              transparent
+              animationType="fade"
+              visible={showConfirmDeleteModal}
+              onRequestClose={() => setShowConfirmDeleteModal(false)}
+            >
+              <View className="flex-1 bg-black/80 justify-center items-center px-8">
+                <View className="bg-zinc-800 w-full rounded-2xl p-6 items-center shadow-lg">
+                  <Ionicons name="alert-circle" size={48} color="#ff7a7f" className="mb-4" />
+
+                  <Text className="text-white text-xl font-semibold mb-2 font-sans text-center">
+                    Apagar Categoria
+                  </Text>
+
+                  <Text className="text-neutral-400 font-sans text-center mb-6">
+                    {categoryToDelete
+                      ? `Tem certeza que deseja apagar a categoria "${categoryToDelete}"? Esta ação não pode ser desfeita.`
+                      : 'Tem certeza que deseja apagar esta categoria? Esta ação não pode ser desfeita.'}
+                  </Text>
+
+                  <View className="flex-row w-full justify-between gap-3">
+                    <TouchableOpacity
+                      onPress={() => setShowConfirmDeleteModal(false)}
+                      className="flex-1 bg-neutral-700 py-3 rounded-xl items-center"
+                    >
+                      <Text className="text-white font-semibold font-sans">Cancelar</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      onPress={handleDeleteCategory}
+                      className="flex-1 bg-rose-500 py-3 rounded-xl items-center"
+                    >
+                      <Text className="text-black font-sans font-semibold">Apagar</Text>
+                    </TouchableOpacity>
                   </View>
                 </View>
-              </Modal>
-            </View>
-          </Modal>
+              </View>
+            </Modal>
+          </View>
+        </Modal>
+
 
       <View className=' flex flex-row flex-wrap gap-2 px-6 pb-3'>
         {categories.map((cat) => {
@@ -615,7 +626,7 @@ export default function AgendaScreen() {
               onPress={resetModal}
             >
               <Ionicons name="chevron-back" size={28} color="white" />
-              <Text className="text-gray-300 text-lg"> Voltar</Text>
+              <Text className="text-white text-lg font-sans"> Voltar</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={handleSaveTask}>

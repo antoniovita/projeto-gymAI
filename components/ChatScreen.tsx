@@ -74,84 +74,120 @@ export default function ChatScreen() {
     return options[Math.floor(Math.random() * options.length)];
   };
 
-  const handleInputSubmit = async () => {
-    if (!input.trim()) return;
+const handleInputSubmit = async () => {
+  if (!input.trim()) return;
 
-    const userMessage: ChatMessage = { role: 'user', text: input };
-    const updatedMessages = [...messages, userMessage];
-    await saveMessages(updatedMessages);
+  const userMessage: ChatMessage = { role: 'user', text: input };
+  const updatedMessages = [...messages, userMessage];
+  await saveMessages(updatedMessages);
 
-    setInput('');
-    setIsTyping(true);
+  setInput('');
+  setIsTyping(true);
 
-    const lowerInput = input.trim().toLowerCase();
+  const lowerInput = input.trim().toLowerCase();
 
-    const isThanks = ['obrigado', 'valeu', 'agradecido', 'obrigada'].some((word) =>
-      lowerInput.includes(word)
-    );
+  const isThanks = ['obrigado', 'valeu', 'agradecido', 'obrigada'].some((word) =>
+    lowerInput.includes(word)
+  );
 
-    const intent = isThanks ? 'thanks' : await processMessage(input);
+  const isGreeting = ['olá', 'oi', 'e aí', 'bom dia', 'boa tarde', 'boa noite'].some((word) =>
+    lowerInput.includes(word)
+  );
 
-    setTimeout(async () => {
-      const expenseResponses = [
-        'Despesa registrada com sucesso!',
-        'Anotado: uma nova despesa!',
-        'Gasto adicionado à sua lista.',
-        'Sua despesa foi salva.',
-      ];
+  const isIdentityQuestion = ['quem é você', 'quem é vc', 'qual seu nome', 'o que você é', 'você é quem', 'você faz o quê', 'o que você faz'].some((phrase) =>
+    lowerInput.includes(phrase)
+  );
 
-      const taskResponses = [
-        'Tarefa registrada com sucesso!',
-        'Nova tarefa adicionada!',
-        'Está na lista! Tarefa salva.',
-        'Tarefa anotada com sucesso!',
-      ];
+  const intent = isThanks
+    ? 'thanks'
+    : isGreeting
+    ? 'greeting'
+    : isIdentityQuestion
+    ? 'identity'
+    : await processMessage(input);
 
-      const thanksResponses = [
-        'De nada! Sempre por aqui. 😊',
-        'Disponha!',
-        'Fico feliz em ajudar!',
-        'Sempre que precisar, estou aqui.',
-      ];
 
-      const fallbackResponses = [
-        'Não entendi sua mensagem.',
-        'Você pode reformular?',
-        'Não consegui identificar o tipo de registro.',
-        'Tente novamente com mais detalhes.',
-      ];
+  setTimeout(async () => {
+    const expenseResponses = [
+      'Despesa registrada com sucesso!',
+      'Anotado: uma nova despesa!',
+      'Gasto adicionado à sua lista.',
+      'Sua despesa foi salva.',
+    ];
 
-      const finalText =
-        intent === 'expense'
-          ? randomFrom(expenseResponses)
-          : intent === 'task'
-          ? randomFrom(taskResponses)
-          : intent === 'thanks'
-          ? randomFrom(thanksResponses)
-          : randomFrom(fallbackResponses);
+    const taskResponses = [
+      'Tarefa registrada com sucesso!',
+      'Nova tarefa adicionada!',
+      'Está na lista! Tarefa salva.',
+      'Tarefa anotada com sucesso!',
+    ];
 
-      let index = 0;
-      setTypingText('');
+    const thanksResponses = [
+      'De nada! Sempre por aqui. 😊',
+      'Disponha!',
+      'Fico feliz em ajudar!',
+      'Sempre que precisar, estou aqui.',
+    ];
 
-      const interval = setInterval(() => {
-        setTypingText((prev) => {
-          const next = finalText.slice(0, index + 1);
-          index++;
+    const greetingResponses = [
+      'Olá! Como posso te ajudar hoje?',
+      'Oi! Tudo bem por aí?',
+      'E aí! Pronto para organizar o dia?',
+      'Bom te ver por aqui! 😊',
+    ];
 
-          if (index === finalText.length) {
-            clearInterval(interval);
-            const systemReply: ChatMessage = { role: 'ai', text: finalText };
-            const finalMessages = [...updatedMessages, systemReply];
-            saveMessages(finalMessages);
-            setIsTyping(false);
-            setTypingText('');
-          }
+    const fallbackResponses = [
+      'Não entendi sua mensagem.',
+      'Você pode reformular?',
+      'Não consegui identificar o tipo de registro.',
+      'Tente novamente com mais detalhes.',
+    ];
 
-          return next;
-        });
-      }, 25);
-    }, 1000);
-  };
+    const identityResponses = [
+    'Sou o Dayo, seu assistente pessoal. 😊',
+    'Me chamo Dayo! Estou aqui pra te ajudar.',
+    'Pode me chamar de Dayo. Estou sempre por aqui!',
+    'Sou o Dayo, criado pra facilitar sua vida.',
+    ];
+
+
+const finalText =
+  intent === 'expense'
+    ? randomFrom(expenseResponses)
+    : intent === 'task'
+    ? randomFrom(taskResponses)
+    : intent === 'thanks'
+    ? randomFrom(thanksResponses)
+    : intent === 'greeting'
+    ? randomFrom(greetingResponses)
+    : intent === 'identity'
+    ? randomFrom(identityResponses)
+    : randomFrom(fallbackResponses);
+
+
+    let index = 0;
+    setTypingText('');
+
+    const interval = setInterval(() => {
+      setTypingText((prev) => {
+        const next = finalText.slice(0, index + 1);
+        index++;
+
+        if (index === finalText.length) {
+          clearInterval(interval);
+          const systemReply: ChatMessage = { role: 'ai', text: finalText };
+          const finalMessages = [...updatedMessages, systemReply];
+          saveMessages(finalMessages);
+          setIsTyping(false);
+          setTypingText('');
+        }
+
+        return next;
+      });
+    }, 25);
+  }, 1000);
+};
+
 
   return (
     <SafeAreaView className="flex-1 bg-zinc-800">

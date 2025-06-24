@@ -9,10 +9,12 @@ import {
   ScrollView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { SwipeListView } from 'react-native-swipe-list-view';
 import { useWorkout } from '../hooks/useWorkout';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from 'hooks/useAuth';
+import { useFocusEffect } from '@react-navigation/native';
 
 
 const colorOptions = [
@@ -37,7 +39,7 @@ const muscleColors: Record<string, string> = {
   Abdômen: '#f97316',
   Ombros: '#38bdf8',
 };
-const muscleGroups = Object.keys(muscleColors);
+
 
 export default function WorkoutScreen() {
   const [isCreateVisible, setIsCreateVisible] = useState(false);
@@ -55,7 +57,32 @@ export default function WorkoutScreen() {
   const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false);
   const [showDeleteCategoryModal, setShowDeleteCategoryModal] = useState(false);
 
-  const userId = '123';
+
+  const [customMuscleGroups, setCustomMuscleGroups] = useState<{ name: string; color: string }[]>([]);
+
+  useEffect(() => {
+  const loadMuscleGroups = async () => {
+    try {
+      const stored = await AsyncStorage.getItem('customMuscleGroups');
+      if (stored) {
+        setCustomMuscleGroups(JSON.parse(stored));
+      } else {
+        const initial = Object.entries(muscleColors).map(([name, color]) => ({ name, color }));
+        setCustomMuscleGroups(initial);
+        await AsyncStorage.setItem('customMuscleGroups', JSON.stringify(initial));
+      }
+    } catch (err) {
+      console.error('Erro ao carregar grupos musculares:', err);
+    }
+  };
+
+  loadMuscleGroups();
+}, []);
+
+  const { userId, loading } = useAuth();
+
+  const muscleGroups = customMuscleGroups.map((g) => g.name);
+
 
  const {
     workouts,
@@ -94,27 +121,33 @@ export default function WorkoutScreen() {
     saveCategories();
   }, [extraCatWorkout]);
 
-  useEffect(() => {
-    fetchWorkouts(userId);
-  }, [userId]);
-
-  const categories = Array.from(
-    new Set([
-      ...muscleGroups,
-      ...workout
-        .flatMap((task) => task.type?.split(',').map((s: string) => s.trim()) ?? [])
-        .filter((t) => t.length > 0),
-      ...extraCatWorkout.map(cat => cat.name),
-    ])
+  useFocusEffect(
+    useCallback(() => {
+      fetchWorkouts(userId!);
+    }, [userId])
   );
 
+const categories = Array.from(
+  new Set([
+    ...muscleGroups,
+    ...workout
+      .flatMap((task) => task.type?.split(',').map((s: string) => s.trim()) ?? [])
+      .filter((t) => t.length > 0),
+    ...extraCatWorkout.map(cat => cat.name),
+  ])
+);
 
-  const getCategoryColor = (catName: string) => {
-    const extraCat = extraCatWorkout.find(c => c.name === catName);
-    if (extraCat) return extraCat.color;
-    if (muscleColors[catName]) return muscleColors[catName];
-    return '#999999';
-  };
+
+const getCategoryColor = (catName: string) => {
+  const custom = customMuscleGroups.find(c => c.name === catName);
+  if (custom) return custom.color;
+
+  const extraCat = extraCatWorkout.find(c => c.name === catName);
+  if (extraCat) return extraCat.color;
+
+  return '#999999';
+};
+
 
 
   const handleAddCategory = () => {
@@ -140,26 +173,33 @@ export default function WorkoutScreen() {
     setIsCategoryModalVisible(false);
   };
 
-  const handleDeleteCategory = () => {
-    if (!categoryToDelete) return;
+const handleDeleteCategory = async () => {
+  if (!categoryToDelete) return;
 
-    const isCategoryInUse = workout.some(task =>
-      task.type?.split(',').map((t: string) => t.trim()).includes(categoryToDelete)
-    );
+  const isCategoryInUse = workout.some(task =>
+    task.type?.split(',').map((t: string) => t.trim()).includes(categoryToDelete)
+  );
 
-    if (isCategoryInUse) {
-      Alert.alert('Erro', 'Esta categoria está associada a uma ou mais tarefas e não pode ser excluída.');
-      setShowConfirmDeleteModal(false);
-      setCategoryToDelete(null);
-      return;
-    }
-
-    setextraCatWorkout(prev =>
-      prev.filter((cat) => cat.name !== categoryToDelete)
-    );
+  if (isCategoryInUse) {
+    Alert.alert('Erro', 'Esta categoria está associada a uma ou mais tarefas e não pode ser excluída.');
     setShowConfirmDeleteModal(false);
     setCategoryToDelete(null);
-  };
+    return;
+  }
+
+  const newMuscles = customMuscleGroups.filter(c => c.name !== categoryToDelete);
+  const newExtras = extraCatWorkout.filter(c => c.name !== categoryToDelete);
+
+  setCustomMuscleGroups(newMuscles);
+  setextraCatWorkout(newExtras);
+
+  await AsyncStorage.setItem('customMuscleGroups', JSON.stringify(newMuscles));
+  await AsyncStorage.setItem('extraCatWorkout', JSON.stringify(newExtras));
+
+  setShowConfirmDeleteModal(false);
+  setCategoryToDelete(null);
+};
+
 
   const toggleMuscleForWorkout = (muscle: string) => {
     setSelectedMusclesForWorkout((prev) =>
@@ -185,12 +225,7 @@ export default function WorkoutScreen() {
 
   const handleSaveWorkout = async () => {
     if (!newWorkoutTitle.trim()) {
-      Alert.alert('Erro', 'O título do treino não pode estar vazio.');
-      return;
-    }
-
-    if (selectedMusclesForWorkout.length === 0) {
-      Alert.alert('Erro', 'Selecione pelo menos um grupo muscular para o treino.');
+      Alert.alert('Erro!', 'O título do treino não pode estar vazio.');
       return;
     }
 
@@ -207,14 +242,14 @@ export default function WorkoutScreen() {
           type,
         });
       } else {
-        await createWorkout(newWorkoutTitle, content, formattedDate, userId, type);
+        await createWorkout(newWorkoutTitle, content, formattedDate, userId!, type);
       }
 
       setIsCreateVisible(false);
       setNewWorkoutTitle('');
       setSelectedMusclesForWorkout([]);
       setContent('');
-      await fetchWorkouts(userId);
+      await fetchWorkouts(userId!);
     } catch (err) {
       console.error(err);
     }
@@ -232,7 +267,7 @@ export default function WorkoutScreen() {
           onPress: async () => {
             try {
               await deleteWorkout(id);
-              await fetchWorkouts(userId);
+              await fetchWorkouts(userId!);
             } catch (err) {
               console.error(err);
               Alert.alert('Erro', 'Não foi possível excluir o treino.');
@@ -269,88 +304,98 @@ export default function WorkoutScreen() {
             </TouchableOpacity>
 
 
-             <Modal
-        transparent
-        animationType="fade"
-        visible={showDeleteCategoryModal}
-        onRequestClose={() => setShowDeleteCategoryModal(false)}
-      >
-        <View className="flex-1 bg-black/80 justify-center items-center px-6">
-          <View className="bg-zinc-800 rounded-2xl w-full max-h-[80%] p-4">
-            <ScrollView className="mb-4">
-              {categories.map((cat) => {
-                const color = getCategoryColor(cat);
-                return (
-                  <View
-                    key={cat}
-                    className="flex-row justify-between items-center py-2 border-b border-neutral-700"
-                  >
-                    <View className="flex-row items-center gap-3">
+        <Modal
+          transparent
+          animationType="fade"
+          visible={showDeleteCategoryModal}
+          onRequestClose={() => setShowDeleteCategoryModal(false)}
+        >
+          <View className="flex-1 bg-black/80 justify-center items-center px-6">
+            <View className="bg-zinc-800 rounded-2xl w-full max-h-[80%] p-4">
+              <ScrollView className="mb-4">
+                {categories.length === 0 ? (
+                  <View className="items-center justify-center py-12">
+                    <Ionicons name="folder-open-outline" size={64} color="#aaa" className="mb-4" />
+                    <Text className="text-neutral-400 text-lg font-sans text-center">
+                      Você ainda não criou categorias.
+                    </Text>
+                  </View>
+                ) : (
+                  categories.map((cat) => {
+                    const color = getCategoryColor(cat);
+                    return (
                       <View
-                        style={{ width: 15, height: 15, borderRadius: 7.5, backgroundColor: color }}
-                      />
-                      <Text className="text-white font-sans text-lg">{cat}</Text>
-                    </View>
+                        key={cat}
+                        className="flex-row justify-between items-center py-2 border-b border-neutral-700"
+                      >
+                        <View className="flex-row items-center gap-3">
+                          <View
+                            style={{ width: 15, height: 15, borderRadius: 7.5, backgroundColor: color }}
+                          />
+                          <Text className="text-white font-sans text-lg">{cat}</Text>
+                        </View>
+                        <TouchableOpacity
+                          onPress={() => {
+                            setCategoryToDelete(cat);
+                            setShowConfirmDeleteModal(true);
+                          }}
+                          className="p-2 bg-rose-200 rounded-full"
+                        >
+                          <Ionicons name="trash" size={24} color="red" />
+                        </TouchableOpacity>
+                      </View>
+                    );
+                  })
+                )}
+              </ScrollView>
+
+              <TouchableOpacity
+                onPress={() => setShowDeleteCategoryModal(false)}
+                className="bg-neutral-700 rounded-xl p-3 items-center"
+              >
+                <Text className="text-white text-lg font-sans font-semibold">Fechar</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Modal
+              transparent
+              animationType="fade"
+              visible={showConfirmDeleteModal}
+              onRequestClose={() => setShowConfirmDeleteModal(false)}
+            >
+              <View className="flex-1 bg-black/80 justify-center items-center px-8">
+                <View className="bg-zinc-800 w-full rounded-2xl p-6 items-center shadow-lg">
+                  <Ionicons name="alert-circle" size={48} color="#ff7a7f" className="mb-4" />
+                  <Text className="text-white text-xl font-semibold mb-2 font-sans text-center">
+                    Apagar Categoria
+                  </Text>
+                  <Text className="text-neutral-400 font-sans text-center mb-6">
+                    {categoryToDelete
+                      ? `Tem certeza que deseja apagar a categoria "${categoryToDelete}"? Esta ação não pode ser desfeita.`
+                      : 'Tem certeza que deseja apagar esta categoria? Esta ação não pode ser desfeita.'}
+                  </Text>
+
+                  <View className="flex-row w-full justify-between gap-3">
                     <TouchableOpacity
-                      onPress={() => {
-                        setCategoryToDelete(cat);
-                        setShowConfirmDeleteModal(true);
-                      }}
-                      className="p-2 bg-rose-300 rounded-full"
+                      onPress={() => setShowConfirmDeleteModal(false)}
+                      className="flex-1 bg-neutral-700 py-3 rounded-xl items-center"
                     >
-                      <Ionicons name="trash" size={24} color="red" />
+                      <Text className="text-white font-semibold font-sans">Cancelar</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      onPress={handleDeleteCategory}
+                      className="flex-1 bg-rose-500 py-3 rounded-xl items-center"
+                    >
+                      <Text className="text-black font-sans font-semibold">Apagar</Text>
                     </TouchableOpacity>
                   </View>
-                );
-              })}
-            </ScrollView>
-
-            <TouchableOpacity
-              onPress={() => setShowDeleteCategoryModal(false)}
-              className="bg-neutral-700 rounded-xl p-3 items-center"
-            >
-              <Text className="text-white text-lg font-sans font-semibold">Fechar</Text>
-            </TouchableOpacity>
-          </View>
-
-          <Modal
-            transparent
-            animationType="fade"
-            visible={showConfirmDeleteModal}
-            onRequestClose={() => setShowConfirmDeleteModal(false)}
-          >
-            <View className="flex-1 bg-black/80 justify-center items-center px-8">
-              <View className="bg-zinc-800 w-full rounded-2xl p-6 items-center shadow-lg">
-                <Ionicons name="alert-circle" size={48} color="#ff7a7f" className="mb-4" />
-                <Text className="text-white text-xl font-semibold mb-2 font-sans text-center">
-                  Apagar Categoria
-                </Text>
-                <Text className="text-neutral-400 font-sans text-center mb-6">
-                  {categoryToDelete
-                    ? `Tem certeza que deseja apagar a categoria "${categoryToDelete}"? Esta ação não pode ser desfeita.`
-                    : 'Tem certeza que deseja apagar esta categoria? Esta ação não pode ser desfeita.'}
-                </Text>
-
-                <View className="flex-row w-full justify-between gap-3">
-                  <TouchableOpacity
-                    onPress={() => setShowConfirmDeleteModal(false)}
-                    className="flex-1 bg-neutral-700 py-3 rounded-xl items-center"
-                  >
-                    <Text className="text-white font-semibold font-sans">Cancelar</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    onPress={handleDeleteCategory}
-                    className="flex-1 bg-rose-500 py-3 rounded-xl items-center"
-                  >
-                    <Text className="text-black font-sans font-semibold">Apagar</Text>
-                  </TouchableOpacity>
                 </View>
               </View>
-            </View>
-          </Modal>
-        </View>
-      </Modal>
+            </Modal>
+          </View>
+        </Modal>
+
 
         </View>
 
@@ -513,11 +558,11 @@ export default function WorkoutScreen() {
               onPress={() => setIsCreateVisible(false)}
             >
               <Ionicons name="chevron-back" size={28} color="white" />
-              <Text className="text-white text-lg"> Voltar</Text>
+              <Text className="text-white text-lg font-sans"> Voltar</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={handleSaveWorkout}>
-              <Text className="text-rose-400 text-lg font-semibold mr-4">Salvar</Text>
+              <Text className="text-rose-400 font-sans text-lg font-semibold mr-4">Salvar</Text>
             </TouchableOpacity>
           </View>
 
@@ -532,7 +577,7 @@ export default function WorkoutScreen() {
             />
 
             <View className="flex flex-row flex-wrap gap-2 mb-4">
-              {muscleGroups.map((muscle) => {
+              {categories.map((muscle) => {
                 const isSelected = selectedMusclesForWorkout.includes(muscle);
                 const color = muscleColors[muscle];
 

@@ -278,7 +278,7 @@ export default function ExpensesScreen() {
         <View className="flex-row justify-between items-center px-4 py-4">
           <TouchableOpacity onPress={onClose} className="items-center flex flex-row">
             <Ionicons name="chevron-back" size={28} color="white" />
-            <Text className="text-gray-300 text-lg">Voltar</Text>
+            <Text className="text-white text-lg font-sans">Voltar</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={onSave}>
             <Text className="text-rose-400 text-lg mr-4 font-semibold">Salvar</Text>

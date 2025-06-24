@@ -9,6 +9,7 @@ import {
   ScrollView,
   Animated,
   Easing,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -73,17 +74,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </View>
 
               <ScrollView className="mb-4">
-                {/* Modo Escuro */}
-                <View className="flex-row justify-between items-center py-3 border-b border-zinc-700">
-                  <Text className="text-gray-300 text-lg font-sans">Modo Escuro</Text>
-                  <Switch
-                    value={darkMode}
-                    onValueChange={setDarkMode}
-                    trackColor={{ false: '#767577', true: '#f43f5e' }}
-                    thumbColor={darkMode ? '#ff7a7f' : '#f4f3f4'}
-                  />
-                </View>
-
                 {/* Notificações */}
                 <View className="flex-row justify-between items-center py-3 border-b border-zinc-700">
                   <Text className="text-gray-300 text-lg font-sans">Notificações</Text>
@@ -95,55 +85,34 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   />
                 </View>
 
-                {/* Fonte */}
-                <View className="py-3 border-b border-zinc-700">
-                  <Text className="text-gray-300 text-lg mb-2 font-sans">Tamanho da Fonte</Text>
-                  <View className="flex-row items-center justify-between">
-                    {(['small', 'medium', 'large'] as const).map((size) => (
-                      <TouchableOpacity
-                        key={size}
-                        onPress={() => setFontSize(size)}
-                        className={`px-4 py-1 rounded-full border-2 ${
-                          fontSize === size ? 'border-rose-400' : 'border-zinc-700'
-                        }`}
-                      >
-                        <Text
-                          className={`text-white font-sans ${
-                            fontSize === size ? 'font-semibold' : 'font-light'
-                          }`}
-                        >
-                          {size === 'small' ? 'Pequena' : size === 'medium' ? 'Média' : 'Grande'}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-
-                {/* Tema */}
-                <View className="py-3">
-                  <Text className="text-gray-300 text-lg mb-2 font-sans">Tema</Text>
-                  <View className="flex-row gap-3">
-                    {['#ff7a7f', '#22d3ee', '#f59e0b', '#a3e635'].map((color) => (
-                      <TouchableOpacity
-                        key={color}
-                        onPress={() => console.log('Tema alterado para', color)}
-                        className="w-8 h-8 rounded-full border-2"
-                        style={{ backgroundColor: color, borderColor: '#fff' }}
-                      />
-                    ))}
-                  </View>
-                </View>
+                
 
                 {/* Histórico */}
                 <View className="py-3">
                   <Text className="text-gray-300 text-lg mb-2 font-sans">Histórico</Text>
-                  <TouchableOpacity
-                    onPress={clearMessages}
-                    className="bg-rose-600 py-2 px-4 rounded-xl items-center"
-                  >
-                    <Text className="text-white font-sans">Limpar Conversa</Text>
-                  </TouchableOpacity>
+                <TouchableOpacity
+                style={{ backgroundColor: '#262626' }}
+                onPress={() => {
+                    Alert.alert(
+                    'Limpar Conversa',
+                    'Tem certeza que deseja apagar todas as mensagens?',
+                    [
+                        { text: 'Cancelar', style: 'cancel' },
+                        {
+                        text: 'Apagar',
+                        style: 'destructive',
+                        onPress: clearMessages,
+                        },
+                    ],
+                    { cancelable: true }
+                    );
+                }}
+                className="bg-zinc-600 py-3 px-4 rounded-xl items-center"
+                >
+                <Text className="text-rose-400 font-sans font-medium text-base">Apagar Conversa</Text>
+                </TouchableOpacity>
                 </View>
+
               </ScrollView>
 
               <TouchableOpacity
