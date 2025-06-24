@@ -151,11 +151,6 @@ const initials = userName
           onPress={() => Alert.alert('Em breve', 'Função de editar informações ainda não implementada')}
         />
         <SettingsItem
-          icon="notifications-outline"
-          label="Notificações"
-          onPress={() => Alert.alert('Configurações', 'Gerencie suas notificações')}
-        />
-        <SettingsItem
           icon="lock-closed-outline"
           label="Privacidade"
           onPress={() => Alert.alert('Configurações', 'Gerencie sua privacidade')}
