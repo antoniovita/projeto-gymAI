@@ -11,6 +11,7 @@ import WelcomeScreen from './components/WelcomeScreen';
 import MainTabs from './widgets/MainTabs';
 import SettingsScreen from 'components/SettingsScreen';
 import { RootStackParamList } from 'widgets/types';
+import InfoScreen from 'components/subScreens/InfoScreen';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -64,6 +65,7 @@ export default function App() {
           <Stack.Screen name="WelcomeScreen" component={WelcomeScreen} />
           <Stack.Screen name="MainTabs" component={MainTabs} />
           <Stack.Screen name="SettingsScreen" component={SettingsScreen} />
+          <Stack.Screen name="InfoScreen" component={InfoScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </View>

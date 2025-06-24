@@ -148,11 +148,11 @@ const initials = userName
         <SettingsItem
           icon="person-outline"
           label="Informações"
-          onPress={() => Alert.alert('Em breve', 'Função de editar informações ainda não implementada')}
+          onPress={() => navigation.navigate('InfoScreen')}
         />
         <SettingsItem
-          icon="lock-closed-outline"
-          label="Privacidade"
+          icon="card-outline"
+          label="Assinatura"
           onPress={() => Alert.alert('Configurações', 'Gerencie sua privacidade')}
         />
 
