@@ -1,3 +1,11 @@
+falta criar a tela do pin
+ter a opcao de ter pin ou nao
+integrar com o calendario
+expo revenue cat
+deixar mais bonito
+criar a opcao de idioma ptbr ou en
+fim
+
 Tabela users
 id: Identificador único do usuário.
 name: Nome do usuário.
