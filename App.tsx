@@ -4,6 +4,7 @@ import { useFonts } from 'expo-font';
 import { View } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { useCallback, useEffect, useState } from 'react';
+import * as Notifications from 'expo-notifications';
 import "./global.css";
 import { AuthService } from 'api/service/authService';
 import { initDatabase, getDb } from 'database';
@@ -16,6 +17,15 @@ import HelpScreen from 'components/subScreens/HelpScreen';
 
 SplashScreen.preventAutoHideAsync();
 
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
+
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
@@ -26,11 +36,27 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isDbReady, setIsDbReady] = useState<boolean>(false);
 
-  const onLayoutRootView = useCallback(async () => {
-    if (fontsLoaded && isAuthenticated !== null && isDbReady) {
-      await SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded, isAuthenticated, isDbReady]);
+  useEffect(() => {
+    (async () => {
+      const { status } = await Notifications.requestPermissionsAsync();
+      if (status !== 'granted') {
+        console.warn('Permissão de notificações negada');
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    const receiveSub = Notifications.addNotificationReceivedListener(notification => {
+      console.log('Notificação recebida:', notification);
+    });
+    const responseSub = Notifications.addNotificationResponseReceivedListener(response => {
+      console.log('Resposta da notificação:', response);
+    });
+    return () => {
+      receiveSub.remove();
+      responseSub.remove();
+    };
+  }, []);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -54,7 +80,15 @@ export default function App() {
     initDb();
   }, []);
 
-  if (!fontsLoaded || isAuthenticated === null || !isDbReady) return null;
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded && isAuthenticated !== null && isDbReady) {
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, isAuthenticated, isDbReady]);
+
+  if (!fontsLoaded || isAuthenticated === null || !isDbReady) {
+    return null;
+  }
 
   return (
     <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
