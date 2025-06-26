@@ -172,7 +172,7 @@ const initials = userName
         <SettingsItem
           icon="help-circle-outline"
           label="Ajuda"
-          onPress={() => Alert.alert('Ajuda', 'Entre em contato com o suporte')}
+          onPress={() => navigation.navigate('HelpScreen')}
         />
 
         <Text className="text-zinc-400 uppercase text-xs mt-6 mb-2">Conta</Text>

@@ -175,8 +175,7 @@ export default function WelcomeScreen() {
                   <View
                     key={index}
                     onLayout={getCellOnLayoutHandler(index)}
-                    className={`w-[48px] h-[60px] rounded-xl items-center justify-center mx-1 ${
-                      isFocused ? 'bg-rose-500' : 'bg-neutral-800'
+                    className={`w-[48px] h-[60px] rounded-xl items-center justify-center mx-1 bg-neutral-800'
                     }`}
                   >
                     <Text className="text-white font-sans text-2xl">

@@ -3,4 +3,5 @@ export type RootStackParamList = {
   MainTabs: undefined,
   SettingsScreen: undefined;
   InfoScreen: undefined;
+  HelpScreen: undefined;
 };
