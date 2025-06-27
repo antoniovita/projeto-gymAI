@@ -9,7 +9,7 @@ import { Easing } from 'react-native-reanimated';
 import { useAuth } from '../hooks/useAuth';
 import { useAcceptTerms } from '../hooks/useAcceptTerms';
 import { DataModal } from '../components/comps/dataModal';
-import { SubscriptionModal } from '../components/comps/subscriptionModal';
+import { SubscriptionModal } from './comps/SubscriptionModal';
 
 export default function WelcomeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();

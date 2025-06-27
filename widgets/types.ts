@@ -5,4 +5,5 @@ export type RootStackParamList = {
   SettingsScreen: undefined;
   InfoScreen: undefined;
   HelpScreen: undefined;
+  SubscriptionModal: undefined;
 };

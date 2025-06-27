@@ -9,7 +9,7 @@ import {
 import { MotiView } from 'moti';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { ProgressBar } from '../comps/progressBar';
+import { ProgressBar } from './progressBar';
 import { Easing } from 'react-native-reanimated';
 
 
@@ -170,11 +170,12 @@ export function SubscriptionModal({
             from={{ opacity: 0, translateY: 30 }}
             animate={{ opacity: 1, translateY: 0 }}
             transition={{ type: 'timing', duration: 600, delay: 800 }}
+            className='absolute self-center bottom-[-20%]'
           >
             <TouchableOpacity
               onPress={onFinish}
               disabled={!selectedPlan}
-              className={`rounded-2xl h-14 flex-row items-center justify-center mb-4 
+              className={`rounded-2xl h-14 w-[300px] flex-row items-center justify-center mb-4 
                 ${selectedPlan ? 'bg-gradient-to-r from-rose-500 to-pink-600' : 'bg-white/10'}`}
             >
               <Text className={`text-lg font-semisans mr-2 
@@ -190,18 +191,6 @@ export function SubscriptionModal({
             </TouchableOpacity>
           </MotiView>
 
-          {/* Footer */}
-          <MotiView
-            from={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ type: 'timing', duration: 800, delay: 1000 }}
-            className="items-center"
-          >
-            <Text className="text-white/50 text-sm text-center leading-5">
-              Cancele a qualquer momento.{"\n"}
-              Termos e condições aplicáveis.
-            </Text>
-          </MotiView>
         </ScrollView>
       </View>
     </Modal>

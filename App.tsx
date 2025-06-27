@@ -15,6 +15,7 @@ import { RootStackParamList } from 'widgets/types';
 import InfoScreen from 'components/subScreens/InfoScreen';
 import HelpScreen from 'components/subScreens/HelpScreen';
 import PinScreen from 'components/PinScreen';
+import { SubscriptionModal } from 'components/comps/SubscriptionModal';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -104,6 +105,9 @@ export default function App() {
           <Stack.Screen name="InfoScreen" component={InfoScreen} />
           <Stack.Screen name="PinScreen" component={PinScreen} />
           <Stack.Screen name="HelpScreen" component={HelpScreen} />
+          <Stack.Screen name="SubscriptionModal" component={SubscriptionModal} />
+
+
         </Stack.Navigator>
       </NavigationContainer>
     </View>
