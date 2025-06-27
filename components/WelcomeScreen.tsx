@@ -1,89 +1,52 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Modal,
-  TextInput,
-  Image,
-  Switch,
-  Alert,
-} from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { MotiView, MotiImage } from 'moti';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../widgets/types';
 import { Easing } from 'react-native-reanimated';
-import {
-  CodeField,
-  Cursor,
-  useBlurOnFulfill,
-  useClearByFocusCell,
-} from 'react-native-confirmation-code-field';
-import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../hooks/useAuth';
+import { useAcceptTerms } from '../hooks/useAcceptTerms';
+import { DataModal } from '../components/comps/dataModal';
+import { SubscriptionModal } from '../components/comps/subscriptionModal';
 
 export default function WelcomeScreen() {
-  const navigation = useNavigation<
-    NativeStackNavigationProp<RootStackParamList>
-  >();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { register, storePin } = useAuth();
+  const { acceptTerms, toggleAcceptTerms } = useAcceptTerms();
 
   const [name, setName] = useState('');
   const [pin, setPin] = useState('');
-  const [modalVisible, setModalVisible] = useState(false);
-  const [subscriptionModalVisible, setSubscriptionModalVisible] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<'free' | 'premium' | null>(
-    null
-  );
   const [skipPin, setSkipPin] = useState(false);
-
-  const { register, storePin } = useAuth();
-
-  const CELL_COUNT = 6;
-  const ref = useBlurOnFulfill({ value: pin, cellCount: CELL_COUNT });
-  const [props, getCellOnLayoutHandler] = useClearByFocusCell({
-    value: pin,
-    setValue: setPin,
-  });
+  const [currentStep, setCurrentStep] = useState(0);
+  const [dataModalVisible, setDataModalVisible] = useState(false);
+  const [subscriptionModalVisible, setSubscriptionModalVisible] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<'free'|'premium'|null>(null);
 
   const handleInitialContinue = () => {
-    setModalVisible(true);
+    setCurrentStep(1);
+    setDataModalVisible(true);
   };
 
   const handleNextStep = () => {
-    if (name.trim().length === 0 || (!skipPin && pin.length !== CELL_COUNT)) {
-      const msg = skipPin
-        ? 'Preencha seu nome para continuar.'
-        : 'Preencha seu nome e PIN de 6 dígitos.';
-      Alert.alert('Atenção', msg);
-      return;
-    }
-
+    setDataModalVisible(false);
+    setCurrentStep(2);
     setSubscriptionModalVisible(true);
   };
 
   const handleFinish = async () => {
-    if (!selectedPlan) {
-      Alert.alert('Atenção', 'Selecione um plano para continuar.');
-      return;
-    }
-    try {
-      // registra nome e salva ID
-      await register(name);
-      // armazena PIN seguro
-       if (!skipPin) { 
-       await storePin(pin); 
-      }
-      console.log('Usuário registrado e PIN armazenado');
+    if (!selectedPlan) return;
+    await register(name);
+    if (!skipPin) await storePin(pin);
+    setSubscriptionModalVisible(false);
+    navigation.navigate('MainTabs');
+  };
 
-      setSubscriptionModalVisible(false);
-      setModalVisible(false);
-      navigation.navigate('MainTabs');
-    } catch (error: any) {
-      console.error('Erro no registro:', error.message);
-      Alert.alert('Erro', error.message || 'Erro ao registrar');
-    }
+  const handleBackToData = () => {
+    setSubscriptionModalVisible(false);
+    setCurrentStep(1);
+    setDataModalVisible(true);
   };
 
   return (
@@ -91,38 +54,14 @@ export default function WelcomeScreen() {
       <MotiView
         from={{ scale: 4 }}
         animate={{ scale: 2 }}
-        transition={{
-          loop: true,
-          type: 'timing',
-          duration: 3000,
-          easing: Easing.inOut(Easing.ease),
-          repeatReverse: true,
-        }}
+        transition={{ loop: true, type: 'timing', duration: 3000, easing: Easing.inOut(Easing.ease), repeatReverse: true }}
         className="absolute w-full h-full"
       >
         <LinearGradient
-          colors={['#000000', '#1f1f1f', '#f43f5e']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
+          colors={[ '#000000', '#1f1f1f', '#f43f5e' ]}
+          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
           style={{ flex: 1, width: '100%', height: '100%' }}
         />
-      </MotiView>
-
-      <MotiView
-        from={{ opacity: 0, translateY: 140 }}
-        animate={{ opacity: 1, translateY: 0 }}
-        transition={{ type: 'timing', duration: 1000, delay: 4000 }}
-        className="absolute bottom-[10%] left-1/4 -translate-x-1/2 z-10"
-      >
-        <TouchableOpacity
-          className="bg-rose-500 rounded-full h-[50px] flex flex-row w-[200px] items-center justify-center"
-          onPress={handleInitialContinue}
-        >
-          <Text className="text-white font-sans font-medium text-xl px-3">
-            Continue
-          </Text>
-          <Ionicons name="chevron-forward-outline" size={20} color="white" />
-        </TouchableOpacity>
       </MotiView>
 
       <MotiImage
@@ -134,239 +73,43 @@ export default function WelcomeScreen() {
         resizeMode="contain"
       />
 
-      <Modal
-        animationType="slide"
-        transparent
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
+      <MotiView
+        from={{ opacity: 0, translateY: 140 }}
+        animate={{ opacity: 1, translateY: 0 }}
+        transition={{ type: 'timing', duration: 1000, delay: 4000 }}
+        className="absolute bottom-[6%] self-center -translate-x-1/2 z-10"
       >
-        <View className="flex-1 mt-[260px] bg-black">
-          <View className="absolute top-[-20%] gap-1 left-[6%] z-10">
-            <Text className="text-white font-sans text-2xl max-w-[300px]">
-              Boas vindas ao             , sua jornada começa aqui!
-            </Text>
-          </View>
+        <TouchableOpacity
+          className="bg-[#ff7a7f] rounded-full h-[50px] w-[200px] items-center justify-center shadow-lg"
+          onPress={handleInitialContinue}
+        >
+          <Text className="text-white font-sans font-medium text-xl">Continue</Text>
+        </TouchableOpacity>
+      </MotiView>
 
-        <View className="absolute top-[-26%] left-[44%] z-10">
-            <Image
-              source={require('../assets/dayo.png')}
-              className="w-[100px] h-[100px]"
-              resizeMode="contain"
-            />
-          </View>
+      <DataModal
+        visible={dataModalVisible}
+        currentStep={currentStep}
+        name={name}
+        setName={setName}
+        pin={pin}
+        setPin={setPin}
+        skipPin={skipPin}
+        toggleSkipPin={() => setSkipPin(prev => !prev)}
+        acceptTerms={acceptTerms}
+        toggleAcceptTerms={toggleAcceptTerms}
+        handleNextStep={handleNextStep}
+        onClose={() => { setDataModalVisible(false); setCurrentStep(0); }}
+      />
 
-
-          <MotiView
-            from={{ scale: 4 }}
-            animate={{ scale: 2 }}
-            transition={{
-              loop: true,
-              type: 'timing',
-              duration: 3000,
-              easing: Easing.inOut(Easing.ease),
-              repeatReverse: true,
-            }}
-            className="absolute w-full h-full"
-          >
-            <LinearGradient
-              colors={['#000000', '#1f1f1f', '#f43f5e']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={{ flex: 1, width: '100%', height: '100%' }}
-            />
-          </MotiView>
-
-          <View className="h-[300px] p-4 mt-[45px]">
-            <Text className="text-neutral-200 font-sans text-[14px] mb-3 px-5">
-              Insira seu nome:
-            </Text>
-            <View className="flex items-center mb-[60px]">
-              <TextInput
-                className="bg-neutral-800 font-sans text-lg text-white h-[50px] w-[335px] px-5 rounded-2xl"
-                placeholder="Your name"
-                placeholderTextColor="#aaa"
-                value={name}
-                onChangeText={setName}
-              />
-            </View>
-            
-            <View className="flex-row items-center mb-4 px-5">
-                <Text className="text-neutral-200 font-sans text-[14px] mr-2">
-                  Não criar PIN
-                </Text>
-                <Switch
-                  value={skipPin}
-                  onValueChange={setSkipPin}
-                  trackColor={{ false: '#767577', true: '#f43f5e' }}
-                  thumbColor={skipPin ? '#ff7a7f' : '#f4f3f4'}
-                />
-              </View>
-                {!skipPin && (
-                  <>
-                    <Text className="text-neutral-200 font-sans text-[14px] mb-3 px-5">
-                      Crie o seu PIN:
-                    </Text>
-                    <View className="flex items-center justify-center">
-                      <CodeField
-                        ref={ref}
-                        {...props}
-                        value={pin}
-                        onChangeText={setPin}
-                        cellCount={CELL_COUNT}
-                        rootStyle={{
-                          flexDirection: 'row',
-                          justifyContent: 'center',
-                          marginBottom: 10,
-                        }}
-                        keyboardType="number-pad"
-                        textContentType="oneTimeCode"
-                        renderCell={({ index, symbol, isFocused }) => (
-                          <View
-                            key={index}
-                            onLayout={getCellOnLayoutHandler(index)}
-                            className="w-[48px] h-[60px] rounded-xl items-center justify-center mx-1 bg-neutral-800"
-                          >
-                            <Text className="text-white font-sans text-2xl">
-                              {symbol || (isFocused ? <Cursor /> : null)}
-                            </Text>
-                          </View>
-                        )}
-                      />
-                    </View>
-                  </>
-                )}
-
-
-          </View>
-
-          <View className="absolute bottom-[10%] left-1/4 z-10">
-            <TouchableOpacity
-              className="bg-rose-500 rounded-full h-[50px] flex flex-row w-[200px] items-center justify-center"
-              onPress={handleNextStep}
-              disabled={name.trim().length === 0 || pin.length !== CELL_COUNT}
-            >
-              <Text className="text-white font-sans font-medium text-xl px-3">
-                Next step
-              </Text>
-              <Ionicons name="chevron-forward-outline" size={20} color="white" />
-            </TouchableOpacity>
-
-            <Modal
-              visible={subscriptionModalVisible}
-              transparent
-              animationType="slide"
-            >
-              <View className="flex-1 justify-center items-center bg-neutral-800">
-                <View className="flex h-screen z-20 mt-[300px]">
-                  <Text className="text-white font-sans text-2xl mb-4 text-center">
-                    Escolha seu plano
-                  </Text>
-
-                  <View className="flex flex-row gap-4 items-center mt-[50px] justify-center">
-                    {/* free */}
-                    <TouchableOpacity
-                      className={`w-[170px] h-[370px] p-5 flex flex-col rounded-2xl justify-between items-start ${
-                        selectedPlan === 'free' ? 'border-rose-400 border-[0.5px]' : ''
-                      } bg-neutral-800`}
-                      onPress={() => setSelectedPlan('free')}
-                    >
-                      <View className="flex flex-col gap-3">
-                        <Text className="text-white font-sans text-2xl mb-3">
-                          free
-                        </Text>
-                        <Text className="text-neutral-400 font-sans text-[15px]">
-                          • Acesso limitado
-                        </Text>
-                        <Text className="text-neutral-400 font-sans text-[15px]">
-                          • 3 usos por dia
-                        </Text>
-                        <Text className="text-neutral-400 font-sans text-[15px]">
-                          • Sem suporte prioritário
-                        </Text>
-                      </View>
-                      <Text className="text-white font-sans text-xl mt-4 mb-7">
-                        R$ 0,00
-                      </Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      className={`w-[170px] h-[370px] p-5 flex flex-col rounded-2xl justify-between items-start ${
-                        selectedPlan === 'premium' ? 'border-rose-400 border-[0.5px]' : ''
-                      } bg-neutral-800`}
-                      onPress={() => setSelectedPlan('premium')}
-                    >
-                      <View>
-                        <Text className="text-white font-sans text-2xl mb-3">
-                          premium
-                        </Text>
-                        <Text className="text-neutral-400 font-sans text-sm">
-                          • Uso ilimitado
-                        </Text>
-                        <Text className="text-neutral-400 font-sans text-sm">
-                          • Suporte prioritário
-                        </Text>
-                        <Text className="text-neutral-400 font-sans text-sm">
-                          • Novas funções exclusivas
-                        </Text>
-                      </View>
-
-                      <View>
-                        <Text className="text-white font-sans text-xl mt-4">
-                          R$ 9,90/mês
-                        </Text>
-                        <View className="flex flex-row items-center gap-2 mt-2">
-                          <Ionicons
-                            name="checkmark-circle"
-                            size={20}
-                            color="#f43f5e"
-                          />
-                          <Text className="text-white font-sans text-sm">
-                            Recomendado
-                          </Text>
-                        </View>
-                      </View>
-                    </TouchableOpacity>
-                  </View>
-                  <TouchableOpacity
-                    className="bg-rose-500 rounded-full h-[50px] mt-8 flex flex-row w-[200px] items-center justify-center"
-                    onPress={handleFinish}
-                    disabled={!selectedPlan}
-                  >
-                    <Text className="text-white font-sans font-medium text-xl px-3">
-                      Finish
-                    </Text>
-                    <Ionicons
-                      name="chevron-forward-outline"
-                      size={20}
-                      color="white"
-                    />
-                  </TouchableOpacity>
-                </View>
-
-                <MotiView
-                  from={{ scale: 4 }}
-                  animate={{ scale: 2 }}
-                  transition={{
-                    loop: true,
-                    type: 'timing',
-                    duration: 3000,
-                    easing: Easing.inOut(Easing.ease),
-                    repeatReverse: true,
-                  }}
-                  className="absolute w-full h-full"
-                >
-                  <LinearGradient
-                    colors={['#000000', '#1f1f1f', '#f43f5e']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={{ flex: 1, width: '100%', height: '100%' }}
-                  />
-                </MotiView>
-              </View>
-            </Modal>
-          </View>
-        </View>
-      </Modal>
+      <SubscriptionModal
+        visible={subscriptionModalVisible}
+        currentStep={currentStep}
+        selectedPlan={selectedPlan}
+        setSelectedPlan={setSelectedPlan}
+        onBack={handleBackToData}
+        onFinish={handleFinish}
+      />
     </View>
   );
 }

@@ -1,3 +1,13 @@
+    {/* Close Button */}
+    <TouchableOpacity 
+      className="absolute top-16 right-6 z-30 w-8 h-8 rounded-full bg-white/10 backdrop-blur-md items-center justify-center"
+      onPress={handleBackToData}
+    >
+      <Ionicons name="close" size={18} color="white" />
+    </TouchableOpacity>
+
+
+
 falta criar a tela do pin
 ter a opcao de ter pin ou nao
 integrar com o calendario
