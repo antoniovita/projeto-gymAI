@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Modal,
   View,
@@ -55,12 +54,6 @@ export function DataModal({
     value: pin,
     setValue: setPin,
   });
-
-
-  const isDisabled =
-  name.trim().length === 0 ||
-  (!skipPin && pin.length !== CELL_COUNT) ||
-  !acceptTerms;
 
   return (
     <Modal
@@ -182,45 +175,27 @@ export function DataModal({
               </Text>
             </TouchableOpacity>
           </View>
-          <MotiView
-                from={{ opacity: 0, translateY: 30 }}
-                animate={{ opacity: 1, translateY: 0 }}
-                transition={{ type: 'timing', duration: 600, delay: 800 }}
-                className="absolute self-center bottom-[10%]"
-              >
-                <TouchableOpacity
-                  onPress={handleNextStep}
-                  disabled={isDisabled}
-                  className={`
-                    rounded-2xl
-                    h-14
-                    w-[300px]
-                    flex-row
-                    items-center
-                    justify-center
-                    mb-4
-                    ${isDisabled
-                      ? 'bg-white/10'
-                      : 'bg-gradient-to-r from-rose-500 to-pink-600'}
-                  `}
-                >
-                  <Text
-                    className={`
-                      text-lg
-                      font-semisans
-                      mr-2
-                      ${isDisabled ? 'text-white/40' : 'text-white'}
-                    `}
-                  >
-                    Next step
-                  </Text>
-                  <Ionicons
-                    name="arrow-forward"
-                    size={18}
-                    color={isDisabled ? 'rgba(255,255,255,0.4)' : 'white'}
-                  />
-                </TouchableOpacity>
-              </MotiView>
+
+          <View className="absolute bottom-[6%] self-center z-10">
+            <TouchableOpacity
+              className="bg-[#ff7a7f] rounded-xl h-[50px] w-[250px] items-center justify-center flex-row"
+              onPress={handleNextStep}
+              disabled={
+                name.trim().length === 0 ||
+                (!skipPin && pin.length !== CELL_COUNT) ||
+                !acceptTerms
+              }
+            >
+              <Text className="text-white font-sans font-medium text-xl px-3">
+                Next step
+              </Text>
+              <Ionicons
+                name="arrow-forward"
+                size={18}
+                color="white"
+              />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </Modal>

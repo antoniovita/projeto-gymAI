@@ -95,11 +95,6 @@ export function SubscriptionModal({
                 className="relative rounded-3xl p-6"
                 onPress={() => setSelectedPlan('free')}
               >
-                {selectedPlan === 'free' && (
-                  <View className="absolute top-4 right-4 w-6 h-6 rounded-full bg-rose-500 items-center justify-center">
-                    <Ionicons name="checkmark" size={14} color="white" />
-                  </View>
-                )}
                 <View className="flex-row items-center justify-between mb-4">
                   <View>
                     <Text className="text-white text-2xl font-sans mb-1">Gratuito</Text>
@@ -138,11 +133,7 @@ export function SubscriptionModal({
                 <View className="absolute -top-3 left-6 bg-gradient-to-r from-rose-500 to-pink-600 px-4 py-1 rounded-full">
                   <Text className="text-white text-xs font-bold">RECOMENDADO</Text>
                 </View>
-                {selectedPlan === 'premium' && (
-                  <View className="absolute top-4 right-4 w-6 h-6 rounded-full bg-rose-500 items-center justify-center">
-                    <Ionicons name="checkmark" size={14} color="white" />
-                  </View>
-                )}
+                
                 <View className="flex-row items-center justify-between mb-4 mt-2">
                   <View>
                     <Text className="text-white text-2xl font-sans mb-1">Premium</Text>
@@ -164,34 +155,29 @@ export function SubscriptionModal({
               </TouchableOpacity>
             </MotiView>
           </View>
+        </ScrollView>
 
-          {/* Continue Button */}
           <MotiView
             from={{ opacity: 0, translateY: 30 }}
             animate={{ opacity: 1, translateY: 0 }}
             transition={{ type: 'timing', duration: 600, delay: 800 }}
-            className='absolute self-center bottom-[-20%]'
+            className="absolute self-center bottom-[6%]"
           >
             <TouchableOpacity
               onPress={onFinish}
               disabled={!selectedPlan}
-              className={`rounded-2xl h-14 w-[300px] flex-row items-center justify-center mb-4 
-                ${selectedPlan ? 'bg-gradient-to-r from-rose-500 to-pink-600' : 'bg-white/10'}`}
+              className="bg-[#ff7a7f] rounded-xl h-[50px] w-[250px] items-center justify-center flex-row"
             >
-              <Text className={`text-lg font-semisans mr-2 
-                ${selectedPlan ? 'text-white' : 'text-white/40'}`}
-              >
+              <Text className="text-white font-sans font-medium text-xl px-3">
                 Continuar
               </Text>
               <Ionicons
                 name="arrow-forward"
                 size={18}
-                color={selectedPlan ? 'white' : 'rgba(255,255,255,0.4)'}
+                color="white"
               />
             </TouchableOpacity>
           </MotiView>
-
-        </ScrollView>
       </View>
     </Modal>
   );

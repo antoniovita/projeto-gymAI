@@ -9,7 +9,8 @@ import { Easing } from 'react-native-reanimated';
 import { useAuth } from '../hooks/useAuth';
 import { useAcceptTerms } from '../hooks/useAcceptTerms';
 import { DataModal } from '../components/comps/dataModal';
-import { SubscriptionModal } from './comps/SubscriptionModal';
+import { SubscriptionModal } from '../components/comps/subscriptionModal';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function WelcomeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -77,13 +78,18 @@ export default function WelcomeScreen() {
         from={{ opacity: 0, translateY: 140 }}
         animate={{ opacity: 1, translateY: 0 }}
         transition={{ type: 'timing', duration: 1000, delay: 4000 }}
-        className="absolute bottom-[6%] self-center -translate-x-1/2 z-10"
+        className="absolute bottom-[6%] self-center z-10"
       >
         <TouchableOpacity
-          className="bg-[#ff7a7f] rounded-full h-[50px] w-[200px] items-center justify-center shadow-lg"
+          className="bg-[#ff7a7f] rounded-xl h-[50px] w-[250px] items-center justify-center flex-row"
           onPress={handleInitialContinue}
         >
-          <Text className="text-white font-sans font-medium text-xl">Continue</Text>
+          <Text className="text-white font-sans font-medium text-xl px-3">Continue</Text>
+                        <Ionicons
+                name="arrow-forward"
+                size={18}
+                color="white"
+              />
         </TouchableOpacity>
       </MotiView>
 
