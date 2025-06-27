@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   Modal,
   TextInput,
   Image,
+  Switch,
   Alert,
 } from 'react-native';
 import { MotiView, MotiImage } from 'moti';
@@ -14,53 +15,76 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../widgets/types';
 import { Easing } from 'react-native-reanimated';
-import { CodeField, Cursor, useBlurOnFulfill, useClearByFocusCell } from 'react-native-confirmation-code-field';
+import {
+  CodeField,
+  Cursor,
+  useBlurOnFulfill,
+  useClearByFocusCell,
+} from 'react-native-confirmation-code-field';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../hooks/useAuth'; 
+import { useAuth } from '../hooks/useAuth';
 
 export default function WelcomeScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigation = useNavigation<
+    NativeStackNavigationProp<RootStackParamList>
+  >();
+
   const [name, setName] = useState('');
   const [pin, setPin] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [subscriptionModalVisible, setSubscriptionModalVisible] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<'free' | 'premium' | null>(null);
-  const { register } = useAuth();
+  const [selectedPlan, setSelectedPlan] = useState<'free' | 'premium' | null>(
+    null
+  );
+  const [skipPin, setSkipPin] = useState(false);
+
+  const { register, storePin } = useAuth();
 
   const CELL_COUNT = 6;
   const ref = useBlurOnFulfill({ value: pin, cellCount: CELL_COUNT });
-  const [props, getCellOnLayoutHandler] = useClearByFocusCell({ value: pin, setValue: setPin });
+  const [props, getCellOnLayoutHandler] = useClearByFocusCell({
+    value: pin,
+    setValue: setPin,
+  });
 
   const handleInitialContinue = () => {
     setModalVisible(true);
   };
 
   const handleNextStep = () => {
+    if (name.trim().length === 0 || (!skipPin && pin.length !== CELL_COUNT)) {
+      const msg = skipPin
+        ? 'Preencha seu nome para continuar.'
+        : 'Preencha seu nome e PIN de 6 dígitos.';
+      Alert.alert('Atenção', msg);
+      return;
+    }
+
     setSubscriptionModalVisible(true);
   };
 
   const handleFinish = async () => {
-  console.log('Tentando finalizar...');
-  if (!selectedPlan) {
-    Alert.alert('Atenção', 'Selecione um plano para continuar.');
-    return;
-  }
+    if (!selectedPlan) {
+      Alert.alert('Atenção', 'Selecione um plano para continuar.');
+      return;
+    }
+    try {
+      // registra nome e salva ID
+      await register(name);
+      // armazena PIN seguro
+       if (!skipPin) { 
+       await storePin(pin); 
+      }
+      console.log('Usuário registrado e PIN armazenado');
 
-  try {
-    await register(name);
-    console.log('Usuário registrado com sucesso!');
-    setSubscriptionModalVisible(false);
-    setModalVisible(false);
-
-    navigation.navigate('MainTabs');
-
-
-  } catch (error: any) {
-    console.error('Erro no registro:', error.message);
-    Alert.alert('Erro', error.message || 'Erro ao registrar');
-  }
-};
-
+      setSubscriptionModalVisible(false);
+      setModalVisible(false);
+      navigation.navigate('MainTabs');
+    } catch (error: any) {
+      console.error('Erro no registro:', error.message);
+      Alert.alert('Erro', error.message || 'Erro ao registrar');
+    }
+  };
 
   return (
     <View className="flex-1 items-center justify-center relative overflow-hidden">
@@ -80,7 +104,7 @@ export default function WelcomeScreen() {
           colors={['#000000', '#1f1f1f', '#f43f5e']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={{ flex: 1, width: '100%', height: '100%', opacity: 1 }}
+          style={{ flex: 1, width: '100%', height: '100%' }}
         />
       </MotiView>
 
@@ -94,7 +118,9 @@ export default function WelcomeScreen() {
           className="bg-rose-500 rounded-full h-[50px] flex flex-row w-[200px] items-center justify-center"
           onPress={handleInitialContinue}
         >
-          <Text className="text-white font-sans font-medium text-xl px-3">Continue</Text>
+          <Text className="text-white font-sans font-medium text-xl px-3">
+            Continue
+          </Text>
           <Ionicons name="chevron-forward-outline" size={20} color="white" />
         </TouchableOpacity>
       </MotiView>
@@ -110,23 +136,25 @@ export default function WelcomeScreen() {
 
       <Modal
         animationType="slide"
-        transparent={true}
+        transparent
         visible={modalVisible}
         onRequestClose={() => setModalVisible(false)}
       >
         <View className="flex-1 mt-[260px] bg-black">
           <View className="absolute top-[-20%] gap-1 left-[6%] z-10">
-            <Text className='text-white font-sans text-3xl max-w-[300px]'>Bem vindo ao             ,</Text>
-            <Text className='text-white font-sans text-3xl max-w-[300px]'>inicie sua jornada!</Text>
+            <Text className="text-white font-sans text-2xl max-w-[300px]">
+              Boas vindas ao             , sua jornada começa aqui!
+            </Text>
           </View>
 
-          <View className="absolute top-[-28.5%] left-[47.8%] z-10">
+        <View className="absolute top-[-26%] left-[44%] z-10">
             <Image
               source={require('../assets/dayo.png')}
-              className="w-[130px] h-[130px]"
+              className="w-[100px] h-[100px]"
               resizeMode="contain"
             />
           </View>
+
 
           <MotiView
             from={{ scale: 4 }}
@@ -144,13 +172,15 @@ export default function WelcomeScreen() {
               colors={['#000000', '#1f1f1f', '#f43f5e']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={{ flex: 1, width: '100%', height: '100%', opacity: 1 }}
+              style={{ flex: 1, width: '100%', height: '100%' }}
             />
           </MotiView>
 
           <View className="h-[300px] p-4 mt-[45px]">
-            <Text className='text-neutral-200 font-sans text-[14px] mb-3 px-5'>Insira seu nome:</Text>
-            <View className='flex items-center mb-[60px]'>
+            <Text className="text-neutral-200 font-sans text-[14px] mb-3 px-5">
+              Insira seu nome:
+            </Text>
+            <View className="flex items-center mb-[60px]">
               <TextInput
                 className="bg-neutral-800 font-sans text-lg text-white h-[50px] w-[335px] px-5 rounded-2xl"
                 placeholder="Your name"
@@ -159,32 +189,54 @@ export default function WelcomeScreen() {
                 onChangeText={setName}
               />
             </View>
-
-            <Text className='text-neutral-200 font-sans text-[14px] mb-3 px-5'>Crie o seu PIN:</Text>
-            <View className="flex items-center justify-center">
-              <CodeField
-                ref={ref}
-                {...props}
-                value={pin}
-                onChangeText={setPin}
-                cellCount={CELL_COUNT}
-                rootStyle={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 10 }}
-                keyboardType="number-pad"
-                textContentType="oneTimeCode"
-                renderCell={({ index, symbol, isFocused }) => (
-                  <View
-                    key={index}
-                    onLayout={getCellOnLayoutHandler(index)}
-                    className={`w-[48px] h-[60px] rounded-xl items-center justify-center mx-1 bg-neutral-800'
-                    }`}
-                  >
-                    <Text className="text-white font-sans text-2xl">
-                      {symbol || (isFocused ? <Cursor /> : null)}
+            
+            <View className="flex-row items-center mb-4 px-5">
+                <Text className="text-neutral-200 font-sans text-[14px] mr-2">
+                  Não criar PIN
+                </Text>
+                <Switch
+                  value={skipPin}
+                  onValueChange={setSkipPin}
+                  trackColor={{ false: '#767577', true: '#f43f5e' }}
+                  thumbColor={skipPin ? '#ff7a7f' : '#f4f3f4'}
+                />
+              </View>
+                {!skipPin && (
+                  <>
+                    <Text className="text-neutral-200 font-sans text-[14px] mb-3 px-5">
+                      Crie o seu PIN:
                     </Text>
-                  </View>
+                    <View className="flex items-center justify-center">
+                      <CodeField
+                        ref={ref}
+                        {...props}
+                        value={pin}
+                        onChangeText={setPin}
+                        cellCount={CELL_COUNT}
+                        rootStyle={{
+                          flexDirection: 'row',
+                          justifyContent: 'center',
+                          marginBottom: 10,
+                        }}
+                        keyboardType="number-pad"
+                        textContentType="oneTimeCode"
+                        renderCell={({ index, symbol, isFocused }) => (
+                          <View
+                            key={index}
+                            onLayout={getCellOnLayoutHandler(index)}
+                            className="w-[48px] h-[60px] rounded-xl items-center justify-center mx-1 bg-neutral-800"
+                          >
+                            <Text className="text-white font-sans text-2xl">
+                              {symbol || (isFocused ? <Cursor /> : null)}
+                            </Text>
+                          </View>
+                        )}
+                      />
+                    </View>
+                  </>
                 )}
-              />
-            </View>
+
+
           </View>
 
           <View className="absolute bottom-[10%] left-1/4 z-10">
@@ -193,14 +245,22 @@ export default function WelcomeScreen() {
               onPress={handleNextStep}
               disabled={name.trim().length === 0 || pin.length !== CELL_COUNT}
             >
-              <Text className="text-white font-sans font-medium text-xl px-3">Next step</Text>
+              <Text className="text-white font-sans font-medium text-xl px-3">
+                Next step
+              </Text>
               <Ionicons name="chevron-forward-outline" size={20} color="white" />
             </TouchableOpacity>
 
-            <Modal visible={subscriptionModalVisible} transparent={true} animationType="slide">
+            <Modal
+              visible={subscriptionModalVisible}
+              transparent
+              animationType="slide"
+            >
               <View className="flex-1 justify-center items-center bg-neutral-800">
                 <View className="flex h-screen z-20 mt-[300px]">
-                  <Text className="text-white font-sans text-2xl mb-4 text-center">Escolha seu plano</Text>
+                  <Text className="text-white font-sans text-2xl mb-4 text-center">
+                    Escolha seu plano
+                  </Text>
 
                   <View className="flex flex-row gap-4 items-center mt-[50px] justify-center">
                     {/* free */}
@@ -210,13 +270,23 @@ export default function WelcomeScreen() {
                       } bg-neutral-800`}
                       onPress={() => setSelectedPlan('free')}
                     >
-                      <View className='flex flex-col gap-3'>
-                        <Text className="text-white font-sans text-2xl mb-3">free</Text>
-                        <Text className="text-neutral-400 font-sans text-[15px]">• Acesso limitado</Text>
-                        <Text className="text-neutral-400 font-sans text-[15px]">• 3 usos por dia</Text>
-                        <Text className="text-neutral-400 font-sans text-[15px]">• Sem suporte prioritário</Text>
+                      <View className="flex flex-col gap-3">
+                        <Text className="text-white font-sans text-2xl mb-3">
+                          free
+                        </Text>
+                        <Text className="text-neutral-400 font-sans text-[15px]">
+                          • Acesso limitado
+                        </Text>
+                        <Text className="text-neutral-400 font-sans text-[15px]">
+                          • 3 usos por dia
+                        </Text>
+                        <Text className="text-neutral-400 font-sans text-[15px]">
+                          • Sem suporte prioritário
+                        </Text>
                       </View>
-                      <Text className="text-white font-sans text-xl mt-4 mb-7">R$ 0,00</Text>
+                      <Text className="text-white font-sans text-xl mt-4 mb-7">
+                        R$ 0,00
+                      </Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -226,17 +296,33 @@ export default function WelcomeScreen() {
                       onPress={() => setSelectedPlan('premium')}
                     >
                       <View>
-                        <Text className="text-white font-sans text-2xl mb-3">premium</Text>
-                        <Text className="text-neutral-400 font-sans text-sm">• Uso ilimitado</Text>
-                        <Text className="text-neutral-400 font-sans text-sm">• Suporte prioritário</Text>
-                        <Text className="text-neutral-400 font-sans text-sm">• Novas funções exclusivas</Text>
+                        <Text className="text-white font-sans text-2xl mb-3">
+                          premium
+                        </Text>
+                        <Text className="text-neutral-400 font-sans text-sm">
+                          • Uso ilimitado
+                        </Text>
+                        <Text className="text-neutral-400 font-sans text-sm">
+                          • Suporte prioritário
+                        </Text>
+                        <Text className="text-neutral-400 font-sans text-sm">
+                          • Novas funções exclusivas
+                        </Text>
                       </View>
 
                       <View>
-                        <Text className="text-white font-sans text-xl mt-4">R$ 9,90/mês</Text>
+                        <Text className="text-white font-sans text-xl mt-4">
+                          R$ 9,90/mês
+                        </Text>
                         <View className="flex flex-row items-center gap-2 mt-2">
-                          <Ionicons name="checkmark-circle" size={20} color="#f43f5e" />
-                          <Text className="text-white font-sans text-sm">Recomendado</Text>
+                          <Ionicons
+                            name="checkmark-circle"
+                            size={20}
+                            color="#f43f5e"
+                          />
+                          <Text className="text-white font-sans text-sm">
+                            Recomendado
+                          </Text>
                         </View>
                       </View>
                     </TouchableOpacity>
@@ -246,8 +332,14 @@ export default function WelcomeScreen() {
                     onPress={handleFinish}
                     disabled={!selectedPlan}
                   >
-                    <Text className="text-white font-sans font-medium text-xl px-3">Finish</Text>
-                    <Ionicons name="chevron-forward-outline" size={20} color="white" />
+                    <Text className="text-white font-sans font-medium text-xl px-3">
+                      Finish
+                    </Text>
+                    <Ionicons
+                      name="chevron-forward-outline"
+                      size={20}
+                      color="white"
+                    />
                   </TouchableOpacity>
                 </View>
 
@@ -267,7 +359,7 @@ export default function WelcomeScreen() {
                     colors={['#000000', '#1f1f1f', '#f43f5e']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
-                    style={{ flex: 1, width: '100%', height: '100%', opacity: 1 }}
+                    style={{ flex: 1, width: '100%', height: '100%' }}
                   />
                 </MotiView>
               </View>

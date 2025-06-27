@@ -24,7 +24,7 @@ export function useAuth() {
     try {
       const newUserId = await UserService.createUserLocal(name);
       if (!newUserId) {
-        throw new Error("Failed to create user");
+        throw new Error('Failed to create user');
       }
       await AuthService.saveUserId(newUserId);
       await AuthService.saveUserName(name);
@@ -38,12 +38,24 @@ export function useAuth() {
     }
   };
 
+  const storePin = async (pin: string) => {
+    setLoading(true);
+    try {
+      await AuthService.saveUserPin(pin);
+      console.log('PIN armazenado:', pin);
+    } catch (error: any) {
+      throw new Error(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const login = async (id: string) => {
     setLoading(true);
     try {
       const user = await UserService.getUserById(id);
       if (!user) {
-        throw new Error("User not found");
+        throw new Error('User not found');
       }
       await AuthService.saveUserId(user.id);
       await AuthService.saveUserName(user.name);
@@ -70,6 +82,7 @@ export function useAuth() {
     loading,
     isLoggedIn: !!userId,
     register,
+    storePin,
     login,
     logout,
   };
