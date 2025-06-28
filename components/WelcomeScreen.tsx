@@ -74,24 +74,23 @@ export default function WelcomeScreen() {
         resizeMode="contain"
       />
 
-      <MotiView
-        from={{ opacity: 0, translateY: 140 }}
-        animate={{ opacity: 1, translateY: 0 }}
-        transition={{ type: 'timing', duration: 1000, delay: 4000 }}
-        className="absolute bottom-[6%] self-center z-10"
-      >
-        <TouchableOpacity
-          className="bg-[#ff7a7f] rounded-xl h-[50px] w-[250px] items-center justify-center flex-row"
-          onPress={handleInitialContinue}
+      {/* Only show Continue button on the first step */}
+      {currentStep === 0 && (
+        <MotiView
+          from={{ opacity: 0, translateY: 140 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          transition={{ type: 'timing', duration: 1000, delay: 4000 }}
+          className="absolute bottom-[6%] self-center z-10"
         >
-          <Text className="text-white font-sans font-medium text-xl px-3">Continue</Text>
-                        <Ionicons
-                name="arrow-forward"
-                size={18}
-                color="white"
-              />
-        </TouchableOpacity>
-      </MotiView>
+          <TouchableOpacity
+            className="bg-[#ff7a7f] rounded-xl h-[50px] w-[250px] items-center justify-center flex-row"
+            onPress={handleInitialContinue}
+          >
+            <Text className="text-white font-sans font-medium text-xl px-3">Continue</Text>
+            <Ionicons name="arrow-forward" size={18} color="white" />
+          </TouchableOpacity>
+        </MotiView>
+      )}
 
       <DataModal
         visible={dataModalVisible}
