@@ -33,11 +33,11 @@ export const AuthService = {
   },
 
   saveUserPin: async (pin: string) => {
-    await SecureStore.setItemAsync('user_pin', pin, { requireAuthentication: true });
+    await SecureStore.setItemAsync('user_pin', pin, { requireAuthentication: false });
   },
 
   getUserPin: async (): Promise<string | null> => {
-    return await SecureStore.getItemAsync('user_pin', { requireAuthentication: true });
+    return await SecureStore.getItemAsync('user_pin', { requireAuthentication: false });
   },
 
   clearUserPin: async () => {

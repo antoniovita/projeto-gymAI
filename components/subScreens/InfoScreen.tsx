@@ -19,6 +19,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { RootStackParamList } from 'widgets/types';
+import { useAuth } from '../../hooks/useAuth';
 
 type InfoScreenNavProp = NativeStackNavigationProp<RootStackParamList, 'InfoScreen'>;
 
@@ -26,12 +27,14 @@ const ChangeNameModal: React.FC<{
   visible: boolean;
   onClose: () => void;
   onSave: (newName: string) => void;
-}> = ({ visible, onClose, onSave }) => {
+  currentName?: string;
+}> = ({ visible, onClose, onSave, currentName }) => {
   const slideY = useRef(new Animated.Value(300)).current;
   const [name, setName] = useState('');
 
   useEffect(() => {
     if (visible) {
+      setName(currentName || '');
       Animated.timing(slideY, {
         toValue: 0,
         duration: 300,
@@ -42,7 +45,7 @@ const ChangeNameModal: React.FC<{
       slideY.setValue(300);
       setName('');
     }
-  }, [visible]);
+  }, [visible, currentName]);
 
   const handleSave = () => {
     if (!name.trim()) {
@@ -172,7 +175,7 @@ const ChangePinModal: React.FC<{
 
           <ScrollView>
             <Text className="text-gray-300 font-sans mb-4">
-              Insira seu PIN atual e defina um novo código de 6 dígitos para proteger sua conta.
+              Defina um novo código de 6 dígitos para proteger sua conta.
             </Text>
             <View className="flex-row justify-center flex gap-2 space-x-3 mb-6">
               {digits.map((digit, idx) => (
@@ -211,13 +214,26 @@ export default function InfoScreen() {
   const navigation = useNavigation<InfoScreenNavProp>();
   const [showNameModal, setShowNameModal] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
+  
+  // Usar o hook useAuth
+  const { changeName, changePin, userName, loading } = useAuth();
 
-  const handleSaveName = (newName: string) => {
-    console.log('Novo nome:', newName);
+  const handleSaveName = async (newName: string) => {
+    try {
+      await changeName(newName);
+      Alert.alert('Sucesso', 'Nome alterado com sucesso!');
+    } catch (error: any) {
+      Alert.alert('Erro', error.message || 'Erro ao alterar nome');
+    }
   };
 
-  const handleSavePin = (newPin: string) => {
-    console.log('Novo PIN:', newPin);
+  const handleSavePin = async (newPin: string) => {
+    try {
+      await changePin(newPin);
+      Alert.alert('Sucesso', 'PIN alterado com sucesso!');
+    } catch (error: any) {
+      console.log(error)
+    }
   };
 
   return (
@@ -235,25 +251,30 @@ export default function InfoScreen() {
         <TouchableOpacity
           className="flex-row items-center py-7 border-b border-zinc-700"
           onPress={() => setShowNameModal(true)}
+          disabled={loading}
         >
           <Ionicons name="person-outline" size={20} color="white" />
-          <Text className="ml-3 text-white font-sans text-[16px]">Alterar Nome de Usuário</Text>
+          <View className="ml-3 flex-1">
+            <Text className="text-white font-sans text-[16px]">Alterar Nome de Usuário</Text>
+          </View>
         </TouchableOpacity>
 
         <TouchableOpacity
           className="flex-row items-center py-7 border-b border-zinc-700"
           onPress={() => setShowPinModal(true)}
+          disabled={loading}
         >
           <Ionicons name="key-outline" size={20} color="white" />
           <Text className="ml-3 text-white font-sans text-[16px]">Alterar PIN</Text>
         </TouchableOpacity>
       </ScrollView>
 
-          <ChangeNameModal
-            visible={showNameModal}
-            onClose={() => setShowNameModal(false)}
-            onSave={handleSaveName}
-          />
+      <ChangeNameModal
+        visible={showNameModal}
+        onClose={() => setShowNameModal(false)}
+        onSave={handleSaveName}
+        currentName={userName || ''}
+      />
 
       <ChangePinModal
         visible={showPinModal}

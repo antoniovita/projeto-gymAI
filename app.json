@@ -14,7 +14,10 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.myexpoapp"
+      "bundleIdentifier": "com.anonymous.myexpoapp",
+       "infoPlist": {
+        "NSFaceIDUsageDescription": "Precisamos usar o Face ID para proteger seu PIN."
+      }
     },
     "android": {
       "adaptiveIcon": {
