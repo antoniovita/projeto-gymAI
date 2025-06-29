@@ -58,43 +58,43 @@ const ChangeNameModal: React.FC<{
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          className="flex-1"
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        className="flex-1"
+      >
+        <TouchableWithoutFeedback onPress={onClose}>
+          <View className="flex-1 justify-end" />
+        </TouchableWithoutFeedback>
+        <Animated.View
+          style={{ transform: [{ translateY: slideY }] }}
+          className="bg-[#1e1e1e] rounded-t-3xl p-6 max-h-[60%]"
         >
-          <TouchableWithoutFeedback onPress={onClose}>
-            <View className="flex-1 justify-end" />
-          </TouchableWithoutFeedback>
-          <Animated.View
-            style={{ transform: [{ translateY: slideY }] }}
-            className="bg-[#1e1e1e] rounded-t-3xl p-6 max-h-[60%]"
-          >
-            <View className="flex-row justify-between items-center mb-4">
-              <Text className="text-white font-sans text-[20px] font-bold">Alterar Nome</Text>
-              <TouchableOpacity onPress={onClose}>
-                <Ionicons name="close" size={24} color="white" />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView>
-              <Text className="text-gray-300 font-sans mb-4">
-                Atualize o nome que será exibido em seu perfil. Escolha um nome que seus contatos reconheçam facilmente.
-              </Text>
-              <TextInput
-                className="bg-zinc-800 text-white rounded-xl px-4 py-4 font-sans text-base mb-6"
-                placeholder="Digite novo nome"
-                placeholderTextColor="#a1a1aa"
-                value={name}
-                onChangeText={setName}
-              />
-            </ScrollView>
-            <TouchableOpacity
-              onPress={handleSave}
-              className="w-full bg-[#ff7a7f] py-3 rounded-2xl items-center mb-4"
-            >
-              <Text className="text-white font-sans font-bold text-base">Salvar</Text>
+          <View className="flex-row justify-between items-center mb-4">
+            <Text className="text-white font-sans text-[20px] font-bold">Alterar Nome</Text>
+            <TouchableOpacity onPress={onClose}>
+              <Ionicons name="close" size={24} color="white" />
             </TouchableOpacity>
-          </Animated.View>
+          </View>
+
+          <ScrollView>
+            <Text className="text-gray-300 font-sans mb-4">
+              Atualize o nome que será exibido em seu perfil. Escolha um nome que seus contatos reconheçam facilmente.
+            </Text>
+            <TextInput
+              className="bg-zinc-800 text-white rounded-xl px-4 py-4 font-sans text-base mb-6"
+              placeholder="Digite novo nome"
+              placeholderTextColor="#a1a1aa"
+              value={name}
+              onChangeText={setName}
+            />
+          </ScrollView>
+          <TouchableOpacity
+            onPress={handleSave}
+            className="w-full bg-[#ff7a7f] py-3 rounded-2xl items-center mb-4"
+          >
+            <Text className="text-white font-sans font-bold text-base">Salvar</Text>
+          </TouchableOpacity>
+        </Animated.View>
       </KeyboardAvoidingView>
     </Modal>
   );
@@ -124,12 +124,10 @@ const ChangePinModal: React.FC<{
   }, [visible]);
 
   const handleChange = (text: string, idx: number) => {
-    if (!/^\d?$/.test(text)) return; // permite apenas números
-
+    if (!/^\d?$/.test(text)) return;
     const arr = [...digits];
     arr[idx] = text;
     setDigits(arr);
-
     if (text !== '' && idx < 5) {
       inputRefs.current[idx + 1]?.focus();
     } else if (text === '' && idx > 0) {
@@ -177,7 +175,7 @@ const ChangePinModal: React.FC<{
             <Text className="text-gray-300 font-sans mb-4">
               Defina um novo código de 6 dígitos para proteger sua conta.
             </Text>
-            <View className="flex-row justify-center flex gap-2 space-x-3 mb-6">
+            <View className="flex-row justify-center gap-2 mb-6">
               {digits.map((digit, idx) => (
                 <TextInput
                   key={idx}
@@ -187,8 +185,6 @@ const ChangePinModal: React.FC<{
                   className="w-12 h-[50px] bg-zinc-800 text-white rounded-lg text-center font-sans text-xl"
                   keyboardType="numeric"
                   maxLength={1}
-                  placeholder=""
-                  placeholderTextColor="#555"
                   value={digit}
                   onChangeText={text => handleChange(text, idx)}
                   onKeyPress={e => handleKeyPress(e, idx)}
@@ -214,8 +210,8 @@ export default function InfoScreen() {
   const navigation = useNavigation<InfoScreenNavProp>();
   const [showNameModal, setShowNameModal] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
-  
-  const { changeName, changePin, userName, loading } = useAuth();
+
+  const { changeName, changePin, userName, loading, removePin } = useAuth();
 
   const handleSaveName = async (newName: string) => {
     try {
@@ -231,8 +227,30 @@ export default function InfoScreen() {
       await changePin(newPin);
       Alert.alert('Sucesso', 'PIN alterado com sucesso!');
     } catch (error: any) {
-      console.log(error)
+      console.log(error);
     }
+  };
+
+  const confirmRemovePin = () => {
+    Alert.alert(
+      'Remover PIN',
+      'Tem certeza que deseja remover o PIN?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Remover',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await removePin();
+              Alert.alert('Sucesso', 'PIN removido com sucesso!');
+            } catch {
+              Alert.alert('Erro', 'Não foi possível remover o PIN.');
+            }
+          },
+        },
+      ],
+    );
   };
 
   return (
@@ -265,6 +283,15 @@ export default function InfoScreen() {
         >
           <Ionicons name="key-outline" size={20} color="white" />
           <Text className="ml-3 text-white font-sans text-[16px]">Alterar PIN</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          className="flex-row items-center py-7 border-b border-zinc-700"
+          onPress={confirmRemovePin}
+          disabled={loading}
+        >
+          <Ionicons name="lock-open-outline" size={20} color="white" />
+          <Text className="ml-3 text-white font-sans text-[16px]">Remover PIN</Text>
         </TouchableOpacity>
       </ScrollView>
 

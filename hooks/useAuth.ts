@@ -115,6 +115,17 @@ export function useAuth() {
     }
   };
 
+  const removePin = async () => {
+    setLoading(true);
+    try {
+      await AuthService.removePin()
+      console.log('PIN removido.')
+    } finally {
+      setLoading(false);
+    }
+  }
+
+
   return {
     userId,
     userName,
@@ -127,6 +138,7 @@ export function useAuth() {
     hasPin,
     changeName,
     login,
+    removePin,
     logout,
   };
 }

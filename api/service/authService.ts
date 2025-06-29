@@ -47,4 +47,8 @@ export const AuthService = {
     const id = await SecureStore.getItemAsync('user_id');
     return !!id;
   },
+
+  removePin: async () => {
+    await SecureStore.deleteItemAsync('user_pin');
+  }
 };

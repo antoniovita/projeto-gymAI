@@ -199,8 +199,8 @@ const finalText =
             onPress={() => setSettingsVisible(true)}
             className="flex-row items-center gap-2 bg-neutral-700 rounded-xl px-3 py-1"
           >
-            <Ionicons name="options-outline" size={15} color="#ff7a7f" />
-            <Text className="text-[#ff7a7f] font-sans font-medium text-sm">Opções</Text>
+            <Ionicons name="options-outline" size={15} color="white" />
+            <Text className="text-white font-sans font-medium text-sm">Opções</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
