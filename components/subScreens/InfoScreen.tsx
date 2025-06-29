@@ -215,7 +215,6 @@ export default function InfoScreen() {
   const [showNameModal, setShowNameModal] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
   
-  // Usar o hook useAuth
   const { changeName, changePin, userName, loading } = useAuth();
 
   const handleSaveName = async (newName: string) => {

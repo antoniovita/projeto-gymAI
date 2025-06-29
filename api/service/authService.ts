@@ -11,13 +11,6 @@ export const AuthService = {
 
   clearUserId: async () => {
     await SecureStore.deleteItemAsync('user_id');
-    await SecureStore.deleteItemAsync('user_name');
-    await SecureStore.deleteItemAsync('user_pin');
-  },
-
-  isLoggedIn: async (): Promise<boolean> => {
-    const id = await SecureStore.getItemAsync('user_id');
-    return !!id;
   },
 
   saveUserName: async (name: string) => {
@@ -42,5 +35,16 @@ export const AuthService = {
 
   clearUserPin: async () => {
     await SecureStore.deleteItemAsync('user_pin');
+  },
+
+  clearAuth: async () => {
+    await SecureStore.deleteItemAsync('user_id');
+    await SecureStore.deleteItemAsync('user_name');
+    await SecureStore.deleteItemAsync('user_pin');
+  },
+
+  isLoggedIn: async (): Promise<boolean> => {
+    const id = await SecureStore.getItemAsync('user_id');
+    return !!id;
   },
 };

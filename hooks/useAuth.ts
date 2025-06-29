@@ -5,36 +5,35 @@ import { deleteDatabase } from 'database';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export function useAuth() {
-  const [userId, setUserId] = useState<string | null>(null);
+  const [userId,   setUserId]   = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading,  setLoading]  = useState<boolean>(true);
 
   useEffect(() => {
-    const loadUser = async () => {
-      const storedId = await AuthService.getUserId();
-      const storedName = await AuthService.getUserName();
+    (async () => {
+      const [storedId, storedName] = await Promise.all([
+        AuthService.getUserId(),
+        AuthService.getUserName()
+      ]);
       setUserId(storedId);
       setUserName(storedName);
       console.log('Usuário carregado:', storedName);
       setLoading(false);
-    };
-    loadUser();
+    })();
   }, []);
 
   const register = async (name: string) => {
     setLoading(true);
     try {
       const newUserId = await UserService.createUserLocal(name);
-      if (!newUserId) {
-        throw new Error('Failed to create user');
-      }
-      await AuthService.saveUserId(newUserId);
-      await AuthService.saveUserName(name);
+      if (!newUserId) throw new Error('Failed to create user');
+      await Promise.all([
+        AuthService.saveUserId(newUserId),
+        AuthService.saveUserName(name)
+      ]);
       setUserId(newUserId);
       setUserName(name);
       console.log('Usuário registrado:', name);
-    } catch (error: any) {
-      throw new Error(error.message);
     } finally {
       setLoading(false);
     }
@@ -45,20 +44,30 @@ export function useAuth() {
     try {
       await AuthService.saveUserPin(pin);
       console.log('PIN armazenado:', pin);
-    } catch (error: any) {
-      throw new Error(error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const changePin = async (pin: string) => {
+  const changePin = storePin;
+
+  const verifyPin = async (pin: string): Promise<boolean> => {
     setLoading(true);
     try {
-      await AuthService.saveUserPin(pin);
-      console.log('PIN alterado para:', pin);
-    } catch (error: any) {
-      throw new Error(error.message);
+      const stored = await AuthService.getUserPin();
+      console.log('PIN armazenado no AsyncStorage:', stored);
+      return stored === pin;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const hasPin = async (): Promise<boolean> => {
+    setLoading(true);
+    try {
+      const stored = await AuthService.getUserPin();
+      console.log('PIN armazenado no AsyncStorage:', stored);
+      return !!stored && stored.length > 0;
     } finally {
       setLoading(false);
     }
@@ -70,8 +79,6 @@ export function useAuth() {
       await AuthService.saveUserName(name);
       setUserName(name);
       console.log('Nome alterado para:', name);
-    } catch (error: any) {
-      throw new Error(error.message);
     } finally {
       setLoading(false);
     }
@@ -81,16 +88,14 @@ export function useAuth() {
     setLoading(true);
     try {
       const user = await UserService.getUserById(id);
-      if (!user) {
-        throw new Error('User not found');
-      }
-      await AuthService.saveUserId(user.id);
-      await AuthService.saveUserName(user.name);
+      if (!user) throw new Error('User not found');
+      await Promise.all([
+        AuthService.saveUserId(user.id),
+        AuthService.saveUserName(user.name)
+      ]);
       setUserId(user.id);
       setUserName(user.name);
       console.log('Usuário logado:', user.name);
-    } catch (error: any) {
-      throw new Error(error.message);
     } finally {
       setLoading(false);
     }
@@ -99,13 +104,12 @@ export function useAuth() {
   const logout = async () => {
     setLoading(true);
     try {
-      await AsyncStorage.clear();
-      await deleteDatabase();      
-      setUserId(null);         
+      await AsyncStorage.clear()
+      await AuthService.clearAuth();
+      await deleteDatabase();
+      setUserId(null);
       setUserName(null);
-      console.log('Usuário deslogado');
-    } catch (error: any) {
-      console.error('Erro ao deslogar:', error);
+      console.log('Usuário deslogado e PIN removido');
     } finally {
       setLoading(false);
     }
@@ -119,6 +123,8 @@ export function useAuth() {
     register,
     storePin,
     changePin,
+    verifyPin,
+    hasPin,
     changeName,
     login,
     logout,

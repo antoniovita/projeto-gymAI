@@ -63,7 +63,7 @@ export function DataModal({
       onRequestClose={onClose}
     >
       <View className="flex-1 bg-black">
-        {/* Progress Bar */}
+
         <View className="absolute top-0 left-0 right-0 z-20 pt-12">
           <ProgressBar currentStep={currentStep} totalSteps={3} />
         </View>

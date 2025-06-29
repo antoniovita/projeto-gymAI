@@ -36,6 +36,7 @@ export default function App() {
 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isDbReady, setIsDbReady] = useState<boolean>(false);
+  const [hasPin, setHasPin] = useState<boolean | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -60,42 +61,65 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const checkAuth = async () => {
+    (async () => {
       const userId = await AuthService.getUserId();
       setIsAuthenticated(!!userId);
-    };
-    checkAuth();
+    })();
   }, []);
 
   useEffect(() => {
-    const initDb = async () => {
+    (async () => {
       try {
         await initDatabase();
-        const db = getDb();
-        console.log('Banco de dados inicializado:', db);
+        console.log('Banco de dados pronto:', getDb());
         setIsDbReady(true);
       } catch (err) {
-        console.error('Erro ao inicializar o banco de dados:', err);
+        console.error('Erro ao inicializar o DB:', err);
       }
-    };
-    initDb();
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      const storedPin = await AuthService.getUserPin();
+      console.log('PIN armazenado no AsyncStorage:', storedPin);
+
+      const pinExists = !!storedPin && storedPin.length > 0;
+      console.log('Existe PIN?', pinExists);
+
+      setHasPin(pinExists);
+    })();
   }, []);
 
   const onLayoutRootView = useCallback(async () => {
-    if (fontsLoaded && isAuthenticated !== null && isDbReady) {
+    if (
+      fontsLoaded &&
+      isAuthenticated !== null &&
+      isDbReady &&
+      hasPin !== null
+    ) {
       await SplashScreen.hideAsync();
     }
-  }, [fontsLoaded, isAuthenticated, isDbReady]);
+  }, [fontsLoaded, isAuthenticated, isDbReady, hasPin]);
 
-  if (!fontsLoaded || isAuthenticated === null || !isDbReady) {
+  if (!fontsLoaded || isAuthenticated === null || !isDbReady || hasPin === null) {
     return null;
+  }
+
+  let initialRoute: keyof RootStackParamList;
+  if (!isAuthenticated) {
+    initialRoute = 'WelcomeScreen';
+  } else if (hasPin) {
+    initialRoute = 'PinScreen';
+  } else {
+    initialRoute = 'MainTabs';
   }
 
   return (
     <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
       <NavigationContainer>
         <Stack.Navigator
-          initialRouteName={isAuthenticated ? 'MainTabs' : 'WelcomeScreen'}
+          initialRouteName={initialRoute}
           screenOptions={{ headerShown: false }}
         >
           <Stack.Screen name="WelcomeScreen" component={WelcomeScreen} />
