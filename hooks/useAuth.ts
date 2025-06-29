@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { UserService } from '../api/service/userService';
 import { AuthService } from '../api/service/authService';
+import { deleteDatabase } from 'database';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export function useAuth() {
   const [userId, setUserId] = useState<string | null>(null);
@@ -50,6 +52,31 @@ export function useAuth() {
     }
   };
 
+  const changePin = async (pin: string) => {
+    setLoading(true);
+    try {
+      await AuthService.saveUserPin(pin);
+      console.log('PIN alterado para:', pin);
+    } catch (error: any) {
+      throw new Error(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const changeName = async (name: string) => {
+    setLoading(true);
+    try {
+      await AuthService.saveUserName(name);
+      setUserName(name);
+      console.log('Nome alterado para:', name);
+    } catch (error: any) {
+      throw new Error(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const login = async (id: string) => {
     setLoading(true);
     try {
@@ -70,10 +97,18 @@ export function useAuth() {
   };
 
   const logout = async () => {
-    await AuthService.clearUserId();
-    setUserId(null);
-    setUserName(null);
-    console.log('Usuário deslogado');
+    setLoading(true);
+    try {
+      await AsyncStorage.clear();
+      await deleteDatabase();      
+      setUserId(null);         
+      setUserName(null);
+      console.log('Usuário deslogado');
+    } catch (error: any) {
+      console.error('Erro ao deslogar:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return {
@@ -83,6 +118,8 @@ export function useAuth() {
     isLoggedIn: !!userId,
     register,
     storePin,
+    changePin,
+    changeName,
     login,
     logout,
   };
