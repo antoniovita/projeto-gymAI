@@ -171,7 +171,7 @@ const initials = userName
         <Text className="text-zinc-400 uppercase text-xs mt-6 mb-2">Suporte</Text>
         <SettingsItem
           icon="help-circle-outline"
-          label="Ajuda"
+          label="Ajuda & Suporte"
           onPress={() => navigation.navigate('HelpScreen')}
         />
 

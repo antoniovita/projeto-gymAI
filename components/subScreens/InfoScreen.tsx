@@ -260,7 +260,7 @@ export default function InfoScreen() {
           <Ionicons name="chevron-back" size={24} color="white" />
           <Text className="ml-2 text-white font-sans text-[16px]">Voltar</Text>
         </TouchableOpacity>
-        <Text className="text-white absolute left-[43%] font-sans text-[13px]">Informações</Text>
+        <Text className="text-white absolute left-[43%] font-sans text-[15px]">Informações</Text>
         <View style={{ width: 24 }} />
       </View>
 

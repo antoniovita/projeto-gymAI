@@ -28,15 +28,12 @@ interface SettingsModalProps {
 export const SettingsModal: React.FC<SettingsModalProps> = ({
   visible,
   onClose,
-  darkMode,
-  setDarkMode,
   notificationsEnabled,
   setNotificationsEnabled,
-  fontSize,
-  setFontSize,
   clearMessages,
 }) => {
   const slideAnim = useRef(new Animated.Value(300)).current;
+
 
   useEffect(() => {
     if (visible) {
