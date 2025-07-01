@@ -115,6 +115,17 @@ export function useAuth() {
     }
   };
 
+  const getPin = async () => {
+    setLoading(true);
+    try {
+      const pin = await AuthService.getUserPin();
+      console.log('PIN obtido com sucesso:', pin);
+      return pin
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const removePin = async () => {
     setLoading(true);
     try {
@@ -140,5 +151,6 @@ export function useAuth() {
     login,
     removePin,
     logout,
+    getPin
   };
 }
