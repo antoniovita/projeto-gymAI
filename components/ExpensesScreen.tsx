@@ -337,7 +337,7 @@ export default function ExpensesScreen() {
           </View>
 
           <TextInput
-            placeholder="Descrição da tarefa"
+            placeholder="Descrição da despesa"
             placeholderTextColor="#a1a1aa"
             className="text-gray-300 text-lg"
             multiline
@@ -421,12 +421,12 @@ export default function ExpensesScreen() {
                       setShowConfirmDeleteModal(true);
                     }
                   }}
-                  className={`p-2 bg-rose-200 rounded-full`}
+                  className="p-2 bg-neutral-700 rounded-xl"
                 >
                   {cat.name === "Ganhos" || cat.name === "Perdas" ? (
-                    <Ionicons name="ban" size={20} color="red" />
+                    <Ionicons name="ban" size={20} color="#fa4d5c" />
                   ) : (
-                    <Ionicons name="trash" size={20} color="red" />
+                    <Ionicons name="trash" size={20} color="#fa4d5c" />
                   )}
                 </TouchableOpacity>
               </View>

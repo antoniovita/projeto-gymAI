@@ -411,7 +411,7 @@ export default function AgendaScreen() {
                 return (
                   <View
                     key={cat}
-                    className="flex-row justify-between items-center py-2 border-b border-neutral-700"
+                    className="flex-row justify-between items-center py-2 pb-3 border-b border-neutral-700"
                   >
                     <View className="flex-row items-center gap-3">
                       <View
@@ -429,9 +429,9 @@ export default function AgendaScreen() {
                         setCategoryToDelete(cat);
                         setShowConfirmDeleteModal(true);
                       }}
-                      className="p-2 bg-rose-200 rounded-full"
+                      className="p-2 bg-neutral-700 rounded-xl"
                     >
-                      <Ionicons name="trash" size={24} color="red" />
+                      <Ionicons name="trash" size={20} color="#fa4d5c" />
                     </TouchableOpacity>
                   </View>
                 );
@@ -694,7 +694,7 @@ export default function AgendaScreen() {
               locale="pt-BR"
             />
 
-            <View className="flex flex-row flex-wrap gap-2 mb-4">
+            <View className="flex flex-row flex-wrap gap-2 mb-2">
               {categories.map((cat) => {
                 const isSelected = selectedCategories.includes(cat);
                 const color = getCategoryColor(cat);

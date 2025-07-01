@@ -195,6 +195,15 @@ const finalText =
         <Text className="text-3xl text-white font-medium font-sans mb-4">Your Chat</Text>
 
         <View className="flex-row items-center gap-2 mt-2">
+
+          <TouchableOpacity
+            onPress={() => navigation.navigate('RoutineScreen')}
+            className="flex-row items-center gap-2 bg-zinc-700 rounded-xl px-3 py-1"
+          >
+            <Feather name="calendar" size={14} color="white" />
+            <Text className="text-white font-sans font-medium text-sm">Rotina</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity
             onPress={() => setSettingsVisible(true)}
             className="flex-row items-center gap-2 bg-neutral-700 rounded-xl px-3 py-1"

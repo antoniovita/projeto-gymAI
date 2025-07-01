@@ -339,9 +339,9 @@ const handleDeleteCategory = async () => {
                             setCategoryToDelete(cat);
                             setShowConfirmDeleteModal(true);
                           }}
-                          className="p-2 bg-rose-200 rounded-full"
+                          className="p-2 bg-neutral-700 rounded-xl"
                         >
-                          <Ionicons name="trash" size={24} color="red" />
+                        <Ionicons name="trash" size={20} color="#fa4d5c" />
                         </TouchableOpacity>
                       </View>
                     );
