@@ -356,7 +356,7 @@ export default function AgendaScreen() {
           <View className="flex flex-row items-center gap-[20px]">
 
             <TouchableOpacity onPress={showDatePickerDateFilter}>
-              <Text className="text-[#ff7a7f] text-lg border rounded-lg px-3 py-1 font-sans border-neutral-700">
+              <Text className="text-white text-lg border rounded-lg w-[110px] text-center py-1 font-sans border-[#ff7a7f]">
                 {format(dateFilter, 'dd/MM/yyyy')}
               </Text>
             </TouchableOpacity>
@@ -510,13 +510,13 @@ export default function AgendaScreen() {
                 );
               })}
 
-        <TouchableOpacity
-          onPress={() => setIsCategoryModalVisible(true)}
-          className="flex-row items-center gap-2 px-3 py-1 rounded-xl bg-neutral-700"
-        >
-          <Ionicons name="add" size={16} color="white" />
-          <Text className="text-white text-sm font-sans">Nova Categoria</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setIsCategoryModalVisible(true)}
+            className="flex-row items-center gap-2 px-3 py-1 rounded-xl bg-neutral-700"
+          >
+            <Ionicons name="add" size={16} color="white" />
+            <Text className="text-white text-sm font-sans">Nova Categoria</Text>
+          </TouchableOpacity>
 
         <Modal
                     transparent

@@ -21,7 +21,6 @@ export default function ExpensesScreen() {
   const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('#ff7a7f');
-  const [colorOptions] = useState(['#ff7a7f', '#4CAF50', '#3B82F6', '#F59E0B']);
   const [gains, setGains] = useState(0);
   const [losses, setLosses] = useState(0);
   const [filteredExpenses, setFilteredExpenses] = useState<any[]>([]);
@@ -29,6 +28,20 @@ export default function ExpensesScreen() {
   const [showDeleteCategoryModal, setShowDeleteCategoryModal] = useState(false);
   const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<{ name: string, color: string } | null>(null);
+
+  const colorOptions = [
+  '#EF4444', // Vermelho
+  '#F97316', // Laranja
+  '#EAB308', // Amarelo
+  '#10B981', // Verde
+  '#3B82F6', // Azul
+  '#6366F1', // Índigo
+  '#8B5CF6', // Roxo
+  '#EC4899', // Rosa
+  '#F43F5E', // Rosa escuro
+  '#6B7280', // Cinza
+];
+
 
 
 
@@ -364,7 +377,7 @@ export default function ExpensesScreen() {
 
         <View className='flex flex-row gap-4 items-center'>
 
-        <View className='flex flex-row items-center gap-4 border border-neutral-700 rounded-lg px-3 py-1'>
+        <View className={`${gains - losses >= 0 ? 'border-emerald-300' : 'border-[#ff7a7f]'} flex flex-row items-center gap-4 border rounded-lg px-3 py-1`}>
           <Text className={`${gains - losses >= 0 ? 'text-emerald-300' : 'text-[#ff7a7f]'} text-lg font-sans`}>
             {currencyFormat(Math.abs(gains - losses))}
           </Text>
