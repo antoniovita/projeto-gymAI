@@ -646,15 +646,14 @@ export default function AgendaScreen() {
 
             <View className='flex flex-row justify-between'>
               <View className="flex-row space-x-4 flex gap-3 mb-4">
-                <TouchableOpacity onPress={() => setShowDatePicker(true)} className="flex-row items-center">
-                  <Ionicons name="calendar-outline" size={20} color="#ff7a7f" />
-                  <Text className="text-rose-400 ml-2">{date.toLocaleDateString('pt-BR')}</Text>
+                <TouchableOpacity onPress={() => setShowDatePicker(true)} className="flex-row items-center border border-[#ff7a7f] px-2 py-1 rounded-lg">
+                  <Text className="text-white">{date.toLocaleDateString('pt-BR')}</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity onPress={() => setShowTimePicker(true)} className="flex-row items-center">
-                  <Ionicons name="time-outline" size={20} color="#ff7a7f" />
-                  <Text className="text-rose-400 ml-1">{time.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</Text>
+                <TouchableOpacity onPress={() => setShowTimePicker(true)} className="flex-row items-center border border-[#ff7a7f] px-2 py-1 rounded-lg">
+                  <Text className="text-white">{time.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</Text>
                 </TouchableOpacity>
+                
               </View>
             </View>
 
