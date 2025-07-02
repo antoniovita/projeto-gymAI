@@ -115,55 +115,6 @@ export const useTask = () => {
     }
   };
 
-  const fetchTasksByTypeAndDate = async (userId: string, types: string[], date: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      console.log('[fetchTasksByTypeAndDate] Buscando por tipo + data:', { userId, types, date });
-      const data = await TaskService.getTasksByTypeAndDate(userId, types, date);
-      console.log('[fetchTasksByTypeAndDate] Tarefas encontradas:', data);
-      setTasks(Array.isArray(data) ? [...data] : []);
-    } catch (err: any) {
-      setError(err.message || 'Erro ao buscar tarefas.');
-      console.error('[fetchTasksByTypeAndDate] Erro:', err);
-      setTasks([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchTasksByType = async (userId: string, type: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      console.log('[fetchTasksByType] Buscando por tipo:', { userId, type });
-      const data = await TaskService.getTasksByType(userId, type);
-      console.log('[fetchTasksByType] Tarefas retornadas:', data);
-      setTasks(data || []);
-    } catch (err: any) {
-      setError(err.message);
-      console.error('[fetchTasksByType] Erro:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchTasksByDate = async (userId: string, date: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      console.log('[fetchTasksByDate] Buscando por data:', { userId, date });
-      const data = await TaskService.getTasksByDate(userId, date);
-      console.log('[fetchTasksByDate] Tarefas retornadas:', data);
-      setTasks(data || []);
-    } catch (err: any) {
-      setError(err.message);
-      console.error('[fetchTasksByDate] Erro:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const updateTaskCompletion = async (taskId: string, completed: 0 | 1) => {
     setLoading(true);
     setError(null);
@@ -249,9 +200,6 @@ export const useTask = () => {
     createTask,
     updateTask,
     fetchTasks,
-    fetchTasksByType,
-    fetchTasksByTypeAndDate,
-    fetchTasksByDate,
     updateTaskCompletion,
     deleteTask,
     clearTasksByUser,
