@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { ExpenseService } from '../api/service/expensesService'; 
-import { Expense } from '../api/model/Expenses'; 
+import { ExpenseService } from '../api/service/expensesService';
+import { Expense } from '../api/model/Expenses';
 
 export const useExpenses = () => {
   const [loading, setLoading] = useState(false);
@@ -13,14 +13,13 @@ export const useExpenses = () => {
     userId: string,
     date?: string,
     time?: string,
-    type?: string,
-    routineId?: string
-  ) => {
+    type?: string
+  ): Promise<string> => {
     setLoading(true);
     setError(null);
     try {
-      console.log('[createExpense] Criando despesa com:', { name, amount, userId, date, time, type, routineId });
-      const expenseId = await ExpenseService.createExpense(name, amount, userId, date, time, type, routineId);
+      console.log('[createExpense] Criando despesa com:', { name, amount, userId, date, time, type });
+      const expenseId = await ExpenseService.createExpense(name, amount, userId, date, time, type);
       console.log('[createExpense] Despesa criada com ID:', expenseId);
       return expenseId;
     } catch (err: any) {
@@ -37,7 +36,7 @@ export const useExpenses = () => {
     setError(null);
     try {
       const data = await ExpenseService.getExpenses(userId);
-      setExpenses(data || []);
+      setExpenses(data);
     } catch (err: any) {
       setError(err.message);
       console.error('[fetchExpenses] Erro:', err);
@@ -53,7 +52,7 @@ export const useExpenses = () => {
       console.log('[fetchExpensesByType] Buscando por tipo:', { userId, type });
       const data = await ExpenseService.getExpensesByType(userId, type);
       console.log('[fetchExpensesByType] Despesas retornadas:', data);
-      setExpenses(data || []);
+      setExpenses(data);
     } catch (err: any) {
       setError(err.message);
       console.error('[fetchExpensesByType] Erro:', err);
@@ -64,15 +63,8 @@ export const useExpenses = () => {
 
   const updateExpense = async (
     expenseId: string,
-    updates: Partial<{
-      name: string;
-      date: string;
-      time?: string;
-      amount?: number;
-      type?: string;
-      routine_id?: string;
-    }>
-  ) => {
+    updates: Partial<Omit<Expense, 'id' | 'user_id'>>
+  ): Promise<number> => {
     setLoading(true);
     setError(null);
     try {
@@ -89,7 +81,7 @@ export const useExpenses = () => {
     }
   };
 
-  const deleteExpense = async (expenseId: string) => {
+  const deleteExpense = async (expenseId: string): Promise<boolean> => {
     setLoading(true);
     setError(null);
     try {
@@ -106,7 +98,7 @@ export const useExpenses = () => {
     }
   };
 
-  const clearExpensesByUser = async (userId: string) => {
+  const clearExpensesByUser = async (userId: string): Promise<number> => {
     setLoading(true);
     setError(null);
     try {

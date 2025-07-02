@@ -1,11 +1,9 @@
 import { useState } from 'react';
 import * as Notifications from 'expo-notifications';
-import { parseISO, formatISO, subHours } from 'date-fns';
+import { parseISO, formatISO, subHours, isSameDay } from 'date-fns';
 import { TaskService } from '../api/service/taskService';
 import { Task } from '../api/model/Task';
 import { SchedulableTriggerInputTypes } from 'expo-notifications';
-import { isSameDay } from 'date-fns';
-
 
 export const useTask = () => {
   const [loading, setLoading] = useState(false);
@@ -17,9 +15,8 @@ export const useTask = () => {
     content: string,
     datetimeISO: string,
     userId: string,
-    type?: string,
-    routineId?: string
-  ) => {
+    type?: string
+  ): Promise<string> => {
     setLoading(true);
     setError(null);
 
@@ -33,8 +30,7 @@ export const useTask = () => {
         content,
         datetime,
         type ?? '',
-        userId,
-        routineId ?? ''
+        userId
       );
       console.log('[createTask] Task criada com ID:', taskId);
 
@@ -42,7 +38,8 @@ export const useTask = () => {
       if (status === 'granted') {
         const now = new Date();
 
-        if (isSameDay(date, new Date())) {
+        // Notificação imediata se for hoje
+        if (isSameDay(date, now)) {
           await Notifications.scheduleNotificationAsync({
             content: {
               title: `🗓️ Tarefa para hoje: ${title}`,
@@ -53,6 +50,7 @@ export const useTask = () => {
           });
         }
 
+        // Notificação na hora exata
         if (date > now) {
           await Notifications.scheduleNotificationAsync({
             content: {
@@ -67,6 +65,7 @@ export const useTask = () => {
           });
         }
 
+        // Notificação 1 hora antes
         const oneHourBefore = subHours(date, 1);
         if (oneHourBefore > now) {
           await Notifications.scheduleNotificationAsync({
@@ -93,7 +92,8 @@ export const useTask = () => {
     }
   };
 
-  const fetchTasks = async (userId: string) => {
+
+  const fetchTasks = async (userId: string): Promise<void> => {
     setLoading(true);
     setError(null);
     try {
@@ -101,12 +101,9 @@ export const useTask = () => {
       const data = await TaskService.getTasks(userId);
       console.log('[fetchTasks] Tarefas retornadas:', data);
 
-      setTasks(oldTasks => {
-        if (JSON.stringify(oldTasks) === JSON.stringify(data)) {
-          return oldTasks;
-        }
-        return data || [];
-      });
+      setTasks((old) => (
+        JSON.stringify(old) === JSON.stringify(data) ? old : data
+      ));
     } catch (err: any) {
       setError(err.message);
       console.error('[fetchTasks] Erro:', err);
@@ -115,58 +112,10 @@ export const useTask = () => {
     }
   };
 
-  const updateTaskCompletion = async (taskId: string, completed: 0 | 1) => {
-    setLoading(true);
-    setError(null);
-    try {
-      console.log('[updateTaskCompletion] Atualizando status:', { taskId, completed });
-      const updatedCount = await TaskService.updateTaskCompletion(taskId, completed);
-      console.log('[updateTaskCompletion] Atualizações aplicadas:', updatedCount);
-      return updatedCount;
-    } catch (err: any) {
-      setError(err.message);
-      console.error('[updateTaskCompletion] Erro:', err);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const deleteTask = async (taskId: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      console.log('[deleteTask] Deletando tarefa ID:', taskId);
-      await TaskService.deleteTask(taskId);
-      console.log('[deleteTask] Tarefa deletada com sucesso');
-      return true;
-    } catch (err: any) {
-      setError(err.message);
-      console.error('[deleteTask] Erro:', err);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const clearTasksByUser = async (userId: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      console.log('[clearTasksByUser] Limpando tarefas do usuário:', userId);
-      const deletedCount = await TaskService.clearTasksByUser(userId);
-      console.log('[clearTasksByUser] Total deletado:', deletedCount);
-      return deletedCount;
-    } catch (err: any) {
-      setError(err.message);
-      console.error('[clearTasksByUser] Erro:', err);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateTask = async (taskId: string, updates: Partial<Task>) => {
+  const updateTask = async (
+    taskId: string,
+    updates: Partial<Task>
+  ): Promise<number> => {
     setLoading(true);
     setError(null);
     try {
@@ -187,7 +136,44 @@ export const useTask = () => {
     }
   };
 
-  const debugAllTasks = async () => {
+
+  const deleteTask = async (taskId: string): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+    try {
+      console.log('[deleteTask] Deletando tarefa ID:', taskId);
+      await TaskService.deleteTask(taskId);
+      console.log('[deleteTask] Tarefa deletada com sucesso');
+      return true;
+    } catch (err: any) {
+      setError(err.message);
+      console.error('[deleteTask] Erro:', err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const clearTasksByUser = async (userId: string): Promise<number> => {
+    setLoading(true);
+    setError(null);
+    try {
+      console.log('[clearTasksByUser] Limpando tarefas do usuário:', userId);
+      const deletedCount = await TaskService.clearTasksByUser(userId);
+      console.log('[clearTasksByUser] Total deletado:', deletedCount);
+      return deletedCount;
+    } catch (err: any) {
+      setError(err.message);
+      console.error('[clearTasksByUser] Erro:', err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const debugAllTasks = async (): Promise<void> => {
     const all = await TaskService.debugAllTasks();
     console.log('[HOOK] Tarefas no banco:', all);
   };
@@ -198,9 +184,8 @@ export const useTask = () => {
     tasks,
     debugAllTasks,
     createTask,
-    updateTask,
     fetchTasks,
-    updateTaskCompletion,
+    updateTask,
     deleteTask,
     clearTasksByUser,
   };

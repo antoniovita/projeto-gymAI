@@ -1,4 +1,3 @@
-
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import {
@@ -7,6 +6,11 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTask } from '../hooks/useTask';
+import { useTaskCompletion } from 'hooks/useTaskCompletion';
+
+import { useRoutine } from 'hooks/useRoutine';
+import { useTaskRoutine } from 'hooks/useTaskRoutine';
+
 import { SwipeListView } from 'react-native-swipe-list-view';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -41,9 +45,24 @@ export default function AgendaScreen() {
     updateTask,
     debugAllTasks,
     fetchTasks,
-    updateTaskCompletion,
     deleteTask,
   } = useTask();
+  
+  const {
+    markDone,
+    unmarkDone,
+    getDoneMap
+  } = useTaskCompletion();
+
+  
+  const { routines, fetchRoutines } = useRoutine(userId!);
+  const { fetchTasksForRoutine } = useTaskRoutine();
+
+
+  const [taskRoutinesMap, setTaskRoutinesMap] = useState<Record<string,string[]>>({});
+
+  const [doneMap, setDoneMap] = useState<Record<string, boolean>>({});
+
 
   const [isCreateVisible, setIsCreateVisible] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
@@ -176,6 +195,43 @@ export default function AgendaScreen() {
       }
     }, [userId, tasks])
   );
+
+  useEffect(() => {
+  if (!userId) return;
+  (async () => {
+    await fetchRoutines();
+    // aqui você pode repetir a lógica do RoutineScreen
+    // para criar missingDays (segunda…domingo) se ainda não existirem
+  })();
+}, [userId]);
+
+useEffect(() => {
+  if (tasks.length === 0 || routines.length === 0) {
+    setTaskRoutinesMap({});
+    return;
+  }
+  (async () => {
+    const map: Record<string,string[]> = {};
+    for (const t of tasks) {
+      map[t.id] = await fetchTasksForRoutine(t.id);
+    }
+    setTaskRoutinesMap(map);
+  })();
+}, [tasks, routines]);
+
+
+    useEffect(() => {
+    if (!userId) return;
+    (async () => {
+      const dateKey = dateFilter.toISOString().split('T')[0];
+      const doneList = await getDoneMap(userId, dateKey);
+      // transforme a lista de IDs num mapa booleano
+      const map: Record<string, boolean> = {};
+      doneList.forEach(id => map[id] = true);
+      setDoneMap(map);
+    })();
+  }, [tasks, dateFilter]);
+
   
 
   const combineDateAndTime = (date: Date, time: Date): Date => {
@@ -248,14 +304,26 @@ export default function AgendaScreen() {
     setIsCreateVisible(true);
   };
 
-  const toggleTaskCompletion = async (taskId: string, completed: 0 | 1) => {
+  const handleToggleTaskCompletion = async (task: Task) => {
+    const dateKey = dateFilter.toISOString().split('T')[0];
+    const currentlyDone = Boolean(doneMap[task.id]);
+
     try {
-      await updateTaskCompletion(taskId, completed === 0 ? 1 : 0);
-      await fetchTasks(userId!);
+      if (currentlyDone) {
+        await unmarkDone(task.id, dateKey);
+        console.log(`[handleToggleTaskCompletion] unmarked task ${task.id} on ${dateKey}`);
+      } else {
+        console.log(`[handleToggleTaskCompletion] marked task ${task.id} as done on ${dateKey}`);
+        await markDone(task.id, dateKey);
+      }
+      // atualiza o mapa local imediatamente
+      setDoneMap(m => ({ ...m, [task.id]: !currentlyDone }));
     } catch (err) {
-      Alert.alert('Erro', 'Não foi possível atualizar o status.');
+      console.error('Erro ao atualizar status da tarefa:', err);
+      Alert.alert('Erro', 'Não foi possível atualizar o status da tarefa');
     }
   };
+
 
   const resetModal = () => {
     setIsCreateVisible(false);
@@ -267,26 +335,115 @@ export default function AgendaScreen() {
     setTime(new Date());
   };
 
-  useEffect(() => {
-    const filtered = tasks.filter(task => {
-      if (!task.datetime) return false;
-  
-      const taskDateISO = task.datetime.split('T')[0]; // 'yyyy-MM-dd'
-      const selectedDateISO = dateFilter.toISOString().split('T')[0]; // 'yyyy-MM-dd'
-  
-      const types = task.type?.split(',').map(t => t.trim()) || [];
-      const categoryMatches =
-        selectedTypes.length === 0 || selectedTypes.some(cat => types.includes(cat));
-  
-      return taskDateISO === selectedDateISO && categoryMatches;
-    });
-  
-    setFilteredTasks(filtered);
-  }, [tasks, dateFilter, selectedTypes]);
 
+  // CORREÇÃO PRINCIPAL: Nova lógica para filtrar tarefas
+  useEffect(() => {
+    const selectedISO = dateFilter.toISOString().split('T')[0];
+    const dayIdx = dateFilter.getDay(); // 0=domingo, 1=segunda, ..., 6=sábado
+
+    // 1) Tarefas agendadas especificamente para a data selecionada
+    const tasksByDate = tasks.filter(t =>
+      t.datetime?.split('T')[0] === selectedISO
+    );
+
+    // 2) Encontrar a rotina do dia da semana selecionado
+    const todayRoutine = routines.find(r => r.day_of_week === dayIdx);
+    
+    // 3) Tarefas que estão vinculadas à rotina do dia
+    const tasksByRoutine = todayRoutine
+      ? tasks.filter(t => taskRoutinesMap[t.id]?.includes(todayRoutine.id))
+      : [];
+
+    // 4) Criar união das tarefas, evitando duplicatas usando IDs
+    const taskIds = new Set<string>();
+    const unionTasks: Task[] = [];
+
+    // Adicionar tarefas por data
+    tasksByDate.forEach(task => {
+      if (!taskIds.has(task.id)) {
+        taskIds.add(task.id);
+        unionTasks.push(task);
+      }
+    });
+
+    // Adicionar tarefas por rotina
+    tasksByRoutine.forEach(task => {
+      if (!taskIds.has(task.id)) {
+        taskIds.add(task.id);
+        unionTasks.push(task);
+      }
+    });
+
+    // 5) Aplicar filtro de categoria se houver
+    const filtered = unionTasks.filter(t => {
+      if (selectedTypes.length === 0) return true;
+      const types = t.type?.split(',').map(s => s.trim()) || [];
+      return selectedTypes.some(cat => types.includes(cat));
+    });
+
+    // 6) Ordenar por horário
+    const sorted = filtered.sort((a, b) => {
+      const dateA = new Date(a.datetime || 0);
+      const dateB = new Date(b.datetime || 0);
+      return dateA.getTime() - dateB.getTime();
+    });
+
+    console.log(`[AgendaScreen] Data selecionada: ${selectedISO}, Dia da semana: ${dayIdx}`);
+    console.log(`[AgendaScreen] Rotina encontrada:`, todayRoutine);
+    console.log(`[AgendaScreen] Tarefas por data: ${tasksByDate.length}`);
+    console.log(`[AgendaScreen] Tarefas por rotina: ${tasksByRoutine.length}`);
+    console.log(`[AgendaScreen] Total após união: ${unionTasks.length}`);
+    console.log(`[AgendaScreen] Após filtro de categoria: ${sorted.length}`);
+
+    setFilteredTasks(sorted);
+  }, [tasks, dateFilter, selectedTypes, routines, taskRoutinesMap]);
+
+  // Função para mostrar todas as tarefas (ignorando filtro de data)
   const showAllTasks = () => {
-    setFilteredTasks(tasks); 
+    const dayIdx = dateFilter.getDay();
+    const todayRoutine = routines.find(r => r.day_of_week === dayIdx);
+    
+    const tasksByRoutine = todayRoutine
+      ? tasks.filter(t => taskRoutinesMap[t.id]?.includes(todayRoutine.id))
+      : [];
+
+    // União de todas as tarefas + tarefas da rotina do dia
+    const taskIds = new Set<string>();
+    const unionTasks: Task[] = [];
+
+    // Adicionar todas as tarefas
+    tasks.forEach(task => {
+      if (!taskIds.has(task.id)) {
+        taskIds.add(task.id);
+        unionTasks.push(task);
+      }
+    });
+
+    // Adicionar tarefas da rotina (se não estiverem já incluídas)
+    tasksByRoutine.forEach(task => {
+      if (!taskIds.has(task.id)) {
+        taskIds.add(task.id);
+        unionTasks.push(task);
+      }
+    });
+
+    // Aplicar filtro de categoria
+    const filtered = unionTasks.filter(t => {
+      if (selectedTypes.length === 0) return true;
+      const types = t.type?.split(',').map(s => s.trim()) || [];
+      return selectedTypes.some(cat => types.includes(cat));
+    });
+
+    // Ordenar por data/horário
+    const sorted = filtered.sort((a, b) => {
+      const dateA = new Date(a.datetime || 0);
+      const dateB = new Date(b.datetime || 0);
+      return dateA.getTime() - dateB.getTime();
+    });
+
+    setFilteredTasks(sorted);
   };
+
 
   const showDatePickerDateFilter = () => setDatePickerVisibility(true);
   const hideDatePicker = () => setDatePickerVisibility(false);
@@ -577,7 +734,7 @@ export default function AgendaScreen() {
           <View className="w-full flex flex-col justify-center px-6 h-[90px] pb-4 border-b border-neutral-700 bg-zinc-800">
             <View className="flex flex-row justify-between">
               <TouchableOpacity className="flex flex-col gap-1 mt-1" onPress={() => handleOpenEdit(item)}>
-                <Text className={`text-xl font-sans font-medium ${item.completed ? 'line-through text-neutral-500' : 'text-gray-300'}`}>
+                <Text className={`text-xl font-sans font-medium ${doneMap[item.id] ? 'line-through text-neutral-500' : 'text-gray-300'}`}>
                   {item.title}
                 </Text>
                 <Text className="text-neutral-400 text-sm mt-1 font-sans">
@@ -586,11 +743,15 @@ export default function AgendaScreen() {
               </TouchableOpacity>
 
               <TouchableOpacity
-                onPress={() => toggleTaskCompletion(item.id, item.completed)}
-                className={`w-[25px] h-[25px] mt-4 border rounded-lg ${item.completed ? 'bg-rose-500' : 'border-2 border-neutral-600'}`}
+                onPress={() => handleToggleTaskCompletion(item)}
+                className={`w-[25px] h-[25px] mt-4 border rounded-lg ${
+                  doneMap[item.id]
+                    ? 'bg-rose-500'
+                    : 'border-2 border-neutral-600'
+                }`}
                 style={{ alignItems: 'center', justifyContent: 'center' }}
               >
-                {item.completed ? <Ionicons name="checkmark" size={20} color="white" /> : null}
+              {doneMap[item.id] ? <Ionicons name="checkmark" size={20} color="white" /> : null}
               </TouchableOpacity>
             </View>
           </View>
@@ -632,99 +793,126 @@ export default function AgendaScreen() {
             <TouchableOpacity onPress={handleSaveTask}>
               <Text className="text-rose-400 text-lg mr-4 font-semibold">Salvar</Text>
             </TouchableOpacity>
-          </View>
+            </View>
 
-          <ScrollView className="flex-1 py-4 px-8">
-            <TextInput
-              placeholder="Título"
-              placeholderTextColor="#a1a1aa"
-              value={newTaskTitle}
-              onChangeText={setNewTaskTitle}
-              className="text-gray-300 text-3xl font-semibold mb-4"
-              multiline
-            />
+          <ScrollView className="flex-1 px-4">
+            <View className="mb-4">
+              <Text className="text-white text-lg font-semibold mb-2 font-sans">Título</Text>
+              <TextInput
+                placeholder="Digite o título da tarefa"
+                placeholderTextColor="#a1a1aa"
+                value={newTaskTitle}
+                onChangeText={setNewTaskTitle}
+                className="bg-neutral-700 text-white p-3 rounded-xl font-sans"
+              />
+            </View>
 
-            <View className='flex flex-row justify-between'>
-              <View className="flex-row space-x-4 flex gap-3 mb-4">
-                <TouchableOpacity onPress={() => setShowDatePicker(true)} className="flex-row items-center border border-[#ff7a7f] px-2 py-1 rounded-lg">
-                  <Text className="text-white">{date.toLocaleDateString('pt-BR')}</Text>
-                </TouchableOpacity>
+            <View className="mb-4">
+              <Text className="text-white text-lg font-semibold mb-2 font-sans">Conteúdo</Text>
+              <TextInput
+                placeholder="Digite o conteúdo da tarefa (opcional)"
+                placeholderTextColor="#a1a1aa"
+                value={taskContent}
+                onChangeText={setTaskContent}
+                multiline
+                numberOfLines={4}
+                className="bg-neutral-700 text-white p-3 rounded-xl font-sans"
+                textAlignVertical="top"
+              />
+            </View>
 
-                <TouchableOpacity onPress={() => setShowTimePicker(true)} className="flex-row items-center border border-[#ff7a7f] px-2 py-1 rounded-lg">
-                  <Text className="text-white">{time.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</Text>
-                </TouchableOpacity>
-                
+            <View className="mb-4">
+              <Text className="text-white text-lg font-semibold mb-2 font-sans">Data</Text>
+              <TouchableOpacity
+                onPress={() => setShowDatePicker(true)}
+                className="bg-neutral-700 p-3 rounded-xl flex-row items-center justify-between"
+              >
+                <Text className="text-white font-sans">{format(date, 'dd/MM/yyyy')}</Text>
+                <Ionicons name="calendar" size={24} color="#ff7a7f" />
+              </TouchableOpacity>
+            </View>
+
+            <View className="mb-4">
+              <Text className="text-white text-lg font-semibold mb-2 font-sans">Horário</Text>
+              <TouchableOpacity
+                onPress={() => setShowTimePicker(true)}
+                className="bg-neutral-700 p-3 rounded-xl flex-row items-center justify-between"
+              >
+                <Text className="text-white font-sans">{format(time, 'HH:mm')}</Text>
+                <Ionicons name="time" size={24} color="#ff7a7f" />
+              </TouchableOpacity>
+            </View>
+
+            <View className="mb-6">
+              <Text className="text-white text-lg font-semibold mb-2 font-sans">Categorias</Text>
+              <View className="flex-row flex-wrap gap-2">
+                {categories.map((cat) => {
+                  const isSelected = selectedCategories.includes(cat);
+                  const color = getCategoryColor(cat);
+
+                  return (
+                    <TouchableOpacity
+                      key={cat}
+                      onPress={() =>
+                        setSelectedCategories((prev) =>
+                          prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
+                        )
+                      }
+                      className={`flex-row items-center gap-2 px-3 py-2 rounded-xl ${
+                        isSelected ? 'bg-rose-400' : 'bg-neutral-700'
+                      }`}
+                    >
+                      <View 
+                        style={{ 
+                          width: 10, 
+                          height: 10, 
+                          borderRadius: 5, 
+                          backgroundColor: color 
+                        }} 
+                      />
+                      <Text className={`font-sans ${isSelected ? 'text-black' : 'text-white'}`}>
+                        {cat}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </View>
-
-            <DateTimePickerModal
-              isVisible={showDatePicker}
-              mode="date"
-              date={date}
-              onConfirm={(selectedDate) => {
-                setDate(selectedDate);
-                setShowDatePicker(false);
-              }}
-              onCancel={() => {
-                setShowDatePicker(false);
-              }}
-              textColor="#ff0000"
-              accentColor="#ff7a7f"
-              buttonTextColorIOS='#ff7a7f'
-              themeVariant='light'
-              display='inline'
-              locale="pt-BR"
-            />
-            
-
-            <DateTimePickerModal
-              isVisible={showTimePicker}
-              mode="time"
-              date={time}
-              onConfirm={(selectedTime) => {
-                setTime(selectedTime);
-                setShowTimePicker(false);
-              }}
-              onCancel={() => setShowTimePicker(false)}
-              textColor="#ff0000"
-              accentColor="#ff7a7f"
-              buttonTextColorIOS="#ff7a7f"
-              themeVariant="light"
-              locale="pt-BR"
-            />
-
-            <View className="flex flex-row flex-wrap gap-2 mb-2">
-              {categories.map((cat) => {
-                const isSelected = selectedCategories.includes(cat);
-                const color = getCategoryColor(cat);
-
-                return (
-                  <TouchableOpacity
-                    key={cat}
-                    onPress={() =>
-                      setSelectedCategories((prev) =>
-                        prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
-                      )
-                    }
-                    className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${isSelected ? 'bg-rose-400' : 'bg-neutral-700'}`}
-                  >
-                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color }} />
-                    <Text className={`font-sans text-sm ${isSelected ? 'text-black' : 'text-white'}`}>{cat}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            <TextInput
-              placeholder="Descrição da tarefa"
-              placeholderTextColor="#a1a1aa"
-              className="text-gray-300 text-lg"
-              multiline
-              value={taskContent}
-              onChangeText={setTaskContent}
-              style={{ minHeight: 150, textAlignVertical: 'top' }}
-            />
           </ScrollView>
+
+          <DateTimePickerModal
+            isVisible={showDatePicker}
+            mode="date"
+            date={date}
+            onConfirm={(selectedDate) => {
+              setDate(selectedDate);
+              setShowDatePicker(false);
+            }}
+            onCancel={() => setShowDatePicker(false)}
+            textColor="#ff0000"
+            accentColor="#ff7a7f"
+            buttonTextColorIOS="#ff7a7f"
+            themeVariant="light"
+            display="inline"
+            locale="pt-BR"
+          />
+
+          <DateTimePickerModal
+            isVisible={showTimePicker}
+            mode="time"
+            date={time}
+            onConfirm={(selectedTime) => {
+              setTime(selectedTime);
+              setShowTimePicker(false);
+            }}
+            onCancel={() => setShowTimePicker(false)}
+            textColor="#ff0000"
+            accentColor="#ff7a7f"
+            buttonTextColorIOS="#ff7a7f"
+            themeVariant="light"
+            display="inline"
+            locale="pt-BR"
+          />
         </View>
       </Modal>
     </SafeAreaView>

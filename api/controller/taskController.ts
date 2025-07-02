@@ -2,13 +2,13 @@ import { getDb } from '../../database';
 import { Task, TaskModel } from '../model/Task';
 
 export const TaskController = {
+
   createTask: async (
     title: string,
     content: string,
     datetime: string,  // ISO string, ex: "2025-06-12T07:12:00.000Z"
     type: string,
-    userId: string,
-    routineId?: string
+    userId: string
   ) => {
     const db = getDb();
     try {
@@ -22,9 +22,8 @@ export const TaskController = {
         title,
         content,
         isoDate.toISOString(),
-        type,
-        userId,
-        routineId
+        type ?? null,
+        userId
       );
 
       return { success: true, taskId };
@@ -45,46 +44,13 @@ export const TaskController = {
     }
   },
 
-  getTasksByType: async (userId: string, type: string) => {
+  updateTask: async (taskId: string, updates: Partial<Task>) => {
     const db = getDb();
     try {
-      const tasks = await TaskModel.getTasksByType(db, userId, type);
-      return { success: true, data: tasks };
-    } catch (error) {
-      console.error('Erro ao buscar tarefas por tipo no controller:', error);
-      return { success: false, error: 'Erro ao buscar tarefas por tipo.' };
-    }
-  },
-
-  getTasksByDate: async (userId: string, date: string) => {
-    const db = getDb();
-    try {
-      const tasks = await TaskModel.getTasksByDate(db, userId, date);
-      return { success: true, data: tasks };
-    } catch (error) {
-      console.error('Erro ao buscar tarefas por data no controller:', error);
-      return { success: false, error: 'Erro ao buscar tarefas por data.' };
-    }
-  },
-
-  getTasksByTypeAndDate: async (userId: string, types: string[], date: string) => {
-    const db = getDb();
-    try {
-      const tasks = await TaskModel.getTasksByTypeAndDate(db, userId, types, date);
-      return { success: true, data: tasks };
-    } catch (error) {
-      console.error('Erro ao buscar tarefas por tipo e data no controller:', error);
-      return { success: false, error: 'Erro ao buscar tarefas por tipo e data.' };
-    }
-  },
-
-  updateCompletion: async (taskId: string, completed: 0 | 1) => {
-    const db = getDb();
-    try {
-      const changes = await TaskModel.updateTaskCompletion(db, taskId, completed);
+      const changes = await TaskModel.updateTask(db, taskId, updates);
       return { success: true, updatedCount: changes };
     } catch (error) {
-      console.error('Erro ao atualizar conclusão da tarefa no controller:', error);
+      console.error('Erro ao atualizar tarefa no controller:', error);
       return { success: false, error: 'Erro ao atualizar tarefa.' };
     }
   },
@@ -100,6 +66,7 @@ export const TaskController = {
     }
   },
 
+
   clearTasksByUser: async (userId: string) => {
     const db = getDb();
     try {
@@ -108,17 +75,6 @@ export const TaskController = {
     } catch (error) {
       console.error('Erro ao limpar tarefas no controller:', error);
       return { success: false, error: 'Erro ao limpar tarefas.' };
-    }
-  },
-
-  updateTask: async (taskId: string, updates: Partial<Task>) => {
-    const db = getDb();
-    try {
-      const changes = await TaskModel.updateTask(db, taskId, updates);
-      return { success: true, updatedCount: changes };
-    } catch (error) {
-      console.error('Erro ao atualizar tarefa no controller:', error);
-      return { success: false, error: 'Erro ao atualizar tarefa.' };
     }
   }
 };

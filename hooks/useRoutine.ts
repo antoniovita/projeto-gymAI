@@ -7,7 +7,6 @@ export interface Task {
   content: string;
   datetime: string; // ISO string: "2025-06-12T07:12:00.000Z"
   type?: string;
-  completed: 0 | 1;
   user_id: string;
   routine_id?: string;
 }
@@ -15,7 +14,7 @@ export interface Task {
 export interface Routine {
   id: string;
   dayOfWeek: string;
-  tasks: Task[]; 
+  tasks: Task[];
   [key: string]: any;
 }
 
@@ -33,16 +32,19 @@ export function useRoutine(userId: string) {
    * Busca todas as rotinas do usuário e suas tarefas, atualizando o estado 'routines'.
    */
   const fetchRoutines = useCallback(async () => {
+    console.log('[useRoutine] fetchRoutines: iniciando para userId=', userId);
     setLoading(true);
     setError(null);
     try {
       const data = await RoutineService.getRoutines(userId);
-      // Cada rotina já vem com suas tasks
+      console.log('[useRoutine] fetchRoutines: recuperou', data.length, 'rotinas', data);
       setRoutines(data);
     } catch (err: any) {
+      console.error('[useRoutine] fetchRoutines: erro', err);
       setError(err.message || 'Erro ao buscar rotinas.');
     } finally {
       setLoading(false);
+      console.log('[useRoutine] fetchRoutines: finalizado');
     }
   }, [userId]);
 
@@ -52,16 +54,19 @@ export function useRoutine(userId: string) {
    */
   const fetchRoutineByDay = useCallback(
     async (dayOfWeek: string) => {
+      console.log('[useRoutine] fetchRoutineByDay: dia=', dayOfWeek);
       setLoading(true);
       setError(null);
       try {
         const data = await RoutineService.getRoutineByDay(userId, dayOfWeek);
-        // A rotina retornada inclui o array de tasks
+        console.log('[useRoutine] fetchRoutineByDay: rotina=', data);
         setRoutineByDay(data);
       } catch (err: any) {
+        console.error('[useRoutine] fetchRoutineByDay: erro', err);
         setError(err.message || 'Erro ao buscar rotina do dia.');
       } finally {
         setLoading(false);
+        console.log('[useRoutine] fetchRoutineByDay: finalizado');
       }
     },
     [userId]
@@ -73,16 +78,20 @@ export function useRoutine(userId: string) {
    */
   const createRoutine = useCallback(
     async (dayOfWeek: string) => {
+      console.log('[useRoutine] createRoutine: dia=', dayOfWeek);
       setLoading(true);
       setError(null);
       try {
         const newRoutine = await RoutineService.createRoutine(userId, dayOfWeek);
-        newRoutine.tasks = []; // Inicializa sem tarefas
+        newRoutine.tasks = [];
+        console.log('[useRoutine] createRoutine: criada', newRoutine);
         setRoutines(prev => [...prev, newRoutine]);
       } catch (err: any) {
+        console.error('[useRoutine] createRoutine: erro', err);
         setError(err.message || 'Erro ao criar rotina.');
       } finally {
         setLoading(false);
+        console.log('[useRoutine] createRoutine: finalizado');
       }
     },
     [userId]
@@ -94,35 +103,41 @@ export function useRoutine(userId: string) {
    */
   const deleteRoutine = useCallback(
     async (routineId: string) => {
+      console.log('[useRoutine] deleteRoutine: id=', routineId);
       setLoading(true);
       setError(null);
       try {
         await RoutineService.deleteRoutine(routineId);
+        console.log('[useRoutine] deleteRoutine: sucesso');
         setRoutines(prev => prev.filter(r => r.id !== routineId));
       } catch (err: any) {
+        console.error('[useRoutine] deleteRoutine: erro', err);
         setError(err.message || 'Erro ao deletar rotina.');
       } finally {
         setLoading(false);
+        console.log('[useRoutine] deleteRoutine: finalizado');
       }
     },
     []
   );
 
+
   // Carrega todas as rotinas ao montar o hook ou quando 'userId' mudar
   useEffect(() => {
+    console.log('[useRoutine] useEffect: userId mudou para', userId);
     if (userId) {
       fetchRoutines();
     }
   }, [userId, fetchRoutines]);
 
   return {
-    routines,          // Lista de todas as rotinas do usuário, cada uma com seu array de tarefas
-    routineByDay,      // Rotina específica por dia com suas tarefas
+    routines,          // Lista de todas as rotinas do usuário
+    routineByDay,      // Rotina específica por dia
     loading,           // Indicador de carregamento
-    error,             // Mensagem de erro, se houver
-    fetchRoutines,     // Função para recarregar todas as rotinas
-    fetchRoutineByDay, // Função para buscar rotina por dia
-    createRoutine,     // Função para criar nova rotina (inicializa tasks vazias)
-    deleteRoutine,     // Função para deletar rotina existente
+    error,             // Mensagem de erro
+    fetchRoutines,     // Recarregar todas as rotinas
+    fetchRoutineByDay, // Buscar rotina por dia
+    createRoutine,     // Criar nova rotina
+    deleteRoutine,     // Deletar rotina existente
   };
 }

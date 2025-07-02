@@ -8,6 +8,7 @@ import { useAuth } from 'hooks/useAuth';
 import { SwipeListView } from 'react-native-swipe-list-view';
 import { format } from 'date-fns';
 import { Task } from 'api/model/Task';
+import { useTaskRoutine } from 'hooks/useTaskRoutine';
 
 export default function RoutineScreen() {
   const navigation = useNavigation();
@@ -15,20 +16,21 @@ export default function RoutineScreen() {
 
   const {
     tasks,
-    updateTask,
     fetchTasks,
     deleteTask,
-    updateTaskCompletion
   } = useTask();
+
+  const { 
+    linkRoutine,
+    unlinkRoutine,
+    fetchRoutines: fetchRoutinesForTask
+  } = useTaskRoutine();
 
   const {
     routines,
-    routineByDay,
     loading: routineLoading,
-    error: routineError,
     fetchRoutines,
-    fetchRoutineByDay,
-    createRoutine
+    createRoutine,
   } = useRoutine(userId || '');
 
   const [activeTab, setActiveTab] = useState<'agenda' | 'expenses'>('agenda');
@@ -39,8 +41,8 @@ export default function RoutineScreen() {
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [currentRoutine, setCurrentRoutine] = useState<typeof routines[0] | undefined>(undefined);
   const [routinesInitialized, setRoutinesInitialized] = useState(false);
+  const [taskRoutinesMap, setTaskRoutinesMap] = useState<Record<string,string[]>>({});
 
-  // Mapear dias da semana para a estrutura do banco (day_of_week)
   const dayMap = {
     'Segunda': 'monday',
     'Terça': 'tuesday', 
@@ -51,64 +53,113 @@ export default function RoutineScreen() {
     'Domingo': 'sunday'
   };
 
-  // Inicializar rotinas se não existirem
   const initializeRoutines = async () => {
     if (!userId || routinesInitialized) return;
 
     try {
       console.log('Inicializando rotinas para usuário:', userId);
       await fetchRoutines();
-      
-      // Verificar se existem rotinas para todos os dias
-      const existingDays = routines.map(r => r.dayOfWeek);
-      const daysInEnglish = Object.values(dayMap);
-      
-      const missingDays = daysInEnglish.filter(day => !existingDays.includes(day));
-      
-      if (missingDays.length > 0) {
-        console.log('Criando rotinas para os dias:', missingDays);
-        
-        for (const day of missingDays) {
-          await createRoutine(day);
-        }
-        
-        // Recarregar rotinas após criação
-        await fetchRoutines();
-      }
-      
       setRoutinesInitialized(true);
     } catch (error) {
       console.error('Erro ao inicializar rotinas:', error);
+      setRoutinesInitialized(true);
     }
   };
 
-  // Effect para inicializar rotinas e buscar tarefas
+  const createMissingRoutines = async (currentRoutines: typeof routines) => {
+    try {
+      const existingDays = currentRoutines.map(r => r.dayOfWeek);
+      const daysInEnglish = Object.values(dayMap);
+      const missingDays = daysInEnglish.filter(day => !existingDays.includes(day));
+      
+      if (currentRoutines.length >= 7 || missingDays.length === 0) {
+        return;
+      }
+      
+      const maxToCreate = Math.min(missingDays.length, 7 - currentRoutines.length);
+      const daysToCreate = missingDays.slice(0, maxToCreate);
+      
+      console.log('Criando rotinas para os dias:', daysToCreate);
+      
+      for (const day of daysToCreate) {
+        try {
+          await createRoutine(day);
+        } catch (error) {
+          console.error(`Erro ao criar rotina para ${day}:`, error);
+        }
+      }
+      
+      await fetchRoutines();
+    } catch (error) {
+      console.error('Erro ao criar rotinas em falta:', error);
+    }
+  };
+
+  // Effect principal para inicialização - apenas uma vez quando userId muda
   useEffect(() => {
-    if (userId) {
+    if (userId && !routinesInitialized) {
       initializeRoutines();
       fetchTasks(userId);
     }
   }, [userId]);
 
-  // Effect para atualizar quando as rotinas mudarem
+  // Effect separado para criar rotinas em falta quando as rotinas carregam
   useEffect(() => {
-    if (routines.length > 0 && !routinesInitialized) {
-      initializeRoutines();
+    if (routinesInitialized && routines.length > 0 && routines.length < 7) {
+      createMissingRoutines(routines);
     }
-  }, [routines]);
+  }, [routinesInitialized, routines.length]);
 
-  // Effect para filtrar tarefas quando o dia selecionado muda
-    useEffect(() => {
-    if (tasks && selectedDay && routines.length > 0) {
-        const dayInEnglish = dayMap[selectedDay];
-        const routine = routines.find(r => r.dayOfWeek === dayInEnglish);
-        setCurrentRoutine(routine);
-
-        // Em vez de filtrar por dia, mostrar todas as tarefas
-        setFilteredTasks(tasks);
+  // Effect para mapear task-routines - usando useCallback para estabilizar a função
+  useEffect(() => {
+    if (tasks.length === 0) {
+      setTaskRoutinesMap({});
+      return;
     }
-    }, [selectedDay, tasks, routines]);
 
+    let isCancelled = false;
+
+    const fetchTaskRoutinesMap = async () => {
+      const map: Record<string,string[]> = {};
+      try {
+        for (const task of tasks) {
+          if (isCancelled) return;
+          const routineIds = await fetchRoutinesForTask(task.id);
+          map[task.id] = routineIds;
+        }
+        if (!isCancelled) {
+          setTaskRoutinesMap(map);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar rotinas das tasks:', error);
+        if (!isCancelled) {
+          setTaskRoutinesMap({});
+        }
+      }
+    };
+
+    fetchTaskRoutinesMap();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [tasks]);
+
+  // Effect para atualizar rotina atual e tarefas filtradas
+  useEffect(() => {
+    if (selectedDay && routines.length > 0) {
+      const dayInEnglish = dayMap[selectedDay];
+      const routine = routines.find(r => r.dayOfWeek === dayInEnglish);
+      setCurrentRoutine(routine);
+    }
+  }, [selectedDay, routines]);
+
+  // Effect separado para filtrar tasks
+  useEffect(() => {
+    if (tasks) {
+      setFilteredTasks(tasks);
+    }
+  }, [tasks]);
 
   const handleDeleteTask = (taskId: string) => {
     Alert.alert(
@@ -125,7 +176,9 @@ export default function RoutineScreen() {
           onPress: async () => {
             try {
               await deleteTask(taskId);
-              await fetchTasks(userId!);
+              if (userId) {
+                await fetchTasks(userId);
+              }
             } catch (error) {
               console.error('Erro ao deletar tarefa:', error);
               Alert.alert('Erro', 'Não foi possível deletar a tarefa');
@@ -138,49 +191,58 @@ export default function RoutineScreen() {
   };
 
   const handleToggleRoutineTask = async (task: Task) => {
+    if (!currentRoutine) {
+      Alert.alert('Erro', 'Rotina não encontrada para este dia');
+      return;
+    }
+
+    if (!userId) {
+      Alert.alert('Erro', 'Usuário não encontrado');
+      return;
+    }
+
+    const inRoutine = taskRoutinesMap[task.id]?.includes(currentRoutine.id);
+    
     try {
-      if (!currentRoutine) {
-        Alert.alert('Erro', 'Rotina não encontrada para este dia');
-        return;
+      if (inRoutine) {
+        await unlinkRoutine(task.id, currentRoutine.id);
+      } else {
+        await linkRoutine(task.id, currentRoutine.id);
       }
 
-      // Se a tarefa já está na rotina, remove da rotina
-      // Se não está na rotina, adiciona à rotina
-      const isInRoutine = task.routine_id === currentRoutine.id;
-      const newRoutineId = isInRoutine ? undefined : currentRoutine.id;
+      // Refetch das tasks e atualização do map
+      await fetchTasks(userId);
+      
+      // Atualizar o map para esta task específica
+      const updatedRoutines = await fetchRoutinesForTask(task.id);
+      setTaskRoutinesMap(prevMap => ({ 
+        ...prevMap, 
+        [task.id]: updatedRoutines 
+      }));
 
-      await updateTask(task.id, { routine_id: newRoutineId });
-      await fetchTasks(userId!);
-      
-      const action = isInRoutine ? 'removida da' : 'adicionada à';
-      console.log(`Tarefa ${action} rotina de ${selectedDay}`);
-      
+      console.log(`Tarefa "${task.title}" ${inRoutine ? 'removida de' : 'adicionada à'} rotina de ${selectedDay}`);
     } catch (error) {
-      console.error('Erro ao atualizar tarefa na rotina:', error);
-      Alert.alert('Erro', 'Não foi possível atualizar a tarefa');
+      console.error('Erro ao atualizar rotina da tarefa:', error);
+      Alert.alert('Erro', 'Não foi possível atualizar a rotina da tarefa');
     }
   };
 
-  const handleToggleTaskCompletion = async (task: Task) => {
-    try {
-      const newCompletedStatus = task.completed === 1 ? 0 : 1;
-      await updateTaskCompletion(task.id, newCompletedStatus);
-      await fetchTasks(userId!);
-    } catch (error) {
-      console.error('Erro ao atualizar status da tarefa:', error);
-      Alert.alert('Erro', 'Não foi possível atualizar o status da tarefa');
-    }
+  const isTaskInRoutine = (task: Task): boolean => {
+    return Boolean(
+      currentRoutine &&
+      taskRoutinesMap[task.id]?.includes(currentRoutine.id)
+    );
   };
 
-  const isTaskInRoutine = (task: Task) => {
-    return currentRoutine && task.routine_id === currentRoutine.id;
-  };
+  // Contar tarefas na rotina atual
+  const tasksInCurrentRoutine = filteredTasks.filter(task => isTaskInRoutine(task)).length;
 
   // Mock data para expenses (não implementado ainda)
-  const expenseItems = [];
-  const incomeItems = [];
+  const expenseItems: any[] = [];
+  const incomeItems: any[] = [];
 
-  if (routineLoading && !routinesInitialized) {
+  // Loading state
+  if (routineLoading || !routinesInitialized) {
     return (
       <SafeAreaView className="flex-1 bg-zinc-800 justify-center items-center">
         <Text className="text-white font-sans">Carregando rotinas...</Text>
@@ -246,8 +308,8 @@ export default function RoutineScreen() {
           {/* Info sobre a rotina atual */}
           {currentRoutine && (
             <View className="mx-4 mb-2">
-              <Text className="text-neutral-400 text-sm font-sans">
-                Rotina de {selectedDay} • {filteredTasks.filter(t => isTaskInRoutine(t)).length} tarefas na rotina
+              <Text className="text-neutral-400 px-2 text-sm font-sans">
+                Rotina de {selectedDay} • {tasksInCurrentRoutine} tarefas na rotina
               </Text>
             </View>
           )}
@@ -260,11 +322,8 @@ export default function RoutineScreen() {
               renderItem={({ item }) => (
                 <View className="w-full flex flex-col justify-center px-6 h-[90px] pb-4 border-b border-neutral-700 bg-zinc-800">
                   <View className="flex flex-row justify-between">
-                    <TouchableOpacity 
-                      className="flex flex-col gap-1 mt-1 flex-1 pr-4"
-                      onPress={() => handleToggleTaskCompletion(item)}
-                    >
-                      <Text className={`text-xl font-sans font-medium ${item.completed === 1 ? 'line-through text-neutral-500' : 'text-gray-300'}`}>
+                    <View className="flex flex-col gap-1 mt-1 flex-1 pr-4">
+                      <Text className="text-xl font-sans font-medium text-gray-300">
                         {item.title}
                       </Text>
                       <Text className="text-neutral-400 text-sm mt-1 font-sans">
@@ -275,10 +334,10 @@ export default function RoutineScreen() {
                           {item.content}
                         </Text>
                       )}
-                    </TouchableOpacity>
+                    </View>
                   </View>
 
-                  <View className="absolute right-0 mr-4 z-20">
+                  <View className="absolute right-0 mr-4 z-20 flex items-center justify-center h-full">
                     <Switch
                       value={isTaskInRoutine(item)}
                       onValueChange={() => handleToggleRoutineTask(item)}
@@ -289,7 +348,7 @@ export default function RoutineScreen() {
                 </View>
               )}
               renderHiddenItem={({ item }) => (
-                <View className="w-full flex flex-col justify-center px-6 border-b border-neutral-700 bg-rose-500">
+                <View className="w-full flex flex-col justify-center px-6 h-[90px] border-b border-neutral-700 bg-rose-500">
                   <View className="flex flex-row justify-start items-center h-full">
                     <TouchableOpacity
                       className="p-3"
@@ -306,13 +365,13 @@ export default function RoutineScreen() {
               disableLeftSwipe={true}
             />
           ) : (
-            <View className="self-center z-20 items-center px-4" style={{paddingTop: 150}}>
+            <View className="flex justify-center items-center px-4">
               <Ionicons name="calendar-outline" size={64} color="#6b7280" />
               <Text className="text-neutral-400 font-sans text-lg mt-4 text-center">
-                Nenhuma tarefa para {selectedDay}
+                Nenhuma tarefa encontrada
               </Text>
               <Text className="text-neutral-500 font-sans text-sm mt-2 text-center">
-                Crie novas tarefas para organizar sua rotina
+                Crie novas tarefas para organizar sua rotina de {selectedDay}
               </Text>
             </View>
           )}
@@ -335,7 +394,7 @@ export default function RoutineScreen() {
           </View>
 
           {/* Expenses Placeholder */}
-          <View className="flex-1 justify-center items-center px-4">
+          <View className="flex justify-center items-center px-4">
             <Ionicons name="wallet-outline" size={64} color="#6b7280" />
             <Text className="text-neutral-400 font-sans text-lg mt-4 text-center">
               Expenses em desenvolvimento
@@ -346,7 +405,6 @@ export default function RoutineScreen() {
           </View>
         </View>
       )}
-
     </SafeAreaView>
   );
 }

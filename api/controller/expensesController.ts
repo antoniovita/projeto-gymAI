@@ -9,13 +9,18 @@ export const ExpenseController = {
     userId: string,
     date?: string,
     time?: string,
-    type?: string,
-    routineId?: string
+    type?: string
   ) => {
     const db = getDb();
     try {
       const expenseId = await ExpenseModel.createExpense(
-        db, name, amount, userId, date, time, type, routineId
+        db,
+        name,
+        amount,
+        userId,
+        date,
+        time,
+        type
       );
       return { success: true, expenseId };
     } catch (error) {
@@ -23,6 +28,7 @@ export const ExpenseController = {
       return { success: false, error: 'Erro ao criar despesa.' };
     }
   },
+
 
   getExpenses: async (userId: string) => {
     const db = getDb();
@@ -35,6 +41,7 @@ export const ExpenseController = {
     }
   },
 
+
   getExpensesByType: async (userId: string, type: string) => {
     const db = getDb();
     try {
@@ -46,6 +53,7 @@ export const ExpenseController = {
     }
   },
 
+
   updateExpense: async (expenseId: string, updates: Partial<Omit<Expense, 'id' | 'user_id'>>) => {
     const db = getDb();
     try {
@@ -56,6 +64,7 @@ export const ExpenseController = {
       return { success: false, error: 'Erro ao atualizar despesa.' };
     }
   },
+
 
   deleteExpense: async (expenseId: string) => {
     const db = getDb();
