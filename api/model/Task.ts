@@ -138,5 +138,23 @@ export const TaskModel = {
       console.error('[DEBUG] Erro ao listar tarefas:', err);
       return [];
     }
-  }
+  },
+
+   getTasksByDateAndName: async (
+    db: SQLite.SQLiteDatabase,
+    userId: string,
+    date: string,      
+    name: string       
+  ): Promise<Task[]> => {
+    const likePattern = `%${name}%`;
+    const sql = `
+      SELECT *
+      FROM tasks
+      WHERE user_id = ?
+        AND DATE(datetime) = ?
+        AND title LIKE ?
+    `;
+    return await db.getAllAsync(sql, userId, date, likePattern) as Task[];
+  },
+  
 };

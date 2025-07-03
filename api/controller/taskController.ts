@@ -76,6 +76,26 @@ export const TaskController = {
     }
   },
 
+  getTasksByDateAndName: async (
+    userId: string,
+    date: string,     
+    name: string
+  ) => {
+    const db = getDb();
+    try {
+      const tasks = await TaskModel.getTasksByDateAndName(
+        db,
+        userId,
+        date,
+        name
+      );
+      return { success: true, data: tasks };
+    } catch (error) {
+      console.error('Erro ao buscar tarefas por data e nome no controller:', error);
+      return { success: false, error: 'Erro ao buscar tarefas por data e nome.' };
+    }
+  },
+
   updateCompletion: async (taskId: string, completed: 0 | 1) => {
     const db = getDb();
     try {
@@ -83,6 +103,17 @@ export const TaskController = {
       return { success: true, updatedCount: changes };
     } catch (error) {
       console.error('Erro ao atualizar conclusão da tarefa no controller:', error);
+      return { success: false, error: 'Erro ao atualizar tarefa.' };
+    }
+  },
+
+  updateTask: async (taskId: string, updates: Partial<Task>) => {
+    const db = getDb();
+    try {
+      const changes = await TaskModel.updateTask(db, taskId, updates);
+      return { success: true, updatedCount: changes };
+    } catch (error) {
+      console.error('Erro ao atualizar tarefa no controller:', error);
       return { success: false, error: 'Erro ao atualizar tarefa.' };
     }
   },
@@ -108,15 +139,4 @@ export const TaskController = {
       return { success: false, error: 'Erro ao limpar tarefas.' };
     }
   },
-
-  updateTask: async (taskId: string, updates: Partial<Task>) => {
-    const db = getDb();
-    try {
-      const changes = await TaskModel.updateTask(db, taskId, updates);
-      return { success: true, updatedCount: changes };
-    } catch (error) {
-      console.error('Erro ao atualizar tarefa no controller:', error);
-      return { success: false, error: 'Erro ao atualizar tarefa.' };
-    }
-  }
 };

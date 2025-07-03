@@ -121,11 +121,59 @@ export const useTask = () => {
     }
   };
 
+  const fetchTasksByDate = async (userId: string, date: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      console.log('[fetchTasksByDate] Buscando tarefas por data:', date);
+      const data = await TaskService.getTasksByDate(userId, date);
+      setTasks(data || []);
+    } catch (err: any) {
+      setError(err.message);
+      console.error('[fetchTasksByDate] Erro:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchTasksByTypeAndDate = async (userId: string, types: string[], date: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      console.log('[fetchTasksByTypeAndDate] Buscando tarefas por tipo e data:', types, date);
+      const data = await TaskService.getTasksByTypeAndDate(userId, types, date);
+      setTasks(data || []);
+    } catch (err: any) {
+      setError(err.message);
+      console.error('[fetchTasksByTypeAndDate] Erro:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchTasksByDateAndName = async (
+    userId: string,
+    date: string,
+    name: string
+  ) => {
+    setLoading(true);
+    setError(null);
+    try {
+      console.log('[fetchTasksByDateAndName] Buscando tarefas por data e nome:', date, name);
+      const data = await TaskService.getTasksByDateAndName(userId, date, name);
+      setTasks(data || []);
+    } catch (err: any) {
+      setError(err.message);
+      console.error('[fetchTasksByDateAndName] Erro:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const updateTask = async (taskId: string, updates: Partial<Task>) => {
     setLoading(true);
     setError(null);
     try {
-      // If datetime is being updated, normalize it
       let newDate: Date | null = null;
       if (updates.datetime) {
         newDate = parseISO(formatISO(parseISO(updates.datetime)));
@@ -136,18 +184,14 @@ export const useTask = () => {
       const updatedCount = await TaskService.updateTask(taskId, updates);
       console.log('[updateTask] Tarefa atualizada:', updatedCount);
 
-      // Reschedule notifications if date, title or content changed
       if (newDate || updates.title || updates.content) {
-        // Cancel existing
         await cancelTaskNotifications(taskId);
 
-        // Determine values to schedule
         const original = tasks.find(t => t.id === taskId);
         const title = updates.title ?? original?.title ?? '';
         const body = updates.content ?? original?.content ?? '';
         const dateToUse = newDate ?? (original ? parseISO(original.datetime) : new Date());
 
-        // Schedule new
         await scheduleNotifications(taskId, title, body, dateToUse);
       }
 
@@ -229,8 +273,11 @@ export const useTask = () => {
     tasks,
     debugAllTasks,
     createTask,
-    updateTask,
     fetchTasks,
+    fetchTasksByDate,
+    fetchTasksByTypeAndDate,
+    fetchTasksByDateAndName,
+    updateTask,
     updateTaskCompletion,
     deleteTask,
     clearTasksByUser,

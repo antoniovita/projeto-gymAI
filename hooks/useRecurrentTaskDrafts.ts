@@ -218,10 +218,26 @@ export function useRecurrentTaskDrafts() {
       for (const draft of draftsForDay) {
         const draftRuns = runsRef.current[draft.id] || {};
         
-        // Evita duplicatas
+        // Evita duplicatas pelos registros de runs
         if (draftRuns[isoDay]) continue;
         
         try {
+          // Verifica se já existe uma task com o mesmo nome na data
+          await fetchTasksByDateAndName(draft.userId, isoDay, draft.title);
+          
+          // Se a consulta retornou tasks, significa que já existe uma task com esse nome
+          if (tasks.length > 0) {
+            console.log('[useRecurrentTaskDrafts] Task já existe para:', isoDay, 'Draft:', draft.title);
+            
+            // Registra como se tivesse sido criada por este draft para evitar futuras duplicatas
+            if (!runsRef.current[draft.id]) {
+              runsRef.current[draft.id] = {};
+            }
+            runsRef.current[draft.id][isoDay] = tasks[0].id; // Usa o ID da task existente
+            continue;
+          }
+          
+          // Se não existe, cria a nova task
           const dt = buildDateTime(date, draft.time).toISOString();
           const taskId = await createTask(
             draft.title,
@@ -230,6 +246,8 @@ export function useRecurrentTaskDrafts() {
             draft.userId,
             draft.type
           );
+
+          console.log('[useRecurrentTaskDrafts] Task criada para dia:', isoDay, 'Draft ID:', draft.id, 'Task ID:', taskId);
           
           // Atualiza registro de runs
           if (!runsRef.current[draft.id]) {

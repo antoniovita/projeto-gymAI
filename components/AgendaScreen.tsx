@@ -1,4 +1,3 @@
-
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import {
@@ -7,6 +6,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTask } from '../hooks/useTask';
+import { useRecurrentTaskDrafts } from '../hooks/useRecurrentTaskDrafts'; // Adicione esta importação
 import { SwipeListView } from 'react-native-swipe-list-view';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -15,8 +15,6 @@ import { format } from 'date-fns';
 import { useAuth } from 'hooks/useAuth';
 import { Task } from 'api/model/Task';
 import RefreshButton from './comps/refreshButton';
-
-
 
 const colorOptions = [
   '#EF4444', // Vermelho
@@ -45,6 +43,9 @@ export default function AgendaScreen() {
     deleteTask,
   } = useTask();
 
+  // Adicione o hook de tasks recorrentes
+  const { tasksFromDraftDay } = useRecurrentTaskDrafts();
+
   const [isCreateVisible, setIsCreateVisible] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [selectedTask, setSelectedTask] = useState<any | null>(null);
@@ -69,7 +70,7 @@ export default function AgendaScreen() {
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [dateFilter, setDateFilter] = useState(new Date());
 
-  const [filteredTasks, setFilteredTasks] = useState<Task[]>([]); // 
+  const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
 
   const categories = Array.from(
     new Set([
@@ -159,7 +160,6 @@ export default function AgendaScreen() {
     debugAllTasks();
   }, []);
 
-
   useFocusEffect(
     React.useCallback(() => {
       if (userId) {
@@ -176,7 +176,6 @@ export default function AgendaScreen() {
       }
     }, [userId, tasks])
   );
-  
 
   const combineDateAndTime = (date: Date, time: Date): Date => {
     const combined = new Date(date);
@@ -186,7 +185,6 @@ export default function AgendaScreen() {
     combined.setMilliseconds(0);
     return combined;
   };
-
 
   const handleSaveTask = async () => {
     if (!newTaskTitle.trim()) {
@@ -198,7 +196,7 @@ export default function AgendaScreen() {
       const categoriesString = selectedCategories.join(', ');
 
       const combinedDateTime = combineDateAndTime(date, time);
-      const datetimeISO = combinedDateTime.toISOString(); // Exemplo: "2025-06-12T14:30:00.000Z"
+      const datetimeISO = combinedDateTime.toISOString();
 
       if (selectedTask) {
         await updateTask(selectedTask.id, {
@@ -225,7 +223,6 @@ export default function AgendaScreen() {
     }
   };
 
-  // Abre modal para editar, preenchendo os campos corretamente
   const handleOpenEdit = (task: any) => {
     setSelectedTask(task);
     setNewTaskTitle(task.title);
@@ -235,7 +232,6 @@ export default function AgendaScreen() {
       : [];
     setSelectedCategories(parsedCategories);
 
-    // Parse datetime ISO para Date para preencher o date e time
     if (task.datetime) {
       const dateObj = new Date(task.datetime);
       setDate(dateObj);
@@ -267,22 +263,41 @@ export default function AgendaScreen() {
     setTime(new Date());
   };
 
+  // Função para filtrar tasks e gerar tasks recorrentes
+  const filterTasksAndGenerateRecurrent = async (filterDate: Date) => {
+    try {
+      // Primeiro, gera as tasks recorrentes para o dia selecionado
+      await tasksFromDraftDay(filterDate);
+      
+      // Depois busca todas as tasks atualizadas
+      await fetchTasks(userId!);
+      
+      // Filtra as tasks para o dia selecionado
+      const filtered = tasks.filter(task => {
+        if (!task.datetime) return false;
+    
+        const taskDateISO = task.datetime.split('T')[0]; // 'yyyy-MM-dd'
+        const selectedDateISO = filterDate.toISOString().split('T')[0]; // 'yyyy-MM-dd'
+    
+        const types = task.type?.split(',').map(t => t.trim()) || [];
+        const categoryMatches =
+          selectedTypes.length === 0 || selectedTypes.some(cat => types.includes(cat));
+    
+        return taskDateISO === selectedDateISO && categoryMatches;
+      });
+    
+      setFilteredTasks(filtered);
+    } catch (error) {
+      console.error('Erro ao filtrar tasks e gerar recorrentes:', error);
+    }
+  };
+
+  // Modificado para usar a nova função
   useEffect(() => {
-    const filtered = tasks.filter(task => {
-      if (!task.datetime) return false;
-  
-      const taskDateISO = task.datetime.split('T')[0]; // 'yyyy-MM-dd'
-      const selectedDateISO = dateFilter.toISOString().split('T')[0]; // 'yyyy-MM-dd'
-  
-      const types = task.type?.split(',').map(t => t.trim()) || [];
-      const categoryMatches =
-        selectedTypes.length === 0 || selectedTypes.some(cat => types.includes(cat));
-  
-      return taskDateISO === selectedDateISO && categoryMatches;
-    });
-  
-    setFilteredTasks(filtered);
-  }, [tasks, dateFilter, selectedTypes]);
+    if (userId) {
+      filterTasksAndGenerateRecurrent(dateFilter);
+    }
+  }, [tasks, dateFilter, selectedTypes, userId]);
 
   const showAllTasks = () => {
     setFilteredTasks(tasks); 
@@ -290,11 +305,17 @@ export default function AgendaScreen() {
 
   const showDatePickerDateFilter = () => setDatePickerVisibility(true);
   const hideDatePicker = () => setDatePickerVisibility(false);
-  const handleConfirm = (date: Date) => {
+  
+  // Modificado para usar a nova função
+  const handleConfirm = async (date: Date) => {
     setDateFilter(date);
     hideDatePicker();
+    
+    // Gera tasks recorrentes para a nova data selecionada
+    if (userId) {
+      await filterTasksAndGenerateRecurrent(date);
+    }
   };
-
 
   const handleDeleteTask = (
     taskId: string,
@@ -326,8 +347,6 @@ export default function AgendaScreen() {
       { cancelable: true }
     );
   };
-  
-
 
   return (
     <SafeAreaView className="flex-1 bg-zinc-800">
@@ -351,8 +370,6 @@ export default function AgendaScreen() {
         <View className="flex flex-row items-center justify-between px-6 mt-[40px] mb-6">
           <Text className="text-3xl text-white font-medium font-sans">Agenda</Text>
 
-
-
           <View className="flex flex-row items-center gap-[20px]">
 
             <TouchableOpacity onPress={showDatePickerDateFilter}>
@@ -361,13 +378,11 @@ export default function AgendaScreen() {
               </Text>
             </TouchableOpacity>
 
-
             <RefreshButton onPress={showAllTasks} />
 
             <TouchableOpacity onPress={() => setShowDeleteCategoryModal(true)}>
               <Ionicons name="options-outline" size={24} color="#ff7a7f" />
             </TouchableOpacity>
-
 
             <DateTimePickerModal
               isVisible={isDatePickerVisible}
@@ -384,8 +399,6 @@ export default function AgendaScreen() {
             />
           </View>
         </View>
-
-
 
       <Modal
       transparent
@@ -487,7 +500,6 @@ export default function AgendaScreen() {
             </Modal>
           </View>
         </Modal>
-
 
       <View className=' flex flex-row flex-wrap gap-2 px-6 pb-3'>
         {categories.map((cat) => {
@@ -676,7 +688,6 @@ export default function AgendaScreen() {
               locale="pt-BR"
             />
             
-
             <DateTimePickerModal
               isVisible={showTimePicker}
               mode="time"
