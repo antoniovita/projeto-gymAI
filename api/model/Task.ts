@@ -9,7 +9,6 @@ export interface Task {
   type?: string;
   completed: 0 | 1;
   user_id: string;
-  routine_id?: string;
 }
 
 export const TaskModel = {
@@ -23,8 +22,6 @@ export const TaskModel = {
         type TEXT,
         completed INTEGER DEFAULT 0,
         user_id TEXT,
-        routine_id TEXT,
-        FOREIGN KEY (routine_id) REFERENCES routine(id),
         FOREIGN KEY (user_id) REFERENCES user(id)
       );
     `);
@@ -37,13 +34,12 @@ export const TaskModel = {
     datetime: string, // ISO string
     type: string,
     userId: string,
-    routineId?: string
   ) => {
     const taskId = uuid.v4() as string;
 
     await db.runAsync(
-      `INSERT INTO tasks (id, title, content, datetime, type, completed, user_id, routine_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO tasks (id, title, content, datetime, type, completed, user_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
       taskId,
       title,
       content,
@@ -51,7 +47,6 @@ export const TaskModel = {
       type ?? null,
       0,
       userId,
-      routineId ?? null
     );
 
     return taskId;

@@ -13,12 +13,11 @@ export const useWorkout = () => {
     date: string,
     userId: string,
     type?: string,
-    routineId?: string
   ) => {
     setLoading(true);
     setError(null);
     try {
-      const workoutId = await WorkoutService.createWorkout(name, content, date, userId, type, routineId);
+      const workoutId = await WorkoutService.createWorkout(name, content, date, userId, type);
       return workoutId;
     } catch (err: any) {
       setError(err.message);
@@ -56,7 +55,7 @@ export const useWorkout = () => {
 
   const updateWorkout = async (
     workoutId: string,
-    updates: Partial<{ name?: string; content?: string; date?: string; type?: string; routine_id?: string }>
+    updates: Partial<{ name?: string; content?: string; date?: string; type?: string; }>
   ) => {
     setLoading(true);
     setError(null);

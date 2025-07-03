@@ -14,13 +14,12 @@ export const useExpenses = () => {
     date?: string,
     time?: string,
     type?: string,
-    routineId?: string
   ) => {
     setLoading(true);
     setError(null);
     try {
-      console.log('[createExpense] Criando despesa com:', { name, amount, userId, date, time, type, routineId });
-      const expenseId = await ExpenseService.createExpense(name, amount, userId, date, time, type, routineId);
+      console.log('[createExpense] Criando despesa com:', { name, amount, userId, date, time, type });
+      const expenseId = await ExpenseService.createExpense(name, amount, userId, date, time, type );
       console.log('[createExpense] Despesa criada com ID:', expenseId);
       return expenseId;
     } catch (err: any) {
@@ -70,7 +69,6 @@ export const useExpenses = () => {
       time?: string;
       amount?: number;
       type?: string;
-      routine_id?: string;
     }>
   ) => {
     setLoading(true);

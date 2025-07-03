@@ -8,7 +8,6 @@ export const TaskController = {
     datetime: string,  // ISO string, ex: "2025-06-12T07:12:00.000Z"
     type: string,
     userId: string,
-    routineId?: string
   ) => {
     const db = getDb();
     try {
@@ -24,7 +23,6 @@ export const TaskController = {
         isoDate.toISOString(),
         type,
         userId,
-        routineId
       );
 
       return { success: true, taskId };

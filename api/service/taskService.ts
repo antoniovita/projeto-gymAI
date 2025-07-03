@@ -10,9 +10,8 @@ export const TaskService = {
     datetime: string,  // string ISO: "2025-06-12T07:12:00.000Z"
     type: string,
     userId: string,
-    routineId?: string
   ) => {
-    const response = await TaskController.createTask(title, content, datetime, type, userId, routineId);
+    const response = await TaskController.createTask(title, content, datetime, type, userId);
     if (!response.success) {
       throw new Error(response.error || 'Erro ao criar tarefa.');
     }

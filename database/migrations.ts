@@ -10,16 +10,6 @@ export const runMigrations = async (db: SQLiteDatabase) => {
     );
   `);
 
-  // table routine
-  await db.execAsync(`
-    CREATE TABLE IF NOT EXISTS routine (
-      id TEXT PRIMARY KEY,
-      user_id TEXT,
-      day_of_week TEXT NOT NULL,
-      FOREIGN KEY (user_id) REFERENCES user(id)
-    );
-  `);
-
   // table tasks
   await db.execAsync(`
     CREATE TABLE IF NOT EXISTS tasks (
@@ -30,8 +20,6 @@ export const runMigrations = async (db: SQLiteDatabase) => {
       type TEXT,
       completed INTEGER DEFAULT 0,
       user_id TEXT,
-      routine_id TEXT,
-      FOREIGN KEY (routine_id) REFERENCES routine(id),
       FOREIGN KEY (user_id) REFERENCES user(id)
     );
   `);
@@ -47,8 +35,6 @@ export const runMigrations = async (db: SQLiteDatabase) => {
         amount INTEGER NOT NULL, 
         type TEXT,
         user_id TEXT,
-        routine_id TEXT,
-        FOREIGN KEY (routine_id) REFERENCES routine(id),
         FOREIGN KEY (user_id) REFERENCES user(id)
       );
     `);
@@ -62,8 +48,6 @@ export const runMigrations = async (db: SQLiteDatabase) => {
       date TEXT,
       type TEXT,
       user_id TEXT,
-      routine_id TEXT,
-      FOREIGN KEY (routine_id) REFERENCES routine(id),
       FOREIGN KEY (user_id) REFERENCES user(id)
     );
   `);

@@ -8,32 +8,42 @@ export const ExpenseService = {
     userId: string,
     date?: string,
     time?: string,
-    type?: string,
-    routineId?: string
-  ) => {
+    type?: string
+  ): Promise<string> => {
     const response = await ExpenseController.createExpense(
-      name, amount, userId, date, time, type, routineId
+      name,
+      amount,
+      userId,
+      date,
+      time,
+      type
     );
     if (!response.success) {
       throw new Error(response.error || 'Erro ao criar despesa.');
     }
-    return response.expenseId;
+    return response.expenseId!;
   },
 
-  getExpenses: async (userId: string) => {
+  getExpenses: async (userId: string): Promise<any[]> => {
     const response = await ExpenseController.getExpenses(userId);
     if (!response.success) {
       throw new Error(response.error || 'Erro ao buscar despesas.');
     }
-    return response.data;
+    return response.data!;
   },
 
-  getExpensesByType: async (userId: string, type: string) => {
-    const response = await ExpenseController.getExpensesByType(userId, type);
+  getExpensesByType: async (
+    userId: string,
+    type: string
+  ): Promise<any[]> => {
+    const response = await ExpenseController.getExpensesByType(
+      userId,
+      type
+    );
     if (!response.success) {
       throw new Error(response.error || 'Erro ao buscar despesas por tipo.');
     }
-    return response.data;
+    return response.data!;
   },
 
   updateExpense: async (
@@ -44,17 +54,19 @@ export const ExpenseService = {
       time?: string;
       amount?: number;
       type?: string;
-      routine_id?: string;
     }>
-  ) => {
-    const response = await ExpenseController.updateExpense(expenseId, updates);
+  ): Promise<number> => {
+    const response = await ExpenseController.updateExpense(
+      expenseId,
+      updates
+    );
     if (!response.success) {
       throw new Error(response.error || 'Erro ao atualizar despesa.');
     }
-    return response.updatedCount;
+    return response.updatedCount!;
   },
 
-  deleteExpense: async (expenseId: string) => {
+  deleteExpense: async (expenseId: string): Promise<boolean> => {
     const response = await ExpenseController.deleteExpense(expenseId);
     if (!response.success) {
       throw new Error(response.error || 'Erro ao deletar despesa.');
@@ -62,11 +74,11 @@ export const ExpenseService = {
     return true;
   },
 
-  clearExpensesByUser: async (userId: string) => {
+  clearExpensesByUser: async (userId: string): Promise<number> => {
     const response = await ExpenseController.clearExpensesByUser(userId);
     if (!response.success) {
       throw new Error(response.error || 'Erro ao limpar despesas.');
     }
-    return response.deletedCount;
+    return response.deletedCount!;
   }
 };

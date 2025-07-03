@@ -6,43 +6,42 @@ export interface Expense {
   name: string;
   date?: string;
   time?: string;
-  amount: number; // in cents (INTEGER)
+  amount: number; // em centavos
   type?: string;
   user_id: string;
-  routine_id?: string;
 }
 
 export const ExpenseModel = {
-
   createExpense: async (
     db: SQLite.SQLiteDatabase,
     name: string,
-    amount: number, // in cents
+    amount: number, // em centavos
     userId: string,
     date?: string,
     time?: string,
-    type?: string,
-    routineId?: string
-  ) => {
+    type?: string
+  ): Promise<string> => {
     const expenseId = uuid.v4() as string;
 
     await db.runAsync(
-      `INSERT INTO expenses (id, name, date, time, amount, type, user_id, routine_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO expenses (id, name, date, time, amount, type, user_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
       expenseId,
       name,
       date ?? null,
       time ?? null,
       amount,
       type ?? null,
-      userId,
-      routineId ?? null
+      userId
     );
 
     return expenseId;
   },
 
-  getExpensesByUserId: async (db: SQLite.SQLiteDatabase, userId: string) => {
+  getExpensesByUserId: async (
+    db: SQLite.SQLiteDatabase,
+    userId: string
+  ): Promise<Expense[]> => {
     const expenses = await db.getAllAsync(
       'SELECT * FROM expenses WHERE user_id = ?',
       userId
@@ -50,7 +49,11 @@ export const ExpenseModel = {
     return expenses as Expense[];
   },
 
-  getExpensesByType: async (db: SQLite.SQLiteDatabase, userId: string, type: string) => {
+  getExpensesByType: async (
+    db: SQLite.SQLiteDatabase,
+    userId: string,
+    type: string
+  ): Promise<Expense[]> => {
     const expenses = await db.getAllAsync(
       'SELECT * FROM expenses WHERE user_id = ? AND type = ?',
       userId,
@@ -63,8 +66,10 @@ export const ExpenseModel = {
     db: SQLite.SQLiteDatabase,
     expenseId: string,
     updates: Partial<Omit<Expense, 'id' | 'user_id'>>
-  ) => {
-    const fields = Object.keys(updates).map((key) => `${key} = ?`).join(', ');
+  ): Promise<number> => {
+    const fields = Object.keys(updates)
+      .map((key) => `${key} = ?`)
+      .join(', ');
     const values = Object.values(updates);
 
     const result = await db.runAsync(
@@ -76,7 +81,10 @@ export const ExpenseModel = {
     return result.changes;
   },
 
-  deleteExpense: async (db: SQLite.SQLiteDatabase, expenseId: string) => {
+  deleteExpense: async (
+    db: SQLite.SQLiteDatabase,
+    expenseId: string
+  ): Promise<number> => {
     const result = await db.runAsync(
       'DELETE FROM expenses WHERE id = ?',
       expenseId
@@ -84,11 +92,14 @@ export const ExpenseModel = {
     return result.changes;
   },
 
-  clearExpensesByUser: async (db: SQLite.SQLiteDatabase, userId: string) => {
+  clearExpensesByUser: async (
+    db: SQLite.SQLiteDatabase,
+    userId: string
+  ): Promise<number> => {
     const result = await db.runAsync(
       'DELETE FROM expenses WHERE user_id = ?',
       userId
     );
     return result.changes;
-  }
+  },
 };

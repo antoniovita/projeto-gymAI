@@ -10,7 +10,6 @@ export const WorkoutController = {
     date: string,
     userId: string,
     type?: string,
-    routineId?: string
   ) => {
     const db = getDb();
     try {
@@ -21,7 +20,6 @@ export const WorkoutController = {
         date,
         userId,
         type,
-        routineId
       );
       return { success: true, workoutId };
     } catch (error) {

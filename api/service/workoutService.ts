@@ -8,9 +8,8 @@ export const WorkoutService = {
     date: string,
     userId: string,
     type?: string,
-    routineId?: string
   ) => {
-    const response = await WorkoutController.createWorkout(name, content, date, userId, type, routineId);
+    const response = await WorkoutController.createWorkout(name, content, date, userId, type);
     if (!response.success) {
       throw new Error(response.error || 'Erro ao criar workout.');
     }
@@ -40,7 +39,6 @@ export const WorkoutService = {
       content?: string;
       date?: string;
       type?: string;
-      routine_id?: string;
     }>
   ) => {
     const response = await WorkoutController.updateWorkout(workoutId, updates);

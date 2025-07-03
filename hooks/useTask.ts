@@ -1,16 +1,66 @@
 import { useState } from 'react';
 import * as Notifications from 'expo-notifications';
-import { parseISO, formatISO, subHours } from 'date-fns';
+import { parseISO, formatISO, subHours, isSameDay } from 'date-fns';
 import { TaskService } from '../api/service/taskService';
 import { Task } from '../api/model/Task';
 import { SchedulableTriggerInputTypes } from 'expo-notifications';
-import { isSameDay } from 'date-fns';
-
 
 export const useTask = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
+
+  // Helper to cancel all scheduled notifications for a given task
+  const cancelTaskNotifications = async (taskId: string) => {
+    try {
+      const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+      await Promise.all(
+        scheduled
+          .filter(n => n.content.data?.taskId === taskId)
+          .map(n => Notifications.cancelScheduledNotificationAsync(n.identifier))
+      );
+    } catch (err) {
+      console.warn('[cancelTaskNotifications] Falha ao cancelar notificações:', err);
+    }
+  };
+
+  // Helper to schedule notifications for a task
+  const scheduleNotifications = async (
+    taskId: string,
+    title: string,
+    body: string,
+    date: Date
+  ) => {
+    const { status } = await Notifications.getPermissionsAsync();
+    if (status !== 'granted') return;
+
+    const now = new Date();
+
+    // Notification on creation day (immediate)
+    if (isSameDay(date, now)) {
+      await Notifications.scheduleNotificationAsync({
+        content: { title: `🗓️ Tarefa para hoje: ${title}`, body: body || 'Você tem uma tarefa hoje!', data: { taskId } },
+        trigger: null,
+      });
+    }
+
+    // Notification at exact time
+    if (date > now) {
+      await Notifications.scheduleNotificationAsync({
+        content: { title: `⏰ Agora: ${title}`, body: body || 'Não perca a hora!', data: { taskId } },
+        trigger: { type: SchedulableTriggerInputTypes.DATE, date },
+      });
+    }
+
+    // Notification 1 hour before
+    const oneHourBefore = subHours(date, 1);
+    if (oneHourBefore > now) {
+      await Notifications.scheduleNotificationAsync({
+        content: { title: `⏳ Em 1 hora: ${title}`, body: body || 'Falta pouco tempo!', data: { taskId } },
+        trigger: { type: SchedulableTriggerInputTypes.DATE, date: oneHourBefore },
+      });
+    }
+  };
 
   const createTask = async (
     title: string,
@@ -18,7 +68,6 @@ export const useTask = () => {
     datetimeISO: string,
     userId: string,
     type?: string,
-    routineId?: string
   ) => {
     setLoading(true);
     setError(null);
@@ -33,55 +82,12 @@ export const useTask = () => {
         content,
         datetime,
         type ?? '',
-        userId,
-        routineId ?? ''
+        userId
       );
       console.log('[createTask] Task criada com ID:', taskId);
 
-      const { status } = await Notifications.getPermissionsAsync();
-      if (status === 'granted') {
-        const now = new Date();
-
-        if (isSameDay(date, new Date())) {
-          await Notifications.scheduleNotificationAsync({
-            content: {
-              title: `🗓️ Tarefa para hoje: ${title}`,
-              body: content || 'Você tem uma tarefa hoje!',
-              data: { taskId },
-            },
-            trigger: null,
-          });
-        }
-
-        if (date > now) {
-          await Notifications.scheduleNotificationAsync({
-            content: {
-              title: `⏰ Agora: ${title}`,
-              body: content || 'Não perca a hora!',
-              data: { taskId },
-            },
-            trigger: {
-              type: SchedulableTriggerInputTypes.DATE,
-              date,
-            },
-          });
-        }
-
-        const oneHourBefore = subHours(date, 1);
-        if (oneHourBefore > now) {
-          await Notifications.scheduleNotificationAsync({
-            content: {
-              title: `⏳ Em 1 hora: ${title}`,
-              body: content || 'Falta pouco tempo!',
-              data: { taskId },
-            },
-            trigger: {
-              type: SchedulableTriggerInputTypes.DATE,
-              date: oneHourBefore,
-            },
-          });
-        }
-      }
+      // Schedule notifications
+      await scheduleNotifications(taskId!, title, content ?? '', date);
 
       return taskId;
     } catch (err: any) {
@@ -115,6 +121,66 @@ export const useTask = () => {
     }
   };
 
+  const updateTask = async (taskId: string, updates: Partial<Task>) => {
+    setLoading(true);
+    setError(null);
+    try {
+      // If datetime is being updated, normalize it
+      let newDate: Date | null = null;
+      if (updates.datetime) {
+        newDate = parseISO(formatISO(parseISO(updates.datetime)));
+        updates.datetime = formatISO(newDate);
+      }
+
+      console.log('[updateTask] Atualizando tarefa:', { taskId, updates });
+      const updatedCount = await TaskService.updateTask(taskId, updates);
+      console.log('[updateTask] Tarefa atualizada:', updatedCount);
+
+      // Reschedule notifications if date, title or content changed
+      if (newDate || updates.title || updates.content) {
+        // Cancel existing
+        await cancelTaskNotifications(taskId);
+
+        // Determine values to schedule
+        const original = tasks.find(t => t.id === taskId);
+        const title = updates.title ?? original?.title ?? '';
+        const body = updates.content ?? original?.content ?? '';
+        const dateToUse = newDate ?? (original ? parseISO(original.datetime) : new Date());
+
+        // Schedule new
+        await scheduleNotifications(taskId, title, body, dateToUse);
+      }
+
+      return updatedCount;
+    } catch (err: any) {
+      setError(err.message);
+      console.error('[updateTask] Erro:', err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteTask = async (taskId: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      console.log('[deleteTask] Cancelando notificações da tarefa ID:', taskId);
+      await cancelTaskNotifications(taskId);
+
+      console.log('[deleteTask] Deletando tarefa ID:', taskId);
+      await TaskService.deleteTask(taskId);
+      console.log('[deleteTask] Tarefa deletada com sucesso');
+      return true;
+    } catch (err: any) {
+      setError(err.message);
+      console.error('[deleteTask] Erro:', err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const updateTaskCompletion = async (taskId: string, completed: 0 | 1) => {
     setLoading(true);
     setError(null);
@@ -132,55 +198,20 @@ export const useTask = () => {
     }
   };
 
-  const deleteTask = async (taskId: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      console.log('[deleteTask] Deletando tarefa ID:', taskId);
-      await TaskService.deleteTask(taskId);
-      console.log('[deleteTask] Tarefa deletada com sucesso');
-      return true;
-    } catch (err: any) {
-      setError(err.message);
-      console.error('[deleteTask] Erro:', err);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const clearTasksByUser = async (userId: string) => {
     setLoading(true);
     setError(null);
     try {
       console.log('[clearTasksByUser] Limpando tarefas do usuário:', userId);
+      const userTasks = await TaskService.getTasks(userId);
+      await Promise.all(userTasks!.map(t => cancelTaskNotifications(t.id)));
+
       const deletedCount = await TaskService.clearTasksByUser(userId);
       console.log('[clearTasksByUser] Total deletado:', deletedCount);
       return deletedCount;
     } catch (err: any) {
       setError(err.message);
       console.error('[clearTasksByUser] Erro:', err);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateTask = async (taskId: string, updates: Partial<Task>) => {
-    setLoading(true);
-    setError(null);
-    try {
-      if (updates.datetime) {
-        updates.datetime = formatISO(parseISO(updates.datetime));
-      }
-
-      console.log('[updateTask] Atualizando tarefa:', { taskId, updates });
-      const updatedCount = await TaskService.updateTask(taskId, updates);
-      console.log('[updateTask] Tarefa atualizada:', updatedCount);
-      return updatedCount;
-    } catch (err: any) {
-      setError(err.message);
-      console.error('[updateTask] Erro:', err);
       throw err;
     } finally {
       setLoading(false);

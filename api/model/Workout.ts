@@ -8,7 +8,6 @@ export interface Workout {
   date: string;
   type?: string;
   user_id: string;
-  routine_id?: string;
 }
 
 export const WorkoutModel = {
@@ -21,20 +20,18 @@ export const WorkoutModel = {
     date: string,
     userId: string,
     type?: string,
-    routineId?: string
   ) => {
     const workoutId = uuid.v4() as string;
 
     const result = await db.runAsync(
-      `INSERT INTO workouts (id, name, content, date, type, user_id, routine_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO workouts (id, name, content, date, type, user_id)
+       VALUES (?, ?, ?, ?, ?, ?)`,
       workoutId,
       name,
       content,
       date,
       type ?? null,
       userId,
-      routineId ?? null
     );
 
     return workoutId;
