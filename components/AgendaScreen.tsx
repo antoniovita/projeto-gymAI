@@ -263,29 +263,30 @@ export default function AgendaScreen() {
     setTime(new Date());
   };
 
-  // Função para filtrar tasks e gerar tasks recorrentes
+  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+
   const filterTasksAndGenerateRecurrent = async (filterDate: Date) => {
     try {
-      // Primeiro, gera as tasks recorrentes para o dia selecionado
       await tasksFromDraftDay(userId!, filterDate);
-            
-      // Depois busca todas as tasks atualizadas
+
+      await sleep(500);
+
       await fetchTasks(userId!);
-      
-      // Filtra as tasks para o dia selecionado
+
       const filtered = tasks.filter(task => {
         if (!task.datetime) return false;
-    
-        const taskDateISO = task.datetime.split('T')[0]; // 'yyyy-MM-dd'
+
+        const taskDateISO = task.datetime.split('T')[0];       // 'yyyy-MM-dd'
         const selectedDateISO = filterDate.toISOString().split('T')[0]; // 'yyyy-MM-dd'
-    
+
         const types = task.type?.split(',').map(t => t.trim()) || [];
         const categoryMatches =
           selectedTypes.length === 0 || selectedTypes.some(cat => types.includes(cat));
-    
+
         return taskDateISO === selectedDateISO && categoryMatches;
       });
-    
+
       setFilteredTasks(filtered);
     } catch (error) {
       console.error('Erro ao filtrar tasks e gerar recorrentes:', error);

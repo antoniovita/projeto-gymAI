@@ -225,7 +225,6 @@ export function useRecurrentTaskDrafts() {
       const isoDay = format(startOfDay(date), 'yyyy-MM-dd');
       const lockKey = `${userId}_${isoDay}`;
       
-      // Previne execução simultânea para o mesmo dia/usuário
       if (executionLockRef.current.has(lockKey)) {
         console.log(`Execução já em andamento para ${lockKey}, ignorando...`);
         return;
@@ -245,24 +244,20 @@ export function useRecurrentTaskDrafts() {
         
         console.log(`[${lockKey}] Encontrados ${draftsForDay.length} drafts para processar`);
         
-        // Processa cada draft sequencialmente
         for (const draft of draftsForDay) {
           try {
             console.log(`[${lockKey}] Processando draft ${draft.id} - ${draft.title}`);
             
-            // Garante que o objeto existe
             if (!runsRef.current[draft.id]) {
               runsRef.current[draft.id] = {};
             }
             
             const draftRuns = runsRef.current[draft.id];
             
-            // Verifica se já existe task para este dia
             if (draftRuns[isoDay]) {
               const existingTaskId = draftRuns[isoDay];
               console.log(`[${lockKey}] Task já registrada: ${existingTaskId}`);
               
-              // Verifica se a task ainda existe
               const exists = await taskExists(existingTaskId);
               if (exists) {
                 console.log(`[${lockKey}] Task ${existingTaskId} confirmada, pulando...`);
@@ -273,7 +268,6 @@ export function useRecurrentTaskDrafts() {
               delete draftRuns[isoDay];
             }
             
-            // Cria nova task apenas se não existir registro
             if (!draftRuns[isoDay]) {
               console.log(`[${lockKey}] Criando nova task para draft ${draft.id}`);
               
@@ -286,7 +280,6 @@ export function useRecurrentTaskDrafts() {
                 draft.type
               );
               
-              // Registra a task criada
               runsRef.current[draft.id][isoDay] = taskId as string;
               console.log(`[${lockKey}] Task criada e registrada: ${taskId}`);
             }
@@ -296,7 +289,6 @@ export function useRecurrentTaskDrafts() {
           }
         }
         
-        // Salva todas as alterações uma única vez
         await saveRuns();
         console.log(`[${lockKey}] Processamento concluído e salvo`);
         
@@ -304,7 +296,6 @@ export function useRecurrentTaskDrafts() {
         console.error(`[${lockKey}] Erro geral:`, err);
         setError(err.message);
       } finally {
-        // Remove o lock e para o loading
         executionLockRef.current.delete(lockKey);
         setLoading(false);
       }
