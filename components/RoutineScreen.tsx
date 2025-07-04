@@ -7,7 +7,11 @@ import {
   SafeAreaView, 
   Modal, 
   TextInput, 
-  Alert 
+  Alert, 
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
+  Platform,
+  Keyboard
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { format, addDays, startOfWeek } from 'date-fns';
@@ -47,18 +51,16 @@ export default function RoutineScreen() {
     time: '',
     daysOfWeek: [] as number[],
     userId,
-    type: 'task'
+    type: 'rotina'
   });
 
   // Hook integration
   const { 
     drafts, 
     loading, 
-    error, 
     addDraft, 
     updateDraft, 
     deleteDraft, 
-    deleteDraftTaskForDay
   } = useRecurrentTaskDrafts();
 
   // Mapear dias da semana para números (0=domingo, 1=segunda...)
@@ -84,6 +86,8 @@ export default function RoutineScreen() {
     date.setHours(hours, minutes, 0, 0);
     return date;
   };
+
+  
 
   const resetForm = () => {
     setFormData({
@@ -111,7 +115,7 @@ export default function RoutineScreen() {
       time: draft.time,
       daysOfWeek: draft.daysOfWeek,
       userId: draft.userId,
-      type: draft.type || 'task'
+      type: draft.type
     });
     
     // Atualizar o estado do time picker com o horário da tarefa
@@ -360,40 +364,31 @@ export default function RoutineScreen() {
         </View>
       )}
 
-      {/* Modal */}
-      <Modal
-        visible={showModal}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setShowModal(false)}
+    <Modal
+      visible={showModal}
+      animationType="slide"
+      transparent
+      onRequestClose={() => setShowModal(false)}
+    >
+      <KeyboardAvoidingView
+        style={{ flex: 1, justifyContent: 'flex-end' }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
-        <View className="flex-1 justify-end">
-          <View className="bg-zinc-900 rounded-t-3xl p-6 min-h-[65%]">
-            {/* Modal Header */}
-            <View className="flex-row items-center justify-between mb-6">
-              <Text className="text-white font-sans text-xl">
-                {modalType === 'create' ? 'Nova Tarefa' : 'Editar Tarefa'}
-              </Text>
-              <TouchableOpacity onPress={() => setShowModal(false)}>
-                <Ionicons name="close" size={24} color="white" />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {/* Title Input */}
-              <View className="mb-4">
-                <Text className="text-white font-sans text-sm mb-2">Título</Text>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View className="bg-zinc-900 rounded-t-3xl p-6 min-h-[52%]">
+            <ScrollView showsVerticalScrollIndicator={false} className='max-h-[290px]'>
+              <View>
                 <TextInput
                   value={formData.title}
                   onChangeText={text => setFormData(prev => ({ ...prev, title: text }))}
                   placeholder="Nome da tarefa"
                   placeholderTextColor="#6b7280"
-                  className="bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-3 text-white font-sans"
+                  className="px-1 py-3 text-white text-2xl font-bold"
                 />
               </View>
 
-              <View className="mb-4">
-                <Text className="text-white font-sans text-sm mb-2">Descrição</Text>
+              <View className="mb-2">
                 <TextInput
                   value={formData.content}
                   onChangeText={text => setFormData(prev => ({ ...prev, content: text }))}
@@ -401,24 +396,22 @@ export default function RoutineScreen() {
                   placeholderTextColor="#6b7280"
                   multiline
                   numberOfLines={3}
-                  className="bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-3 text-white font-sans"
+                  className="rounded-xl text-lg px-1 py-3 text-white font-normal"
                 />
               </View>
 
               <View className="mb-4">
-                <Text className="text-white font-sans text-sm mb-2">Horário</Text>
                 <TouchableOpacity
                   onPress={() => setShowTimePicker(true)}
-                  className="bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-3 flex-row items-center justify-between"
+                  className="px-2 py-3 flex-row items-center justify-between"
                 >
-                  <Text className={`font-sans ${formData.time ? 'text-white' : 'text-gray-400'}`}>
-                    {formData.time || 'Selecionar horário'}
+                  <Text className={`font-bold text-2xl ${formData.time ? 'text-white' : 'text-gray-400'}`}>
+                    {formData.time || new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                   </Text>
                 </TouchableOpacity>
               </View>
 
-              <View className="mb-6">
-                <Text className="text-white font-sans text-sm mb-3">Dias da semana</Text>
+              <View className="mb-6 mt-2">
                 <View className="flex-row flex-wrap">
                   {[1, 2, 3, 4, 5, 6, 0].map(dayNumber => (
                     <TouchableOpacity
@@ -442,7 +435,9 @@ export default function RoutineScreen() {
                 </View>
               </View>
 
-              <View className="flex-row flex gap-3">
+            </ScrollView>
+
+            <View className=" absolute bottom-[15%] self-center flex-row flex gap-3">
                 <TouchableOpacity
                   onPress={() => setShowModal(false)}
                   className="flex-1 bg-neutral-700 rounded-xl py-4"
@@ -458,25 +453,26 @@ export default function RoutineScreen() {
                     {loading ? 'Salvando...' : 'Salvar'}
                   </Text>
                 </TouchableOpacity>
-              </View>
-            </ScrollView>
-          </View>
-        </View>
+            </View>
 
-        <DateTimePickerModal
-          isVisible={showTimePicker}
-          mode="time"
-          date={time}
-          onConfirm={handleTimeConfirm}
-          onCancel={handleTimeCancel}
-          textColor="#000000"
-          accentColor="#ff7a7f"
-          buttonTextColorIOS="#ff7a7f"
-          themeVariant="light"
-          locale="pt-BR"
-          is24Hour={true}
-        />
-      </Modal>
+          </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+
+      <DateTimePickerModal
+        isVisible={showTimePicker}
+        mode="time"
+        date={time}
+        onConfirm={handleTimeConfirm}
+        onCancel={handleTimeCancel}
+        textColor="#000000"
+        accentColor="#ff7a7f"
+        buttonTextColorIOS="#ff7a7f"
+        themeVariant="light"
+        locale="pt-BR"
+        is24Hour
+      />
+    </Modal>
     </SafeAreaView>
   );
 }

@@ -293,7 +293,6 @@ export default function AgendaScreen() {
     }
   };
 
-  // Modificado para usar a nova função
   useEffect(() => {
     if (userId) {
       filterTasksAndGenerateRecurrent(dateFilter);
@@ -307,12 +306,10 @@ export default function AgendaScreen() {
   const showDatePickerDateFilter = () => setDatePickerVisibility(true);
   const hideDatePicker = () => setDatePickerVisibility(false);
   
-  // Modificado para usar a nova função
   const handleConfirm = async (date: Date) => {
     setDateFilter(date);
     hideDatePicker();
     
-    // Gera tasks recorrentes para a nova data selecionada
     if (userId) {
       await filterTasksAndGenerateRecurrent(date);
     }

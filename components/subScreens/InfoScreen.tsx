@@ -23,29 +23,52 @@ import { useAuth } from '../../hooks/useAuth';
 
 type InfoScreenNavProp = NativeStackNavigationProp<RootStackParamList, 'InfoScreen'>;
 
-const ChangeNameModal: React.FC<{
+
+interface ChangeNameModalProps {
   visible: boolean;
   onClose: () => void;
   onSave: (newName: string) => void;
   currentName?: string;
-}> = ({ visible, onClose, onSave, currentName }) => {
+}
+
+export const ChangeNameModal: React.FC<ChangeNameModalProps> = ({
+  visible,
+  onClose,
+  onSave,
+  currentName,
+}) => {
   const slideY = useRef(new Animated.Value(300)).current;
   const [name, setName] = useState('');
 
+  // animate in on visible
   useEffect(() => {
     if (visible) {
       setName(currentName || '');
+      slideY.setValue(300);
       Animated.timing(slideY, {
         toValue: 0,
         duration: 300,
         easing: Easing.out(Easing.ease),
         useNativeDriver: true,
       }).start();
-    } else {
-      slideY.setValue(300);
-      setName('');
     }
-  }, [visible, currentName]);
+  }, [visible, currentName, slideY]);
+
+  // animate out then close
+  const handleClose = () => {
+    Animated.timing(slideY, {
+      toValue: 300,
+      duration: 300,
+      easing: Easing.in(Easing.ease),
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      if (finished) {
+        // reset name
+        setName('');
+        onClose();
+      }
+    });
+  };
 
   const handleSave = () => {
     if (!name.trim()) {
@@ -53,25 +76,37 @@ const ChangeNameModal: React.FC<{
       return;
     }
     onSave(name.trim());
-    onClose();
+    handleClose();
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={handleClose}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1"
+        style={{ flex: 1 }}
       >
-        <TouchableWithoutFeedback onPress={onClose}>
-          <View className="flex-1 justify-end" />
+        {/* backdrop */}
+        <TouchableWithoutFeedback onPress={handleClose}>
+          <View style={{ flex: 1 }} />
         </TouchableWithoutFeedback>
+
         <Animated.View
-          style={{ transform: [{ translateY: slideY }] }}
+          style={{
+            transform: [{ translateY: slideY }],
+          }}
           className="bg-[#1e1e1e] rounded-t-3xl p-6 max-h-[60%]"
         >
+          {/* header */}
           <View className="flex-row justify-between items-center mb-4">
-            <Text className="text-white font-sans text-[20px] font-bold">Alterar Nome</Text>
-            <TouchableOpacity onPress={onClose}>
+            <Text className="text-white font-sans text-[20px] font-bold">
+              Alterar Nome
+            </Text>
+            <TouchableOpacity onPress={handleClose}>
               <Ionicons name="close" size={24} color="white" />
             </TouchableOpacity>
           </View>
@@ -88,11 +123,14 @@ const ChangeNameModal: React.FC<{
               onChangeText={setName}
             />
           </ScrollView>
+
           <TouchableOpacity
             onPress={handleSave}
             className="w-full bg-[#ff7a7f] py-3 rounded-2xl items-center mb-4"
           >
-            <Text className="text-white font-sans font-bold text-base">Salvar</Text>
+            <Text className="text-white font-sans font-bold text-base">
+              Salvar
+            </Text>
           </TouchableOpacity>
         </Animated.View>
       </KeyboardAvoidingView>
@@ -141,22 +179,39 @@ const ChangePinModal: React.FC<{
     }
   };
 
+  const animateClose = (callback?: () => void) => {
+    Animated.timing(slideY, {
+      toValue: 300,
+      duration: 300,
+      easing: Easing.in(Easing.ease),
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      if (finished && callback) callback();
+    });
+  };
+
+  const handleClose = () => {
+    animateClose(onClose);
+  };
+
   const handleSave = () => {
     if (digits.some(d => d === '')) {
       Alert.alert('Erro', 'Preencha os 6 dígitos do PIN.');
       return;
     }
-    onSave(digits.join(''));
-    onClose();
+    animateClose(() => {
+      onSave(digits.join(''));
+      onClose();
+    });
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
       >
-        <TouchableWithoutFeedback onPress={onClose}>
+        <TouchableWithoutFeedback onPress={handleClose}>
           <View className="flex-1 justify-end" />
         </TouchableWithoutFeedback>
 
@@ -166,7 +221,7 @@ const ChangePinModal: React.FC<{
         >
           <View className="flex-row justify-between items-center mb-4">
             <Text className="text-white font-sans text-[20px] font-bold">Alterar PIN</Text>
-            <TouchableOpacity onPress={onClose}>
+            <TouchableOpacity onPress={handleClose}>
               <Ionicons name="close" size={24} color="white" />
             </TouchableOpacity>
           </View>
