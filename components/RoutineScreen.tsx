@@ -14,6 +14,7 @@ import {
   Keyboard
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SwipeListView } from 'react-native-swipe-list-view';
 import { format, addDays, startOfWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useRecurrentTaskDrafts } from '../hooks/useRecurrentTaskDrafts';
@@ -293,40 +294,55 @@ export default function RoutineScreen() {
           </ScrollView>
 
           {/* Tasks List */}
-          <ScrollView className="flex px-4 mt-4">
+          <View className="flex mt-4">
             {draftsForSelectedDay.length > 0 ? (
-              draftsForSelectedDay.map(draft => (
-                <View key={draft.id} className="bg-neutral-800 border border-neutral-700 rounded-xl p-4 mb-3">
-                  <View className="flex-row items-center justify-between">
-                    <View className="flex-1">
-                      <Text className="text-white font-sans text-lg">{draft.title}</Text>
-                      {draft.content && (
-                        <Text className="text-neutral-400 font-sans text-sm mt-1">{draft.content}</Text>
-                      )}
-                      <Text className="text-[#ff7a7f] font-sans text-sm mt-2">{draft.time}</Text>
-                      {/* Mostrar indicador se a tarefa está em múltiplos dias */}
-                      {draft.daysOfWeek.length > 1 && (
-                        <Text className="text-neutral-500 font-sans text-xs mt-1">
-                          Recorrente em {draft.daysOfWeek.length} dias
+              <SwipeListView
+                data={draftsForSelectedDay}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={({ item }) => (
+                  <View className="w-full flex flex-col justify-center px-6 h-[90px] pb-4 border-b border-neutral-700 bg-zinc-800">
+                    <View className="flex flex-row justify-between">
+                      <TouchableOpacity className="flex flex-col gap-1 mt-1" onPress={() => openEditModal(item)}>
+                        <Text className="text-xl font-sans font-medium text-gray-300">
+                          {item.title}
                         </Text>
-                      )}
-                    </View>
-                    <View className="flex-row">
-                      <TouchableOpacity 
-                        onPress={() => openEditModal(draft)}
-                        className="mr-3"
-                      >
-                        <Ionicons name="create-outline" size={20} color="#ff7a7f" />
-                      </TouchableOpacity>
-                      <TouchableOpacity onPress={() => handleDelete(draft)}>
-                        <Ionicons name="trash-outline" size={20} color="#ef4444" />
+                        {item.content && (
+                          <Text className="text-neutral-400 text-sm mt-1 font-sans">
+                            {item.content}
+                          </Text>
+                        )}
+                        <Text className="text-neutral-400 text-sm mt-1 font-sans">
+                          {item.time}
+                        </Text>
+                        {/* Mostrar indicador se a tarefa está em múltiplos dias */}
+                        {item.daysOfWeek.length > 1 && (
+                          <Text className="text-neutral-500 font-sans text-xs mt-1">
+                            Recorrente em {item.daysOfWeek.length} dias
+                          </Text>
+                        )}
                       </TouchableOpacity>
                     </View>
                   </View>
-                </View>
-              ))
+                )}
+                renderHiddenItem={({ item }) => (
+                  <View className="w-full flex flex-col justify-center px-6 border-b border-neutral-700 bg-rose-500">
+                    <View className="flex flex-row justify-start items-center h-full">
+                      <TouchableOpacity
+                        className="p-3"
+                        onPress={() => handleDelete(item)}
+                      >
+                        <Ionicons name="trash" size={24} color="white" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
+                leftOpenValue={80}
+                rightOpenValue={0}
+                disableRightSwipe={false}
+                disableLeftSwipe={true}
+              />
             ) : (
-              <View className="flex-1 items-center justify-center" style={{ paddingTop: 120 }}>
+              <View className="flex items-center justify-center" style={{ paddingTop: 120 }}>
                 <Ionicons name="calendar-outline" size={64} color="#6b7280" />
                 <Text className="text-neutral-400 font-sans text-lg mt-4 text-center">
                   Nenhuma tarefa para {selectedDay}
@@ -336,7 +352,7 @@ export default function RoutineScreen() {
                 </Text>
               </View>
             )}
-          </ScrollView>
+          </View>
         </View>
       ) : (
         <View className="flex-1 mt-4">

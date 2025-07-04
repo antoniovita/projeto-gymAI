@@ -372,7 +372,7 @@ export default function ExpensesScreen() {
 
 
       <View className="flex flex-row items-center justify-between px-6 mt-[40px] mb-6">
-        <Text className="text-3xl text-white font-medium font-sans">Expenses</Text>
+        <Text className="text-3xl text-white font-medium font-sans">Despesas</Text>
         
 
         <View className='flex flex-row gap-4 items-center'>

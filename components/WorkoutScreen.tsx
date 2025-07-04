@@ -297,7 +297,7 @@ const handleDeleteCategory = async () => {
 
       <View className="flex flex-col px-6 mt-[40px] mb-5">
         <View className='flex flex-row justify-between items-center'>
-          <Text className="text-3xl text-white font-medium font-sans">Workouts</Text>
+          <Text className="text-3xl text-white font-medium font-sans">Academia</Text>
         
             <TouchableOpacity onPress={() => setShowDeleteCategoryModal(true)}>
               <Ionicons name="options-outline" size={24} color="#ff7a7f" />

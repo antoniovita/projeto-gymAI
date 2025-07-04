@@ -124,6 +124,7 @@ const initials = userName
       .map((n) => n[0])
       .join('')
       .toUpperCase()
+      .slice(0, 2)
   : '';
 
 
