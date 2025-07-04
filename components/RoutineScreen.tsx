@@ -58,7 +58,7 @@ export default function RoutineScreen() {
     addDraft, 
     updateDraft, 
     deleteDraft, 
-    tasksFromDraftDay 
+    deleteDraftTaskForDay
   } = useRecurrentTaskDrafts();
 
   // Mapear dias da semana para números (0=domingo, 1=segunda...)
@@ -148,25 +148,65 @@ export default function RoutineScreen() {
     }
   };
 
-  const handleDelete = async (draftId: string) => {
-    Alert.alert(
-      'Confirmar exclusão',
-      'Tem certeza que deseja excluir esta tarefa recorrente?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { 
-          text: 'Excluir', 
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteDraft(draftId);
-            } catch (err) {
-              Alert.alert('Erro', 'Não foi possível excluir a tarefa');
+  const handleDelete = async (draft: any) => {
+    const currentDayNumber = dayToNumber[selectedDay];
+    const isMultipleDays = draft.daysOfWeek.length > 1;
+    
+    if (isMultipleDays) {
+
+      Alert.alert(
+        'Confirmar exclusão',
+        `Esta tarefa está configurada para múltiplos dias. O que você deseja fazer?`,
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { 
+            text: `Remover apenas de ${selectedDay}`, 
+            onPress: async () => {
+              try {
+                const updatedDaysOfWeek = draft.daysOfWeek.filter((day: number) => day !== currentDayNumber);
+                await updateDraft({ 
+                  ...draft, 
+                  daysOfWeek: updatedDaysOfWeek 
+                });
+              } catch (err) {
+                Alert.alert('Erro', 'Não foi possível remover a tarefa deste dia');
+              }
+            }
+          },
+          { 
+            text: 'Excluir completamente', 
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await deleteDraft(draft.id);
+              } catch (err) {
+                Alert.alert('Erro', 'Não foi possível excluir a tarefa');
+              }
             }
           }
-        }
-      ]
-    );
+        ]
+      );
+    } else {
+
+      Alert.alert(
+        'Confirmar exclusão',
+        'Tem certeza que deseja excluir esta tarefa?',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { 
+            text: 'Excluir', 
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await deleteDraft(draft.id);
+              } catch (err) {
+                Alert.alert('Erro', 'Não foi possível excluir a tarefa');
+              }
+            }
+          }
+        ]
+      );
+    }
   };
 
   const toggleDaySelection = (dayNumber: number) => {
@@ -183,12 +223,10 @@ export default function RoutineScreen() {
     return dayNames[dayNumber];
   };
 
-  // Função para lidar com a confirmação do time picker
   const handleTimeConfirm = (selectedTime: Date) => {
     setShowTimePicker(false);
     setTime(selectedTime);
     
-    // Atualizar o formData com o horário formatado
     const formattedTime = selectedTime.toLocaleTimeString('pt-BR', { 
       hour: '2-digit', 
       minute: '2-digit' 
@@ -262,6 +300,12 @@ export default function RoutineScreen() {
                         <Text className="text-neutral-400 font-sans text-sm mt-1">{draft.content}</Text>
                       )}
                       <Text className="text-[#ff7a7f] font-sans text-sm mt-2">{draft.time}</Text>
+                      {/* Mostrar indicador se a tarefa está em múltiplos dias */}
+                      {draft.daysOfWeek.length > 1 && (
+                        <Text className="text-neutral-500 font-sans text-xs mt-1">
+                          Recorrente em {draft.daysOfWeek.length} dias
+                        </Text>
+                      )}
                     </View>
                     <View className="flex-row">
                       <TouchableOpacity 
@@ -270,7 +314,7 @@ export default function RoutineScreen() {
                       >
                         <Ionicons name="create-outline" size={20} color="#ff7a7f" />
                       </TouchableOpacity>
-                      <TouchableOpacity onPress={() => handleDelete(draft.id)}>
+                      <TouchableOpacity onPress={() => handleDelete(draft)}>
                         <Ionicons name="trash-outline" size={20} color="#ef4444" />
                       </TouchableOpacity>
                     </View>
@@ -348,7 +392,6 @@ export default function RoutineScreen() {
                 />
               </View>
 
-              {/* Content Input */}
               <View className="mb-4">
                 <Text className="text-white font-sans text-sm mb-2">Descrição</Text>
                 <TextInput
@@ -362,7 +405,6 @@ export default function RoutineScreen() {
                 />
               </View>
 
-              {/* Time Picker */}
               <View className="mb-4">
                 <Text className="text-white font-sans text-sm mb-2">Horário</Text>
                 <TouchableOpacity
@@ -375,7 +417,6 @@ export default function RoutineScreen() {
                 </TouchableOpacity>
               </View>
 
-              {/* Days Selection */}
               <View className="mb-6">
                 <Text className="text-white font-sans text-sm mb-3">Dias da semana</Text>
                 <View className="flex-row flex-wrap">
@@ -401,7 +442,6 @@ export default function RoutineScreen() {
                 </View>
               </View>
 
-              {/* Action Buttons */}
               <View className="flex-row flex gap-3">
                 <TouchableOpacity
                   onPress={() => setShowModal(false)}
@@ -423,21 +463,19 @@ export default function RoutineScreen() {
           </View>
         </View>
 
-              {/* DateTimePickerModal */}
-      <DateTimePickerModal
-        isVisible={showTimePicker}
-        mode="time"
-        date={time}
-        onConfirm={handleTimeConfirm}
-        onCancel={handleTimeCancel}
-        textColor="#000000"
-        accentColor="#ff7a7f"
-        buttonTextColorIOS="#ff7a7f"
-        themeVariant="light"
-        locale="pt-BR"
-        is24Hour={true}
-      />
-
+        <DateTimePickerModal
+          isVisible={showTimePicker}
+          mode="time"
+          date={time}
+          onConfirm={handleTimeConfirm}
+          onCancel={handleTimeCancel}
+          textColor="#000000"
+          accentColor="#ff7a7f"
+          buttonTextColorIOS="#ff7a7f"
+          themeVariant="light"
+          locale="pt-BR"
+          is24Hour={true}
+        />
       </Modal>
     </SafeAreaView>
   );

@@ -14,7 +14,7 @@ export const TaskService = {
     if (!response.success) {
       throw new Error(response.error || 'Erro ao criar tarefa.');
     }
-    return response.taskId;
+    return response.taskId!;
   },
 
   getTasks: async (userId: string): Promise<Task[]> => {
@@ -22,43 +22,7 @@ export const TaskService = {
     if (!response.success) {
       throw new Error(response.error || 'Erro ao buscar tarefas.');
     }
-    return response.data;
-  },
-
-  getTasksByTypeAndDate: async (userId: string, types: string[], date: string): Promise<Task[]> => {
-    const response = await TaskController.getTasksByTypeAndDate(userId, types, date);
-    if (!response.success) {
-      throw new Error(response.error || 'Erro ao buscar tarefas por tipo e data.');
-    }
-    return response.data;
-  },
-
-  getTasksByType: async (userId: string, type: string): Promise<Task[]> => {
-    const response = await TaskController.getTasksByType(userId, type);
-    if (!response.success) {
-      throw new Error(response.error || 'Erro ao buscar tarefas por tipo.');
-    }
-    return response.data;
-  },
-
-  getTasksByDate: async (userId: string, date: string): Promise<Task[]> => {
-    const response = await TaskController.getTasksByDate(userId, date);
-    if (!response.success) {
-      throw new Error(response.error || 'Erro ao buscar tarefas por data.');
-    }
-    return response.data;
-  },
-
-  getTasksByDateAndName: async (
-    userId: string,
-    date: string,
-    name: string
-  ): Promise<Task[]> => {
-    const response = await TaskController.getTasksByDateAndName(userId, date, name);
-    if (!response.success) {
-      throw new Error(response.error || 'Erro ao buscar tarefas por data e nome.');
-    }
-    return response.data;
+    return response.data!;
   },
 
   updateTaskCompletion: async (taskId: string, completed: 0 | 1): Promise<number> => {
@@ -66,7 +30,7 @@ export const TaskService = {
     if (!response.success) {
       throw new Error(response.error || 'Erro ao atualizar status da tarefa.');
     }
-    return response.updatedCount;
+    return response.updatedCount!;
   },
 
   updateTask: async (taskId: string, updates: Partial<Task>): Promise<number> => {
@@ -74,7 +38,7 @@ export const TaskService = {
     if (!response.success) {
       throw new Error(response.error || 'Erro ao atualizar tarefa.');
     }
-    return response.updatedCount;
+    return response.updatedCount!;
   },
 
   deleteTask: async (taskId: string): Promise<boolean> => {
@@ -90,13 +54,19 @@ export const TaskService = {
     if (!response.success) {
       throw new Error(response.error || 'Erro ao limpar tarefas.');
     }
-    return response.deletedCount;
+    return response.deletedCount!;
   },
 
   debugAllTasks: async (): Promise<Task[]> => {
-    const db = getDb();
-    return TaskController.debugAllTasks
-      ? TaskController.debugAllTasks()
-      : TaskModel.getAllTasksDebug(db);
-  }
+    const response = await TaskController.getTasksDebug();
+    if (!response.success) {
+      throw new Error(response.error || 'Erro ao buscar todas as tarefas para debug.');
+    }
+    return response.data!;
+  },
+
+  getTaskById: async (taskId: string): Promise<Task> => {
+    const response = await TaskController.getTaskById(taskId);
+    return response.data!;
+  },
 };

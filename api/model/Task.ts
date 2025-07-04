@@ -12,6 +12,7 @@ export interface Task {
 }
 
 export const TaskModel = {
+
   init: async (db: SQLite.SQLiteDatabase) => {
     await db.execAsync(`
       CREATE TABLE IF NOT EXISTS tasks (
@@ -52,14 +53,14 @@ export const TaskModel = {
     return taskId;
   },
 
-  getTasksByUserId: async (db: SQLite.SQLiteDatabase, userId: string) => {
+  getTasksByUserId: async (db: SQLite.SQLiteDatabase, userId: string): Promise<Task[]> => {
     return await db.getAllAsync(
       'SELECT * FROM tasks WHERE user_id = ?',
       userId
     ) as Task[];
   },
 
-  getTasksByType: async (db: SQLite.SQLiteDatabase, userId: string, type: string) => {
+  getTasksByType: async (db: SQLite.SQLiteDatabase, userId: string, type: string): Promise<Task[]> => {
     return await db.getAllAsync(
       'SELECT * FROM tasks WHERE user_id = ? AND type = ?',
       userId,
@@ -67,34 +68,18 @@ export const TaskModel = {
     ) as Task[];
   },
 
-  getTasksByTypeAndDate: async (
+  getTaskById: async (
     db: SQLite.SQLiteDatabase,
-    userId: string,
-    types: string[],
-    date: string // formato: "YYYY-MM-DD"
-  ) => {
-    if (types.length === 0) return [];
-
-    const placeholders = types.map(() => 'type LIKE ?').join(' OR ');
-    const query = `
-      SELECT * FROM tasks
-      WHERE user_id = ?
-      AND DATE(datetime) = ?
-      AND (${placeholders})
-    `;
-    const params = [userId, date, ...types.map((type) => `%${type}%`)];
-    return await db.getAllAsync(query, ...params) as Task[];
-  },
-
-  getTasksByDate: async (db: SQLite.SQLiteDatabase, userId: string, date: string) => {
-    return await db.getAllAsync(
-      'SELECT * FROM tasks WHERE user_id = ? AND DATE(datetime) = ?',
-      userId,
-      date
+    taskId: string
+  ): Promise<Task | null> => {
+    const tasks = await db.getAllAsync(
+      'SELECT * FROM tasks WHERE id = ?',
+      taskId
     ) as Task[];
+    return tasks.length > 0 ? tasks[0] : null;
   },
 
-  updateTaskCompletion: async (db: SQLite.SQLiteDatabase, taskId: string, completed: 0 | 1) => {
+  updateTaskCompletion: async (db: SQLite.SQLiteDatabase, taskId: string, completed: 0 | 1): Promise<number> => {
     const result = await db.runAsync(
       'UPDATE tasks SET completed = ? WHERE id = ?',
       completed,
@@ -103,7 +88,8 @@ export const TaskModel = {
     return result.changes;
   },
 
-  updateTask: async (db: SQLite.SQLiteDatabase, taskId: string, updates: Partial<Task>) => {
+
+  updateTask: async (db: SQLite.SQLiteDatabase, taskId: string, updates: Partial<Task>): Promise<number> => {
     const fields = Object.keys(updates);
     if (fields.length === 0) return 0;
 
@@ -119,19 +105,25 @@ export const TaskModel = {
     return result.changes;
   },
 
-  deleteTask: async (db: SQLite.SQLiteDatabase, taskId: string) => {
-    const result = await db.runAsync('DELETE FROM tasks WHERE id = ?', taskId);
+  deleteTask: async (db: SQLite.SQLiteDatabase, taskId: string): Promise<number> => {
+    const result = await db.runAsync(
+      'DELETE FROM tasks WHERE id = ?',
+      taskId
+    );
     return result.changes;
   },
 
-  clearTasksByUser: async (db: SQLite.SQLiteDatabase, userId: string) => {
-    const result = await db.runAsync('DELETE FROM tasks WHERE user_id = ?', userId);
+  clearTasksByUser: async (db: SQLite.SQLiteDatabase, userId: string): Promise<number> => {
+    const result = await db.runAsync(
+      'DELETE FROM tasks WHERE user_id = ?',
+      userId
+    );
     return result.changes;
   },
 
-  getAllTasksDebug: async (db: SQLite.SQLiteDatabase) => {
+  getAllTasksDebug: async (db: SQLite.SQLiteDatabase): Promise<Task[]> => {
     try {
-      const tasks = await db.getAllAsync('SELECT * FROM tasks');
+      const tasks = await db.getAllAsync('SELECT * FROM tasks') as Task[];
       console.log('[DEBUG] Todas as tarefas no banco:', tasks);
       return tasks;
     } catch (err) {
@@ -140,21 +132,4 @@ export const TaskModel = {
     }
   },
 
-   getTasksByDateAndName: async (
-    db: SQLite.SQLiteDatabase,
-    userId: string,
-    date: string,      
-    name: string       
-  ): Promise<Task[]> => {
-    const likePattern = `%${name}%`;
-    const sql = `
-      SELECT *
-      FROM tasks
-      WHERE user_id = ?
-        AND DATE(datetime) = ?
-        AND title LIKE ?
-    `;
-    return await db.getAllAsync(sql, userId, date, likePattern) as Task[];
-  },
-  
 };

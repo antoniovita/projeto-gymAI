@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
-  parseISO,
   addDays,
   setHours,
   setMinutes,
@@ -16,8 +15,8 @@ type Draft = {
   id: string;
   title: string;
   content?: string;
-  time: string;           // "HH:mm"
-  daysOfWeek: number[];   // 0=domingo … 6=sábado
+  time: string;
+  daysOfWeek: number[];
   userId: string;
   type?: string;
 };
@@ -25,21 +24,17 @@ type Draft = {
 const DRAFTS_KEY = '@recurrent_task_drafts';
 const RUNS_KEY = '@recurrent_task_runs';
 
-/**
- * Hook que gerencia drafts recorrentes e suas tasks
- * Gera tasks para uma semana a partir de hoje
- */
 export function useRecurrentTaskDrafts() {
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const executionLockRef = useRef<Set<string>>(new Set());
 
-  // Mapa de registros de execuções: { draftId: { 'yyyy-MM-dd': taskId } }
+
   const runsRef = useRef<Record<string, Record<string, string>>>({});
 
-  const { createTask, deleteTask } = useTask();
+  const { createTask, deleteTask, getTaskById } = useTask();
 
-  /** Carrega drafts e runs do AsyncStorage */
   const loadAll = async () => {
     setLoading(true);
     try {
@@ -56,18 +51,14 @@ export function useRecurrentTaskDrafts() {
     }
   };
 
-  /** Persiste lista de drafts */
   const saveDrafts = (list: Draft[]) =>
     AsyncStorage.setItem(DRAFTS_KEY, JSON.stringify(list));
 
-  /** Persiste registros de runs */
   const saveRuns = () =>
     AsyncStorage.setItem(RUNS_KEY, JSON.stringify(runsRef.current));
 
-  /** Retorna dia da semana (0–6) */
   const getWeekday = (d: Date) => d.getDay();
 
-  /** Combina data + horário "HH:mm" */
   const buildDateTime = (date: Date, time: string) => {
     const [h, m] = time.split(':').map(Number);
     return setMilliseconds(
@@ -76,7 +67,6 @@ export function useRecurrentTaskDrafts() {
     );
   };
 
-  /** Gera datas dos próximos 7 dias */
   const getNextWeekDates = () => {
     const today = startOfDay(new Date());
     const dates = [];
@@ -86,7 +76,12 @@ export function useRecurrentTaskDrafts() {
     return dates;
   };
 
-  /** Gera tasks para um draft específico nos próximos 7 dias */
+  const taskExists = async (taskId: string): Promise<boolean> => {
+      const task = await getTaskById(taskId);
+      return !!task;
+
+  };
+
   const generateTasksForDraft = async (draft: Draft) => {
     const weekDates = getNextWeekDates();
     const draftRuns = runsRef.current[draft.id] || {};
@@ -95,11 +90,15 @@ export function useRecurrentTaskDrafts() {
       const weekday = getWeekday(date);
       const isoDay = format(date, 'yyyy-MM-dd');
       
-      // Só gera se o draft tem esse dia da semana configurado
       if (!draft.daysOfWeek.includes(weekday)) continue;
       
-      // Evita duplicatas
-      if (draftRuns[isoDay]) continue;
+      if (draftRuns[isoDay]) {
+        const existingTaskId = draftRuns[isoDay];
+        const exists = await taskExists(existingTaskId);
+        if (exists) continue;
+        
+        delete draftRuns[isoDay];
+      }
       
       try {
         const dt = buildDateTime(date, draft.time).toISOString();
@@ -111,31 +110,27 @@ export function useRecurrentTaskDrafts() {
           draft.type
         );
         
-        // Atualiza registro de runs
         if (!runsRef.current[draft.id]) {
           runsRef.current[draft.id] = {};
         }
         runsRef.current[draft.id][isoDay] = taskId as string;
       } catch (err) {
-        console.error('[useRecurrentTaskDrafts] Erro gerando task:', draft.id, err);
+        console.error('Erro gerando task para draft:', draft.id, err);
       }
     }
     
     await saveRuns();
   };
 
-  /** Adiciona um draft e gera suas tasks para a próxima semana */
   const addDraft = async (input: Omit<Draft, 'id'>) => {
     setLoading(true);
     try {
       const newDraft: Draft = { id: `draft_${Date.now()}`, ...input };
       
-      // Adiciona o draft à lista
       const nextDrafts = [...drafts, newDraft];
       setDrafts(nextDrafts);
       await saveDrafts(nextDrafts);
       
-      // Gera tasks para este draft
       await generateTasksForDraft(newDraft);
       
     } catch (err: any) {
@@ -145,29 +140,27 @@ export function useRecurrentTaskDrafts() {
     }
   };
 
-  /** Atualiza draft - remove todas as tasks antigas e cria novas */
   const updateDraft = async (updatedDraft: Draft) => {
     setLoading(true);
     try {
-      // 1) Remove todas as tasks antigas deste draft
       const doneMap = runsRef.current[updatedDraft.id] || {};
       for (const taskId of Object.values(doneMap)) {
         try {
-          await deleteTask(taskId);
+          const exists = await taskExists(taskId);
+          if (exists) {
+            await deleteTask(taskId);
+          }
         } catch (err) {
-          console.error('[useRecurrentTaskDrafts] Erro deletando task antiga:', taskId, err);
+          console.error('Erro deletando task antiga:', taskId, err);
         }
       }
       
-      // 2) Limpa registros de runs
       runsRef.current[updatedDraft.id] = {};
       
-      // 3) Atualiza o draft na lista
       const nextDrafts = drafts.map(d => d.id === updatedDraft.id ? updatedDraft : d);
       setDrafts(nextDrafts);
       await saveDrafts(nextDrafts);
       
-      // 4) Gera novas tasks com os dados atualizados
       await generateTasksForDraft(updatedDraft);
       
     } catch (err: any) {
@@ -177,21 +170,20 @@ export function useRecurrentTaskDrafts() {
     }
   };
 
-  /** Remove draft e todas suas tasks */
   const deleteDraft = async (id: string) => {
     setLoading(true);
     try {
-      // 1) Deleta todas as tasks criadas para esse draft
       const doneMap = runsRef.current[id] || {};
       for (const taskId of Object.values(doneMap)) {
-          await deleteTask(taskId);
-        }
+          const exists = await taskExists(taskId);
+          if (exists) {
+            await deleteTask(taskId);
+          }
+      }
       
-      // 2) Remove registros de runs
       delete runsRef.current[id];
       await saveRuns();
       
-      // 3) Remove o draft da lista
       const nextDrafts = drafts.filter(d => d.id !== id);
       setDrafts(nextDrafts);
       await saveDrafts(nextDrafts);
@@ -203,63 +195,24 @@ export function useRecurrentTaskDrafts() {
     }
   };
 
-  /** Gera tasks para todos os drafts que devem executar em um dia específico */
-  const tasksFromDraftDay = async (date: Date) => {
+  const deleteDraftTaskForDay = async (draftId: string, date: Date) => {
     setLoading(true);
     try {
-      const weekday = getWeekday(date);
       const isoDay = format(startOfDay(date), 'yyyy-MM-dd');
+      const draftRuns = runsRef.current[draftId] || {};
       
-      // Filtra drafts que devem executar neste dia da semana
-      const draftsForDay = drafts.filter(draft => 
-        draft.daysOfWeek.includes(weekday)
-      );
-      
-      for (const draft of draftsForDay) {
-        const draftRuns = runsRef.current[draft.id] || {};
-        
-        // Evita duplicatas pelos registros de runs
-        if (draftRuns[isoDay]) continue;
-        
-        try {
-          // Verifica se já existe uma task com o mesmo nome na data
-          await fetchTasksByDateAndName(draft.userId, isoDay, draft.title);
-          
-          // Se a consulta retornou tasks, significa que já existe uma task com esse nome
-          if (tasks.length > 0) {
-            console.log('[useRecurrentTaskDrafts] Task já existe para:', isoDay, 'Draft:', draft.title);
-            
-            // Registra como se tivesse sido criada por este draft para evitar futuras duplicatas
-            if (!runsRef.current[draft.id]) {
-              runsRef.current[draft.id] = {};
-            }
-            runsRef.current[draft.id][isoDay] = tasks[0].id; // Usa o ID da task existente
-            continue;
-          }
-          
-          // Se não existe, cria a nova task
-          const dt = buildDateTime(date, draft.time).toISOString();
-          const taskId = await createTask(
-            draft.title,
-            draft.content || '',
-            dt,
-            draft.userId,
-            draft.type
-          );
-
-          console.log('[useRecurrentTaskDrafts] Task criada para dia:', isoDay, 'Draft ID:', draft.id, 'Task ID:', taskId);
-          
-          // Atualiza registro de runs
-          if (!runsRef.current[draft.id]) {
-            runsRef.current[draft.id] = {};
-          }
-          runsRef.current[draft.id][isoDay] = taskId as string;
-        } catch (err) {
-          console.error('[useRecurrentTaskDrafts] Erro gerando task para dia:', draft.id, err);
+      if (draftRuns[isoDay]) {
+        const taskId = draftRuns[isoDay];
+        const exists = await taskExists(taskId);
+        if (exists) {
+          await deleteTask(taskId);
         }
+        
+        delete draftRuns[isoDay];
+        await saveRuns();
+        
+        console.log('Task deletada para o dia:', isoDay, 'Draft ID:', draftId);
       }
-      
-      await saveRuns();
       
     } catch (err: any) {
       setError(err.message);
@@ -268,7 +221,95 @@ export function useRecurrentTaskDrafts() {
     }
   };
 
-  /** Regenera todas as tasks para todos os drafts (útil para sincronização) */
+    const tasksFromDraftDay = async (userId: string, date: Date) => {
+      const isoDay = format(startOfDay(date), 'yyyy-MM-dd');
+      const lockKey = `${userId}_${isoDay}`;
+      
+      // Previne execução simultânea para o mesmo dia/usuário
+      if (executionLockRef.current.has(lockKey)) {
+        console.log(`Execução já em andamento para ${lockKey}, ignorando...`);
+        return;
+      }
+      
+      executionLockRef.current.add(lockKey);
+      
+      try {
+        setLoading(true);
+        const weekday = getWeekday(date);
+        
+        console.log(`[${lockKey}] Iniciando processamento para ${isoDay}, weekday: ${weekday}`);
+        
+        const draftsForDay = drafts.filter(draft => 
+          draft.daysOfWeek.includes(weekday) && draft.userId === userId
+        );
+        
+        console.log(`[${lockKey}] Encontrados ${draftsForDay.length} drafts para processar`);
+        
+        // Processa cada draft sequencialmente
+        for (const draft of draftsForDay) {
+          try {
+            console.log(`[${lockKey}] Processando draft ${draft.id} - ${draft.title}`);
+            
+            // Garante que o objeto existe
+            if (!runsRef.current[draft.id]) {
+              runsRef.current[draft.id] = {};
+            }
+            
+            const draftRuns = runsRef.current[draft.id];
+            
+            // Verifica se já existe task para este dia
+            if (draftRuns[isoDay]) {
+              const existingTaskId = draftRuns[isoDay];
+              console.log(`[${lockKey}] Task já registrada: ${existingTaskId}`);
+              
+              // Verifica se a task ainda existe
+              const exists = await taskExists(existingTaskId);
+              if (exists) {
+                console.log(`[${lockKey}] Task ${existingTaskId} confirmada, pulando...`);
+                continue;
+              }
+              
+              console.log(`[${lockKey}] Task ${existingTaskId} não existe mais, limpando...`);
+              delete draftRuns[isoDay];
+            }
+            
+            // Cria nova task apenas se não existir registro
+            if (!draftRuns[isoDay]) {
+              console.log(`[${lockKey}] Criando nova task para draft ${draft.id}`);
+              
+              const dt = buildDateTime(date, draft.time).toISOString();
+              const taskId = await createTask(
+                draft.title,
+                draft.content || '',
+                dt,
+                draft.userId,
+                draft.type
+              );
+              
+              // Registra a task criada
+              runsRef.current[draft.id][isoDay] = taskId as string;
+              console.log(`[${lockKey}] Task criada e registrada: ${taskId}`);
+            }
+            
+          } catch (err) {
+            console.error(`[${lockKey}] Erro processando draft ${draft.id}:`, err);
+          }
+        }
+        
+        // Salva todas as alterações uma única vez
+        await saveRuns();
+        console.log(`[${lockKey}] Processamento concluído e salvo`);
+        
+      } catch (err: any) {
+        console.error(`[${lockKey}] Erro geral:`, err);
+        setError(err.message);
+      } finally {
+        // Remove o lock e para o loading
+        executionLockRef.current.delete(lockKey);
+        setLoading(false);
+      }
+    };
+
   const regenerateAllTasks = async () => {
     setLoading(true);
     try {
@@ -282,7 +323,6 @@ export function useRecurrentTaskDrafts() {
     }
   };
 
-  // Carrega dados ao montar o componente
   useEffect(() => { 
     loadAll(); 
   }, []);
@@ -294,6 +334,7 @@ export function useRecurrentTaskDrafts() {
     addDraft,
     updateDraft,
     deleteDraft,
+    deleteDraftTaskForDay,
     tasksFromDraftDay,
     regenerateAllTasks,
   };

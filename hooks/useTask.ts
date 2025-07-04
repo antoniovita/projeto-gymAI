@@ -121,55 +121,6 @@ export const useTask = () => {
     }
   };
 
-  const fetchTasksByDate = async (userId: string, date: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      console.log('[fetchTasksByDate] Buscando tarefas por data:', date);
-      const data = await TaskService.getTasksByDate(userId, date);
-      setTasks(data || []);
-    } catch (err: any) {
-      setError(err.message);
-      console.error('[fetchTasksByDate] Erro:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchTasksByTypeAndDate = async (userId: string, types: string[], date: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      console.log('[fetchTasksByTypeAndDate] Buscando tarefas por tipo e data:', types, date);
-      const data = await TaskService.getTasksByTypeAndDate(userId, types, date);
-      setTasks(data || []);
-    } catch (err: any) {
-      setError(err.message);
-      console.error('[fetchTasksByTypeAndDate] Erro:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchTasksByDateAndName = async (
-    userId: string,
-    date: string,
-    name: string
-  ) => {
-    setLoading(true);
-    setError(null);
-    try {
-      console.log('[fetchTasksByDateAndName] Buscando tarefas por data e nome:', date, name);
-      const data = await TaskService.getTasksByDateAndName(userId, date, name);
-      setTasks(data || []);
-    } catch (err: any) {
-      setError(err.message);
-      console.error('[fetchTasksByDateAndName] Erro:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const updateTask = async (taskId: string, updates: Partial<Task>) => {
     setLoading(true);
     setError(null);
@@ -267,6 +218,22 @@ export const useTask = () => {
     console.log('[HOOK] Tarefas no banco:', all);
   };
 
+    const getTaskById = async (taskId: string): Promise<Task | null> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const task = await TaskService.getTaskById(taskId);
+      return task;
+    } catch (err: any) {
+      setError(err.message);
+      console.error('[getTaskById] Erro:', err);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+
   return {
     loading,
     error,
@@ -274,12 +241,11 @@ export const useTask = () => {
     debugAllTasks,
     createTask,
     fetchTasks,
-    fetchTasksByDate,
-    fetchTasksByTypeAndDate,
-    fetchTasksByDateAndName,
     updateTask,
     updateTaskCompletion,
     deleteTask,
     clearTasksByUser,
+    getTaskById
   };
 };
+ 

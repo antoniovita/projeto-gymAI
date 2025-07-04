@@ -43,59 +43,6 @@ export const TaskController = {
     }
   },
 
-  getTasksByType: async (userId: string, type: string) => {
-    const db = getDb();
-    try {
-      const tasks = await TaskModel.getTasksByType(db, userId, type);
-      return { success: true, data: tasks };
-    } catch (error) {
-      console.error('Erro ao buscar tarefas por tipo no controller:', error);
-      return { success: false, error: 'Erro ao buscar tarefas por tipo.' };
-    }
-  },
-
-  getTasksByDate: async (userId: string, date: string) => {
-    const db = getDb();
-    try {
-      const tasks = await TaskModel.getTasksByDate(db, userId, date);
-      return { success: true, data: tasks };
-    } catch (error) {
-      console.error('Erro ao buscar tarefas por data no controller:', error);
-      return { success: false, error: 'Erro ao buscar tarefas por data.' };
-    }
-  },
-
-  getTasksByTypeAndDate: async (userId: string, types: string[], date: string) => {
-    const db = getDb();
-    try {
-      const tasks = await TaskModel.getTasksByTypeAndDate(db, userId, types, date);
-      return { success: true, data: tasks };
-    } catch (error) {
-      console.error('Erro ao buscar tarefas por tipo e data no controller:', error);
-      return { success: false, error: 'Erro ao buscar tarefas por tipo e data.' };
-    }
-  },
-
-  getTasksByDateAndName: async (
-    userId: string,
-    date: string,     
-    name: string
-  ) => {
-    const db = getDb();
-    try {
-      const tasks = await TaskModel.getTasksByDateAndName(
-        db,
-        userId,
-        date,
-        name
-      );
-      return { success: true, data: tasks };
-    } catch (error) {
-      console.error('Erro ao buscar tarefas por data e nome no controller:', error);
-      return { success: false, error: 'Erro ao buscar tarefas por data e nome.' };
-    }
-  },
-
   updateCompletion: async (taskId: string, completed: 0 | 1) => {
     const db = getDb();
     try {
@@ -139,4 +86,32 @@ export const TaskController = {
       return { success: false, error: 'Erro ao limpar tarefas.' };
     }
   },
+
+  getTasksDebug: async () => {
+    const db = getDb();
+    try {
+      const tasks = await TaskModel.getAllTasksDebug(db);
+      return { success: true, data: tasks };
+    } catch (error) {
+      console.error('Erro ao buscar todas as tarefas para debug no controller:', error);
+      return { success: false, error: 'Erro ao buscar todas as tarefas para debug.' };
+    }
+  },
+
+  getTaskById: async (taskId: string) => {
+    const db = getDb();
+    try {
+      const task = await TaskModel.getTaskById(db, taskId);
+      if (task) {
+        return { success: true, data: task };
+      } else {
+        return { success: false, error: 'Tarefa não encontrada.' };
+      }
+    } catch (error) {
+      console.error('Erro ao buscar tarefa por ID no controller:', error);
+      return { success: false, error: 'Erro ao buscar tarefa por ID.' };
+    }
+  },
+
+
 };

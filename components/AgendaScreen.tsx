@@ -267,8 +267,8 @@ export default function AgendaScreen() {
   const filterTasksAndGenerateRecurrent = async (filterDate: Date) => {
     try {
       // Primeiro, gera as tasks recorrentes para o dia selecionado
-      await tasksFromDraftDay(filterDate);
-      
+      await tasksFromDraftDay(userId!, filterDate);
+            
       // Depois busca todas as tasks atualizadas
       await fetchTasks(userId!);
       
