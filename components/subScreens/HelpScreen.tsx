@@ -10,6 +10,33 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
+type HelpItemProps = {
+  icon: keyof typeof Ionicons.glyphMap;
+  color?: string;
+  label: string;
+  onPress: () => void;
+  rightIcon?: keyof typeof Ionicons.glyphMap;
+};
+
+const HelpItem: React.FC<HelpItemProps> = ({
+  icon,
+  color = 'white',
+  label,
+  onPress,
+  rightIcon = 'chevron-forward',
+}) => (
+  <TouchableOpacity
+    className="flex flex-row items-center justify-between py-7 border-b border-zinc-700"
+    onPress={onPress}
+  >
+    <View className="flex flex-row items-center gap-3">
+      <Ionicons name={icon} size={20} color={color} />
+      <Text className="text-white text-[16px] font-sans">{label}</Text>
+    </View>
+    <Ionicons name={rightIcon} size={20} color="#a1a1aa" />
+  </TouchableOpacity>
+);
+
 export default function HelpScreen() {
   const navigation = useNavigation();
 
@@ -37,84 +64,25 @@ export default function HelpScreen() {
     Linking.openURL('https://meuapp.com/suporte');
   };
 
-  const SupportItem = ({ icon, title, subtitle, onPress, iconColor = '#60a5fa' }) => (
-    <TouchableOpacity 
-      onPress={onPress}
-      className="bg-zinc-800 rounded-xl p-4 mb-3"
-      activeOpacity={0.7}
-    >
-      <View className="flex-row items-center">
-        <View 
-          className="w-10 h-10 rounded-lg items-center justify-center mr-4"
-          style={{ backgroundColor: iconColor + '20' }}
-        >
-          <Ionicons name={icon} size={20} color={iconColor} />
-        </View>
-        <View className="flex-1">
-          <Text className="text-white font-sans text-[16px] font-medium">{title}</Text>
-          {subtitle && (
-            <Text className="text-zinc-400 font-sans text-[12px] mt-1">{subtitle}</Text>
-          )}
-        </View>
-        <Ionicons name="chevron-forward" size={16} color="#71717a" />
-      </View>
-    </TouchableOpacity>
-  );
+  const handleFAQPress = () => {
+    console.log('FAQ pressed');
+  };
 
-  const SocialMediaSection = () => (
-    <View className="bg-zinc-800 rounded-xl p-4 mb-6">
-      <View className="flex-row justify-around">
-        <TouchableOpacity 
-          onPress={handleInstagramPress}
-          className="items-center"
-          activeOpacity={0.7}
-        >
-          <View className="w-12 h-12 rounded-xl items-center justify-center mb-2" style={{ backgroundColor: '#E4405F20' }}>
-            <Ionicons name="logo-instagram" size={24} color="#E4405F" />
-          </View>
-          <Text className="text-zinc-300 font-sans text-[12px]">Instagram</Text>
-        </TouchableOpacity>
+  const handleDocumentationPress = () => {
+    console.log('Documentation pressed');
+  };
 
-        <TouchableOpacity 
-          onPress={handleTwitterPress}
-          className="items-center"
-          activeOpacity={0.7}
-        >
-          <View className="w-12 h-12 rounded-xl items-center justify-center mb-2" style={{ backgroundColor: '#1DA1F220' }}>
-            <Ionicons name="logo-twitter" size={24} color="#1DA1F2" />
-          </View>
-          <Text className="text-zinc-300 font-sans text-[12px]">Twitter</Text>
-        </TouchableOpacity>
+  const handlePrivacyPress = () => {
+    console.log('Privacy policy pressed');
+  };
 
-        <TouchableOpacity 
-          onPress={handleLinkedInPress}
-          className="items-center"
-          activeOpacity={0.7}
-        >
-          <View className="w-12 h-12 rounded-xl items-center justify-center mb-2" style={{ backgroundColor: '#0077B520' }}>
-            <Ionicons name="logo-linkedin" size={24} color="#0077B5" />
-          </View>
-          <Text className="text-zinc-300 font-sans text-[12px]">LinkedIn</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          onPress={handleWebsitePress}
-          className="items-center"
-          activeOpacity={0.7}
-        >
-          <View className="w-12 h-12 rounded-xl items-center justify-center mb-2" style={{ backgroundColor: '#10b98120' }}>
-            <Ionicons name="globe-outline" size={24} color="#10b981" />
-          </View>
-          <Text className="text-zinc-300 font-sans text-[12px]">Website</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+  const handleTermsPress = () => {
+    console.log('Terms of use pressed');
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-zinc-900">
-      {/* Header */}
-      <View className="flex-row items-center justify-between px-4 py-2">
+            <View className="flex-row items-center justify-between px-4 py-2">
         <TouchableOpacity 
           onPress={() => navigation.goBack()} 
           className="flex-row items-center py-2"
@@ -129,64 +97,73 @@ export default function HelpScreen() {
         <View style={{ width: 70 }} />
       </View>
 
-      <ScrollView 
-        className="flex-1 px-4" 
-        contentContainerStyle={{ paddingBottom: 40 }}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView className="flex-1 mt-10 px-6" contentContainerStyle={{ paddingBottom: 40 }}>
+        <Text className="text-zinc-400 uppercase font-sans text-xs mb-2">Contato Direto</Text>
+        <HelpItem
+          icon="mail-outline"
+          color="#ffff"
+          label="E-mail"
+          onPress={handleEmailPress}
+        />
 
-        {/* Contact Options */}
-        <View className="mt-8 mb-6">
-          <Text className="text-zinc-400 font-sans uppercase text-xs mb-2 ml-1">
-            CONTATO DIRETO
-          </Text>
-          
-          <SupportItem
-            icon="mail"
-            title="E-mail"
-            subtitle=" Contate-nos • Resposta em até 24h"
-            onPress={handleEmailPress}
-            iconColor="#60a5fa"
-          />
-        </View>
+        <Text className="text-zinc-400 font-sans uppercase text-xs mt-6 mb-2">Redes Sociais</Text>
+        <HelpItem
+          icon="logo-instagram"
+          color="#ff7a7f"
+          label="Instagram"
+          onPress={handleInstagramPress}
+        />
+        <HelpItem
+          icon="logo-twitter"
+          color="#ff7a7f"
+          label="Twitter"
+          onPress={handleTwitterPress}
+        />
+        <HelpItem
+          icon="logo-linkedin"
+          color="#ff7a7f"
+          label="LinkedIn"
+          onPress={handleLinkedInPress}
+        />
+        <HelpItem
+          icon="logo-tiktok"
+          color="#ff7a7f"
+          label="Tiktok"
+          onPress={handleWebsitePress}
+        />
 
-        {/* Social Media */}
-        <View className="mb-6">
-          <Text className="text-zinc-400 font-sans uppercase text-xs mb-2 ml-1">
-            REDES SOCIAIS
-          </Text>
-          <SocialMediaSection />
-        </View>
+        <Text className="text-zinc-400 uppercase text-xs mt-6 mb-2">Informações</Text>
+        <HelpItem
+          icon="help-circle-outline"
+          label="Perguntas Frequentes"
+          onPress={handleFAQPress}
+        />
+        <HelpItem
+          icon="document-text-outline"
+          label="Documentação"
+          onPress={handleDocumentationPress}
+        />
+        <HelpItem
+          icon="shield-outline"
+          label="Política de Privacidade"
+          onPress={handlePrivacyPress}
+        />
+        <HelpItem
+          icon="reader-outline"
+          label="Termos de Uso"
+          onPress={handleTermsPress}
+        />
 
-        {/* Additional Info */}
-        <View className="mb-6">
-          <Text className="text-zinc-400 font-sans uppercase text-xs mb-2 ml-1">
-            INFORMAÇÕES ADICIONAIS
-          </Text>
-          
-          <View className="bg-zinc-800 rounded-xl p-4">
-            <View className="flex-row items-start mb-4">
-              <Ionicons name="document-text" size={20} color="#f59e0b" style={{ marginTop: 2, marginRight: 12 }} />
-              <View className="flex-1">
-                <Text className="text-white font-sans text-[16px] font-medium">Documentação</Text>
-                <Text className="text-zinc-400 font-sans text-[12px] mt-1">
-                  Termos de uso, política de privacidade e FAQ disponíveis no aplicativo
-                </Text>
-              </View>
-            </View>
-            
-            <View className="flex-row items-start">
-              <Ionicons name="time" size={20} color="#8b5cf6" style={{ marginTop: 2, marginRight: 12 }} />
-              <View className="flex-1">
-                <Text className="text-white font-sans text-[16px] font-medium">Horário de Atendimento</Text>
-                <Text className="text-zinc-400 font-sans text-[12px] mt-1">
-                  Segunda à Sexta: 9h às 18h (Brasília)
-                </Text>
-              </View>
-            </View>
+        <Text className="text-zinc-400 uppercase text-xs mt-6 mb-2">Atendimento</Text>
+        <View className="py-4 border-b border-zinc-700">
+          <View className="flex flex-row items-center gap-3">
+            <Ionicons name="time-outline" size={20} color="#ffff" />
+            <Text className="text-white text-[16px] font-sans">Horário de Atendimento</Text>
           </View>
+          <Text className="text-zinc-400 text-[12px] font-sans mt-2 ml-8">
+            Segunda à Sexta: 9h às 18h (Brasília)
+          </Text>
         </View>
-        
       </ScrollView>
     </SafeAreaView>
   );

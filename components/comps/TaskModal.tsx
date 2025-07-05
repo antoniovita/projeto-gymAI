@@ -66,7 +66,7 @@ export default function TaskModal({
           </TouchableOpacity>
 
           <TouchableOpacity onPress={onSave}>
-            <Text className="text-rose-400 text-lg mr-4 font-semibold">Salvar</Text>
+            <Text className="text-rose-400 text-lg mr-4 font-semibold font-sans">Salvar</Text>
           </TouchableOpacity>
         </View>
 

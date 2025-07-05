@@ -316,15 +316,12 @@ export default function AgendaScreen() {
     }
   };
 
-  // Função para filtrar tasks após ter certeza que foram processadas
   const filterTasks = async (filterDate: Date) => {
     try {
       setIsLoading(true);
       
-      // Primeiro processa os drafts para a data
       await processTasksForDate(filterDate);
       
-      // Depois filtra as tasks
       const filtered = tasks.filter(task => {
         if (!task.datetime) return false;
 

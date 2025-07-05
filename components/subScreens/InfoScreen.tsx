@@ -23,6 +23,32 @@ import { useAuth } from '../../hooks/useAuth';
 
 type InfoScreenNavProp = NativeStackNavigationProp<RootStackParamList, 'InfoScreen'>;
 
+type InfoItemProps = {
+  icon: keyof typeof Ionicons.glyphMap;
+  color?: string;
+  label: string;
+  onPress: () => void;
+  rightIcon?: keyof typeof Ionicons.glyphMap;
+};
+
+const InfoItem: React.FC<InfoItemProps> = ({
+  icon,
+  color = 'white',
+  label,
+  onPress,
+  rightIcon = 'chevron-forward',
+}) => (
+  <TouchableOpacity
+    className="flex flex-row items-center justify-between py-7 border-b border-zinc-700"
+    onPress={onPress}
+  >
+    <View className="flex flex-row items-center gap-3">
+      <Ionicons name={icon} size={20} color={color} />
+      <Text className="text-white text-[16px] font-sans">{label}</Text>
+    </View>
+    <Ionicons name={rightIcon} size={20} color="#a1a1aa" />
+  </TouchableOpacity>
+);
 
 interface ChangeNameModalProps {
   visible: boolean;
@@ -319,35 +345,26 @@ export default function InfoScreen() {
         <View style={{ width: 24 }} />
       </View>
 
-      <ScrollView className="mt-8 px-6" contentContainerStyle={{ paddingBottom: 40 }}>
-        <TouchableOpacity
-          className="flex-row items-center py-7 border-b border-zinc-700"
+      <ScrollView className="flex-1 mt-10 px-6" contentContainerStyle={{ paddingBottom: 40 }}>
+        <Text className="text-zinc-400 uppercase font-sans text-xs mb-2">Perfil</Text>
+        <InfoItem
+          icon="person-outline"
+          label="Alterar Nome de Usuário"
           onPress={() => setShowNameModal(true)}
-          disabled={loading}
-        >
-          <Ionicons name="person-outline" size={20} color="white" />
-          <View className="ml-3 flex-1">
-            <Text className="text-white font-sans text-[16px]">Alterar Nome de Usuário</Text>
-          </View>
-        </TouchableOpacity>
+        />
 
-        <TouchableOpacity
-          className="flex-row items-center py-7 border-b border-zinc-700"
+        <Text className="text-zinc-400 font-sans uppercase text-xs mt-6 mb-2">Segurança</Text>
+        <InfoItem
+          icon="key-outline"
+          label="Alterar PIN"
           onPress={() => setShowPinModal(true)}
-          disabled={loading}
-        >
-          <Ionicons name="key-outline" size={20} color="white" />
-          <Text className="ml-3 text-white font-sans text-[16px]">Alterar PIN</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          className="flex-row items-center py-7 border-b border-zinc-700"
+        />
+        <InfoItem
+          icon="lock-open-outline"
+          color="#ff7a7f"
+          label="Remover PIN"
           onPress={confirmRemovePin}
-          disabled={loading}
-        >
-          <Ionicons name="lock-open-outline" size={20} color="white" />
-          <Text className="ml-3 text-white font-sans text-[16px]">Remover PIN</Text>
-        </TouchableOpacity>
+        />
       </ScrollView>
 
       <ChangeNameModal
