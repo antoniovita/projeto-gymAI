@@ -57,7 +57,7 @@ export default function ExpensesScreen() {
 
   const categories = [
     { name: 'Ganhos', color: '#34D399' },
-    { name: 'Perdas', color: '#ff7a7f' },
+    { name: 'Gastos', color: '#ff7a7f' },
     ...selectedCategories
   ];
 
@@ -203,7 +203,7 @@ export default function ExpensesScreen() {
       (cat) => cat.name.trim().toLowerCase() === trimmedName.toLowerCase()
     );
   
-    if (alreadyExists || ['Ganhos', 'Perdas'].includes(trimmedName)) {
+    if (alreadyExists || ['Ganhos', 'Gastos'].includes(trimmedName)) {
       alert('Essa categoria já existe.');
       return;
     }
@@ -254,7 +254,7 @@ export default function ExpensesScreen() {
       .reduce((sum, exp) => sum + Number(exp.amount), 0);
 
     const totalLosses = expenses
-      .filter(exp => exp.type === 'Perdas')
+      .filter(exp => exp.type === 'Gastos')
       .reduce((sum, exp) => sum + Number(exp.amount), 0);
 
     setGains(totalGains);
@@ -416,14 +416,14 @@ export default function ExpensesScreen() {
                 </View>
                 <TouchableOpacity
                   onPress={() => {
-                    if (cat.name !== "Ganhos" && cat.name !== "Perdas") {
+                    if (cat.name !== "Ganhos" && cat.name !== "Gastos") {
                       setCategoryToDelete(cat);
                       setShowConfirmDeleteModal(true);
                     }
                   }}
                   className="p-2 bg-neutral-700 rounded-xl"
                 >
-                  {cat.name === "Ganhos" || cat.name === "Perdas" ? (
+                  {cat.name === "Ganhos" || cat.name === "Gastos" ? (
                     <Ionicons name="ban" size={20} color="#fa4d5c" />
                   ) : (
                     <Ionicons name="trash" size={20} color="#fa4d5c" />

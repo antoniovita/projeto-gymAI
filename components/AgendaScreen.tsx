@@ -346,7 +346,6 @@ export default function AgendaScreen() {
     }
   };
 
-  // useFocusEffect para carregar dados quando a tela ganha foco
   useFocusEffect(
     React.useCallback(() => {
       const loadInitialData = async () => {
@@ -375,7 +374,6 @@ export default function AgendaScreen() {
     }, [userId])
   );
 
-  // Effect para filtrar tasks quando tasks ou filtros mudam
   useEffect(() => {
     if (tasks.length > 0) {
       const filtered = tasks.filter(task => {
@@ -530,7 +528,7 @@ export default function AgendaScreen() {
           onPress: async () => {
             try {
               await deleteTask(taskId);
-              await fetchTasks(userId);
+              await processTasksForDate(dateFilter);
             } catch (error) {
               console.error('Erro ao deletar tarefa:', error);
               Alert.alert('Erro', 'Falha ao deletar tarefa');

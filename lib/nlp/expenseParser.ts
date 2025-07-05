@@ -4,7 +4,7 @@ import { translateKeywordLocally, detectExpenseType } from './translator';
 export type ParsedExpense = {
   title: string;
   price: number;
-  type: 'Ganhos' | 'Perdas';
+  type: 'Ganhos' | 'Gastos';
 };
 
 export async function parseExpense(text: string): Promise<ParsedExpense | null> {
@@ -22,7 +22,7 @@ export async function parseExpense(text: string): Promise<ParsedExpense | null> 
 
   if (!type || type !== 'Ganhos') {
     if (/\b(gastei|paguei|comprei|perdi|investi)\b/.test(translated)) {
-      type = 'Perdas';
+      type = 'Gastos';
     } else if (/\b(recebi|ganhei|vendi|entrou|salário)\b/.test(translated)) {
       type = 'Ganhos';
     }

@@ -74,7 +74,7 @@ export function translateKeywordLocally(text: string): string {
   }, normalized);
 }
 
-export function detectExpenseType(translatedText: string): 'Ganhos' | 'Perdas' {
+export function detectExpenseType(translatedText: string): 'Ganhos' | 'Gastos' {
   const lower = translatedText.toLowerCase();
 
   const gainKeywords = [
@@ -87,6 +87,6 @@ export function detectExpenseType(translatedText: string): 'Ganhos' | 'Perdas' {
   ];
 
   if (gainKeywords.some(k => lower.includes(k))) return 'Ganhos';
-  if (lossKeywords.some(k => lower.includes(k))) return 'Perdas';
-  return 'Perdas';
+  if (lossKeywords.some(k => lower.includes(k))) return 'Gastos';
+  return 'Gastos';
 }
