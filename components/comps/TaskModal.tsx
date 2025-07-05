@@ -83,11 +83,11 @@ export default function TaskModal({
           <View className='flex flex-row justify-between'>
             <View className="flex-row space-x-4 flex gap-3 mb-4">
               <TouchableOpacity onPress={() => setShowDatePicker(true)} className="flex-row items-center border border-[#ff7a7f] px-2 py-1 rounded-lg">
-                <Text className="text-white">{date.toLocaleDateString('pt-BR')}</Text>
+                <Text className="text-white text-lg font-sans">{date.toLocaleDateString('pt-BR')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity onPress={() => setShowTimePicker(true)} className="flex-row items-center border border-[#ff7a7f] px-2 py-1 rounded-lg">
-                <Text className="text-white">{time.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</Text>
+                <Text className="text-white text-lg font-sans">{time.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</Text>
               </TouchableOpacity>
             </View>
           </View>

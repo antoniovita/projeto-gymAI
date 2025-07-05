@@ -24,7 +24,6 @@ const LoadingSpinner = ({ visible }: { visible: boolean }) => {
 
   React.useEffect(() => {
     if (visible) {
-      // Fade in com scale
       Animated.parallel([
         Animated.timing(fadeValue, {
           toValue: 1,
@@ -39,7 +38,6 @@ const LoadingSpinner = ({ visible }: { visible: boolean }) => {
         }),
       ]).start();
 
-      // Rotação suave e contínua
       const spinAnimation = Animated.loop(
         Animated.timing(spinValue, {
           toValue: 1,
@@ -53,7 +51,6 @@ const LoadingSpinner = ({ visible }: { visible: boolean }) => {
         spinAnimation.stop();
       };
     } else {
-      // Fade out com scale
       Animated.parallel([
         Animated.timing(fadeValue, {
           toValue: 0,
@@ -141,77 +138,6 @@ const LoadingSpinner = ({ visible }: { visible: boolean }) => {
   );
 };
 
-const ListLoadingSpinner = () => {
-  const pulseValue = React.useRef(new Animated.Value(0)).current;
-  const scaleValue = React.useRef(new Animated.Value(0.95)).current;
-
-  React.useEffect(() => {
-    const pulseAnimation = Animated.loop(
-      Animated.sequence([
-        Animated.parallel([
-          Animated.timing(pulseValue, {
-            toValue: 1,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-          Animated.timing(scaleValue, {
-            toValue: 1.02,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-        ]),
-        Animated.parallel([
-          Animated.timing(pulseValue, {
-            toValue: 0,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-          Animated.timing(scaleValue, {
-            toValue: 0.98,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-        ]),
-      ])
-    );
-    pulseAnimation.start();
-
-    return () => {
-      pulseAnimation.stop();
-    };
-  }, []);
-
-  const opacity = pulseValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.4, 0.8],
-  });
-
-  return (
-    <View className="flex-1 justify-center items-center py-20">
-      <Animated.View 
-        style={{ 
-          opacity,
-          transform: [{ scale: scaleValue }],
-        }} 
-        className="items-center"
-      >
-        <View style={{
-          width: 64,
-          height: 64,
-          borderRadius: 32,
-          backgroundColor: 'rgba(255, 122, 127, 0.15)',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: 16,
-        }}>
-          <Ionicons name="list" size={28} color="#ff7a7f" />
-        </View>
-        <Text className="text-white text-lg font-sans opacity-70">Carregando tarefas...</Text>
-      </Animated.View>
-    </View>
-  );
-};
-
 const EmptyState = ({ dateFilter, onCreateTask }: { dateFilter: Date, onCreateTask: () => void }) => {
   const getDayOfWeek = (date: Date) => {
     const dayNames = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
@@ -226,24 +152,20 @@ const EmptyState = ({ dateFilter, onCreateTask }: { dateFilter: Date, onCreateTa
   return (
     <View className="flex-1 justify-center items-center px-8 pb-20">
       <View className="items-center">
-
         <View className="w-20 h-20 rounded-full  items-center justify-center mb-3">
           <Ionicons name="calendar-outline" size={60} color="gray" />
         </View>
 
-        {/* Título */}
         <Text className="text-neutral-400 text-xl font-medium font-sans mb-2 text-center">
           Nenhuma tarefa {isToday(dateFilter) ? 'hoje' : `para ${getDayOfWeek(dateFilter).toLowerCase()}`}
         </Text>
 
-        {/* Subtítulo com data */}
         <Text
           className="text-neutral-400 text-sm font-sans mb-4 text-center"
           style={{ maxWidth: 230 }}
         >
           Crie novas tarefas para organizar sua rotina
         </Text>
-
       </View>
     </View>
   );
@@ -262,7 +184,7 @@ export default function AgendaScreen() {
     deleteTask,
   } = useTask();
 
-  const { tasksFromDraftDay } = useRecurrentTaskDrafts();
+  const { tasksFromDraftDay, loading: draftLoading, loadAll } = useRecurrentTaskDrafts();
 
   const [isCreateVisible, setIsCreateVisible] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
@@ -289,8 +211,8 @@ export default function AgendaScreen() {
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
 
   const [isLoading, setIsLoading] = useState(false);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isProcessingDrafts, setIsProcessingDrafts] = useState(false);
 
   const categories = Array.from(
     new Set([
@@ -364,27 +286,117 @@ export default function AgendaScreen() {
     debugAllTasks();
   }, []);
 
+  const processTasksForDate = async (targetDate: Date) => {
+    if (!userId) {
+      console.log('UserId não disponível, pulando processamento de drafts');
+      return;
+    }
+
+    try {
+      setIsProcessingDrafts(true);
+      console.log('=== INICIANDO PROCESSAMENTO DE DRAFTS ===');
+      console.log('Data alvo:', format(targetDate, 'yyyy-MM-dd'));
+      console.log('UserId:', userId);
+
+      await loadAll();
+      await tasksFromDraftDay(userId, targetDate);
+      
+      console.log('Drafts processados, atualizando tasks...');
+      
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      await fetchTasks(userId);
+      
+      console.log('=== PROCESSAMENTO DE DRAFTS CONCLUÍDO ===');
+    } catch (error) {
+      console.error('Erro ao processar drafts:', error);
+      Alert.alert('Erro', 'Falha ao processar tarefas recorrentes');
+    } finally {
+      setIsProcessingDrafts(false);
+    }
+  };
+
+  // Função para filtrar tasks após ter certeza que foram processadas
+  const filterTasks = async (filterDate: Date) => {
+    try {
+      setIsLoading(true);
+      
+      // Primeiro processa os drafts para a data
+      await processTasksForDate(filterDate);
+      
+      // Depois filtra as tasks
+      const filtered = tasks.filter(task => {
+        if (!task.datetime) return false;
+
+        const taskDateISO = task.datetime.split('T')[0];
+        const selectedDateISO = filterDate.toISOString().split('T')[0];
+
+        const types = task.type?.split(',').map(t => t.trim()) || [];
+        const categoryMatches =
+          selectedTypes.length === 0 || selectedTypes.some(cat => types.includes(cat));
+
+        return taskDateISO === selectedDateISO && categoryMatches;
+      });
+
+      setFilteredTasks(filtered);
+      console.log(`Filtradas ${filtered.length} tasks para ${format(filterDate, 'dd/MM/yyyy')}`);
+      
+    } catch (error) {
+      console.error('Erro ao filtrar tasks:', error);
+      Alert.alert('Erro', 'Falha ao filtrar tarefas');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // useFocusEffect para carregar dados quando a tela ganha foco
   useFocusEffect(
     React.useCallback(() => {
-      if (userId) {
-        const fetchAllTasks = async () => {
-          try {
-            setIsLoading(true);
-            await fetchTasks(userId); 
-            setFilteredTasks(tasks); 
-          } catch (err) {
-            console.error('Erro ao buscar tarefas:', err);
-            Alert.alert('Erro', 'Falha ao carregar tarefas');
-          } finally {
-            setIsLoading(false);
-            setIsInitialLoading(false);
-          }
-        };
-  
-        fetchAllTasks();
-      }
+      const loadInitialData = async () => {
+        if (!userId) return;
+
+        try {
+          setIsLoading(true);
+          console.log('=== CARREGAMENTO INICIAL DA AGENDA ===');
+          
+          // Primeiro carrega as tasks existentes
+          await fetchTasks(userId);
+          
+          // Depois processa drafts para hoje
+          await processTasksForDate(new Date());
+          
+          console.log('=== CARREGAMENTO INICIAL CONCLUÍDO ===');
+        } catch (error) {
+          console.error('Erro no carregamento inicial:', error);
+          Alert.alert('Erro', 'Falha ao carregar dados iniciais');
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      loadInitialData();
     }, [userId])
   );
+
+  // Effect para filtrar tasks quando tasks ou filtros mudam
+  useEffect(() => {
+    if (tasks.length > 0) {
+      const filtered = tasks.filter(task => {
+        if (!task.datetime) return false;
+
+        const taskDateISO = task.datetime.split('T')[0];
+        const selectedDateISO = dateFilter.toISOString().split('T')[0];
+
+        const types = task.type?.split(',').map(t => t.trim()) || [];
+        const categoryMatches =
+          selectedTypes.length === 0 || selectedTypes.some(cat => types.includes(cat));
+
+        return taskDateISO === selectedDateISO && categoryMatches;
+      });
+
+      setFilteredTasks(filtered);
+    }
+  }, [tasks, dateFilter, selectedTypes]);
 
   const combineDateAndTime = (date: Date, time: Date): Date => {
     const combined = new Date(date);
@@ -458,13 +470,10 @@ export default function AgendaScreen() {
 
   const toggleTaskCompletion = async (taskId: string, completed: 0 | 1) => {
     try {
-      setIsLoading(true);
       await updateTaskCompletion(taskId, completed === 0 ? 1 : 0);
       await fetchTasks(userId!);
     } catch (err) {
       Alert.alert('Erro', 'Não foi possível atualizar o status.');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -485,56 +494,6 @@ export default function AgendaScreen() {
     setIsCreateVisible(true);
   };
 
-  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-  const filterTasksAndGenerateRecurrent = async (filterDate: Date) => {
-    try {
-      setIsLoading(true);
-      await tasksFromDraftDay(userId!, filterDate);
-      await sleep(500);
-      await fetchTasks(userId!);
-
-      const filtered = tasks.filter(task => {
-        if (!task.datetime) return false;
-
-        const taskDateISO = task.datetime.split('T')[0];
-        const selectedDateISO = filterDate.toISOString().split('T')[0];
-
-        const types = task.type?.split(',').map(t => t.trim()) || [];
-        const categoryMatches =
-          selectedTypes.length === 0 || selectedTypes.some(cat => types.includes(cat));
-
-        return taskDateISO === selectedDateISO && categoryMatches;
-      });
-
-      setFilteredTasks(filtered);
-    } catch (error) {
-      console.error('Erro ao filtrar tasks e gerar recorrentes:', error);
-      Alert.alert('Erro', 'Falha ao filtrar tarefas');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (userId && !isInitialLoading) {
-      filterTasksAndGenerateRecurrent(dateFilter);
-    }
-  }, [tasks, dateFilter, selectedTypes, userId, isInitialLoading]);
-
-  const showAllTasks = async () => {
-    setIsLoading(true);
-    try {
-      await fetchTasks(userId!);
-      setFilteredTasks(tasks);
-    } catch (error) {
-      console.error('Erro ao buscar todas as tarefas:', error);
-      Alert.alert('Erro', 'Falha ao carregar tarefas');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const showDatePickerDateFilter = () => setDatePickerVisibility(true);
   const hideDatePicker = () => setDatePickerVisibility(false);
   
@@ -543,7 +502,7 @@ export default function AgendaScreen() {
     hideDatePicker();
     
     if (userId) {
-      await filterTasksAndGenerateRecurrent(date);
+      await filterTasks(date);
     }
   };
 
@@ -553,7 +512,6 @@ export default function AgendaScreen() {
     deleteTask: (id: string) => Promise<boolean | void>,
     fetchTasks: (id: string) => Promise<void>
   ) => {
-
     const taskToDelete = tasks.find(task => task.id === taskId);
     
     if (!taskToDelete) {
@@ -574,14 +532,11 @@ export default function AgendaScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              setIsLoading(true);
               await deleteTask(taskId);
               await fetchTasks(userId);
             } catch (error) {
               console.error('Erro ao deletar tarefa:', error);
               Alert.alert('Erro', 'Falha ao deletar tarefa');
-            } finally {
-              setIsLoading(false);
             }
           },
         },
@@ -590,10 +545,17 @@ export default function AgendaScreen() {
     );
   };
 
+  const handleRefresh = async () => {
+    if (userId) {
+      await filterTasks(dateFilter);
+    }
+  };
+
+  const isCurrentlyLoading = isLoading || isSaving || isProcessingDrafts || draftLoading;
+
   return (
     <SafeAreaView className="flex-1 bg-zinc-800">
-      {/* Loading Overlay */}
-      <LoadingSpinner visible={isLoading || isSaving} />
+      <LoadingSpinner visible={isCurrentlyLoading} />
 
       <TouchableOpacity
         onPress={() => {
@@ -622,7 +584,7 @@ export default function AgendaScreen() {
             </Text>
           </TouchableOpacity>
 
-          <RefreshButton onPress={showAllTasks} />
+          <RefreshButton onPress={handleRefresh} />
 
           <TouchableOpacity onPress={() => setShowDeleteCategoryModal(true)}>
             <Ionicons name="options-outline" size={24} color="#ff7a7f" />
@@ -674,10 +636,7 @@ export default function AgendaScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Lista de Tarefas com Loading e Empty State */}
-      {isInitialLoading ? (
-        <ListLoadingSpinner />
-      ) : filteredTasks.length === 0 ? (
+      {filteredTasks.length === 0 ? (
         <EmptyState dateFilter={dateFilter} onCreateTask={handleCreateTaskFromEmpty} />
       ) : (
         <SwipeListView

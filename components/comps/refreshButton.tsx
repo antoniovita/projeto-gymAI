@@ -8,11 +8,11 @@ export default function RefreshButton({ onPress }: { onPress: () => void }) {
 
   const startRotation = () => {
     setIsRotating(true);
-    rotation.setValue(0); // garante que comece do zero
+    rotation.setValue(0);
     Animated.loop(
       Animated.timing(rotation, {
         toValue: 1,
-        duration: 400, // mais rápido
+        duration: 400,
         easing: Easing.linear,
         useNativeDriver: true,
       })
@@ -22,7 +22,7 @@ export default function RefreshButton({ onPress }: { onPress: () => void }) {
   const stopRotation = () => {
     setIsRotating(false);
     rotation.stopAnimation(() => {
-      rotation.setValue(0); // resetar ao parar para não ficar "meio girado"
+      rotation.setValue(0);
     });
   };
 
@@ -32,7 +32,7 @@ export default function RefreshButton({ onPress }: { onPress: () => void }) {
     onPress();
     setTimeout(() => {
       stopRotation();
-    }, 1200); // dura um pouco menos, ajuste conforme quiser
+    }, 1200);
   };
 
   const rotateInterpolate = rotation.interpolate({
@@ -51,7 +51,7 @@ export default function RefreshButton({ onPress }: { onPress: () => void }) {
           height: 24,
         }}
       >
-        <Ionicons name="refresh-circle-outline" size={24} color="#ff7a7f" />
+      <Ionicons name="reload-circle-outline" size={24} color="#ff7a7f" />
       </Animated.View>
     </TouchableOpacity>
   );

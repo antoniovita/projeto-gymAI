@@ -97,7 +97,7 @@ export default function RoutineScreen() {
       time: '',
       daysOfWeek: [],
       userId,
-      type: 'task'
+      type: 'rotina'
     });
     setTime(new Date()); // Reset do time picker para hora atual
     setEditingDraft(null);
@@ -119,7 +119,6 @@ export default function RoutineScreen() {
       type: draft.type
     });
     
-    // Atualizar o estado do time picker com o horário da tarefa
     if (draft.time) {
       setTime(parseTimeString(draft.time));
     }

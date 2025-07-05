@@ -2,10 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   addDays,
-  setHours,
-  setMinutes,
-  setSeconds,
-  setMilliseconds,
   startOfDay,
   format,
 } from 'date-fns';
@@ -59,21 +55,25 @@ export function useRecurrentTaskDrafts() {
     }
   };
 
-  const saveDrafts = (list: Draft[]) =>
-    AsyncStorage.setItem(DRAFTS_KEY, JSON.stringify(list));
+  const saveDrafts = async (list: Draft[]) => {
+    try {
+      await AsyncStorage.setItem(DRAFTS_KEY, JSON.stringify(list));
+    } catch (err: any) {
+      console.error('Erro salvando drafts:', err);
+      throw err;
+    }
+  };
 
-  const saveRuns = () =>
-    AsyncStorage.setItem(RUNS_KEY, JSON.stringify(runsRef.current));
+  const saveRuns = async () => {
+    try {
+      await AsyncStorage.setItem(RUNS_KEY, JSON.stringify(runsRef.current));
+    } catch (err: any) {
+      console.error('Erro salvando runs:', err);
+      throw err;
+    }
+  };
 
   const getWeekday = (d: Date) => d.getDay();
-
-  const buildDateTime = (date: Date, time: string) => {
-    const [h, m] = time.split(':').map(Number);
-    return setMilliseconds(
-      setSeconds(setMinutes(setHours(date, h), m), 0),
-      0
-    );
-  };
 
   const getNextWeekDates = () => {
     const today = startOfDay(new Date());
@@ -85,8 +85,13 @@ export function useRecurrentTaskDrafts() {
   };
 
   const taskExists = async (taskId: string): Promise<boolean> => {
+    try {
       const task = await getTaskById(taskId);
       return !!task;
+    } catch (err) {
+      console.error('Erro verificando se task existe:', taskId, err);
+      return false;
+    }
   };
 
   const generateTasksForDraft = async (draft: Draft) => {
@@ -108,12 +113,10 @@ export function useRecurrentTaskDrafts() {
       }
       
       try {
-        // Converte o time string para Date para usar com combineDateAndTime
         const [hours, minutes] = draft.time.split(':').map(Number);
         const timeDate = new Date();
         timeDate.setHours(hours, minutes, 0, 0);
         
-        // Usa a nova função combineDateAndTime
         const combinedDateTime = combineDateAndTime(date, timeDate);
         const datetimeISO = combinedDateTime.toISOString();
         
@@ -146,7 +149,7 @@ export function useRecurrentTaskDrafts() {
       setDrafts(nextDrafts);
       await saveDrafts(nextDrafts);
       
-      await generateTasksForDraft(newDraft);
+      // Removido: não gera tasks automaticamente no addDraft
       
     } catch (err: any) {
       setError(err.message);
@@ -158,8 +161,9 @@ export function useRecurrentTaskDrafts() {
   const updateDraft = async (updatedDraft: Draft) => {
     setLoading(true);
     try {
+      // Limpa tasks antigas relacionadas ao draft
       const doneMap = runsRef.current[updatedDraft.id] || {};
-      for (const taskId of Object.values(doneMap)) {
+      const deletePromises = Object.values(doneMap).map(async (taskId) => {
         try {
           const exists = await taskExists(taskId);
           if (exists) {
@@ -168,14 +172,19 @@ export function useRecurrentTaskDrafts() {
         } catch (err) {
           console.error('Erro deletando task antiga:', taskId, err);
         }
-      }
+      });
       
+      await Promise.all(deletePromises);
+      
+      // Limpa registros do draft
       runsRef.current[updatedDraft.id] = {};
       
+      // Atualiza o draft
       const nextDrafts = drafts.map(d => d.id === updatedDraft.id ? updatedDraft : d);
       setDrafts(nextDrafts);
       await saveDrafts(nextDrafts);
       
+      // Gera novas tasks para o draft atualizado
       await generateTasksForDraft(updatedDraft);
       
     } catch (err: any) {
@@ -188,22 +197,51 @@ export function useRecurrentTaskDrafts() {
   const deleteDraft = async (id: string) => {
     setLoading(true);
     try {
-      const doneMap = runsRef.current[id] || {};
-      for (const taskId of Object.values(doneMap)) {
+      console.log('=== INICIANDO DELEÇÃO DO DRAFT ===');
+      console.log('Draft a ser deletado:', id);
+      console.log('Drafts antes da deleção:', drafts.map(d => ({ id: d.id, title: d.title })));
+      
+      // Busca todas as tasks relacionadas ao draft
+      const draftRuns = runsRef.current[id] || {};
+      const taskIds = Object.values(draftRuns);
+      
+      console.log(`Encontradas ${taskIds.length} tasks para deletar:`, taskIds);
+      
+      // Deleta todas as tasks em paralelo
+      const deletePromises = taskIds.map(async (taskId) => {
+        try {
+          console.log('Verificando task:', taskId);
           const exists = await taskExists(taskId);
           if (exists) {
+            console.log('Deletando task:', taskId);
             await deleteTask(taskId);
+            console.log('Task deletada com sucesso:', taskId);
+          } else {
+            console.log('Task não existe mais:', taskId);
           }
-      }
+        } catch (err) {
+          console.error('Erro ao deletar task:', taskId, err);
+          // Não interrompe o processo se uma task falhar
+        }
+      });
       
+      await Promise.all(deletePromises);
+      
+      // Remove o draft dos registros
       delete runsRef.current[id];
       await saveRuns();
       
+      // Remove o draft da lista
       const nextDrafts = drafts.filter(d => d.id !== id);
       setDrafts(nextDrafts);
       await saveDrafts(nextDrafts);
       
+      console.log('Draft deletado com sucesso:', id);
+      console.log('Drafts após deleção:', nextDrafts.map(d => ({ id: d.id, title: d.title })));
+      console.log('=== DELEÇÃO DO DRAFT CONCLUÍDA ===');
+      
     } catch (err: any) {
+      console.error('Erro ao deletar draft:', id, err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -252,14 +290,27 @@ export function useRecurrentTaskDrafts() {
       const weekday = getWeekday(date);
       
       console.log(`[${lockKey}] Iniciando processamento para ${isoDay}, weekday: ${weekday}`);
+      console.log(`[${lockKey}] Todos os drafts disponíveis:`, drafts.map(d => ({ id: d.id, title: d.title, userId: d.userId, daysOfWeek: d.daysOfWeek })));
       
       const draftsForDay = drafts.filter(draft => 
         draft.daysOfWeek.includes(weekday) && draft.userId === userId
       );
       
-      console.log(`[${lockKey}] Encontrados ${draftsForDay.length} drafts para processar`);
+      console.log(`[${lockKey}] Encontrados ${draftsForDay.length} drafts para processar:`, draftsForDay.map(d => ({ id: d.id, title: d.title })));
       
+      const validDrafts = [];
       for (const draft of draftsForDay) {
+        const stillExists = drafts.some(d => d.id === draft.id);
+        if (stillExists) {
+          validDrafts.push(draft);
+        } else {
+          console.log(`[${lockKey}] Draft ${draft.id} foi deletado, ignorando...`);
+        }
+      }
+      
+      console.log(`[${lockKey}] Drafts válidos após verificação: ${validDrafts.length}`);
+      
+      for (const draft of validDrafts) {
         try {
           console.log(`[${lockKey}] Processando draft ${draft.id} - ${draft.title}`);
           
@@ -286,12 +337,10 @@ export function useRecurrentTaskDrafts() {
           if (!draftRuns[isoDay]) {
             console.log(`[${lockKey}] Criando nova task para draft ${draft.id}`);
             
-            // Converte o time string para Date para usar com combineDateAndTime
             const [hours, minutes] = draft.time.split(':').map(Number);
             const timeDate = new Date();
             timeDate.setHours(hours, minutes, 0, 0);
             
-            // Usa a nova função combineDateAndTime
             const combinedDateTime = combineDateAndTime(date, timeDate);
             const datetimeISO = combinedDateTime.toISOString();
             
@@ -337,23 +386,43 @@ export function useRecurrentTaskDrafts() {
     }
   };
 
+  const clearError = () => setError(null);
+
   useEffect(() => { 
     loadAll(); 
   }, []);
 
   useEffect(() => {
     const processDraftsForToday = async () => {
-      if (drafts.length === 0) return;
+      
+      if (drafts.length === 0) {
+        console.log('Nenhum draft disponível, pulando processamento...');
+        return;
+      }
+      
+      console.log('=== PROCESSAMENTO AUTOMÁTICO INICIADO ===');
+      console.log('Total de drafts:', drafts.length);
+      console.log('Drafts completos:', drafts.map(d => ({ 
+        id: d.id, 
+        title: d.title, 
+        userId: d.userId, 
+        daysOfWeek: d.daysOfWeek,
+        time: d.time 
+      })));
       
       const userIds = [...new Set(drafts.map(draft => draft.userId))];
+      console.log('Usuários únicos encontrados:', userIds);
       
       for (const userId of userIds) {
         try {
+          console.log(`Processando drafts para usuário: ${userId}`);
           await tasksFromDraftDay(userId, new Date());
         } catch (err) {
           console.error('Erro processando drafts para usuário:', userId, err);
         }
       }
+      
+      console.log('=== PROCESSAMENTO AUTOMÁTICO FINALIZADO ===');
     };
 
     processDraftsForToday();
@@ -363,11 +432,13 @@ export function useRecurrentTaskDrafts() {
     drafts,
     loading,
     error,
+    loadAll,
     addDraft,
     updateDraft,
     deleteDraft,
     deleteDraftTaskForDay,
     tasksFromDraftDay,
     regenerateAllTasks,
+    clearError,
   };
 }
