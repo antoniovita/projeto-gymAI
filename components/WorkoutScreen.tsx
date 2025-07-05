@@ -16,6 +16,25 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from 'hooks/useAuth';
 import { useFocusEffect } from '@react-navigation/native';
 
+const EmptyState = ({ onCreateWorkout }: { onCreateWorkout: () => void }) => {
+  return (
+    <View className="flex-1 justify-center items-center mb-[60px] px-8 pb-20">
+      <View className="items-center">
+        <View className="w-20 h-20 rounded-full items-center justify-center mb-3">
+          <Ionicons name="barbell-outline" size={60} color="gray" />
+        </View>
+        
+        <Text className="text-neutral-400 text-xl font-medium font-sans mb-2 text-center">
+          Nenhum treino criado
+        </Text>
+        
+        <Text className="text-neutral-400 text-sm font-sans mb-4 text-center" style={{ maxWidth: 230 }}>
+          Crie seus primeiros treinos para organizar sua rotina na academia
+        </Text>
+      </View>
+    </View>
+  );
+};
 
 const colorOptions = [
   '#EF4444', // Vermelho
@@ -488,62 +507,65 @@ const handleDeleteCategory = async () => {
 
       </View>
       
+      {filteredWorkouts.length === 0 ? (
+        <EmptyState onCreateWorkout={handleOpenCreate} />
+      ) : (
+        <SwipeListView
+          data={filteredWorkouts}
+          keyExtractor={(item) => String(item.id)}
+          contentContainerStyle={{ paddingBottom: 24 }}
+          renderItem={({ item }) => {
+            const muscles = item.type ? item.type.split(',') : [];
 
-      <SwipeListView
-        data={filteredWorkouts}
-        keyExtractor={(item) => String(item.id)}
-        contentContainerStyle={{ paddingBottom: 24 }}
-        renderItem={({ item }) => {
-          const muscles = item.type ? item.type.split(',') : [];
+            return (
+              <View className="w-full flex flex-col justify-center px-6 h-[100px] pt-1 pb-4 border-b border-neutral-700 bg-zinc-800">
+                <View className="flex flex-row justify-between">
+                  <TouchableOpacity
+                    className="flex flex-col gap-1 mt-1"
+                    onPress={() => handleOpenEdit(item)}
+                  >
+                    <Text className="text-xl font-sans font-medium text-gray-300">{item.name}</Text>
+                    <Text className="text-neutral-400 text-sm mt-1 font-sans">
+                      {new Date(item.date ?? '').toLocaleDateString('pt-BR')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
 
-          return (
-            <View className="w-full flex flex-col justify-center px-6 h-[100px] pt-1 pb-4 border-b border-neutral-700 bg-zinc-800">
-              <View className="flex flex-row justify-between">
-                <TouchableOpacity
-                  className="flex flex-col gap-1 mt-1"
-                  onPress={() => handleOpenEdit(item)}
-                >
-                  <Text className="text-xl font-sans font-medium text-gray-300">{item.name}</Text>
-                  <Text className="text-neutral-400 text-sm mt-1 font-sans">
-                    {new Date(item.date ?? '').toLocaleDateString('pt-BR')}
-                  </Text>
+                <View className="flex-row flex-wrap gap-2 justify-start mt-3 items-start flex-1 overflow-hidden">
+                  {muscles.map((muscle) => (
+                    <View
+                      key={muscle}
+                      className="px-3 py-1 rounded-xl max-w-[80px] overflow-hidden"
+                      style={{ backgroundColor: muscleColors[muscle] ?? '#94a3b8' }}
+                    >
+                      <Text
+                        className="text-xs font-medium text-white font-sans"
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                      >
+                        {muscle}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            );
+          }}
+          renderHiddenItem={({ item }) => (
+            <View className="w-full flex flex-col justify-center px-6 border-b border-neutral-700 bg-rose-500">
+              <View className="flex flex-row justify-start items-center h-full">
+                <TouchableOpacity className="p-3" onPress={() => handleDelete(item.id)}>
+                  <Ionicons name="trash" size={24} color="white" />
                 </TouchableOpacity>
               </View>
-
-              <View className="flex-row flex-wrap gap-2 justify-start mt-3 items-start flex-1 overflow-hidden">
-                {muscles.map((muscle) => (
-                  <View
-                    key={muscle}
-                    className="px-3 py-1 rounded-xl max-w-[80px] overflow-hidden"
-                    style={{ backgroundColor: muscleColors[muscle] ?? '#94a3b8' }}
-                  >
-                    <Text
-                      className="text-xs font-medium text-white font-sans"
-                      numberOfLines={1}
-                      ellipsizeMode="tail"
-                    >
-                      {muscle}
-                    </Text>
-                  </View>
-                ))}
-              </View>
             </View>
-          );
-        }}
-        renderHiddenItem={({ item }) => (
-          <View className="w-full flex flex-col justify-center px-6 border-b border-neutral-700 bg-rose-500">
-            <View className="flex flex-row justify-start items-center h-full">
-              <TouchableOpacity className="p-3" onPress={() => handleDelete(item.id)}>
-                <Ionicons name="trash" size={24} color="white" />
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-        leftOpenValue={80}
-        rightOpenValue={0}
-        disableRightSwipe={false}
-        disableLeftSwipe={true}
-      />
+          )}
+          leftOpenValue={80}
+          rightOpenValue={0}
+          disableRightSwipe={false}
+          disableLeftSwipe={true}
+        />
+      )}
 
       <Modal
         transparent

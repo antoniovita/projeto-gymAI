@@ -29,6 +29,24 @@ type ChatMessage = {
 
 const STORAGE_KEY = '@chat_messages';
 
+const EmptyState = () => {
+  return (
+    <View className="flex-1 justify-center items-center mt-[70px] px-8 pb-20">
+      <View className="items-center">
+        <View className="w-20 h-20 rounded-full items-center justify-center mb-3">
+          <Ionicons name="chatbubble-ellipses-outline" size={60} color="gray" />
+        </View>
+        <Text className="text-neutral-400 text-xl font-medium font-sans mb-2 text-center">
+          Nenhuma conversa ainda
+        </Text>
+        <Text className="text-neutral-400 text-sm font-sans mb-4 text-center" style={{ maxWidth: 230 }}>
+          Comece uma conversa para registrar suas tarefas e despesas
+        </Text>
+      </View>
+    </View>
+  );
+};
+
 export default function ChatScreen() {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -228,38 +246,42 @@ const finalText =
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View className="flex-1 justify-between mt-[20px]">
-            <FlatList
-              ref={flatListRef}
-              data={messages}
-              keyExtractor={(_, i) => i.toString()}
-              contentContainerStyle={{ padding: 16 }}
-              renderItem={({ item }) => (
-                <View className={`mb-6 ${item.role === 'user' ? 'items-end' : 'items-start'}`}>
-                  <View
-                    className={`rounded-3xl px-4 py-3 ${
-                      item.role === 'user' ? 'bg-rose-500' : 'bg-zinc-700'
-                    }`}
-                  >
-                    <Text className="text-white text-[15px] font-sans">{item.text}</Text>
-                  </View>
-                </View>
-              )}
-              ListFooterComponent={
-                isTyping ? (
-                  <View className="mb-6 items-start">
-                    <View className="rounded-3xl px-4 py-3 bg-zinc-700">
-                      <Text className="text-white text-[15px] font-sans">
-                        {typingText ? (
-                          <Text className="text-white text-[15px] font-sans">{typingText}</Text>
-                        ) : (
-                          <Ionicons name="ellipsis-horizontal" size={20} color="#white" />
-                        )}
-                      </Text>
+            {messages.length === 0 && !isTyping ? (
+              <EmptyState />
+            ) : (
+              <FlatList
+                ref={flatListRef}
+                data={messages}
+                keyExtractor={(_, i) => i.toString()}
+                contentContainerStyle={{ padding: 16 }}
+                renderItem={({ item }) => (
+                  <View className={`mb-6 ${item.role === 'user' ? 'items-end' : 'items-start'}`}>
+                    <View
+                      className={`rounded-3xl px-4 py-3 ${
+                        item.role === 'user' ? 'bg-rose-500' : 'bg-zinc-700'
+                      }`}
+                    >
+                      <Text className="text-white text-[15px] font-sans">{item.text}</Text>
                     </View>
                   </View>
-                ) : null
-              }
-            />
+                )}
+                ListFooterComponent={
+                  isTyping ? (
+                    <View className="mb-6 items-start">
+                      <View className="rounded-3xl px-4 py-3 bg-zinc-700">
+                        <Text className="text-white text-[15px] font-sans">
+                          {typingText ? (
+                            <Text className="text-white text-[15px] font-sans">{typingText}</Text>
+                          ) : (
+                            <Ionicons name="ellipsis-horizontal" size={20} color="#white" />
+                          )}
+                        </Text>
+                      </View>
+                    </View>
+                  ) : null
+                }
+              />
+            )}
 
             <View className="w-full rounded-t-[30px] pt-8 pl-6 pb-6" style={{ backgroundColor: '#1e1e1e' }}>
               <View className="flex-row pr-6">
