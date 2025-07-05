@@ -34,6 +34,7 @@ export function useRecurrentTaskDrafts() {
   const runsRef = useRef<Record<string, Record<string, string>>>({});
 
   const { createTask, deleteTask, getTaskById } = useTask();
+  
 
   const loadAll = async () => {
     setLoading(true);
@@ -270,7 +271,6 @@ export function useRecurrentTaskDrafts() {
             
             if (!draftRuns[isoDay]) {
               console.log(`[${lockKey}] Criando nova task para draft ${draft.id}`);
-              
               const dt = buildDateTime(date, draft.time).toISOString();
               const taskId = await createTask(
                 draft.title,

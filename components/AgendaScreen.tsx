@@ -1,8 +1,7 @@
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, TouchableOpacity, ScrollView, SafeAreaView,
-  Modal, TextInput, Alert, Animated, ActivityIndicator,
+  View, Text, TouchableOpacity, SafeAreaView,  Alert, Animated, 
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTask } from '../hooks/useTask';
@@ -11,7 +10,6 @@ import { SwipeListView } from 'react-native-swipe-list-view';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { useAuth } from 'hooks/useAuth';
 import { Task } from 'api/model/Task';
 import RefreshButton from './comps/refreshButton';
@@ -19,25 +17,33 @@ import TaskModal from '../components/comps/TaskModal';
 import CategoryModal from '../components/comps/CategoryModal';
 import DeleteCategoryModal from '../components/comps/DeleteCategoryModal';
 
-// Componente de Loading Animado
 const LoadingSpinner = ({ visible }: { visible: boolean }) => {
   const spinValue = React.useRef(new Animated.Value(0)).current;
   const fadeValue = React.useRef(new Animated.Value(0)).current;
+  const scaleValue = React.useRef(new Animated.Value(0.8)).current;
 
   React.useEffect(() => {
     if (visible) {
-      // Fade in
-      Animated.timing(fadeValue, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
+      // Fade in com scale
+      Animated.parallel([
+        Animated.timing(fadeValue, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleValue, {
+          toValue: 1,
+          tension: 100,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+      ]).start();
 
-      // Rotação contínua
+      // Rotação suave e contínua
       const spinAnimation = Animated.loop(
         Animated.timing(spinValue, {
           toValue: 1,
-          duration: 1000,
+          duration: 1200,
           useNativeDriver: true,
         })
       );
@@ -47,12 +53,19 @@ const LoadingSpinner = ({ visible }: { visible: boolean }) => {
         spinAnimation.stop();
       };
     } else {
-      // Fade out
-      Animated.timing(fadeValue, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
+      // Fade out com scale
+      Animated.parallel([
+        Animated.timing(fadeValue, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleValue, {
+          toValue: 0.8,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+      ]).start();
     }
   }, [visible]);
 
@@ -72,43 +85,93 @@ const LoadingSpinner = ({ visible }: { visible: boolean }) => {
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: 'rgba(0, 0, 0, 0.4)',
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 1000,
       }}
     >
-      <View className="bg-zinc-700 rounded-xl p-6 items-center justify-center">
+      <Animated.View
+        style={{
+          transform: [{ scale: scaleValue }],
+          backgroundColor: 'rgba(28, 28, 30, 0.9)',
+          borderRadius: 16,
+          padding: 24,
+          alignItems: 'center',
+          justifyContent: 'center',
+          minWidth: 120,
+          minHeight: 120,
+          shadowColor: '#000',
+          shadowOffset: {
+            width: 0,
+            height: 8,
+          },
+          shadowOpacity: 0.25,
+          shadowRadius: 16,
+          elevation: 10,
+        }}
+      >
         <Animated.View
           style={{
             transform: [{ rotate: spin }],
-            marginBottom: 16,
+            marginBottom: 12,
           }}
         >
-          <Ionicons name="sync" size={32} color="#ff7a7f" />
+          <View style={{
+            width: 32,
+            height: 32,
+            borderRadius: 16,
+            borderWidth: 3,
+            borderColor: 'transparent',
+            borderTopColor: '#ff7a7f',
+            borderRightColor: '#ff7a7f',
+          }} />
         </Animated.View>
-        <Text className="text-white text-lg font-sans">Carregando...</Text>
-      </View>
+        <Text style={{
+          color: 'white',
+          fontSize: 16,
+          fontWeight: '500',
+          textAlign: 'center',
+          opacity: 0.9,
+        }}>
+          Carregando...
+        </Text>
+      </Animated.View>
     </Animated.View>
   );
 };
 
 const ListLoadingSpinner = () => {
   const pulseValue = React.useRef(new Animated.Value(0)).current;
+  const scaleValue = React.useRef(new Animated.Value(0.95)).current;
 
   React.useEffect(() => {
     const pulseAnimation = Animated.loop(
       Animated.sequence([
-        Animated.timing(pulseValue, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseValue, {
-          toValue: 0,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
+        Animated.parallel([
+          Animated.timing(pulseValue, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(scaleValue, {
+            toValue: 1.02,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.parallel([
+          Animated.timing(pulseValue, {
+            toValue: 0,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(scaleValue, {
+            toValue: 0.98,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+        ]),
       ])
     );
     pulseAnimation.start();
@@ -120,16 +183,30 @@ const ListLoadingSpinner = () => {
 
   const opacity = pulseValue.interpolate({
     inputRange: [0, 1],
-    outputRange: [0.3, 1],
+    outputRange: [0.4, 0.8],
   });
 
   return (
     <View className="flex-1 justify-center items-center py-20">
-      <Animated.View style={{ opacity }} className="items-center">
-        <View className="w-16 h-16 rounded-full bg-rose-400 items-center justify-center mb-4">
-          <Ionicons name="list" size={32} color="white" />
+      <Animated.View 
+        style={{ 
+          opacity,
+          transform: [{ scale: scaleValue }],
+        }} 
+        className="items-center"
+      >
+        <View style={{
+          width: 64,
+          height: 64,
+          borderRadius: 32,
+          backgroundColor: 'rgba(255, 122, 127, 0.15)',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: 16,
+        }}>
+          <Ionicons name="list" size={28} color="#ff7a7f" />
         </View>
-        <Text className="text-white text-lg font-sans">Carregando tarefas...</Text>
+        <Text className="text-white text-lg font-sans opacity-70">Carregando tarefas...</Text>
       </Animated.View>
     </View>
   );
@@ -476,6 +553,14 @@ export default function AgendaScreen() {
     deleteTask: (id: string) => Promise<boolean | void>,
     fetchTasks: (id: string) => Promise<void>
   ) => {
+
+    const taskToDelete = tasks.find(task => task.id === taskId);
+    
+    if (!taskToDelete) {
+      Alert.alert('Erro', 'Tarefa não encontrada.');
+      return;
+    }
+
     Alert.alert(
       'Confirmar exclusão',
       'Tem certeza que deseja deletar essa tarefa?',
@@ -602,9 +687,11 @@ export default function AgendaScreen() {
             <View className="w-full flex flex-col justify-center px-6 h-[90px] pb-4 border-b border-neutral-700 bg-zinc-800">
               <View className="flex flex-row justify-between">
                 <TouchableOpacity className="flex flex-col gap-1 mt-1" onPress={() => handleOpenEdit(item)}>
-                  <Text className={`text-xl font-sans font-medium ${item.completed ? 'line-through text-neutral-500' : 'text-gray-300'}`}>
-                    {item.title}
-                  </Text>
+                  <View className="flex flex-row items-center gap-2">
+                    <Text className={`text-xl font-sans font-medium ${item.completed ? 'line-through text-neutral-500' : 'text-gray-300'}`}>
+                      {item.title}
+                    </Text>
+                  </View>
                   <Text className="text-neutral-400 text-sm mt-1 font-sans">
                     {format(item.datetime, 'dd/MM/yyyy')}  - {format(item.datetime, 'HH:mm')}
                   </Text>
