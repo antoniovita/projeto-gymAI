@@ -330,7 +330,7 @@ const handleDeleteCategory = async () => {
                       >
                         <View className="flex-row items-center gap-3">
                           <View
-                            style={{ width: 15, height: 15, borderRadius: 7.5, backgroundColor: color }}
+                            style={{ width: 15, height: 15, borderRadius: 7.5, backgroundColor: color, borderWidth: 0.5, borderColor: '#fff',}}
                           />
                           <Text className="text-white font-sans text-lg">{cat}</Text>
                         </View>
@@ -417,7 +417,7 @@ const handleDeleteCategory = async () => {
                   isSelected ? 'bg-rose-400' : 'bg-neutral-700'
                 }`}
               >
-                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color }} />
+                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color, borderWidth: 0.5, borderColor: '#fff' }} />
                 <Text className={`font-sans text-sm ${isSelected ? 'text-black' : 'text-white'}`}>
                   {cat}
                 </Text>
@@ -589,7 +589,7 @@ const handleDeleteCategory = async () => {
                       isSelected ? 'bg-rose-400' : 'bg-neutral-700'
                     }`}
                   >
-                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color }} />
+                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color, borderWidth: 0.5, borderColor: '#fff' }} />
                     <Text className={`${isSelected ? 'text-black' : 'text-white'}`}>{muscle}</Text>
                   </TouchableOpacity>
                 );

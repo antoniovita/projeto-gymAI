@@ -11,6 +11,35 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../hooks/useAuth';
 import { useFocusEffect } from '@react-navigation/native';
 
+const EmptyState = ({ selectedCategory, onCreateExpense }: { selectedCategory: string, onCreateExpense: () => void }) => {
+  const getCategoryMessage = (category: string) => {
+    if (category === 'Ganhos') return 'ganhos';
+    if (category === 'Gastos') return 'gastos';
+    if (category) return `despesas de ${category.toLowerCase()}`;
+    return 'despesas';
+  };
+
+  return (
+    <View className="flex-1 justify-center items-center px-8 pb-20">
+      <View className="items-center">
+        <View className="w-20 h-20 rounded-full items-center justify-center mb-3">
+          <Ionicons name="wallet-outline" size={60} color="gray" />
+        </View>
+
+        <Text className="text-neutral-400 text-xl font-medium font-sans mb-2 text-center">
+          Nenhuma despesa
+        </Text>
+
+        <Text
+          className="text-neutral-400 text-sm font-sans mb-4 text-center"
+          style={{ maxWidth: 230 }}
+        >
+          Adicione suas despesas para controlar suas finanças
+        </Text>
+      </View>
+    </View>
+  );
+};
 
 export default function ExpensesScreen() {
   const [newTaskTitle, setNewTaskTitle] = useState('');
@@ -41,10 +70,6 @@ export default function ExpensesScreen() {
   '#F43F5E', // Rosa escuro
   '#6B7280', // Cinza
 ];
-
-
-
-
 
   const [currentExpense, setCurrentExpense] = useState<any>(null);
 
@@ -312,19 +337,28 @@ export default function ExpensesScreen() {
           {categories.map((category) => {
             const isSelected = selectedCategory === category.name;
             return (
-              <TouchableOpacity
+                <TouchableOpacity
                 key={category.name}
                 onPress={() => handleCategorySelection(category.name)}
                 className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${isSelected ? 'bg-rose-400' : 'bg-neutral-700'}`}
-              >
-                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: category.color }} />
+                >
+                <View
+                  style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: 5,
+                  backgroundColor: category.color,
+                  borderWidth: 0.5,
+                  borderColor: '#fff',
+                  }}
+                />
                 <Text className={`${isSelected ? 'text-black' : 'text-white'}`}>{category.name}</Text>
-              </TouchableOpacity>
+                </TouchableOpacity>
             );
           })}
           </View>
 
-          <View className='flex flex-row items-center mt-4 gap-2 mb-4'>
+          <View className='flex flex-row items-center mt-2 gap-2 mb-4'>
             <Text className='font-sans text-2xl text-white'>R$</Text>
             <TextInput
               placeholder="00,00"
@@ -378,7 +412,7 @@ export default function ExpensesScreen() {
         <View className='flex flex-row gap-4 items-center'>
 
         <View className={`${gains - losses >= 0 ? 'border-emerald-300' : 'border-[#ff7a7f]'} flex flex-row items-center gap-4 border rounded-lg px-3 py-1`}>
-          <Text className={`${gains - losses >= 0 ? 'text-emerald-300' : 'text-[#ff7a7f]'} text-lg font-sans`}>
+          <Text className="text-lg font-sans text-white">
             {currencyFormat(Math.abs(gains - losses))}
           </Text>
         </View>
@@ -409,7 +443,9 @@ export default function ExpensesScreen() {
                       width: 15,
                       height: 15,
                       borderRadius: 7.5,
-                      backgroundColor: cat.color,
+                      backgroundColor: cat.color, 
+                      borderWidth: 0.5, 
+                      borderColor: '#fff'
                     }}
                   />
                   <Text className="text-white font-sans text-lg">{cat.name}</Text>
@@ -494,8 +530,17 @@ export default function ExpensesScreen() {
             onPress={() => handleCategorySelection(category.name)}
             className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${isSelected ? 'bg-rose-400' : 'bg-neutral-700'}`}
           >
-            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: category.color }} />
-            <Text className={`${isSelected ? 'text-black' : 'text-white'}`}>{category.name}</Text>
+            <View
+              style={{
+              width: 10,
+              height: 10,
+              borderRadius: 5,
+              backgroundColor: category.color,
+              borderWidth: 0.5,
+              borderColor: '#fff',
+              }}
+            />            
+              <Text className={`${isSelected ? 'text-black' : 'text-white'}`}>{category.name}</Text>
           </TouchableOpacity>
         );
       })}
@@ -509,39 +554,43 @@ export default function ExpensesScreen() {
         </TouchableOpacity>
       </View>
 
-      <SwipeListView
-        data={filteredExpenses}
-        keyExtractor={(item) => String(item.id)}
-        renderItem={({ item }) => (
-          <View className="w-full flex flex-col justify-center px-6 h-[90px] pb-4 border-b border-neutral-700 bg-zinc-800">
-            <View className="flex flex-row justify-between">
-              <TouchableOpacity className="flex flex-col gap-1 mt-1" onPress={() => openEditModal(item)}>
-                <Text className="text-xl font-sans font-medium text-gray-300 max-w-[250px]">
-                  {item.name.split(' ').slice(0, 6).join(' ')}
-                  {item.name.split(' ').length > 6 ? '...' : ''}
-                </Text>
-                <Text className="text-neutral-400 text-sm mt-1 font-sans">
-                  {new Date(item.date ?? '').toLocaleDateString('pt-BR')} - {new Date(item.time ?? '').toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                </Text>
-              </TouchableOpacity>
-              <Text className={`font-sans ${item.type == "Ganhos" ? "text-emerald-400" : "text-[#ff7a7f]"} text-2xl mt-6`}>{currencyFormat(Number(item.amount))}</Text>
+      {filteredExpenses.length === 0 ? (
+        <EmptyState selectedCategory={selectedCategory} onCreateExpense={openCreateModal} />
+      ) : (
+        <SwipeListView
+          data={filteredExpenses}
+          keyExtractor={(item) => String(item.id)}
+          renderItem={({ item }) => (
+            <View className="w-full flex flex-col justify-center px-6 h-[90px] pb-4 border-b border-neutral-700 bg-zinc-800">
+              <View className="flex flex-row justify-between">
+                <TouchableOpacity className="flex flex-col gap-1 mt-1" onPress={() => openEditModal(item)}>
+                  <Text className="text-xl font-sans font-medium text-gray-300 max-w-[250px]">
+                    {item.name.split(' ').slice(0, 6).join(' ')}
+                    {item.name.split(' ').length > 6 ? '...' : ''}
+                  </Text>
+                  <Text className="text-neutral-400 text-sm mt-1 font-sans">
+                    {new Date(item.date ?? '').toLocaleDateString('pt-BR')} - {new Date(item.time ?? '').toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                  </Text>
+                </TouchableOpacity>
+                <Text className={`font-sans ${item.type == "Ganhos" ? "text-emerald-400" : "text-[#ff7a7f]"} text-2xl mt-6`}>{currencyFormat(Number(item.amount))}</Text>
+              </View>
             </View>
-          </View>
-        )}
-        renderHiddenItem={({ item }) => (
-          <View className="w-full flex flex-col justify-center px-6 border-b border-neutral-700 bg-rose-500">
-            <View className="flex flex-row justify-start items-center h-full">
-              <TouchableOpacity className="p-3" onPress={() => handleDeleteExpense(item.id)}>
-                <Ionicons name="trash" size={24} color="white" />
-              </TouchableOpacity>
+          )}
+          renderHiddenItem={({ item }) => (
+            <View className="w-full flex flex-col justify-center px-6 border-b border-neutral-700 bg-rose-500">
+              <View className="flex flex-row justify-start items-center h-full">
+                <TouchableOpacity className="p-3" onPress={() => handleDeleteExpense(item.id)}>
+                  <Ionicons name="trash" size={24} color="white" />
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-        )}
-        leftOpenValue={80}
-        rightOpenValue={0}
-        disableRightSwipe={false}
-        disableLeftSwipe={true}
-      />
+          )}
+          leftOpenValue={80}
+          rightOpenValue={0}
+          disableRightSwipe={false}
+          disableLeftSwipe={true}
+        />
+      )}
 
       {renderModal(isCreateVisible, () => setIsCreateVisible(false), handleCreateExpense)}
       {renderModal(isEditVisible, () => setIsEditVisible(false), handleUpdateExpense)}

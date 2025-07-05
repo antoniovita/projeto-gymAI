@@ -71,6 +71,8 @@ export default function DeleteCategoryModal({
                           height: 15,
                           borderRadius: 7.5,
                           backgroundColor: color,
+                          borderWidth: 0.5, 
+                          borderColor: '#fff'
                         }}
                       />
                       <Text className="text-white font-sans text-lg">{cat}</Text>
