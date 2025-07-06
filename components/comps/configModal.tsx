@@ -79,16 +79,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </View>
 
               <ScrollView className="mb-4">
-                <View className="flex-row justify-between items-center py-3 border-b border-zinc-700">
-                  <Text className="text-gray-300 text-lg font-sans">Notificações</Text>
-                  <Switch
-                    value={notificationsEnabled}
-                    onValueChange={setNotificationsEnabled}
-                    trackColor={{ false: '#767577', true: '#f43f5e' }}
-                    thumbColor={notificationsEnabled ? '#ff7a7f' : '#f4f3f4'}
-                  />
-                </View>
-
                 <View className="py-3">
                   <Text className="text-gray-300 text-lg mb-2 font-sans">Histórico</Text>
                   <TouchableOpacity

@@ -102,7 +102,7 @@ export function DataModal({
             <View className="flex items-center mb-[40px]">
               <TextInput
                 className="bg-neutral-800/80 backdrop-blur-sm font-sans text-lg text-white h-[50px] w-[335px] px-5 rounded-2xl border border-neutral-700"
-                placeholder="Your name"
+                placeholder="Seu nome"
                 placeholderTextColor="#aaa"
                 value={name}
                 onChangeText={setName}
@@ -133,7 +133,7 @@ export function DataModal({
                     className="w-[48px] h-[60px] rounded-xl items-center justify-center mx-[4px] bg-neutral-800/80 backdrop-blur-sm border border-neutral-700"
                   >
                     <Text className="text-white font-sans text-2xl">
-                      {symbol || (isFocused ? <Cursor /> : null)}
+                      {symbol || (isFocused ? <Cursor /> : '•')}
                     </Text>
                   </View>
                 )}
