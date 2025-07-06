@@ -1,7 +1,7 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useFonts } from 'expo-font';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { useCallback, useEffect, useState } from 'react';
 import * as Notifications from 'expo-notifications';
@@ -16,6 +16,8 @@ import InfoScreen from 'components/subScreens/InfoScreen';
 import HelpScreen from 'components/subScreens/HelpScreen';
 import PinScreen from 'components/PinScreen';
 import RoutineScreen from 'components/RoutineScreen';
+import Purchases, { LOG_LEVEL } from 'react-native-purchases';
+
 
 
 SplashScreen.preventAutoHideAsync();
@@ -39,6 +41,22 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isDbReady, setIsDbReady] = useState<boolean>(false);
   const [hasPin, setHasPin] = useState<boolean | null>(null);
+
+// trocar isso para a minha chave depois
+  const REVENUECAT_APPLE_API_KEY = 'your_apple_api_key_here';
+  const REVENUECAT_GOOGLE_API_KEY = 'your_google_api_key_here';
+
+  useEffect(() => {
+    Purchases.setLogLevel(LOG_LEVEL.VERBOSE);
+
+    if (Platform.OS === 'ios') {
+       Purchases.configure({ apiKey: REVENUECAT_APPLE_API_KEY });
+    } else if (Platform.OS === 'android') {
+       Purchases.configure({ apiKey: REVENUECAT_GOOGLE_API_KEY });
+    }
+
+  }, []);
+
 
   useEffect(() => {
     (async () => {

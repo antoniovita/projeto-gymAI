@@ -386,7 +386,7 @@ export default function ChatScreen() {
                         item.role === 'user' ? 'bg-rose-500' : 'bg-zinc-700'
                       }`}
                     >
-                      <Text className="text-white text-[15px] font-sans">{item.text}</Text>
+                      <Text className="text-white text-[15px] font-sans max-w-[280px]">{item.text}</Text>
                     </View>
                   </View>
                 )}

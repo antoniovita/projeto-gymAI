@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "my-expo-app",
-    "slug": "my-expo-app",
+    "name": "dayo",
+    "slug": "dayo",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -9,14 +9,14 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#ff7a7f"
     },
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.myexpoapp",
+      "bundleIdentifier": "com.dayodev.dayo",
       "infoPlist": {
         "NSFaceIDUsageDescription": "Precisamos usar o Face ID para proteger seu PIN.",
         "ITSAppUsesNonExemptEncryption": false
@@ -27,7 +27,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.anonymous.myexpoapp"
+      "package": "com.dayodev.dayo"
     },
     "web": {
       "favicon": "./assets/favicon.png"
