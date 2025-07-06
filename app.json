@@ -11,12 +11,15 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.anonymous.myexpoapp",
-       "infoPlist": {
-        "NSFaceIDUsageDescription": "Precisamos usar o Face ID para proteger seu PIN."
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Precisamos usar o Face ID para proteger seu PIN.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -51,6 +54,11 @@
       ],
       "expo-font",
       "expo-secure-store"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "2c182cad-d99c-4bba-ad1d-9054ba2d5f08"
+      }
+    }
   }
 }

@@ -175,7 +175,7 @@ const BottomSheetModal: React.FC<BottomSheetModalProps> = ({
 
             <View className="gap-3">
               <TouchableOpacity
-                className={`py-4 rounded-xl ${destructive ? 'bg-red-600' : 'bg-white'}`}
+                className={`py-4`}
                 onPress={onConfirm}
               >
                 <Text className={`text-center text-base font-sans font-semibold ${destructive ? 'text-rose-400' : 'text-black'}`}>
@@ -267,7 +267,7 @@ export default function SettingsScreen() {
       onConfirm: () => {
         setModalVisible(false);
         Alert.alert(
-          'Confirmação Final',
+          'Você tem certeza?',
           'Esta é sua última chance! Todas as tarefas serão permanentemente removidas. Deseja continuar?',
           [
             { text: 'Cancelar', style: 'cancel' },
@@ -301,7 +301,7 @@ export default function SettingsScreen() {
       onConfirm: () => {
         setModalVisible(false);
         Alert.alert(
-          'Confirmação Final',
+          'Você tem certeza?',
           'Você tem certeza absoluta que deseja restaurar sua conta? Todos os dados locais serão perdidos para sempre!',
           [
             { text: 'Cancelar', style: 'cancel' },
