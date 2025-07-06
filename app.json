@@ -57,8 +57,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "2c182cad-d99c-4bba-ad1d-9054ba2d5f08"
+        "projectId": "d539f8c3-82ea-4b53-91a9-9c00c372cfa6"
       }
-    }
+    },
+    "owner": "antoniovita"
   }
 }
