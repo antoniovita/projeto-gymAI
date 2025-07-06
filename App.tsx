@@ -16,7 +16,7 @@ import InfoScreen from 'components/subScreens/InfoScreen';
 import HelpScreen from 'components/subScreens/HelpScreen';
 import PinScreen from 'components/PinScreen';
 import RoutineScreen from 'components/RoutineScreen';
-import Purchases, { LOG_LEVEL } from 'react-native-purchases';
+// import Purchases, { LOG_LEVEL } from 'react-native-purchases';
 
 
 
@@ -42,20 +42,20 @@ export default function App() {
   const [isDbReady, setIsDbReady] = useState<boolean>(false);
   const [hasPin, setHasPin] = useState<boolean | null>(null);
 
-// trocar isso para a minha chave depois
-  const REVENUECAT_APPLE_API_KEY = 'your_apple_api_key_here';
-  const REVENUECAT_GOOGLE_API_KEY = 'your_google_api_key_here';
+// // trocar isso para a minha chave depois
+//   const REVENUECAT_APPLE_API_KEY = 'your_apple_api_key_here';
+//   const REVENUECAT_GOOGLE_API_KEY = 'your_google_api_key_here';
 
-  useEffect(() => {
-    Purchases.setLogLevel(LOG_LEVEL.VERBOSE);
+//   useEffect(() => {
+//     Purchases.setLogLevel(LOG_LEVEL.VERBOSE);
 
-    if (Platform.OS === 'ios') {
-       Purchases.configure({ apiKey: REVENUECAT_APPLE_API_KEY });
-    } else if (Platform.OS === 'android') {
-       Purchases.configure({ apiKey: REVENUECAT_GOOGLE_API_KEY });
-    }
+//     if (Platform.OS === 'ios') {
+//        Purchases.configure({ apiKey: REVENUECAT_APPLE_API_KEY });
+//     } else if (Platform.OS === 'android') {
+//        Purchases.configure({ apiKey: REVENUECAT_GOOGLE_API_KEY });
+//     }
 
-  }, []);
+//   }, []);
 
 
   useEffect(() => {
