@@ -15,8 +15,6 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SwipeListView } from 'react-native-swipe-list-view';
-import { format, addDays, startOfWeek } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { useRecurrentTaskDrafts } from '../hooks/useRecurrentTaskDrafts';
 import { useAuth } from 'hooks/useAuth';
 import { useNavigation } from '@react-navigation/native';

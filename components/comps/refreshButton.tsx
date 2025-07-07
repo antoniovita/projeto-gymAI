@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { TouchableOpacity, Animated, Easing, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 

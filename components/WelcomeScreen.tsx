@@ -74,7 +74,6 @@ export default function WelcomeScreen() {
         resizeMode="contain"
       />
 
-      {/* Only show Continue button on the first step */}
       {currentStep === 0 && (
         <MotiView
           from={{ opacity: 0, translateY: 140 }}
