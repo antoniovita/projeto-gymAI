@@ -1,11 +1,11 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { Platform } from 'react-native';
 
 import WorkoutScreen from 'components/WorkoutScreen';
 import ChatScreen from 'components/ChatScreen';
 import AgendaScreen from 'components/AgendaScreen';
 import ExpensesScreen from 'components/ExpensesScreen';
-
 
 const Tab = createBottomTabNavigator();
 
@@ -23,7 +23,13 @@ export default function MainTabs() {
           height: 70,
           paddingBottom: 90,
           paddingTop: 20,
+          position: 'absolute',
+          ...(Platform.OS === 'android' && {
+            elevation: 0,
+            borderTopWidth: 0,
+          }),
         },
+        tabBarHideOnKeyboard: true,
         tabBarIcon: ({ color, focused }) => {
           let iconName: keyof typeof Ionicons.glyphMap;
 
@@ -52,7 +58,6 @@ export default function MainTabs() {
       <Tab.Screen name="Agenda" component={AgendaScreen} />
       <Tab.Screen name="Expenses" component={ExpensesScreen} />
       <Tab.Screen name="Workout" component={WorkoutScreen} />
-
     </Tab.Navigator>
   );
 }

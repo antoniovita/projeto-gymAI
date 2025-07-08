@@ -71,7 +71,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               className="bg-[#1e1e1e] rounded-t-3xl p-6 max-h-[80%]"
             >
               <View className="flex-row justify-between items-center mb-4">
-                <Text className="text-white text-2xl font-bold font-sans">Configurações</Text>
+                <Text className="text-white text-2xl font-sans">Configurações</Text>
                 <TouchableOpacity onPress={handleClose}>
                   <Ionicons name="close" size={28} color="white" />
                 </TouchableOpacity>
@@ -99,7 +99,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     }}
                     className="bg-zinc-600 py-3 px-4 rounded-xl items-center"
                   >
-                    <Text className="text-rose-400 font-sans font-medium text-base">Apagar Conversa</Text>
+                    <Text className="text-rose-400 font-sans text-base">Apagar Conversa</Text>
                   </TouchableOpacity>
                 </View>
               </ScrollView>
@@ -108,7 +108,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 className="bg-rose-500 py-3 rounded-xl items-center mb-4"
                 onPress={handleClose}
               >
-                <Text className="text-white text-lg font-semibold font-sans">Salvar</Text>
+                <Text className="text-white text-lg font-sans">Salvar</Text>
               </TouchableOpacity>
             </Animated.View>
           </TouchableWithoutFeedback>
