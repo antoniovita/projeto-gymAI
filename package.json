@@ -1,5 +1,5 @@
 {
-  "name": "my-expo-app",
+  "name": "dayo",
   "version": "1.0.0",
   "scripts": {
     "android": "expo start --android",
@@ -23,7 +23,7 @@
     "compromise-dates": "^3.7.1",
     "cron-parser": "^5.3.0",
     "date-fns": "^4.1.0",
-    "expo": "53.0.17",
+    "expo": "53.0.18",
     "expo-constants": "~17.1.6",
     "expo-dev-client": "~5.2.4",
     "expo-font": "~13.3.1",
@@ -32,7 +32,7 @@
     "expo-notifications": "~0.31.4",
     "expo-secure-store": "~14.2.3",
     "expo-splash-screen": "~0.30.10",
-    "expo-sqlite": "~15.2.13",
+    "expo-sqlite": "~15.2.14",
     "expo-status-bar": "~2.2.3",
     "expo-task-manager": "^13.1.6",
     "moti": "^0.30.0",
@@ -41,6 +41,7 @@
     "react-dom": "19.0.0",
     "react-native": "0.79.5",
     "react-native-confirmation-code-field": "^7.6.1",
+    "react-native-gesture-handler": "~2.24.0",
     "react-native-linear-gradient": "^2.8.3",
     "react-native-modal": "^13.0.1",
     "react-native-modal-datetime-picker": "^18.0.0",
@@ -48,7 +49,6 @@
     "react-native-safe-area-context": "^5.4.0",
     "react-native-screens": "~4.11.1",
     "react-native-svg": "15.11.2",
-    "react-native-swipe-list-view": "^3.2.9",
     "react-native-uuid": "^2.0.3",
     "react-native-web": "^0.20.0"
   },
@@ -70,5 +70,12 @@
     "root": true
   },
   "main": "node_modules/expo/AppEntry.js",
-  "private": true
+  "private": true,
+  "expo": {
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "listUnknownPackages": false
+      }
+    }
+  }
 }

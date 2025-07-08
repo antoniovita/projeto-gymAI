@@ -1,12 +1,12 @@
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, TouchableOpacity, SafeAreaView,  Alert, Animated, 
+  View, Text, TouchableOpacity, SafeAreaView, Alert, Animated, FlatList,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { useTask } from '../hooks/useTask';
 import { useRecurrentTaskDrafts } from '../hooks/useRecurrentTaskDrafts';
-import { SwipeListView } from 'react-native-swipe-list-view';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { format } from 'date-fns';
@@ -168,6 +168,61 @@ const EmptyState = ({ dateFilter, onCreateTask }: { dateFilter: Date, onCreateTa
         </Text>
       </View>
     </View>
+  );
+};
+
+const SwipeableTaskItem = ({ 
+  item, 
+  onEdit, 
+  onToggleCompletion, 
+  onDelete 
+}: { 
+  item: Task, 
+  onEdit: (task: Task) => void, 
+  onToggleCompletion: (taskId: string, completed: 0 | 1) => void,
+  onDelete: (taskId: string) => void
+}) => {
+  const renderLeftActions = () => (
+    <View className="flex-row items-center justify-start border-t bg-rose-500 px-4 h-full">
+      <TouchableOpacity
+        onPress={() => onDelete(item.id)}
+        className="flex-row items-center justify-center w-16 h-16 rounded-full"
+      >
+        <Ionicons name="trash" size={24} color="white" />
+      </TouchableOpacity>
+    </View>
+  );
+
+  return (
+    <Swipeable
+      renderLeftActions={renderLeftActions}
+      leftThreshold={40}
+      friction={1}
+      overshootLeft={false}
+    >
+      <View className="w-full flex flex-col justify-center px-6 h-[90px] pb-4 border-b border-neutral-700 bg-zinc-800">
+        <View className="flex flex-row justify-between">
+          <TouchableOpacity className="flex flex-col gap-1 mt-1" onPress={() => onEdit(item)}>
+            <View className="flex flex-row items-center gap-2">
+              <Text className={`text-xl font-sans font-medium ${item.completed ? 'line-through text-neutral-500' : 'text-gray-300'}`}>
+                {item.title}
+              </Text>
+            </View>
+            <Text className="text-neutral-400 text-sm mt-1 font-sans">
+              {format(new Date(item.datetime), 'dd/MM/yyyy')}  - {format(new Date(item.datetime), 'HH:mm')}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => onToggleCompletion(item.id, item.completed)}
+            className={`w-[25px] h-[25px] mt-4 border rounded-lg ${item.completed ? 'bg-rose-500' : 'border-2 border-neutral-600'}`}
+            style={{ alignItems: 'center', justifyContent: 'center' }}
+          >
+            {item.completed ? <Ionicons name="checkmark" size={20} color="white" /> : null}
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Swipeable>
   );
 };
 
@@ -355,11 +410,8 @@ export default function AgendaScreen() {
           setIsLoading(true);
           console.log('=== CARREGAMENTO INICIAL DA AGENDA ===');
           
-          // Primeiro carrega as tasks existentes
           await fetchTasks(userId);
-          
-          // Depois processa drafts para hoje
-          await processTasksForDate(new Date());
+          await filterTasks(new Date());
           
           console.log('=== CARREGAMENTO INICIAL CONCLUÍDO ===');
         } catch (error) {
@@ -371,7 +423,7 @@ export default function AgendaScreen() {
       };
 
       loadInitialData();
-    }, [userId])
+    }, [])
   );
 
   useEffect(() => {
@@ -501,12 +553,7 @@ export default function AgendaScreen() {
     }
   };
 
-  const handleDeleteTask = (
-    taskId: string,
-    userId: string,
-    deleteTask: (id: string) => Promise<boolean | void>,
-    fetchTasks: (id: string) => Promise<void>
-  ) => {
+    const handleDeleteTask = (taskId: string) => {
     const taskToDelete = tasks.find(task => task.id === taskId);
     
     if (!taskToDelete) {
@@ -526,13 +573,10 @@ export default function AgendaScreen() {
           text: 'Deletar',
           style: 'destructive',
           onPress: async () => {
-            try {
               await deleteTask(taskId);
-              await processTasksForDate(dateFilter);
-            } catch (error) {
-              console.error('Erro ao deletar tarefa:', error);
-              Alert.alert('Erro', 'Falha ao deletar tarefa');
-            }
+              await fetchTasks(userId!);
+              await filterTasks(dateFilter);
+              setFilteredTasks(prev => prev.filter(task => task.id !== taskId));
           },
         },
       ],
@@ -547,6 +591,15 @@ export default function AgendaScreen() {
   };
 
   const isCurrentlyLoading = isLoading || isSaving || isProcessingDrafts || draftLoading;
+
+  const renderTaskItem = ({ item }: { item: Task }) => (
+    <SwipeableTaskItem
+      item={item}
+      onEdit={handleOpenEdit}
+      onToggleCompletion={toggleTaskCompletion}
+      onDelete={handleDeleteTask}
+    />
+  );
 
   return (
     <SafeAreaView className="flex-1 bg-zinc-800">
@@ -635,49 +688,12 @@ export default function AgendaScreen() {
       {filteredTasks.length === 0 ? (
         <EmptyState dateFilter={dateFilter} onCreateTask={handleCreateTaskFromEmpty} />
       ) : (
-        <SwipeListView
+        <FlatList
           data={filteredTasks}
           keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <View className="w-full flex flex-col justify-center px-6 h-[90px] pb-4 border-b border-neutral-700 bg-zinc-800">
-              <View className="flex flex-row justify-between">
-                <TouchableOpacity className="flex flex-col gap-1 mt-1" onPress={() => handleOpenEdit(item)}>
-                  <View className="flex flex-row items-center gap-2">
-                    <Text className={`text-xl font-sans font-medium ${item.completed ? 'line-through text-neutral-500' : 'text-gray-300'}`}>
-                      {item.title}
-                    </Text>
-                  </View>
-                  <Text className="text-neutral-400 text-sm mt-1 font-sans">
-                    {format(item.datetime, 'dd/MM/yyyy')}  - {format(item.datetime, 'HH:mm')}
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={() => toggleTaskCompletion(item.id, item.completed)}
-                  className={`w-[25px] h-[25px] mt-4 border rounded-lg ${item.completed ? 'bg-rose-500' : 'border-2 border-neutral-600'}`}
-                  style={{ alignItems: 'center', justifyContent: 'center' }}
-                >
-                  {item.completed ? <Ionicons name="checkmark" size={20} color="white" /> : null}
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
-          renderHiddenItem={({ item }) => (
-            <View className="w-full flex flex-col justify-center px-6 border-b border-neutral-700 bg-rose-500">
-              <View className="flex flex-row justify-start items-center h-full">
-                <TouchableOpacity
-                  className="p-3"
-                  onPress={() => handleDeleteTask(item.id, userId!, deleteTask, fetchTasks)}
-                >
-                  <Ionicons name="trash" size={24} color="white" />
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
-          leftOpenValue={80}
-          rightOpenValue={0}
-          disableRightSwipe={false}
-          disableLeftSwipe={true}
+          renderItem={renderTaskItem}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 100 }}
         />
       )}
 

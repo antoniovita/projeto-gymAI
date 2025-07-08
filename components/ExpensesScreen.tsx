@@ -6,9 +6,10 @@ import {
   SafeAreaView,
   Alert,
   Dimensions,
+  FlatList,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { SwipeListView } from 'react-native-swipe-list-view';
+import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { useExpenses } from '../hooks/useExpenses';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../hooks/useAuth';
@@ -316,6 +317,50 @@ export default function ExpensesScreen() {
     }
   };
 
+  const renderLeftActions = (item: any) => {
+    return (
+    <View className="flex-row items-center justify-start border-t bg-rose-500 px-4 h-full">
+        <TouchableOpacity 
+          onPress={() => handleDeleteExpense(item.id)}
+        className="flex-row items-center justify-center w-16 h-16 rounded-full"
+        >
+          <Ionicons name="trash" size={24} color="white" />
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  const renderExpenseItem = ({ item }: { item: any }) => {
+    return (
+      <Swipeable
+        renderLeftActions={() => renderLeftActions(item)}
+        leftThreshold={40}
+        rightThreshold={40}
+        overshootLeft={false}
+        overshootRight={false}
+        dragOffsetFromLeftEdge={80}
+        friction={1}
+      >
+        <View className="w-full flex flex-col justify-center px-6 h-[90px] pb-4 border-b border-neutral-700 bg-zinc-800">
+          <View className="flex flex-row justify-between">
+            <TouchableOpacity className="flex flex-col gap-1 mt-1" onPress={() => openEditModal(item)}>
+              <Text className="text-xl font-sans font-medium text-gray-300 max-w-[250px]">
+                {item.name.split(' ').slice(0, 6).join(' ')}
+                {item.name.split(' ').length > 6 ? '...' : ''}
+              </Text>
+              <Text className="text-neutral-400 text-sm mt-1 font-sans">
+                {new Date(item.date ?? '').toLocaleDateString('pt-BR')} - {new Date(item.time ?? '').toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+              </Text>
+            </TouchableOpacity>
+            <Text className={`font-sans ${item.type == "Ganhos" ? "text-emerald-400" : "text-[#ff7a7f]"} text-2xl mt-6`}>
+              {currencyFormat(Number(item.amount))}
+            </Text>
+          </View>
+        </View>
+      </Swipeable>
+    );
+  };
+
   useEffect(() => {
     loadCategoriesFromStorage();
   }, []);
@@ -452,40 +497,11 @@ export default function ExpensesScreen() {
       {filteredExpenses.length === 0 ? (
         <EmptyState selectedCategory={selectedCategory} onCreateExpense={openCreateModal} />
       ) : (
-        <SwipeListView
+        <FlatList
           data={filteredExpenses}
           keyExtractor={(item) => String(item.id)}
-          renderItem={({ item }) => (
-            <View className="w-full flex flex-col justify-center px-6 h-[90px] pb-4 border-b border-neutral-700 bg-zinc-800">
-              <View className="flex flex-row justify-between">
-                <TouchableOpacity className="flex flex-col gap-1 mt-1" onPress={() => openEditModal(item)}>
-                  <Text className="text-xl font-sans font-medium text-gray-300 max-w-[250px]">
-                    {item.name.split(' ').slice(0, 6).join(' ')}
-                    {item.name.split(' ').length > 6 ? '...' : ''}
-                  </Text>
-                  <Text className="text-neutral-400 text-sm mt-1 font-sans">
-                    {new Date(item.date ?? '').toLocaleDateString('pt-BR')} - {new Date(item.time ?? '').toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                  </Text>
-                </TouchableOpacity>
-                <Text className={`font-sans ${item.type == "Ganhos" ? "text-emerald-400" : "text-[#ff7a7f]"} text-2xl mt-6`}>
-                  {currencyFormat(Number(item.amount))}
-                </Text>
-              </View>
-            </View>
-          )}
-          renderHiddenItem={({ item }) => (
-            <View className="w-full flex flex-col justify-center px-6 border-b border-neutral-700 bg-rose-500">
-              <View className="flex flex-row justify-start items-center h-full">
-                <TouchableOpacity className="p-3" onPress={() => handleDeleteExpense(item.id)}>
-                  <Ionicons name="trash" size={24} color="white" />
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
-          leftOpenValue={80}
-          rightOpenValue={0}
-          disableRightSwipe={false}
-          disableLeftSwipe={true}
+          renderItem={renderExpenseItem}
+          showsVerticalScrollIndicator={false}
         />
       )}
 

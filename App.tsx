@@ -5,6 +5,7 @@ import { Platform, View } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { useCallback, useEffect, useState } from 'react';
 import * as Notifications from 'expo-notifications';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import "./global.css";
 import { AuthService } from 'api/service/authService';
 import { initDatabase, getDb } from 'database';
@@ -17,8 +18,6 @@ import HelpScreen from 'components/subScreens/HelpScreen';
 import PinScreen from 'components/PinScreen';
 import RoutineScreen from 'components/RoutineScreen';
 // import Purchases, { LOG_LEVEL } from 'react-native-purchases';
-
-
 
 SplashScreen.preventAutoHideAsync();
 
@@ -56,7 +55,6 @@ export default function App() {
 //     }
 
 //   }, []);
-
 
   useEffect(() => {
     (async () => {
@@ -136,22 +134,23 @@ export default function App() {
   }
 
   return (
-    <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
-      <NavigationContainer>
-        <Stack.Navigator
-          initialRouteName={initialRoute}
-          screenOptions={{ headerShown: false }}
-        >
-          <Stack.Screen name="WelcomeScreen" component={WelcomeScreen} />
-          <Stack.Screen name="MainTabs" component={MainTabs} />
-          <Stack.Screen name="SettingsScreen" component={SettingsScreen} />
-          <Stack.Screen name="InfoScreen" component={InfoScreen} />
-          <Stack.Screen name="PinScreen" component={PinScreen} />
-          <Stack.Screen name="HelpScreen" component={HelpScreen} />
-          <Stack.Screen name="RoutineScreen" component={RoutineScreen} />
-
-        </Stack.Navigator>
-      </NavigationContainer>
-    </View>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
+        <NavigationContainer>
+          <Stack.Navigator
+            initialRouteName={initialRoute}
+            screenOptions={{ headerShown: false }}
+          >
+            <Stack.Screen name="WelcomeScreen" component={WelcomeScreen} />
+            <Stack.Screen name="MainTabs" component={MainTabs} />
+            <Stack.Screen name="SettingsScreen" component={SettingsScreen} />
+            <Stack.Screen name="InfoScreen" component={InfoScreen} />
+            <Stack.Screen name="PinScreen" component={PinScreen} />
+            <Stack.Screen name="HelpScreen" component={HelpScreen} />
+            <Stack.Screen name="RoutineScreen" component={RoutineScreen} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </View>
+    </GestureHandlerRootView>
   );
 }

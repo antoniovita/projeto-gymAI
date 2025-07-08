@@ -6,11 +6,12 @@ import {
   Modal,
   TextInput,
   Alert,
-  ScrollView
+  ScrollView,
+  FlatList
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useState, useEffect, useCallback } from 'react';
-import { SwipeListView } from 'react-native-swipe-list-view';
+import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { useWorkout } from '../hooks/useWorkout';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from 'hooks/useAuth';
@@ -59,7 +60,6 @@ const muscleColors: Record<string, string> = {
   Ombros: '#38bdf8',
 };
 
-
 export default function WorkoutScreen() {
   const [isCreateVisible, setIsCreateVisible] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -76,34 +76,32 @@ export default function WorkoutScreen() {
   const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false);
   const [showDeleteCategoryModal, setShowDeleteCategoryModal] = useState(false);
 
-
   const [customMuscleGroups, setCustomMuscleGroups] = useState<{ name: string; color: string }[]>([]);
 
   useEffect(() => {
-  const loadMuscleGroups = async () => {
-    try {
-      const stored = await AsyncStorage.getItem('customMuscleGroups');
-      if (stored) {
-        setCustomMuscleGroups(JSON.parse(stored));
-      } else {
-        const initial = Object.entries(muscleColors).map(([name, color]) => ({ name, color }));
-        setCustomMuscleGroups(initial);
-        await AsyncStorage.setItem('customMuscleGroups', JSON.stringify(initial));
+    const loadMuscleGroups = async () => {
+      try {
+        const stored = await AsyncStorage.getItem('customMuscleGroups');
+        if (stored) {
+          setCustomMuscleGroups(JSON.parse(stored));
+        } else {
+          const initial = Object.entries(muscleColors).map(([name, color]) => ({ name, color }));
+          setCustomMuscleGroups(initial);
+          await AsyncStorage.setItem('customMuscleGroups', JSON.stringify(initial));
+        }
+      } catch (err) {
+        console.error('Erro ao carregar grupos musculares:', err);
       }
-    } catch (err) {
-      console.error('Erro ao carregar grupos musculares:', err);
-    }
-  };
+    };
 
-  loadMuscleGroups();
-}, []);
+    loadMuscleGroups();
+  }, []);
 
   const { userId, loading } = useAuth();
 
   const muscleGroups = customMuscleGroups.map((g) => g.name);
 
-
- const {
+  const {
     workouts,
     createWorkout,
     fetchWorkouts,
@@ -146,28 +144,25 @@ export default function WorkoutScreen() {
     }, [userId])
   );
 
-const categories = Array.from(
-  new Set([
-    ...muscleGroups,
-    ...workout
-      .flatMap((task) => task.type?.split(',').map((s: string) => s.trim()) ?? [])
-      .filter((t) => t.length > 0),
-    ...extraCatWorkout.map(cat => cat.name),
-  ])
-);
+  const categories = Array.from(
+    new Set([
+      ...muscleGroups,
+      ...workout
+        .flatMap((task) => task.type?.split(',').map((s: string) => s.trim()) ?? [])
+        .filter((t) => t.length > 0),
+      ...extraCatWorkout.map(cat => cat.name),
+    ])
+  );
 
+  const getCategoryColor = (catName: string) => {
+    const custom = customMuscleGroups.find(c => c.name === catName);
+    if (custom) return custom.color;
 
-const getCategoryColor = (catName: string) => {
-  const custom = customMuscleGroups.find(c => c.name === catName);
-  if (custom) return custom.color;
+    const extraCat = extraCatWorkout.find(c => c.name === catName);
+    if (extraCat) return extraCat.color;
 
-  const extraCat = extraCatWorkout.find(c => c.name === catName);
-  if (extraCat) return extraCat.color;
-
-  return '#999999';
-};
-
-
+    return '#999999';
+  };
 
   const handleAddCategory = () => {
     if (!newCategoryName.trim()) {
@@ -192,33 +187,32 @@ const getCategoryColor = (catName: string) => {
     setIsCategoryModalVisible(false);
   };
 
-const handleDeleteCategory = async () => {
-  if (!categoryToDelete) return;
+  const handleDeleteCategory = async () => {
+    if (!categoryToDelete) return;
 
-  const isCategoryInUse = workout.some(task =>
-    task.type?.split(',').map((t: string) => t.trim()).includes(categoryToDelete)
-  );
+    const isCategoryInUse = workout.some(task =>
+      task.type?.split(',').map((t: string) => t.trim()).includes(categoryToDelete)
+    );
 
-  if (isCategoryInUse) {
-    Alert.alert('Erro', 'Esta categoria está associada a uma ou mais tarefas e não pode ser excluída.');
+    if (isCategoryInUse) {
+      Alert.alert('Erro', 'Esta categoria está associada a uma ou mais tarefas e não pode ser excluída.');
+      setShowConfirmDeleteModal(false);
+      setCategoryToDelete(null);
+      return;
+    }
+
+    const newMuscles = customMuscleGroups.filter(c => c.name !== categoryToDelete);
+    const newExtras = extraCatWorkout.filter(c => c.name !== categoryToDelete);
+
+    setCustomMuscleGroups(newMuscles);
+    setextraCatWorkout(newExtras);
+
+    await AsyncStorage.setItem('customMuscleGroups', JSON.stringify(newMuscles));
+    await AsyncStorage.setItem('extraCatWorkout', JSON.stringify(newExtras));
+
     setShowConfirmDeleteModal(false);
     setCategoryToDelete(null);
-    return;
-  }
-
-  const newMuscles = customMuscleGroups.filter(c => c.name !== categoryToDelete);
-  const newExtras = extraCatWorkout.filter(c => c.name !== categoryToDelete);
-
-  setCustomMuscleGroups(newMuscles);
-  setextraCatWorkout(newExtras);
-
-  await AsyncStorage.setItem('customMuscleGroups', JSON.stringify(newMuscles));
-  await AsyncStorage.setItem('extraCatWorkout', JSON.stringify(newExtras));
-
-  setShowConfirmDeleteModal(false);
-  setCategoryToDelete(null);
-};
-
+  };
 
   const toggleMuscleForWorkout = (muscle: string) => {
     setSelectedMusclesForWorkout((prev) =>
@@ -304,6 +298,81 @@ const handleDeleteCategory = async () => {
         workout.type?.split(',').some((muscle) => selectedCategories.includes(muscle))
       );
 
+  const renderLeftActions = (item: any) => {
+    return (
+    <View className="flex-row items-center justify-start border-t bg-rose-500 px-4 h-full">
+        <TouchableOpacity 
+        className="flex-row items-center justify-center w-16 h-16 rounded-full"
+          onPress={() => handleDelete(item.id)}
+        >
+          <Ionicons name="trash" size={24} color="white" />
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  const renderWorkoutItem = ({ item }: { item: any }) => {
+    const muscles = item.type ? item.type.split(',') : [];
+
+    return (
+      <Swipeable
+        renderLeftActions={() => renderLeftActions(item)}
+        leftThreshold={40}
+        rightThreshold={40}
+        overshootLeft={false}
+        overshootRight={false}
+        dragOffsetFromLeftEdge={80}
+        friction={1}
+      >
+        <View className="w-full flex flex-col justify-center px-6 h-[102px] pt-1 pb-4 border-b border-neutral-700 bg-zinc-800">
+          <View className="flex flex-row justify-between">
+            <TouchableOpacity
+              className="flex flex-col gap-1 mt-1"
+              onPress={() => handleOpenEdit(item)}
+            >
+              <Text className="text-xl font-sans font-medium text-gray-300">{item.name}</Text>
+              <Text className="text-neutral-400 text-sm mt-1 font-sans">
+                {new Date(item.date ?? '').toLocaleDateString('pt-BR')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <View className="flex-row flex-wrap gap-2 justify-start mt-3 items-start flex-1 overflow-hidden">
+            {muscles.length > 0 ? (
+              muscles.map((muscle: string) => (
+                <View
+                  key={muscle}
+                  className="px-3 py-1 rounded-xl max-w-[80px] overflow-hidden"
+                  style={{ backgroundColor: muscleColors[muscle] ?? '#94a3b8' }}
+                >
+                  <Text
+                    className="text-xs font-medium text-white font-sans"
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {muscle}
+                  </Text>
+                </View>
+              ))
+            ) : (
+              <View
+                className="px-3 py-1 rounded-xl overflow-hidden"
+                style={{ backgroundColor: '#94a3b8' }}
+              >
+                <Text
+                  className="text-xs font-medium text-white font-sans"
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  Sem categoria
+                </Text>
+              </View>
+            )}
+          </View>
+        </View>
+      </Swipeable>
+    );
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-zinc-800">
@@ -318,108 +387,104 @@ const handleDeleteCategory = async () => {
         <View className='flex flex-row justify-between items-center'>
           <Text className="text-3xl text-white font-medium font-sans">Academia</Text>
         
-            <TouchableOpacity onPress={() => setShowDeleteCategoryModal(true)}>
-              <Ionicons name="options-outline" size={24} color="#ff7a7f" />
-            </TouchableOpacity>
+          <TouchableOpacity onPress={() => setShowDeleteCategoryModal(true)}>
+            <Ionicons name="options-outline" size={24} color="#ff7a7f" />
+          </TouchableOpacity>
 
-
-        <Modal
-          transparent
-          animationType="fade"
-          visible={showDeleteCategoryModal}
-          onRequestClose={() => setShowDeleteCategoryModal(false)}
-        >
-          <View className="flex-1 bg-black/80 justify-center items-center px-6">
-            <View className="bg-zinc-800 rounded-2xl w-full max-h-[80%] p-4">
-              <ScrollView className="mb-4">
-                {categories.length === 0 ? (
-                  <View className="items-center justify-center py-12">
-                    <Ionicons name="folder-open-outline" size={64} color="#aaa" className="mb-4" />
-                    <Text className="text-neutral-400 text-lg font-sans text-center">
-                      Você ainda não criou categorias.
-                    </Text>
-                  </View>
-                ) : (
-                  categories.map((cat) => {
-                    const color = getCategoryColor(cat);
-                    return (
-                      <View
-                        key={cat}
-                        className="flex-row justify-between items-center py-2 border-b border-neutral-700"
-                      >
-                        <View className="flex-row items-center gap-3">
-                          <View
-                            style={{ width: 15, height: 15, borderRadius: 7.5, backgroundColor: color, borderWidth: 0.5, borderColor: '#fff',}}
-                          />
-                          <Text className="text-white font-sans text-lg">{cat}</Text>
-                        </View>
-                        <TouchableOpacity
-                          onPress={() => {
-                            setCategoryToDelete(cat);
-                            setShowConfirmDeleteModal(true);
-                          }}
-                          className="p-2 bg-neutral-700 rounded-xl"
+          <Modal
+            transparent
+            animationType="fade"
+            visible={showDeleteCategoryModal}
+            onRequestClose={() => setShowDeleteCategoryModal(false)}
+          >
+            <View className="flex-1 bg-black/80 justify-center items-center px-6">
+              <View className="bg-zinc-800 rounded-2xl w-full max-h-[80%] p-4">
+                <ScrollView className="mb-4">
+                  {categories.length === 0 ? (
+                    <View className="items-center justify-center py-12">
+                      <Ionicons name="folder-open-outline" size={64} color="#aaa" className="mb-4" />
+                      <Text className="text-neutral-400 text-lg font-sans text-center">
+                        Você ainda não criou categorias.
+                      </Text>
+                    </View>
+                  ) : (
+                    categories.map((cat) => {
+                      const color = getCategoryColor(cat);
+                      return (
+                        <View
+                          key={cat}
+                          className="flex-row justify-between items-center py-2 border-b border-neutral-700"
                         >
-                        <Ionicons name="trash" size={20} color="#fa4d5c" />
-                        </TouchableOpacity>
-                      </View>
-                    );
-                  })
-                )}
-              </ScrollView>
+                          <View className="flex-row items-center gap-3">
+                            <View
+                              style={{ width: 15, height: 15, borderRadius: 7.5, backgroundColor: color, borderWidth: 0.5, borderColor: '#fff',}}
+                            />
+                            <Text className="text-white font-sans text-lg">{cat}</Text>
+                          </View>
+                          <TouchableOpacity
+                            onPress={() => {
+                              setCategoryToDelete(cat);
+                              setShowConfirmDeleteModal(true);
+                            }}
+                            className="p-2 bg-neutral-700 rounded-xl"
+                          >
+                          <Ionicons name="trash" size={20} color="#fa4d5c" />
+                          </TouchableOpacity>
+                        </View>
+                      );
+                    })
+                  )}
+                </ScrollView>
 
-              <TouchableOpacity
-                onPress={() => setShowDeleteCategoryModal(false)}
-                className="bg-neutral-700 rounded-xl p-3 items-center"
+                <TouchableOpacity
+                  onPress={() => setShowDeleteCategoryModal(false)}
+                  className="bg-neutral-700 rounded-xl p-3 items-center"
+                >
+                  <Text className="text-white text-lg font-sans font-semibold">Fechar</Text>
+                </TouchableOpacity>
+              </View>
+
+              <Modal
+                transparent
+                animationType="fade"
+                visible={showConfirmDeleteModal}
+                onRequestClose={() => setShowConfirmDeleteModal(false)}
               >
-                <Text className="text-white text-lg font-sans font-semibold">Fechar</Text>
-              </TouchableOpacity>
-            </View>
+                <View className="flex-1 bg-black/80 justify-center items-center px-8">
+                  <View className="bg-zinc-800 w-full rounded-2xl p-6 items-center shadow-lg">
+                    <Ionicons name="alert-circle" size={48} color="#ff7a7f" className="mb-4" />
+                    <Text className="text-white text-xl font-semibold mb-2 font-sans text-center">
+                      Apagar Categoria
+                    </Text>
+                    <Text className="text-neutral-400 font-sans text-center mb-6">
+                      {categoryToDelete
+                        ? `Tem certeza que deseja apagar a categoria "${categoryToDelete}"? Esta ação não pode ser desfeita.`
+                        : 'Tem certeza que deseja apagar esta categoria? Esta ação não pode ser desfeita.'}
+                    </Text>
 
-            <Modal
-              transparent
-              animationType="fade"
-              visible={showConfirmDeleteModal}
-              onRequestClose={() => setShowConfirmDeleteModal(false)}
-            >
-              <View className="flex-1 bg-black/80 justify-center items-center px-8">
-                <View className="bg-zinc-800 w-full rounded-2xl p-6 items-center shadow-lg">
-                  <Ionicons name="alert-circle" size={48} color="#ff7a7f" className="mb-4" />
-                  <Text className="text-white text-xl font-semibold mb-2 font-sans text-center">
-                    Apagar Categoria
-                  </Text>
-                  <Text className="text-neutral-400 font-sans text-center mb-6">
-                    {categoryToDelete
-                      ? `Tem certeza que deseja apagar a categoria "${categoryToDelete}"? Esta ação não pode ser desfeita.`
-                      : 'Tem certeza que deseja apagar esta categoria? Esta ação não pode ser desfeita.'}
-                  </Text>
+                    <View className="flex-row w-full justify-between gap-3">
+                      <TouchableOpacity
+                        onPress={() => setShowConfirmDeleteModal(false)}
+                        className="flex-1 bg-neutral-700 py-3 rounded-xl items-center"
+                      >
+                        <Text className="text-white font-semibold font-sans">Cancelar</Text>
+                      </TouchableOpacity>
 
-                  <View className="flex-row w-full justify-between gap-3">
-                    <TouchableOpacity
-                      onPress={() => setShowConfirmDeleteModal(false)}
-                      className="flex-1 bg-neutral-700 py-3 rounded-xl items-center"
-                    >
-                      <Text className="text-white font-semibold font-sans">Cancelar</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      onPress={handleDeleteCategory}
-                      className="flex-1 bg-rose-500 py-3 rounded-xl items-center"
-                    >
-                      <Text className="text-black font-sans font-semibold">Apagar</Text>
-                    </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={handleDeleteCategory}
+                        className="flex-1 bg-rose-500 py-3 rounded-xl items-center"
+                      >
+                        <Text className="text-black font-sans font-semibold">Apagar</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 </View>
-              </View>
-            </Modal>
-          </View>
-        </Modal>
-
-
+              </Modal>
+            </View>
+          </Modal>
         </View>
 
-
-        <View className="flex flex-row flex-wrap gap-2 mt-6 pb-3">
+        <View className="flex flex-row flex-wrap gap-2 mt-6">
           {categories.map((cat) => {
             const isSelected = selectedCategories.includes(cat);
             const color = getCategoryColor(cat);
@@ -452,118 +517,67 @@ const handleDeleteCategory = async () => {
             <Text className="text-white text-sm font-sans">Nova Categoria</Text>
           </TouchableOpacity>
 
-                  <Modal
-                              transparent
-                              animationType="fade"
-                              visible={isCategoryModalVisible}
-                              onRequestClose={() => setIsCategoryModalVisible(false)}
-                            >
-                              <View className="flex-1 justify-center items-center bg-black/90 px-8">
-                                <View className="bg-zinc-800 p-6 rounded-2xl w-full">
-          
-                                  <TextInput
-                                    placeholder="Nome da categoria"
-                                    placeholderTextColor="#a1a1aa"
-                                    value={newCategoryName}
-                                    onChangeText={setNewCategoryName}
-                                    className="text-white font-sans font-3xl p-2 rounded mb-4"
-                                  />
-          
-                                  <View className="flex flex-row flex-wrap gap-2 mb-4">
-                                    {colorOptions.map((color) => (
-                                      <TouchableOpacity
-                                        key={color}
-                                        onPress={() => setNewCategoryColor(color)}
-                                        style={{
-                                          backgroundColor: color,
-                                          width: 40,
-                                          height: 40,
-                                          borderRadius: 20,
-                                          borderWidth: newCategoryColor === color ? 3 : 1,
-                                          borderColor: newCategoryColor === color ? '#fff' : '#333',
-                                        }}
-                                      />
-                                    ))}
-                                  </View>
-          
-                                  <TouchableOpacity
-                                    onPress={handleAddCategory}
-                                    className="bg-rose-400 p-3 mt-3 rounded-xl items-center"
-                                  >
-                                    <Text className="text-black font-semibold font-sans">Adicionar Categoria</Text>
-                                  </TouchableOpacity>
-          
-                                  <TouchableOpacity
-                                    onPress={() => setIsCategoryModalVisible(false)}
-                                    className="mt-4 p-2"
-                                  >
-                                    <Text className="text-neutral-400 text-center font-sans">Cancelar</Text>
-                                  </TouchableOpacity>
-                                </View>
-                              </View>
-                            </Modal>
-                            
-        </View>
+          <Modal
+            transparent
+            animationType="fade"
+            visible={isCategoryModalVisible}
+            onRequestClose={() => setIsCategoryModalVisible(false)}
+          >
+            <View className="flex-1 justify-center items-center bg-black/90 px-8">
+              <View className="bg-zinc-800 p-6 rounded-2xl w-full">
 
+                <TextInput
+                  placeholder="Nome da categoria"
+                  placeholderTextColor="#a1a1aa"
+                  value={newCategoryName}
+                  onChangeText={setNewCategoryName}
+                  className="text-white font-sans font-3xl p-2 rounded mb-4"
+                />
+
+                <View className="flex flex-row flex-wrap gap-2 mb-4">
+                  {colorOptions.map((color) => (
+                    <TouchableOpacity
+                      key={color}
+                      onPress={() => setNewCategoryColor(color)}
+                      style={{
+                        backgroundColor: color,
+                        width: 40,
+                        height: 40,
+                        borderRadius: 20,
+                        borderWidth: newCategoryColor === color ? 3 : 1,
+                        borderColor: newCategoryColor === color ? '#fff' : '#333',
+                      }}
+                    />
+                  ))}
+                </View>
+
+                <TouchableOpacity
+                  onPress={handleAddCategory}
+                  className="bg-rose-400 p-3 mt-3 rounded-xl items-center"
+                >
+                  <Text className="text-black font-semibold font-sans">Adicionar Categoria</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => setIsCategoryModalVisible(false)}
+                  className="mt-4 p-2"
+                >
+                  <Text className="text-neutral-400 text-center font-sans">Cancelar</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
+        </View>
       </View>
       
       {filteredWorkouts.length === 0 ? (
         <EmptyState onCreateWorkout={handleOpenCreate} />
       ) : (
-        <SwipeListView
+        <FlatList
           data={filteredWorkouts}
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={{ paddingBottom: 24 }}
-          renderItem={({ item }) => {
-            const muscles = item.type ? item.type.split(',') : [];
-
-            return (
-              <View className="w-full flex flex-col justify-center px-6 h-[100px] pt-1 pb-4 border-b border-neutral-700 bg-zinc-800">
-                <View className="flex flex-row justify-between">
-                  <TouchableOpacity
-                    className="flex flex-col gap-1 mt-1"
-                    onPress={() => handleOpenEdit(item)}
-                  >
-                    <Text className="text-xl font-sans font-medium text-gray-300">{item.name}</Text>
-                    <Text className="text-neutral-400 text-sm mt-1 font-sans">
-                      {new Date(item.date ?? '').toLocaleDateString('pt-BR')}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-
-                <View className="flex-row flex-wrap gap-2 justify-start mt-3 items-start flex-1 overflow-hidden">
-                  {muscles.map((muscle) => (
-                    <View
-                      key={muscle}
-                      className="px-3 py-1 rounded-xl max-w-[80px] overflow-hidden"
-                      style={{ backgroundColor: muscleColors[muscle] ?? '#94a3b8' }}
-                    >
-                      <Text
-                        className="text-xs font-medium text-white font-sans"
-                        numberOfLines={1}
-                        ellipsizeMode="tail"
-                      >
-                        {muscle}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            );
-          }}
-          renderHiddenItem={({ item }) => (
-            <View className="w-full flex flex-col justify-center px-6 border-b border-neutral-700 bg-rose-500">
-              <View className="flex flex-row justify-start items-center h-full">
-                <TouchableOpacity className="p-3" onPress={() => handleDelete(item.id)}>
-                  <Ionicons name="trash" size={24} color="white" />
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
-          leftOpenValue={80}
-          rightOpenValue={0}
-          disableRightSwipe={false}
-          disableLeftSwipe={true}
+          renderItem={renderWorkoutItem}
         />
       )}
 

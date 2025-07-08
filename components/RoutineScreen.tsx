@@ -11,10 +11,11 @@ import {
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
   Platform,
-  Keyboard
+  Keyboard,
+  FlatList
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { SwipeListView } from 'react-native-swipe-list-view';
+import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { useRecurrentTaskDrafts } from '../hooks/useRecurrentTaskDrafts';
 import { useAuth } from 'hooks/useAuth';
 import { useNavigation } from '@react-navigation/native';
@@ -30,18 +31,14 @@ export default function RoutineScreen() {
   type DayKey = typeof days[number];
   const [selectedDay, setSelectedDay] = useState<DayKey>(days[0]);
   
-  // Modal states
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<'create' | 'edit'>('create');
   const [editingDraft, setEditingDraft] = useState<any>(null);
 
-  // Controla a visibilidade do picker de horário
   const [showTimePicker, setShowTimePicker] = useState(false);
 
-  // Guarda o Date selecionado (inicializado com a hora atual)
   const [time, setTime] = useState(new Date());
   
-  // Form states
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -51,7 +48,6 @@ export default function RoutineScreen() {
     type: 'rotina'
   });
 
-  // Hook integration
   const { 
     drafts, 
     loading, 
@@ -60,7 +56,6 @@ export default function RoutineScreen() {
     deleteDraft, 
   } = useRecurrentTaskDrafts();
 
-  // Mapear dias da semana para números (0=domingo, 1=segunda...)
   const dayToNumber = {
     'Segunda': 1,
     'Terça': 2,
@@ -71,12 +66,10 @@ export default function RoutineScreen() {
     'Domingo': 0
   };
 
-  // Filtrar drafts do dia selecionado
   const draftsForSelectedDay = drafts.filter(draft => 
     draft.daysOfWeek.includes(dayToNumber[selectedDay])
   );
 
-  // Função para converter string de horário para Date
   const parseTimeString = (timeString: string) => {
     const [hours, minutes] = timeString.split(':').map(num => parseInt(num, 10));
     const date = new Date();
@@ -93,7 +86,7 @@ export default function RoutineScreen() {
       userId,
       type: 'rotina'
     });
-    setTime(new Date()); // Reset do time picker para hora atual
+    setTime(new Date());
     setEditingDraft(null);
   };
 
@@ -238,6 +231,48 @@ export default function RoutineScreen() {
     setShowTimePicker(false);
   };
 
+  const renderLeftActions = (item: any) => {
+    return (
+      <View className="flex-row items-center justify-start border-t bg-rose-500 px-4 h-full" style={{ width: 80 }}>
+        <TouchableOpacity
+          className="flex-row items-center justify-center w-16 h-16 rounded-full"
+          onPress={() => handleDelete(item)}
+        >
+          <Ionicons name="trash" size={24} color="white" />
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  const renderItem = ({ item }: { item: any }) => {
+    return (
+      <Swipeable
+        renderLeftActions={() => renderLeftActions(item)}
+        leftThreshold={80}
+        rightThreshold={40}
+        overshootLeft={false}
+        overshootRight={false}
+        friction={1}
+      >
+        <View className="w-full flex flex-col justify-center px-6 h-[90px] pb-4 border-b border-neutral-700 bg-zinc-800">
+          <View className="flex flex-row justify-between">
+            <TouchableOpacity className="flex flex-col gap-1 mt-1" onPress={() => openEditModal(item)}>
+              <Text className="text-xl font-sans font-medium text-gray-300">
+                {item.title}
+              </Text>
+              <Text className="text-neutral-400 text-sm mt-1 font-sans">
+                {item.time}
+              </Text>
+              <Text className="text-neutral-500 font-sans text-xs mt-1">
+                Recorrente em {item.daysOfWeek.length} dias
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Swipeable>
+    );
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-zinc-800">
       <View className="mt-5 px-4 flex-row items-center justify-between">
@@ -257,63 +292,25 @@ export default function RoutineScreen() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16 }} className="py-2 mt-[30px]">
           {days.map(day => (
             <TouchableOpacity
-          key={day}
-          onPress={() => setSelectedDay(day)}
-          className={`px-4 py-1.5 rounded-full mr-2 ${selectedDay === day ? 'bg-[#ff7a7f]' : 'bg-neutral-700'}`}
+              key={day}
+              onPress={() => setSelectedDay(day)}
+              className={`px-4 py-1.5 rounded-full mr-2 ${selectedDay === day ? 'bg-[#ff7a7f]' : 'bg-neutral-700'}`}
             >
-          <Text className={`font-sans ${selectedDay === day ? 'text-black' : 'text-white'}`}>{day}</Text>
+              <Text className={`font-sans ${selectedDay === day ? 'text-black' : 'text-white'}`}>{day}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
 
         <View className="flex mt-4">
           {draftsForSelectedDay.length > 0 ? (
-            <SwipeListView
+            <FlatList
               data={draftsForSelectedDay}
               keyExtractor={(item) => item.id.toString()}
-              renderItem={({ item }) => (
-                <View className="w-full flex flex-col justify-center px-6 h-[90px] pb-4 border-b border-neutral-700 bg-zinc-800">
-                  <View className="flex flex-row justify-between">
-                    <TouchableOpacity className="flex flex-col gap-1 mt-1" onPress={() => openEditModal(item)}>
-                      <Text className="text-xl font-sans font-medium text-gray-300">
-                        {item.title}
-                      </Text>
-                      {item.content && (
-                        <Text className="text-neutral-400 text-sm mt-1 font-sans">
-                          {item.content}
-                        </Text>
-                      )}
-                      <Text className="text-neutral-400 text-sm mt-1 font-sans">
-                        {item.time}
-                      </Text>
-                      {item.daysOfWeek.length > 1 && (
-                        <Text className="text-neutral-500 font-sans text-xs mt-1">
-                          Recorrente em {item.daysOfWeek.length} dias
-                        </Text>
-                      )}
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              )}
-              renderHiddenItem={({ item }) => (
-                <View className="w-full flex flex-col justify-center px-6 border-b border-neutral-700 bg-rose-500">
-                  <View className="flex flex-row justify-start items-center h-full">
-                    <TouchableOpacity
-                      className="p-3"
-                      onPress={() => handleDelete(item)}
-                    >
-                      <Ionicons name="trash" size={24} color="white" />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              )}
-              leftOpenValue={80}
-              rightOpenValue={0}
-              disableRightSwipe={false}
-              disableLeftSwipe={true}
+              renderItem={renderItem}
+              showsVerticalScrollIndicator={false}
             />
           ) : (
-            <View className="flex items-center justify-center mt-[80px]" style={{ paddingTop: 120 }}>
+            <View className="flex items-center justify-center" style={{ paddingTop: 120 }}>
               <Ionicons name="calendar-outline" size={64} color="#6b7280" />
               <Text className="text-neutral-400 font-sans text-lg mt-4 text-center">
                 Nenhuma rotina para {selectedDay}
@@ -414,7 +411,7 @@ export default function RoutineScreen() {
                       {loading ? 'Salvando...' : 'Salvar'}
                     </Text>
                   </TouchableOpacity>
-                </View>
+                  </View>
               </View>
             </TouchableWithoutFeedback>
           </KeyboardAvoidingView>
@@ -433,7 +430,7 @@ export default function RoutineScreen() {
             is24Hour
           />
         </Modal>
-        </View>
+      </View>
     </SafeAreaView>
   );
 }
