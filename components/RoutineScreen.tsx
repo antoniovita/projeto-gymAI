@@ -253,6 +253,9 @@ export default function RoutineScreen() {
         overshootLeft={false}
         overshootRight={false}
         friction={1}
+        containerStyle={{ backgroundColor: '#27272a' }}
+        childrenContainerStyle={{ backgroundColor: '#27272a' }}
+        enableTrackpadTwoFingerGesture={false}
       >
         <View className="w-full flex flex-col justify-center px-6 h-[90px] pb-4 border-b border-neutral-700 bg-zinc-800">
           <View className="flex flex-row justify-between">
@@ -288,149 +291,164 @@ export default function RoutineScreen() {
         </TouchableOpacity>
       </View>
 
-      <View className='flex'>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16 }} className="py-2 mt-[30px]">
-          {days.map(day => (
-            <TouchableOpacity
-              key={day}
-              onPress={() => setSelectedDay(day)}
-              className={`px-4 py-1.5 rounded-full mr-2 ${selectedDay === day ? 'bg-[#ff7a7f]' : 'bg-neutral-700'}`}
-            >
-              <Text className={`font-sans ${selectedDay === day ? 'text-black' : 'text-white'}`}>{day}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        <View className="flex mt-4">
-          {draftsForSelectedDay.length > 0 ? (
-            <FlatList
-              data={draftsForSelectedDay}
-              keyExtractor={(item) => item.id.toString()}
-              renderItem={renderItem}
-              showsVerticalScrollIndicator={false}
-            />
-          ) : (
-            <View className="flex items-center justify-center" style={{ paddingTop: 120 }}>
-              <Ionicons name="calendar-outline" size={64} color="#6b7280" />
-              <Text className="text-neutral-400 font-sans text-lg mt-4 text-center">
-                Nenhuma rotina para {selectedDay}
-              </Text>
-              <Text className="text-neutral-500 font-sans text-sm mt-2 text-center">
-                Crie novas tarefas para organizar sua rotina
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {/* Modal */}
-        <Modal
-          visible={showModal}
-          animationType="slide"
-          transparent
-          onRequestClose={() => setShowModal(false)}
-        >
-          <KeyboardAvoidingView
-            style={{ flex: 1, justifyContent: 'flex-end' }}
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false} 
+        contentContainerStyle={{ paddingHorizontal: 16 }} 
+        className="py-2 mt-[30px]"
+        style={{ flexGrow: 0 }}
+      >
+        {days.map(day => (
+          <TouchableOpacity
+            key={day}
+            onPress={() => setSelectedDay(day)}
+            className={`px-4 py-1.5 rounded-full mr-2 ${selectedDay === day ? 'bg-[#ff7a7f]' : 'bg-neutral-700'}`}
           >
-            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-              <View className="bg-zinc-900 rounded-t-3xl p-6 min-h-[52%]">
-                <ScrollView showsVerticalScrollIndicator={false} className='max-h-[290px]'>
-                  <View>
-                    <TextInput
-                      value={formData.title}
-                      onChangeText={text => setFormData(prev => ({ ...prev, title: text }))}
-                      placeholder="Nome da tarefa"
-                      placeholderTextColor="#6b7280"
-                      className="px-1 py-3 text-white text-2xl font-bold"
-                    />
-                  </View>
+            <Text className={`font-sans ${selectedDay === day ? 'text-black' : 'text-white'}`}>{day}</Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
 
-                  <View className="mb-2">
-                    <TextInput
-                      value={formData.content}
-                      onChangeText={text => setFormData(prev => ({ ...prev, content: text }))}
-                      placeholder="Detalhes da tarefa"
-                      placeholderTextColor="#6b7280"
-                      multiline
-                      numberOfLines={3}
-                      className="rounded-xl text-lg px-1 py-3 text-white font-normal"
-                    />
-                  </View>
+      <View className="flex-1 mt-4">
+        {draftsForSelectedDay.length > 0 ? (
+          <FlatList
+            data={draftsForSelectedDay}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={renderItem}
+            showsVerticalScrollIndicator={false}
+            style={{ flex: 1 }}
+            contentContainerStyle={{ flexGrow: 1 }}
+            removeClippedSubviews={Platform.OS === 'android'}
+            maxToRenderPerBatch={10}
+            windowSize={10}
+          />
+        ) : (
+          <View className="flex items-center justify-center" style={{ paddingTop: 180 }}>
+            <Ionicons name="calendar-outline" size={64} color="#6b7280" />
+            <Text className="text-neutral-400 font-sans text-lg mt-4 text-center">
+              Nenhuma rotina para {selectedDay}
+            </Text>
+            <Text className="text-neutral-500 font-sans text-sm mt-2 text-center">
+              Crie novas tarefas para organizar sua rotina
+            </Text>
+          </View>
+        )}
+      </View>
 
-                  <View className="mb-4">
-                    <TouchableOpacity
-                      onPress={() => setShowTimePicker(true)}
-                      className="px-2 py-3 flex-row items-center justify-between"
-                    >
-                      <Text className={`font-bold text-2xl ${formData.time ? 'text-white' : 'text-gray-400'}`}>
-                        {formData.time || new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
+      <Modal
+        visible={showModal}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowModal(false)}
+        statusBarTranslucent={Platform.OS === 'android'}
+      >
+        <KeyboardAvoidingView
+          style={{ flex: 1, justifyContent: 'flex-end' }}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={0}
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View className="bg-zinc-900 rounded-t-3xl p-6" style={{ minHeight: '52%' }}>
+              <ScrollView 
+                showsVerticalScrollIndicator={false} 
+                style={{ maxHeight: 290 }}
+                nestedScrollEnabled={true}
+                keyboardShouldPersistTaps="handled"
+                contentContainerStyle={{ flexGrow: 1 }}
+              >
+                <View>
+                  <TextInput
+                    value={formData.title}
+                    onChangeText={text => setFormData(prev => ({ ...prev, title: text }))}
+                    placeholder="Nome da tarefa"
+                    placeholderTextColor="#6b7280"
+                    className="px-1 py-3 text-white text-2xl font-bold"
+                  />
+                </View>
 
-                  <View className="mb-6 mt-2">
-                    <View className="flex-row flex-wrap">
-                      {[1, 2, 3, 4, 5, 6, 0].map(dayNumber => (
-                        <TouchableOpacity
-                          key={dayNumber}
-                          onPress={() => toggleDaySelection(dayNumber)}
-                          className={`px-4 py-2 rounded-full mr-2 mb-2 ${
-                            formData.daysOfWeek.includes(dayNumber)
-                              ? 'bg-[#ff7a7f]'
-                              : 'bg-neutral-700'
-                          }`}
-                        >
-                          <Text className={`font-sans ${
-                            formData.daysOfWeek.includes(dayNumber)
-                              ? 'text-black'
-                              : 'text-white'
-                          }`}>
-                            {getDayName(dayNumber)}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  </View>
-                </ScrollView>
+                <View className="mb-2">
+                  <TextInput
+                    value={formData.content}
+                    onChangeText={text => setFormData(prev => ({ ...prev, content: text }))}
+                    placeholder="Detalhes da tarefa"
+                    placeholderTextColor="#6b7280"
+                    multiline
+                    numberOfLines={3}
+                    className="rounded-xl text-lg px-1 py-3 text-white font-normal"
+                  />
+                </View>
 
-                <View className="absolute bottom-[15%] self-center flex-row flex gap-3">
+                <View className="mb-4">
                   <TouchableOpacity
-                    onPress={() => setShowModal(false)}
-                    className="flex-1 bg-neutral-700 rounded-xl py-4"
+                    onPress={() => setShowTimePicker(true)}
+                    className="px-2 py-3 flex-row items-center justify-between"
                   >
-                    <Text className="text-white font-sans text-center">Cancelar</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={handleSave}
-                    className="flex-1 bg-[#ff7a7f] rounded-xl py-4"
-                    disabled={loading}
-                  >
-                    <Text className="text-black font-sans text-center">
-                      {loading ? 'Salvando...' : 'Salvar'}
+                    <Text className={`font-bold text-2xl ${formData.time ? 'text-white' : 'text-gray-400'}`}>
+                      {formData.time || new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                     </Text>
                   </TouchableOpacity>
-                  </View>
-              </View>
-            </TouchableWithoutFeedback>
-          </KeyboardAvoidingView>
+                </View>
 
-          <DateTimePickerModal
-            isVisible={showTimePicker}
-            mode="time"
-            date={time}
-            onConfirm={handleTimeConfirm}
-            onCancel={handleTimeCancel}
-            textColor="#000000"
-            accentColor="#ff7a7f"
-            buttonTextColorIOS="#ff7a7f"
-            themeVariant="light"
-            locale="pt-BR"
-            is24Hour
-          />
-        </Modal>
-      </View>
+                <View className="mb-6 mt-2">
+                  <View className="flex-row flex-wrap">
+                    {[1, 2, 3, 4, 5, 6, 0].map(dayNumber => (
+                      <TouchableOpacity
+                        key={dayNumber}
+                        onPress={() => toggleDaySelection(dayNumber)}
+                        className={`px-4 py-2 rounded-full mr-2 mb-2 ${
+                          formData.daysOfWeek.includes(dayNumber)
+                            ? 'bg-[#ff7a7f]'
+                            : 'bg-neutral-700'
+                        }`}
+                      >
+                        <Text className={`font-sans ${
+                          formData.daysOfWeek.includes(dayNumber)
+                            ? 'text-black'
+                            : 'text-white'
+                        }`}>
+                          {getDayName(dayNumber)}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              </ScrollView>
+
+              <View className="absolute bottom-[15%] self-center flex-row flex gap-3">
+                <TouchableOpacity
+                  onPress={() => setShowModal(false)}
+                  className="flex-1 bg-neutral-700 rounded-xl py-4"
+                >
+                  <Text className="text-white font-sans text-center">Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={handleSave}
+                  className="flex-1 bg-[#ff7a7f] rounded-xl py-4"
+                  disabled={loading}
+                >
+                  <Text className="text-black font-sans text-center">
+                    {loading ? 'Salvando...' : 'Salvar'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
+
+        <DateTimePickerModal
+          isVisible={showTimePicker}
+          mode="time"
+          date={time}
+          onConfirm={handleTimeConfirm}
+          onCancel={handleTimeCancel}
+          textColor="#000000"
+          accentColor="#ff7a7f"
+          buttonTextColorIOS="#ff7a7f"
+          themeVariant="light"
+          locale="pt-BR"
+          is24Hour
+        />
+      </Modal>
     </SafeAreaView>
   );
 }

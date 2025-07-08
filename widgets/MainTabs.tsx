@@ -23,13 +23,12 @@ export default function MainTabs() {
           height: 70,
           paddingBottom: 90,
           paddingTop: 20,
-          position: 'absolute',
           ...(Platform.OS === 'android' && {
             elevation: 0,
             borderTopWidth: 0,
           }),
         },
-        tabBarHideOnKeyboard: true,
+        tabBarHideOnKeyboard: Platform.OS === 'android',
         tabBarIcon: ({ color, focused }) => {
           let iconName: keyof typeof Ionicons.glyphMap;
 
