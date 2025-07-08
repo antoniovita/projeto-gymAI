@@ -80,7 +80,7 @@ const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
                   key={category.name}
                   onPress={() => handleCategorySelection(category.name)}
                   className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${
-                    isSelected ? 'bg-rose-400' : 'bg-neutral-700'
+                    isSelected ? 'bg-rose-400' : 'bg-zinc-700'
                   }`}
                 >
                   <View

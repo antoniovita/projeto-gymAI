@@ -44,7 +44,6 @@ const DateFilterModal: React.FC<DateFilterModalProps> = ({
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
 
   const handleApply = () => {
-    // Determina o tipo correto baseado na seleção
     let finalFilter: DateFilter = { ...selectedFilter };
     
     if (selectedFilter.type === 'date') {

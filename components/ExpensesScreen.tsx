@@ -7,6 +7,7 @@ import {
   Alert,
   Dimensions,
   FlatList,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
@@ -83,6 +84,9 @@ export default function ExpensesScreen() {
   // Estados para filtro de data
   const [showDateFilterModal, setShowDateFilterModal] = useState(false);
   const [dateFilter, setDateFilter] = useState<DateFilter>({ type: 'all' });
+
+  // Animação para a chevron
+  const [rotationAnim] = useState(new Animated.Value(0));
 
   const { createExpense, fetchExpenses, expenses, deleteExpense, updateExpense, debugAllExpenses } = useExpenses();
   const { userId, loading } = useAuth();
@@ -278,6 +282,26 @@ export default function ExpensesScreen() {
     setDateFilter(filter);
   };
 
+  const handleDateFilterModalOpen = () => {
+    setShowDateFilterModal(true);
+    // Animação da chevron para baixo
+    Animated.timing(rotationAnim, {
+      toValue: 1,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handleDateFilterModalClose = () => {
+    setShowDateFilterModal(false);
+    // Animação da chevron para cima
+    Animated.timing(rotationAnim, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  };
+
   const filterExpensesByDate = (expenses: any[], filter: DateFilter) => {
     if (filter.type === 'all') {
       return expenses;
@@ -307,13 +331,13 @@ export default function ExpensesScreen() {
 
     switch (dateFilter.type) {
       case 'all':
-        return 'Todas';
+        return 'Todas as despesas';
       case 'month':
         return `${months[dateFilter.month!]} ${dateFilter.year}`;
       case 'year':
         return `${dateFilter.year}`;
       default:
-        return 'Todas';
+        return 'Todas as despesas';
     }
   };
 
@@ -441,23 +465,57 @@ export default function ExpensesScreen() {
 
       <View className="px-6 mb-4">
         <TouchableOpacity
-          onPress={() => setShowDateFilterModal(true)}
-          className="flex-row items-center justify-between bg-neutral-700 px-3 py-1 rounded-xl"
+          onPress={handleDateFilterModalOpen}
+          className="flex-row items-center justify-between px-4 py-3 rounded-2xl bg-[#35353a]"
         >
-          <View className="flex-row items-center gap-2">
-               <View
-                style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: 5,
-                  backgroundColor: 'gray',
-                  borderWidth: 0.5,
-                  borderColor: '#fff',
-                }}
-              />
-            <Text className="text-white font-sans">Exibindo: {getDateFilterDisplayText()}</Text>
+          <View className="flex-row items-center gap-3">
+            <View 
+              className="p-2 rounded-xl"
+              style={{
+                backgroundColor: 'rgba(239, 68, 68, 0.15)'
+              }}
+            >
+              <Ionicons name="calendar-outline" size={16} color="#ff7a7f" />
+            </View>
+            <View className="flex-col">
+              <Text className="text-zinc-400 font-sans text-xs mb-1">Período selecionado</Text>
+              <Text className="text-white font-sans text-sm font-semibold">
+                {getDateFilterDisplayText()}
+              </Text>
+            </View>
           </View>
-          <Ionicons name="chevron-down" size={16} color="white" />
+          
+          <View className="flex-row items-center gap-3">
+            <View 
+              className="px-2 py-1 rounded-lg"
+              style={{
+                backgroundColor: 'rgba(34, 197, 94, 0.15)',
+                borderWidth: 1,
+                borderColor: 'rgba(34, 197, 94, 0.3)',
+              }}
+            >
+              <Text className="text-emerald-400 font-sans text-xs font-medium">
+                {filteredExpenses.length} {filteredExpenses.length === 1 ? 'item' : 'itens'}
+              </Text>
+            </View>
+            <Animated.View
+              style={{
+                transform: [{
+                  rotate: rotationAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: ['0deg', '180deg']
+                  })
+                }]
+              }}
+            >
+              <Ionicons 
+                name="chevron-down" 
+                size={18} 
+                color="#9ca3af"
+                style={{ opacity: 0.8 }}
+              />
+            </Animated.View>
+          </View>
         </TouchableOpacity>
       </View>
 
@@ -468,7 +526,7 @@ export default function ExpensesScreen() {
             <TouchableOpacity
               key={category.name}
               onPress={() => handleCategorySelection(category.name)}
-              className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${isSelected ? 'bg-rose-400' : 'bg-neutral-700'}`}
+              className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${isSelected ? 'bg-rose-400' : 'bg-zinc-700'}`}
             >
               <View
                 style={{
@@ -487,7 +545,7 @@ export default function ExpensesScreen() {
 
         <TouchableOpacity
           onPress={() => setIsCategoryModalVisible(true)}
-          className="flex-row items-center gap-2 px-3 py-1 rounded-xl bg-neutral-700"
+          className="flex-row items-center gap-2 px-3 py-1 rounded-xl bg-zinc-700"
         >
           <Ionicons name="add" size={16} color="white" />
           <Text className="text-white text-sm font-sans">Nova Categoria</Text>
@@ -559,8 +617,11 @@ export default function ExpensesScreen() {
 
       <DateFilterModal
         isVisible={showDateFilterModal}
-        onClose={() => setShowDateFilterModal(false)}
-        onApplyFilter={handleDateFilterApply}
+        onClose={handleDateFilterModalClose}
+        onApplyFilter={(filter) => {
+          handleDateFilterApply(filter);
+          handleDateFilterModalClose();
+        }}
         currentFilter={dateFilter}
       />
     </SafeAreaView>

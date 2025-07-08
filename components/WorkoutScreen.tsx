@@ -498,7 +498,7 @@ export default function WorkoutScreen() {
                   )
                 }
                 className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${
-                  isSelected ? 'bg-rose-400' : 'bg-neutral-700'
+                  isSelected ? 'bg-rose-400' : 'bg-zinc-700'
                 }`}
               >
                 <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color, borderWidth: 0.5, borderColor: '#fff' }} />
@@ -511,7 +511,7 @@ export default function WorkoutScreen() {
 
           <TouchableOpacity
             onPress={() => setIsCategoryModalVisible(true)}
-            className="flex-row items-center gap-2 px-3 py-1 rounded-xl bg-neutral-700"
+            className="flex-row items-center gap-2 px-3 py-1 rounded-xl bg-zinc-700"
           >
             <Ionicons name="add" size={16} color="white" />
             <Text className="text-white text-sm font-sans">Nova Categoria</Text>
@@ -622,7 +622,7 @@ export default function WorkoutScreen() {
                     key={muscle}
                     onPress={() => toggleMuscleForWorkout(muscle)}
                     className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${
-                      isSelected ? 'bg-rose-400' : 'bg-neutral-700'
+                      isSelected ? 'bg-rose-400' : 'bg-zinc-700'
                     }`}
                   >
                     <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color, borderWidth: 0.5, borderColor: '#fff' }} />
