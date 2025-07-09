@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   View,
   Text,
@@ -14,7 +13,7 @@ interface Category {
   color: string;
 }
 
-interface CreateExpenseModalProps {
+export interface CreateExpenseModalProps {
   isVisible: boolean;
   onClose: () => void;
   onSave: () => void;
@@ -68,8 +67,6 @@ const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
             placeholderTextColor="#a1a1aa"
             value={newTaskTitle}
             onChangeText={setNewTaskTitle}
-            scrollEnabled={false}
-            multiline={false}
             className="text-gray-300 text-3xl font-semibold mb-4"
           />
 
@@ -110,6 +107,8 @@ const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
               className="text-white text-2xl font-sans"
               keyboardType="numeric"
               value={expenseValue}
+              scrollEnabled={false}
+              multiline={false}
               onChangeText={setExpenseValue}
             />
           </View>

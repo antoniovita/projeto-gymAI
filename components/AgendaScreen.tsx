@@ -1,5 +1,5 @@
 import { useFocusEffect } from '@react-navigation/native';
-import React, { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, TouchableOpacity, SafeAreaView, Alert, Animated, FlatList,
   Pressable, Modal, Dimensions,
@@ -17,16 +17,17 @@ import RefreshButton from './comps/refreshButton';
 import TaskModal from '../components/comps/TaskModal';
 import CategoryModal from '../components/comps/CategoryModal';
 import DeleteCategoryModal from '../components/comps/DeleteCategoryModal';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 const { width, height } = Dimensions.get('window');
 
   const LoadingSpinner = ({ visible }: { visible: boolean }) => {
-    const spinValue = React.useRef(new Animated.Value(0)).current;
-    const fadeValue = React.useRef(new Animated.Value(0)).current;
-    const scaleValue = React.useRef(new Animated.Value(0.8)).current;
-    const spinAnimation = React.useRef<Animated.CompositeAnimation | null>(null);
+    const spinValue = useRef(new Animated.Value(0)).current;
+    const fadeValue = useRef(new Animated.Value(0)).current;
+    const scaleValue = useRef(new Animated.Value(0.8)).current;
+    const spinAnimation = useRef<Animated.CompositeAnimation | null>(null);
 
-    React.useEffect(() => {
+    useEffect(() => {
       if (visible) {
 
         Animated.parallel([
@@ -182,52 +183,63 @@ const SwipeableTaskItem = ({
   onToggleCompletion: (taskId: string, completed: 0 | 1) => void,
   onDelete: (taskId: string) => void
 }) => {
+  let swipeableRow: any;
+
+  const closeSwipeable = () => {
+    swipeableRow?.close();
+  };
+
   const renderLeftActions = () => (
-    <View className="flex-row items-center justify-start border-t bg-rose-500 px-4 h-full">
-      <Pressable
-        onPress={() => onDelete(item.id)}
-        className="flex-row items-center justify-center w-16 h-16 rounded-full"
-      >
-        <Ionicons name="trash" size={24} color="white" />
-      </Pressable>
-    </View>
+    <Pressable
+      onPress={() => {
+        closeSwipeable();
+        onDelete(item.id);
+      }}
+      className="flex-row items-center justify-center bg-rose-500 w-[80px] h-full"
+    >
+      <Ionicons name="trash" size={24} color="white" />
+    </Pressable>
   );
 
   return (
-    <Swipeable
-      renderLeftActions={renderLeftActions}
-      leftThreshold={40}
-      friction={1}
-      overshootLeft={false}
-    >
-      <View className="w-full flex flex-col justify-center px-6 h-[90px] pb-4 border-b border-neutral-700 bg-zinc-800">
-        <View className="flex flex-row justify-between">
-          <TouchableOpacity className="flex flex-col gap-1 mt-1" onPress={() => onEdit(item)}>
-            <View className="flex flex-row items-center gap-2">
-              <Text className={`text-xl font-sans font-medium ${item.completed ? 'line-through text-neutral-500' : 'text-gray-300'}`}>
-                {item.title}
+    <GestureHandlerRootView>
+      <Swipeable
+        ref={(ref: any) => { swipeableRow = ref; }}
+        renderLeftActions={renderLeftActions}
+        leftThreshold={40}
+        friction={1}
+        overshootLeft={false}
+      >
+        <View className="w-full flex flex-col justify-center px-6 h-[90px] pb-4 border-b border-neutral-700 bg-zinc-800">
+          <View className="flex flex-row justify-between">
+            <TouchableOpacity className="flex flex-col gap-1 mt-1" onPress={() => onEdit(item)}>
+              <View className="flex flex-row items-center gap-2">
+                <Text className={`text-xl font-sans font-medium ${item.completed ? 'line-through text-neutral-500' : 'text-gray-300'}`}>
+                  {item.title}
+                </Text>
+              </View>
+              <Text className="text-neutral-400 text-sm mt-1 font-sans">
+                {format(new Date(item.datetime), 'dd/MM/yyyy')}  - {format(new Date(item.datetime), 'HH:mm')}
               </Text>
-            </View>
-            <Text className="text-neutral-400 text-sm mt-1 font-sans">
-              {format(new Date(item.datetime), 'dd/MM/yyyy')}  - {format(new Date(item.datetime), 'HH:mm')}
-            </Text>
-          </TouchableOpacity>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={() => onToggleCompletion(item.id, item.completed)}
-            className={`w-[25px] h-[25px] mt-4 border rounded-lg ${item.completed ? 'bg-rose-500' : 'border-2 border-neutral-600'}`}
-            style={{ alignItems: 'center', justifyContent: 'center' }}
-          >
-            {item.completed ? <Ionicons name="checkmark" size={20} color="white" /> : null}
-          </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => onToggleCompletion(item.id, item.completed)}
+              className={`w-[25px] h-[25px] mt-4 border rounded-lg ${item.completed ? 'bg-rose-500' : 'border-2 border-neutral-600'}`}
+              style={{ alignItems: 'center', justifyContent: 'center' }}
+            >
+              {item.completed ? <Ionicons name="checkmark" size={20} color="white" /> : null}
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-    </Swipeable>
+      </Swipeable>
+    </GestureHandlerRootView>
   );
 };
 
 export default function AgendaScreen() {
-  const { userId } = useAuth();
+  // const { userId } = useAuth();
+  const userId = 'user123'
 
   const {
     tasks,
@@ -397,7 +409,7 @@ export default function AgendaScreen() {
   };
   
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       const loadInitialData = async () => {
         if (!userId) return;
 

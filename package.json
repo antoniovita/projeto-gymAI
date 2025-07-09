@@ -23,7 +23,7 @@
     "compromise-dates": "^3.7.1",
     "cron-parser": "^5.3.0",
     "date-fns": "^4.1.0",
-    "expo": "53.0.18",
+    "expo": "53.0.19",
     "expo-constants": "~17.1.6",
     "expo-dev-client": "~5.2.4",
     "expo-font": "~13.3.1",
