@@ -12,7 +12,8 @@ import {
   TouchableWithoutFeedback,
   Platform,
   Keyboard,
-  FlatList
+  FlatList,
+  Pressable
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
@@ -234,12 +235,12 @@ export default function RoutineScreen() {
   const renderLeftActions = (item: any) => {
     return (
       <View className="flex-row items-center justify-start border-t bg-rose-500 px-4 h-full" style={{ width: 80 }}>
-        <TouchableOpacity
+        <Pressable
           className="flex-row items-center justify-center w-16 h-16 rounded-full"
           onPress={() => handleDelete(item)}
         >
           <Ionicons name="trash" size={24} color="white" />
-        </TouchableOpacity>
+        </Pressable>
       </View>
     );
   };

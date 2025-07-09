@@ -8,6 +8,7 @@ import {
   Dimensions,
   FlatList,
   Animated,
+  Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
@@ -333,12 +334,12 @@ export default function ExpensesScreen() {
   const renderLeftActions = (item: any) => {
     return (
     <View className="flex-row items-center justify-start border-t bg-rose-500 px-4 h-full">
-        <TouchableOpacity 
+        <Pressable 
           onPress={() => handleDeleteExpense(item.id)}
         className="flex-row items-center justify-center w-16 h-16 rounded-full"
         >
           <Ionicons name="trash" size={24} color="white" />
-        </TouchableOpacity>
+        </Pressable>
       </View>
     );
   };

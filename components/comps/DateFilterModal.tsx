@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,9 @@ import {
   Modal,
   ScrollView,
   Dimensions,
+  Animated,
+  Easing,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -33,6 +36,7 @@ const DateFilterModal: React.FC<DateFilterModalProps> = ({
   currentFilter 
 }) => {
   const [selectedFilter, setSelectedFilter] = useState<DateFilter>(currentFilter);
+  const slideAnim = useRef(new Animated.Value(300)).current;
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth();
   
@@ -42,6 +46,29 @@ const DateFilterModal: React.FC<DateFilterModalProps> = ({
   ];
 
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
+
+  useEffect(() => {
+    if (isVisible) {
+      slideAnim.setValue(600);
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 600,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [isVisible]);
+
+  const handleClose = () => {
+    Animated.timing(slideAnim, {
+      toValue: 600,
+      duration: 500,
+      easing: Easing.in(Easing.ease),
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      if (finished) onClose();
+    });
+  };
 
   const handleApply = () => {
     let finalFilter: DateFilter = { ...selectedFilter };
@@ -62,7 +89,7 @@ const DateFilterModal: React.FC<DateFilterModalProps> = ({
     }
     
     onApplyFilter(finalFilter);
-    onClose();
+    handleClose();
   };
 
   const FilterOption = ({ 
@@ -184,7 +211,7 @@ const DateFilterModal: React.FC<DateFilterModalProps> = ({
   const ActionButtons = () => (
     <View className="flex-row gap-3 mt-6 mb-6">
       <TouchableOpacity
-        onPress={onClose}
+        onPress={handleClose}
         className="flex-1 bg-zinc-800 py-4 rounded-2xl items-center"
       >
         <Text className="text-zinc-300 font-sans font-medium text-[16px]">Cancelar</Text>
@@ -225,66 +252,69 @@ const DateFilterModal: React.FC<DateFilterModalProps> = ({
 
   return (
     <Modal
-      animationType="slide"
-      transparent={true}
       visible={isVisible}
-      onRequestClose={onClose}
+      transparent
+      animationType="fade"
+      onRequestClose={handleClose}
     >
-      <View className="flex-1 justify-end">
-        <View 
-          className="rounded-t-3xl px-6 py-6"
-          style={{ 
-            backgroundColor: '#1e1e1e',
-          }}
-        >
-          {/* Header */}
-          <View className="flex-row justify-between items-center mb-6">
-            <Text className="text-zinc-100 text-[20px] font-semibold font-sans">
-              Filtrar por período
-            </Text>
-            <TouchableOpacity 
-              onPress={onClose}
-              className="w-8 h-8 bg-zinc-800 rounded-full items-center justify-center"
+      <TouchableWithoutFeedback onPress={handleClose}>
+        <View className="flex-1 bg-black/80 justify-end">
+          <TouchableWithoutFeedback>
+            <Animated.View
+              className="rounded-t-3xl px-6 py-6"
+              style={{ 
+                backgroundColor: '#1e1e1e',
+                transform: [{ translateY: slideAnim }]
+              }}
             >
-              <Ionicons name="close" size={20} color="#999" />
-            </TouchableOpacity>
-          </View>
+              <View className="flex-row justify-between items-center mb-6">
+                <Text className="text-zinc-100 text-[20px] font-semibold font-sans">
+                  Filtrar por período
+                </Text>
+                <TouchableOpacity 
+                  onPress={handleClose}
+                  className="w-8 h-8 bg-zinc-800 rounded-full items-center justify-center"
+                >
+                  <Ionicons name="close" size={20} color="#999" />
+                </TouchableOpacity>
+              </View>
 
-          <ScrollView showsVerticalScrollIndicator={false}>
-            {/* Todas as despesas */}
-            <FilterOption
-              icon='file-tray-full-outline'
-              title="Todas as despesas"
-              isSelected={selectedFilter.type === 'all'}
-              onPress={() => setSelectedFilter({ type: 'all' })}
-            />
+              <ScrollView showsVerticalScrollIndicator={false}>
 
-            {/* Seletores */}
-            <SectionTitle title="Ano" />
-            <YearSelector
-              selectedYear={selectedFilter.year}
-              onYearSelect={(year) => setSelectedFilter({ 
-                type: 'date',
-                year: year,
-                month: selectedFilter.month
-              })}
-            />
+                <FilterOption
+                  icon='file-tray-full-outline'
+                  title="Todas as despesas"
+                  isSelected={selectedFilter.type === 'all'}
+                  onPress={() => setSelectedFilter({ type: 'all' })}
+                />
 
-            <SectionTitle title="Mês" />
-            <MonthSelector
-              selectedMonth={selectedFilter.month}
-              selectedYear={selectedFilter.year}
-              onMonthSelect={(month) => setSelectedFilter({ 
-                type: 'date',
-                year: selectedFilter.year || currentYear,
-                month: month
-              })}
-            />
-          </ScrollView>
+                <SectionTitle title="Ano" />
+                <YearSelector
+                  selectedYear={selectedFilter.year}
+                  onYearSelect={(year) => setSelectedFilter({ 
+                    type: 'date',
+                    year: year,
+                    month: selectedFilter.month
+                  })}
+                />
 
-          <ActionButtons />
+                <SectionTitle title="Mês" />
+                <MonthSelector
+                  selectedMonth={selectedFilter.month}
+                  selectedYear={selectedFilter.year}
+                  onMonthSelect={(month) => setSelectedFilter({ 
+                    type: 'date',
+                    year: selectedFilter.year || currentYear,
+                    month: month
+                  })}
+                />
+              </ScrollView>
+
+              <ActionButtons />
+            </Animated.View>
+          </TouchableWithoutFeedback>
         </View>
-      </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 };

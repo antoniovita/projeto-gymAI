@@ -58,7 +58,7 @@ const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
             <Text className="text-white text-lg font-sans">Voltar</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={onSave}>
-            <Text className="text-rose-400 text-lg mr-4 font-semibold">Salvar</Text>
+            <Text className="text-rose-400 text-lg mr-4 font-sans">Salvar</Text>
           </TouchableOpacity>
         </View>
 

@@ -7,7 +7,8 @@ import {
   TextInput,
   Alert,
   ScrollView,
-  FlatList
+  FlatList,
+  Pressable
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useState, useEffect, useCallback } from 'react';
@@ -301,12 +302,12 @@ export default function WorkoutScreen() {
   const renderLeftActions = (item: any) => {
     return (
     <View className="flex-row items-center justify-start border-t bg-rose-500 px-4 h-full">
-        <TouchableOpacity 
+        <Pressable 
         className="flex-row items-center justify-center w-16 h-16 rounded-full"
           onPress={() => handleDelete(item.id)}
         >
           <Ionicons name="trash" size={24} color="white" />
-        </TouchableOpacity>
+        </Pressable>
       </View>
     );
   };
