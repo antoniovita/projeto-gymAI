@@ -85,7 +85,7 @@ export default function WelcomeScreen() {
             className="bg-[#ff7a7f] rounded-xl h-[50px] w-[250px] items-center justify-center flex-row"
             onPress={handleInitialContinue}
           >
-            <Text className="text-white font-sans font-medium text-xl px-3">Continue</Text>
+            <Text className="text-white font-sans font-medium text-xl px-3">Começar</Text>
             <Ionicons name="arrow-forward" size={18} color="white" />
           </TouchableOpacity>
         </MotiView>

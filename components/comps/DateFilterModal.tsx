@@ -48,14 +48,12 @@ const DateFilterModal: React.FC<DateFilterModalProps> = ({
     
     if (selectedFilter.type === 'date') {
       if (selectedFilter.year && selectedFilter.month !== undefined) {
-        // Se tem ano E mês, é filtro por mês
         finalFilter = {
           type: 'month',
           month: selectedFilter.month,
           year: selectedFilter.year
         };
       } else if (selectedFilter.year) {
-        // Se tem apenas ano, é filtro por ano
         finalFilter = {
           type: 'year',
           year: selectedFilter.year
@@ -80,17 +78,17 @@ const DateFilterModal: React.FC<DateFilterModalProps> = ({
   }) => (
     <TouchableOpacity
       onPress={onPress}
-      className={`flex-row items-center justify-between p-4 rounded-xl mb-3 ${
-        isSelected ? 'bg-rose-400' : 'bg-neutral-700'
+      className={`flex-row items-center justify-between px-4 py-3 rounded-2xl mb-1 ${
+        isSelected ? 'bg-rose-400' : 'bg-zinc-800'
       }`}
     >
       <View className="flex-row items-center gap-3">
         <Ionicons 
           name={icon as any}
-          size={20} 
-          color={isSelected ? 'black' : 'white'} 
+          size={22} 
+          color={isSelected ? 'black' : '#999'} 
         />
-        <Text className={`font-sans ${isSelected ? 'text-black' : 'text-white'}`}>
+        <Text className={`font-sans text-[16px] ${isSelected ? 'text-black font-medium' : 'text-zinc-300'}`}>
           {title}
         </Text>
       </View>
@@ -98,6 +96,12 @@ const DateFilterModal: React.FC<DateFilterModalProps> = ({
         <Ionicons name="checkmark" size={20} color="black" />
       )}
     </TouchableOpacity>
+  );
+
+  const SectionTitle = ({ title }: { title: string }) => (
+    <Text className="text-zinc-400 font-sans text-[13px] font-medium mb-2 mt-6 uppercase tracking-wide">
+      {title}
+    </Text>
   );
 
   const YearSelector = ({ 
@@ -108,29 +112,30 @@ const DateFilterModal: React.FC<DateFilterModalProps> = ({
     onYearSelect: (year: number) => void;
   }) => (
     <View className="mb-4">
-      <View className="flex-row gap-2">
-        {years.map((year) => (
-          <TouchableOpacity
-            key={year}
-            onPress={() => {
-              // Se já está selecionado, desfaz a seleção
-              if (selectedYear === year) {
-                setSelectedFilter({ type: 'all' });
-              } else {
-                onYearSelect(year);
-              }
-            }}
-            className={`px-4 py-2 rounded-lg ${
-              selectedYear === year ? 'bg-rose-400' : 'bg-neutral-600'
-            }`}
-          >
-            <Text className={`font-sans text-[15px] ${
-              selectedYear === year ? 'text-black' : 'text-white'
-            }`}>
-              {year}
-            </Text>
-          </TouchableOpacity>
-        ))}
+      <View className="bg-zinc-900/30 rounded-2xl p-3">
+        <View className="flex-row gap-2 flex-wrap justify-center">
+          {years.map((year) => (
+            <TouchableOpacity
+              key={year}
+              onPress={() => {
+                if (selectedYear === year) {
+                  setSelectedFilter({ type: 'all' });
+                } else {
+                  onYearSelect(year);
+                }
+              }}
+              className={`px-6 py-2 rounded-full ${
+                selectedYear === year ? 'bg-rose-400' : 'bg-zinc-800'
+              }`}
+            >
+              <Text className={`font-sans text-[15px] font-medium ${
+                selectedYear === year ? 'text-black' : 'text-zinc-300'
+              }`}>
+                {year}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
     </View>
   );
@@ -144,49 +149,51 @@ const DateFilterModal: React.FC<DateFilterModalProps> = ({
     onMonthSelect: (month: number) => void;
     selectedYear?: number;
   }) => (
-    <View>
-      <View className="flex-row mt-4 flex-wrap gap-2">
-        {months.map((month, index) => (
-          <TouchableOpacity
-            key={index}
-            onPress={() => {
-              if (selectedMonth === index) {
-                setSelectedFilter({ 
-                  ...selectedFilter, 
-                  month: undefined 
-                });
-              } else {
-                onMonthSelect(index);
-              }
-            }}
-            className={`px-3 py-2 mt-1 rounded-full ${
-              selectedMonth === index ? 'bg-rose-400' : 'bg-neutral-600'
-            }`}
-          >
-            <Text className={`font-sans text-[12px] ${
-              selectedMonth === index ? 'text-black' : 'text-white'
-            }`}>
-              {month}
-            </Text>
-          </TouchableOpacity>
-        ))}
+    <View className="mb-4">
+      <View className="bg-zinc-900/30 rounded-2xl p-3">
+        <View className="flex-row flex-wrap gap-2 justify-center">
+          {months.map((month, index) => (
+            <TouchableOpacity
+              key={index}
+              onPress={() => {
+                if (selectedMonth === index) {
+                  setSelectedFilter({ 
+                    ...selectedFilter, 
+                    month: undefined 
+                  });
+                } else {
+                  onMonthSelect(index);
+                }
+              }}
+              className={`px-4 py-2 rounded-full ${
+                selectedMonth === index ? 'bg-rose-400' : 'bg-zinc-800'
+              }`}
+            >
+              <Text className={`font-sans text-[13px] font-medium ${
+                selectedMonth === index ? 'text-black' : 'text-zinc-300'
+              }`}>
+                {month}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
     </View>
   );
 
   const ActionButtons = () => (
-    <View className="flex-row gap-3 mt-4 mb-6">
+    <View className="flex-row gap-3 mt-6 mb-6">
       <TouchableOpacity
         onPress={onClose}
-        className="flex-1 bg-neutral-700 py-3 rounded-xl items-center"
+        className="flex-1 bg-zinc-800 py-4 rounded-2xl items-center"
       >
-        <Text className="text-white font-sans">Cancelar</Text>
+        <Text className="text-zinc-300 font-sans font-medium text-[16px]">Cancelar</Text>
       </TouchableOpacity>
       <TouchableOpacity
         onPress={handleApply}
-        className="flex-1 bg-rose-400 py-3 rounded-xl items-center"
+        className="flex-1 bg-rose-400 py-4 rounded-2xl items-center"
       >
-        <Text className="text-black font-sans font-medium">Aplicar</Text>
+        <Text className="text-black font-sans font-medium text-[16px]">Aplicar</Text>
       </TouchableOpacity>
     </View>
   );
@@ -204,15 +211,6 @@ const DateFilterModal: React.FC<DateFilterModalProps> = ({
     return 'Selecione um período';
   };
 
-  // Mapeia os tipos do filtro atual para o tipo interno
-  const getInternalFilterType = () => {
-    if (currentFilter.type === 'month' || currentFilter.type === 'year') {
-      return 'date';
-    }
-    return currentFilter.type;
-  };
-
-  // Inicializa o filtro interno baseado no filtro atual
   React.useEffect(() => {
     if (currentFilter.type === 'month' || currentFilter.type === 'year') {
       setSelectedFilter({
@@ -234,63 +232,54 @@ const DateFilterModal: React.FC<DateFilterModalProps> = ({
     >
       <View className="flex-1 justify-end">
         <View 
-          className="bg-[#1e1e1e] rounded-t-3xl px-6 py-6"
-          style={{ maxHeight: screenHeight * 0.8 }}
+          className="rounded-t-3xl px-6 py-6"
+          style={{ 
+            backgroundColor: '#1e1e1e',
+          }}
         >
+          {/* Header */}
           <View className="flex-row justify-between items-center mb-6">
-            <Text className="text-white text-xl font-medium font-sans">
+            <Text className="text-zinc-100 text-[20px] font-semibold font-sans">
               Filtrar por período
             </Text>
-            <TouchableOpacity onPress={onClose}>
-              <Ionicons name="close" size={24} color="white" />
+            <TouchableOpacity 
+              onPress={onClose}
+              className="w-8 h-8 bg-zinc-800 rounded-full items-center justify-center"
+            >
+              <Ionicons name="close" size={20} color="#999" />
             </TouchableOpacity>
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false}>
+            {/* Todas as despesas */}
             <FilterOption
-              icon="calendar-outline"
+              icon='file-tray-full-outline'
               title="Todas as despesas"
               isSelected={selectedFilter.type === 'all'}
               onPress={() => setSelectedFilter({ type: 'all' })}
             />
 
-            <FilterOption
-              icon="calendar"
-              title="Por data específica"
-              isSelected={selectedFilter.type === 'date'}
-              onPress={() => {
-                if (selectedFilter.type === 'date') {
-                  setSelectedFilter({ type: 'all' });
-                } else {
-                  setSelectedFilter({ 
-                    type: 'date', 
-                    year: selectedFilter.year ?? currentYear,
-                    month: selectedFilter.month
-                  });
-                }
-              }}
+            {/* Seletores */}
+            <SectionTitle title="Ano" />
+            <YearSelector
+              selectedYear={selectedFilter.year}
+              onYearSelect={(year) => setSelectedFilter({ 
+                type: 'date',
+                year: year,
+                month: selectedFilter.month
+              })}
             />
 
-            {selectedFilter.type === 'date' && (
-              <View className="py-4">
-                <YearSelector
-                  selectedYear={selectedFilter.year}
-                  onYearSelect={(year) => setSelectedFilter({ 
-                    ...selectedFilter, 
-                    year: year
-                  })}
-                />
-
-                <MonthSelector
-                  selectedMonth={selectedFilter.month}
-                  selectedYear={selectedFilter.year}
-                  onMonthSelect={(month) => setSelectedFilter({ 
-                    ...selectedFilter, 
-                    month: month
-                  })}
-                />
-              </View>
-            )}
+            <SectionTitle title="Mês" />
+            <MonthSelector
+              selectedMonth={selectedFilter.month}
+              selectedYear={selectedFilter.year}
+              onMonthSelect={(month) => setSelectedFilter({ 
+                type: 'date',
+                year: selectedFilter.year || currentYear,
+                month: month
+              })}
+            />
           </ScrollView>
 
           <ActionButtons />

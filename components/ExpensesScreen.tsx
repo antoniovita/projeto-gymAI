@@ -284,22 +284,11 @@ export default function ExpensesScreen() {
 
   const handleDateFilterModalOpen = () => {
     setShowDateFilterModal(true);
-    // Animação da chevron para baixo
-    Animated.timing(rotationAnim, {
-      toValue: 1,
-      duration: 200,
-      useNativeDriver: true,
-    }).start();
+
   };
 
   const handleDateFilterModalClose = () => {
     setShowDateFilterModal(false);
-    // Animação da chevron para cima
-    Animated.timing(rotationAnim, {
-      toValue: 0,
-      duration: 200,
-      useNativeDriver: true,
-    }).start();
   };
 
   const filterExpensesByDate = (expenses: any[], filter: DateFilter) => {
@@ -508,12 +497,6 @@ export default function ExpensesScreen() {
                 }]
               }}
             >
-              <Ionicons 
-                name="chevron-down" 
-                size={18} 
-                color="#9ca3af"
-                style={{ opacity: 0.8 }}
-              />
             </Animated.View>
           </View>
         </TouchableOpacity>
