@@ -475,7 +475,7 @@ export default function ExpensesScreen() {
                 backgroundColor: 'rgba(239, 68, 68, 0.15)'
               }}
             >
-              <Ionicons name="calendar-outline" size={16} color="#ff7a7f" />
+              <Ionicons name="calendar-number-outline" size={16} color="#ff7a7f" />
             </View>
             <View className="flex-col">
               <Text className="text-zinc-400 font-sans text-xs mb-1">Período selecionado</Text>

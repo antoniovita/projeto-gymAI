@@ -1,5 +1,5 @@
 const keywordMap: Record<string, string> = {
-  // Despesas
+  // despesas
   'comprei': 'bought',
   'comprar': 'buy',
   'compra': 'purchase',
@@ -20,7 +20,7 @@ const keywordMap: Record<string, string> = {
   'retirei': 'withdrew',
   'retirada': 'withdrawal',
 
-  // Ganhos
+  // ganhos
   'ganhei': 'earned',
   'ganho': 'gain',
   'ganhos': 'earnings',
@@ -39,7 +39,7 @@ const keywordMap: Record<string, string> = {
   'pix recebido': 'pix received',
   'pix': 'pix',
 
-  // Expressões de dinheiro
+  // expressões de dinheiro
   'grana': 'money',
   'bufunfa': 'cash',
   'dinheiro': 'money',
@@ -50,7 +50,7 @@ const keywordMap: Record<string, string> = {
   'entrou': 'came in',
   'saiu': 'went out',
 
-  // Expressões
+  // expressões
   'gastei com': 'spent on',
   'paguei por': 'paid for',
   'ganhei de': 'earned from',

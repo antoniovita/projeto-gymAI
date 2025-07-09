@@ -36,14 +36,6 @@ export const useTask = () => {
 
     const now = new Date();
 
-    // Notification on creation day (immediate)
-    if (isSameDay(date, now)) {
-      await Notifications.scheduleNotificationAsync({
-        content: { title: `🗓️ Tarefa para hoje: ${title}`, body: body || 'Você tem uma tarefa hoje!', data: { taskId } },
-        trigger: null,
-      });
-    }
-
     // Notification at exact time
     if (date > now) {
       await Notifications.scheduleNotificationAsync({

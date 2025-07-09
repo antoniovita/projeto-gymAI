@@ -9,7 +9,7 @@ import { useTask } from '../hooks/useTask';
 import { useRecurrentTaskDrafts } from '../hooks/useRecurrentTaskDrafts';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import { format } from 'date-fns';
+import { format, isSameDay, parseISO } from 'date-fns';
 import { useAuth } from 'hooks/useAuth';
 import { Task } from 'api/model/Task';
 import RefreshButton from './comps/refreshButton';
@@ -374,25 +374,20 @@ export default function AgendaScreen() {
   const filterTasks = async (filterDate: Date) => {
     try {
       setIsLoading(true);
-      
+
       await processTasksForDate(filterDate);
-      
+
       const filtered = tasks.filter(task => {
         if (!task.datetime) return false;
-
-        const taskDateISO = task.datetime.split('T')[0];
-        const selectedDateISO = filterDate.toISOString().split('T')[0];
-
+        const taskDate = parseISO(task.datetime);
         const types = task.type?.split(',').map(t => t.trim()) || [];
         const categoryMatches =
           selectedTypes.length === 0 || selectedTypes.some(cat => types.includes(cat));
-
-        return taskDateISO === selectedDateISO && categoryMatches;
+        return isSameDay(taskDate, filterDate) && categoryMatches;
       });
 
       setFilteredTasks(filtered);
       console.log(`Filtradas ${filtered.length} tasks para ${format(filterDate, 'dd/MM/yyyy')}`);
-      
     } catch (error) {
       console.error('Erro ao filtrar tasks:', error);
       Alert.alert('Erro', 'Falha ao filtrar tarefas');
@@ -400,7 +395,7 @@ export default function AgendaScreen() {
       setIsLoading(false);
     }
   };
-
+  
   useFocusEffect(
     React.useCallback(() => {
       const loadInitialData = async () => {
@@ -423,7 +418,7 @@ export default function AgendaScreen() {
       };
 
       loadInitialData();
-    }, [])
+    }, [tasks])
   );
 
   useEffect(() => {
@@ -587,6 +582,7 @@ export default function AgendaScreen() {
   const handleRefresh = async () => {
     if (userId) {
       await filterTasks(dateFilter);
+      console.log(dateFilter)
     }
   };
 
