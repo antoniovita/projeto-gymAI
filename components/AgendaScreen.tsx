@@ -2,9 +2,9 @@ import { useFocusEffect } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, TouchableOpacity, SafeAreaView, Alert, Animated, FlatList,
-  Pressable,
+  Pressable, Modal, Dimensions,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather, Ionicons } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { useTask } from '../hooks/useTask';
 import { useRecurrentTaskDrafts } from '../hooks/useRecurrentTaskDrafts';
@@ -18,126 +18,125 @@ import TaskModal from '../components/comps/TaskModal';
 import CategoryModal from '../components/comps/CategoryModal';
 import DeleteCategoryModal from '../components/comps/DeleteCategoryModal';
 
-const LoadingSpinner = ({ visible }: { visible: boolean }) => {
-  const spinValue = React.useRef(new Animated.Value(0)).current;
-  const fadeValue = React.useRef(new Animated.Value(0)).current;
-  const scaleValue = React.useRef(new Animated.Value(0.8)).current;
+const { width, height } = Dimensions.get('window');
 
-  React.useEffect(() => {
-    if (visible) {
-      Animated.parallel([
-        Animated.timing(fadeValue, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.spring(scaleValue, {
-          toValue: 1,
-          tension: 100,
-          friction: 8,
-          useNativeDriver: true,
-        }),
-      ]).start();
+  const LoadingSpinner = ({ visible }: { visible: boolean }) => {
+    const spinValue = React.useRef(new Animated.Value(0)).current;
+    const fadeValue = React.useRef(new Animated.Value(0)).current;
+    const scaleValue = React.useRef(new Animated.Value(0.8)).current;
+    const spinAnimation = React.useRef<Animated.CompositeAnimation | null>(null);
 
-      const spinAnimation = Animated.loop(
-        Animated.timing(spinValue, {
-          toValue: 1,
-          duration: 1200,
-          useNativeDriver: true,
-        })
-      );
-      spinAnimation.start();
+    React.useEffect(() => {
+      if (visible) {
 
-      return () => {
-        spinAnimation.stop();
-      };
-    } else {
-      Animated.parallel([
-        Animated.timing(fadeValue, {
-          toValue: 0,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleValue, {
-          toValue: 0.8,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }
-  }, [visible]);
+        Animated.parallel([
+          Animated.timing(fadeValue, {
+            toValue: 1,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+          Animated.spring(scaleValue, {
+            toValue: 1,
+            tension: 100,
+            friction: 8,
+            useNativeDriver: true,
+          }),
+        ]).start();
 
-  const spin = spinValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
+        spinValue.setValue(0);
+        spinAnimation.current = Animated.loop(
+          Animated.timing(spinValue, {
+            toValue: 1,
+            duration: 1200,
+            useNativeDriver: true,
+          })
+        );
+        spinAnimation.current.start();
+      } else {
+        Animated.parallel([
+          Animated.timing(fadeValue, {
+            toValue: 0,
+            duration: 150,
+            useNativeDriver: true,
+          }),
+          Animated.timing(scaleValue, {
+            toValue: 0.8,
+            duration: 150,
+            useNativeDriver: true,
+          }),
+        ]).start();
 
-  if (!visible) return null;
+        spinAnimation.current?.stop();
+      }
+    }, [visible]);
 
-  return (
-    <Animated.View 
-      style={{
-        opacity: fadeValue,
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.4)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 1000,
-      }}
-    >
-      <Animated.View
-        style={{
-          transform: [{ scale: scaleValue }],
-          backgroundColor: 'rgba(28, 28, 30, 0.9)',
-          borderRadius: 16,
-          padding: 24,
-          alignItems: 'center',
-          justifyContent: 'center',
-          minWidth: 120,
-          minHeight: 120,
-          shadowColor: '#000',
-          shadowOffset: {
-            width: 0,
-            height: 8,
-          },
-          shadowOpacity: 0.25,
-          shadowRadius: 16,
-          elevation: 10,
-        }}
+    const spin = spinValue.interpolate({
+      inputRange: [0, 1],
+      outputRange: ['0deg', '360deg'],
+    });
+
+    return (
+      <Modal
+        transparent
+        visible={visible}
+        animationType="none"
+        statusBarTranslucent
       >
         <Animated.View
           style={{
-            transform: [{ rotate: spin }],
-            marginBottom: 12,
+            opacity: fadeValue,
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: width,
+            height: height,
+            backgroundColor: 'rgba(0, 0, 0, 0.4)',
+            justifyContent: 'center',
+            alignItems: 'center',
           }}
         >
-          <View style={{
-            width: 32,
-            height: 32,
-            borderRadius: 16,
-            borderWidth: 3,
-            borderColor: 'transparent',
-            borderTopColor: '#ff7a7f',
-            borderRightColor: '#ff7a7f',
-          }} />
+          <Animated.View
+            style={{
+              transform: [{ scale: scaleValue }],
+              backgroundColor: 'rgba(28, 28, 30, 0.9)',
+              borderRadius: 16,
+              padding: 24,
+              alignItems: 'center',
+              justifyContent: 'center',
+              minWidth: 120,
+              minHeight: 120,
+              shadowColor: '#000',
+              shadowOffset: {
+                width: 0,
+                height: 8,
+              },
+              shadowOpacity: 0.25,
+              shadowRadius: 16,
+              elevation: 10,
+            }}
+          >
+            <Animated.View
+              style={{
+                transform: [{ rotate: spin }],
+                marginBottom: 12,
+              }}
+            >
+              <Feather name="loader" size={32} color="#ff7a7f" />
+            </Animated.View>
+            <Text style={{
+              color: 'white',
+              fontSize: 16,
+              fontFamily: 'Poppins',
+              textAlign: 'center',
+              opacity: 0.9,
+            }}>
+              Carregando...
+            </Text>
+          </Animated.View>
         </Animated.View>
-        <Text style={{
-          color: 'white',
-          fontSize: 16,
-          fontWeight: '500',
-          textAlign: 'center',
-          opacity: 0.9,
-        }}>
-          Carregando...
-        </Text>
-      </Animated.View>
-    </Animated.View>
-  );
-};
+      </Modal>
+    );
+  };
 
 const EmptyState = ({ dateFilter, onCreateTask }: { dateFilter: Date, onCreateTask: () => void }) => {
   const getDayOfWeek = (date: Date) => {

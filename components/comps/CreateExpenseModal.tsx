@@ -68,8 +68,9 @@ const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
             placeholderTextColor="#a1a1aa"
             value={newTaskTitle}
             onChangeText={setNewTaskTitle}
+            scrollEnabled={false}
+            multiline={false}
             className="text-gray-300 text-3xl font-semibold mb-4"
-            multiline
           />
 
           <View className="flex flex-row flex-wrap gap-2 mb-4">
