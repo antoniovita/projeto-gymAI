@@ -5,6 +5,7 @@ import {
   ScrollView,
   Modal,
   TextInput,
+  Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -50,7 +51,7 @@ const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
 
   return (
     <Modal transparent animationType="slide" visible={isVisible} onRequestClose={onClose}>
-      <View className="flex-1 py-[50px] bg-zinc-800">
+      <View className={`flex-1 ${Platform.OS == 'ios' && "py-[50px]" }  bg-zinc-800`}>
         <View className="flex-row justify-between items-center px-4 py-4">
           <TouchableOpacity onPress={onClose} className="items-center flex flex-row">
             <Ionicons name="chevron-back" size={28} color="white" />
@@ -99,6 +100,23 @@ const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
             })}
           </View>
 
+
+          
+          {Platform.OS == 'android' ? (
+
+            <View className="flex flex-row items-center mt-2 gap-2 mb-4">
+              <Text className="font-sans text-2xl text-white">R$</Text>
+
+              <TextInput
+                placeholder="00,00"
+                placeholderTextColor="#a1a1aa"
+                className='text-gray-300 text-2xl mt-[100px]'
+                keyboardType='numeric'
+                value={expenseValue}
+                onChangeText={setExpenseValue}
+              />
+            </View> ) : 
+           
           <View className="flex flex-row items-center mt-2 gap-2 mb-4">
             <Text className="font-sans text-2xl text-white">R$</Text>
             <TextInput
@@ -107,11 +125,12 @@ const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
               className="text-white text-2xl font-sans"
               keyboardType="numeric"
               value={expenseValue}
-              scrollEnabled={false}
-              multiline={false}
               onChangeText={setExpenseValue}
             />
           </View>
+          }
+
+
 
           <TextInput
             placeholder="Descrição da despesa"

@@ -278,7 +278,7 @@ export default function RoutineScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-zinc-800">
+      <SafeAreaView className={`flex-1 ${Platform.OS == 'android' && "py-[30px]" }  bg-zinc-800`}>
       <View className="mt-5 px-4 flex-row items-center justify-between">
         <TouchableOpacity onPress={() => navigation.goBack()} className="flex-row items-center">
           <Ionicons name="chevron-back" size={24} color="white" />
@@ -349,7 +349,7 @@ export default function RoutineScreen() {
           keyboardVerticalOffset={0}
         >
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <View className="bg-zinc-900 rounded-t-3xl p-6" style={{ minHeight: '52%' }}>
+            <View className="bg-zinc-900 rounded-t-3xl p-6" style={{ minHeight: '48%' }}>
               <ScrollView 
                 showsVerticalScrollIndicator={false} 
                 style={{ maxHeight: 290 }}
@@ -415,7 +415,7 @@ export default function RoutineScreen() {
                 </View>
               </ScrollView>
 
-              <View className="absolute bottom-[15%] self-center flex-row flex gap-3">
+              <View className={`${Platform.OS == 'ios' ? 'absolute bottom-[15%] self-center flex-row flex gap-3' : 'self-center flex-row flex gap-3'}`}>
                 <TouchableOpacity
                   onPress={() => setShowModal(false)}
                   className="flex-1 bg-neutral-700 rounded-xl py-4"

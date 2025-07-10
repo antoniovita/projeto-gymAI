@@ -129,7 +129,7 @@ export const ChangeNameModal: React.FC<ChangeNameModalProps> = ({
         >
           {/* header */}
           <View className="flex-row justify-between items-center mb-4">
-            <Text className="text-white font-sans text-[20px] font-bold">
+            <Text className="text-white font-sans text-[20px]">
               Alterar Nome
             </Text>
             <TouchableOpacity onPress={handleClose}>
@@ -154,7 +154,7 @@ export const ChangeNameModal: React.FC<ChangeNameModalProps> = ({
             onPress={handleSave}
             className="w-full bg-[#ff7a7f] py-3 rounded-2xl items-center mb-4"
           >
-            <Text className="text-white font-sans font-bold text-base">
+            <Text className="text-white font-sans text-base">
               Salvar
             </Text>
           </TouchableOpacity>
@@ -246,7 +246,7 @@ const ChangePinModal: React.FC<{
           className="bg-[#1e1e1e] rounded-t-3xl p-6 max-h-[60%]"
         >
           <View className="flex-row justify-between items-center mb-4">
-            <Text className="text-white font-sans text-[20px] font-bold">Alterar PIN</Text>
+            <Text className="text-white font-sans text-[20px]">Alterar PIN</Text>
             <TouchableOpacity onPress={handleClose}>
               <Ionicons name="close" size={24} color="white" />
             </TouchableOpacity>
@@ -279,7 +279,7 @@ const ChangePinModal: React.FC<{
             onPress={handleSave}
             className="w-full bg-[#ff7a7f] py-3 rounded-2xl items-center mb-4"
           >
-            <Text className="text-white font-sans font-bold text-base">Salvar</Text>
+            <Text className="text-white font-sans text-base">Salvar</Text>
           </TouchableOpacity>
         </Animated.View>
       </KeyboardAvoidingView>
@@ -335,7 +335,7 @@ export default function InfoScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-zinc-900">
+    <SafeAreaView className={`flex-1 ${Platform.OS == 'android' && "py-[30px]" }  bg-zinc-900`}>
       <View className="mt-5 px-4 flex-row items-center justify-between">
         <TouchableOpacity onPress={() => navigation.goBack()} className="flex-row items-center">
           <Ionicons name="chevron-back" size={24} color="white" />

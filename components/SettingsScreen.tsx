@@ -9,6 +9,7 @@ import {
   Modal,
   Animated,
   Dimensions,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -334,7 +335,7 @@ export default function SettingsScreen() {
     : '';
 
   return (
-    <SafeAreaView className="flex-1 bg-zinc-900">
+    <SafeAreaView className={`flex-1 ${Platform.OS == 'android' && "py-[30px]" }  bg-zinc-900`}>
       <View className="mt-[20px] flex flex-row items-center px-2">
         <TouchableOpacity onPress={() => navigation.goBack()} className="flex flex-row items-center">
           <Ionicons name="chevron-back" size={24} color="white" />

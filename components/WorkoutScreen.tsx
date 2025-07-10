@@ -8,7 +8,8 @@ import {
   Alert,
   ScrollView,
   FlatList,
-  Pressable
+  Pressable,
+  Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useState, useEffect, useCallback } from 'react';
@@ -588,7 +589,7 @@ export default function WorkoutScreen() {
         visible={isCreateVisible}
         onRequestClose={() => setIsCreateVisible(false)}
       >
-        <View className="flex-1 py-[50px] bg-zinc-800">
+      <View className={`flex-1 ${Platform.OS == 'ios' && "py-[50px]" }  bg-zinc-800`}>
           <View className="flex-row justify-between items-center px-4 py-4">
             <TouchableOpacity
               className="items-center flex flex-row"
