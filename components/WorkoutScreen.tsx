@@ -1,7 +1,6 @@
 import {
   View,
   Text,
-  TouchableOpacity,
   SafeAreaView,
   Modal,
   TextInput,
@@ -13,6 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useState, useEffect, useCallback } from 'react';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { useWorkout } from '../hooks/useWorkout';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -99,7 +99,7 @@ export default function WorkoutScreen() {
     loadMuscleGroups();
   }, []);
 
-  const { userId, loading } = useAuth();
+  const { userId } = useAuth();
 
   const muscleGroups = customMuscleGroups.map((g) => g.name);
 
@@ -302,14 +302,30 @@ export default function WorkoutScreen() {
 
   const renderLeftActions = (item: any) => {
     return (
-    <View className="flex-row items-center justify-start border-t bg-rose-500 px-4 h-full">
-        <Pressable 
-        className="flex-row items-center justify-center w-16 h-16 rounded-full"
-          onPress={() => handleDelete(item.id)}
-        >
-          <Ionicons name="trash" size={24} color="white" />
-        </Pressable>
-      </View>
+    <View style={{
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      borderTopWidth: 1,
+      borderTopColor: '#f43f5e',
+      backgroundColor: '#f43f5e',
+      paddingHorizontal: 16,
+      height: '100%',
+    }}>
+      <TouchableOpacity
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: 64,
+          height: 64,
+          borderRadius: 32,
+        }}
+        onPress={() => handleDelete(item.id)}
+      >
+        <Ionicons name="trash" size={24} color="white" />
+      </TouchableOpacity>
+    </View>
     );
   };
 
@@ -328,7 +344,7 @@ export default function WorkoutScreen() {
       >
         <View className="w-full flex flex-col justify-center px-6 h-[102px] pt-1 pb-4 border-b border-neutral-700 bg-zinc-800">
           <View className="flex flex-row justify-between">
-            <TouchableOpacity
+            <Pressable
               className="flex flex-col gap-1 mt-1"
               onPress={() => handleOpenEdit(item)}
             >
@@ -336,7 +352,7 @@ export default function WorkoutScreen() {
               <Text className="text-neutral-400 text-sm mt-1 font-sans">
                 {new Date(item.date ?? '').toLocaleDateString('pt-BR')}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
           <View className="flex-row flex-wrap gap-2 justify-start mt-3 items-start flex-1 overflow-hidden">
@@ -378,20 +394,20 @@ export default function WorkoutScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-zinc-800">
-      <TouchableOpacity
+      <Pressable
         onPress={handleOpenCreate}
         className="w-[50px] h-[50px] absolute bottom-6 right-6 z-20 rounded-full bg-rose-400 items-center justify-center shadow-lg"
       >
         <Ionicons name="add" size={32} color="black" />
-      </TouchableOpacity>
+      </Pressable>
 
       <View className="flex flex-col px-6 mt-[40px] mb-5">
         <View className='flex flex-row justify-between items-center'>
           <Text className="text-3xl text-white font-medium font-sans">Academia</Text>
         
-          <TouchableOpacity onPress={() => setShowDeleteCategoryModal(true)}>
+          <Pressable onPress={() => setShowDeleteCategoryModal(true)}>
             <Ionicons name="options-outline" size={24} color="#ff7a7f" />
-          </TouchableOpacity>
+          </Pressable>
 
           <Modal
             transparent
@@ -423,7 +439,7 @@ export default function WorkoutScreen() {
                             />
                             <Text className="text-white font-sans text-lg">{cat}</Text>
                           </View>
-                          <TouchableOpacity
+                          <Pressable
                             onPress={() => {
                               setCategoryToDelete(cat);
                               setShowConfirmDeleteModal(true);
@@ -431,19 +447,19 @@ export default function WorkoutScreen() {
                             className="p-2 bg-neutral-700 rounded-xl"
                           >
                           <Ionicons name="trash" size={20} color="#fa4d5c" />
-                          </TouchableOpacity>
+                          </Pressable>
                         </View>
                       );
                     })
                   )}
                 </ScrollView>
 
-                <TouchableOpacity
+                <Pressable
                   onPress={() => setShowDeleteCategoryModal(false)}
                   className="bg-neutral-700 rounded-xl p-3 items-center"
                 >
                   <Text className="text-white text-lg font-sans font-semibold">Fechar</Text>
-                </TouchableOpacity>
+                </Pressable>
               </View>
 
               <Modal
@@ -465,19 +481,19 @@ export default function WorkoutScreen() {
                     </Text>
 
                     <View className="flex-row w-full justify-between gap-3">
-                      <TouchableOpacity
+                      <Pressable
                         onPress={() => setShowConfirmDeleteModal(false)}
                         className="flex-1 bg-neutral-700 py-3 rounded-xl items-center"
                       >
                         <Text className="text-white font-semibold font-sans">Cancelar</Text>
-                      </TouchableOpacity>
+                      </Pressable>
 
-                      <TouchableOpacity
+                      <Pressable
                         onPress={handleDeleteCategory}
                         className="flex-1 bg-rose-500 py-3 rounded-xl items-center"
                       >
                         <Text className="text-black font-sans font-semibold">Apagar</Text>
-                      </TouchableOpacity>
+                      </Pressable>
                     </View>
                   </View>
                 </View>
@@ -492,7 +508,7 @@ export default function WorkoutScreen() {
             const color = getCategoryColor(cat);
 
             return (
-              <TouchableOpacity
+              <Pressable
                 key={cat}
                 onPress={() =>
                   setSelectedCategories((prev) =>
@@ -507,17 +523,17 @@ export default function WorkoutScreen() {
                 <Text className={`font-sans text-sm ${isSelected ? 'text-black' : 'text-white'}`}>
                   {cat}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             );
           })}
 
-          <TouchableOpacity
+          <Pressable
             onPress={() => setIsCategoryModalVisible(true)}
             className="flex-row items-center gap-2 px-3 py-1 rounded-xl bg-zinc-700"
           >
             <Ionicons name="add" size={16} color="white" />
             <Text className="text-white text-sm font-sans">Nova Categoria</Text>
-          </TouchableOpacity>
+          </Pressable>
 
           <Modal
             transparent
@@ -538,7 +554,7 @@ export default function WorkoutScreen() {
 
                 <View className="flex flex-row flex-wrap gap-2 mb-4">
                   {colorOptions.map((color) => (
-                    <TouchableOpacity
+                    <Pressable
                       key={color}
                       onPress={() => setNewCategoryColor(color)}
                       style={{
@@ -553,19 +569,19 @@ export default function WorkoutScreen() {
                   ))}
                 </View>
 
-                <TouchableOpacity
+                <Pressable
                   onPress={handleAddCategory}
                   className="bg-rose-400 p-3 mt-3 rounded-xl items-center"
                 >
                   <Text className="text-black font-semibold font-sans">Adicionar Categoria</Text>
-                </TouchableOpacity>
+                </Pressable>
 
-                <TouchableOpacity
+                <Pressable
                   onPress={() => setIsCategoryModalVisible(false)}
                   className="mt-4 p-2"
                 >
                   <Text className="text-neutral-400 text-center font-sans">Cancelar</Text>
-                </TouchableOpacity>
+                </Pressable>
               </View>
             </View>
           </Modal>
@@ -591,17 +607,17 @@ export default function WorkoutScreen() {
       >
       <View className={`flex-1 ${Platform.OS == 'ios' && "py-[50px]" }  bg-zinc-800`}>
           <View className="flex-row justify-between items-center px-4 py-4">
-            <TouchableOpacity
+            <Pressable
               className="items-center flex flex-row"
               onPress={() => setIsCreateVisible(false)}
             >
               <Ionicons name="chevron-back" size={28} color="white" />
               <Text className="text-white text-lg font-sans"> Voltar</Text>
-            </TouchableOpacity>
+            </Pressable>
 
-            <TouchableOpacity onPress={handleSaveWorkout}>
+            <Pressable onPress={handleSaveWorkout}>
               <Text className="text-rose-400 font-sans text-lg font-semibold mr-4">Salvar</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
           <ScrollView className="flex-1 py-4 px-8">
@@ -620,7 +636,7 @@ export default function WorkoutScreen() {
                 const color = muscleColors[muscle];
 
                 return (
-                  <TouchableOpacity
+                  <Pressable
                     key={muscle}
                     onPress={() => toggleMuscleForWorkout(muscle)}
                     className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${
@@ -629,7 +645,7 @@ export default function WorkoutScreen() {
                   >
                     <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color, borderWidth: 0.5, borderColor: '#fff' }} />
                     <Text className={`${isSelected ? 'text-black' : 'text-white'}`}>{muscle}</Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 );
               })}
             </View>

@@ -247,8 +247,8 @@ const SwipeableTaskItem = ({
 
 export default function AgendaScreen() {
 
-  const { userId } = useAuth()
-
+  const userId = 'user123'
+ 
   const {
     tasks,
     createTask,

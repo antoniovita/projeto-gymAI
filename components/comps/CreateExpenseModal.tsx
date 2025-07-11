@@ -110,7 +110,7 @@ const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
               <TextInput
                 placeholder="00,00"
                 placeholderTextColor="#a1a1aa"
-                className='text-gray-300 text-2xl mt-[100px]'
+                className='text-gray-300 text-2xl'
                 keyboardType='numeric'
                 value={expenseValue}
                 onChangeText={setExpenseValue}

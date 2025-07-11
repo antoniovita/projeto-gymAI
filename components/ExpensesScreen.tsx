@@ -2,15 +2,14 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
   SafeAreaView,
   Alert,
-  Dimensions,
   FlatList,
   Animated,
   Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { useExpenses } from '../hooks/useExpenses';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -20,8 +19,6 @@ import CreateExpenseModal from '../components/comps/CreateExpenseModal';
 import CreateCategoryModal from '../components/comps/CreateCategoryModal';
 import DeleteCategoryModal from '../components/comps/DeleteCategoryModalExp';
 import DateFilterModal from '../components/comps/DateFilterModal';
-
-const { height: screenHeight } = Dimensions.get('window');
 
 export interface DateFilter {
   type: 'all' | 'month' | 'year' | 'custom' | 'date';
@@ -334,12 +331,19 @@ export default function ExpensesScreen() {
   const renderLeftActions = (item: any) => {
     return (
     <View className="flex-row items-center justify-start border-t bg-rose-500 px-4 h-full">
-        <Pressable 
+        <TouchableOpacity
           onPress={() => handleDeleteExpense(item.id)}
-        className="flex-row items-center justify-center w-16 h-16 rounded-full"
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 64,
+            height: 64,
+            borderRadius: 32,
+          }}
         >
           <Ionicons name="trash" size={24} color="white" />
-        </Pressable>
+        </TouchableOpacity>
       </View>
     );
   };
@@ -357,7 +361,7 @@ export default function ExpensesScreen() {
       >
         <View className="w-full flex flex-col justify-center px-6 h-[90px] pb-4 border-b border-neutral-700 bg-zinc-800">
           <View className="flex flex-row justify-between">
-            <TouchableOpacity className="flex flex-col gap-1 mt-1" onPress={() => openEditModal(item)}>
+            <Pressable className="flex flex-col gap-1 mt-1" onPress={() => openEditModal(item)}>
               <Text className="text-xl font-sans font-medium text-gray-300 max-w-[250px]">
                 {item.name.split(' ').slice(0, 6).join(' ')}
                 {item.name.split(' ').length > 6 ? '...' : ''}
@@ -365,7 +369,7 @@ export default function ExpensesScreen() {
               <Text className="text-neutral-400 text-sm mt-1 font-sans">
                 {new Date(item.date ?? '').toLocaleDateString('pt-BR')} - {new Date(item.time ?? '').toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
             <Text className={`font-sans ${item.type == "Ganhos" ? "text-emerald-400" : "text-[#ff7a7f]"} text-2xl mt-6`}>
               {currencyFormat(Number(item.amount))}
             </Text>
@@ -423,7 +427,7 @@ export default function ExpensesScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-zinc-800">
-      <TouchableOpacity
+      <Pressable
         onPress={openCreateModal}
         className="w-[50px] h-[50px] absolute bottom-6 right-6 z-20 rounded-full bg-rose-400 items-center justify-center shadow-lg"
         style={{
@@ -435,7 +439,7 @@ export default function ExpensesScreen() {
         }}
       >
         <Ionicons name="add" size={32} color="black" />
-      </TouchableOpacity>
+      </Pressable>
 
       <View className="flex flex-row items-center justify-between px-6 mt-[40px] mb-6">
         <Text className="text-3xl text-white font-medium font-sans">Despesas</Text>
@@ -447,14 +451,14 @@ export default function ExpensesScreen() {
             </Text>
           </View>
 
-          <TouchableOpacity onPress={() => setShowDeleteCategoryModal(true)}>
+          <Pressable onPress={() => setShowDeleteCategoryModal(true)}>
             <Ionicons name="options-outline" size={24} color="#ff7a7f" />
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
 
       <View className="px-6 mb-4">
-        <TouchableOpacity
+        <Pressable
           onPress={handleDateFilterModalOpen}
           className="flex-row items-center justify-between px-4 py-3 rounded-2xl bg-[#35353a]"
         >
@@ -500,14 +504,14 @@ export default function ExpensesScreen() {
             >
             </Animated.View>
           </View>
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       <View className='flex flex-row flex-wrap gap-2 px-6 pb-3'>
         {categories.map((category) => {
           const isSelected = selectedCategory === category.name;
           return (
-            <TouchableOpacity
+            <Pressable
               key={category.name}
               onPress={() => handleCategorySelection(category.name)}
               className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${isSelected ? 'bg-rose-400' : 'bg-zinc-700'}`}
@@ -523,17 +527,17 @@ export default function ExpensesScreen() {
                 }}
               />
               <Text className={`font-sans text-sm ${isSelected ? 'text-black' : 'text-white'}`}>{category.name}</Text>
-            </TouchableOpacity>
+            </Pressable>
           );
         })}
 
-        <TouchableOpacity
+        <Pressable
           onPress={() => setIsCategoryModalVisible(true)}
           className="flex-row items-center gap-2 px-3 py-1 rounded-xl bg-zinc-700"
         >
           <Ionicons name="add" size={16} color="white" />
           <Text className="text-white text-sm font-sans">Nova Categoria</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {filteredExpenses.length === 0 ? (
