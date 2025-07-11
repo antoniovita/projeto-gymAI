@@ -79,11 +79,9 @@ export default function ExpensesScreen() {
   const [isCreateVisible, setIsCreateVisible] = useState(false);
   const [isEditVisible, setIsEditVisible] = useState(false);
 
-  // Estados para filtro de data
   const [showDateFilterModal, setShowDateFilterModal] = useState(false);
   const [dateFilter, setDateFilter] = useState<DateFilter>({ type: 'all' });
 
-  // Animação para a chevron
   const [rotationAnim] = useState(new Animated.Value(0));
 
   const { createExpense, fetchExpenses, expenses, deleteExpense, updateExpense, debugAllExpenses } = useExpenses();

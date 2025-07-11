@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { 
   View, 
   Text, 
-  TouchableOpacity, 
+  Pressable, 
   ScrollView, 
   SafeAreaView, 
   Modal, 
@@ -13,10 +13,10 @@ import {
   Platform,
   Keyboard,
   FlatList,
-  Pressable
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 import { useRecurrentTaskDrafts } from '../hooks/useRecurrentTaskDrafts';
 import { useAuth } from 'hooks/useAuth';
 import { useNavigation } from '@react-navigation/native';
@@ -235,12 +235,12 @@ export default function RoutineScreen() {
   const renderLeftActions = (item: any) => {
     return (
       <View className="flex-row items-center justify-start border-t bg-rose-500 px-4 h-full" style={{ width: 80 }}>
-        <Pressable
+        <TouchableOpacity
           className="flex-row items-center justify-center w-16 h-16 rounded-full"
           onPress={() => handleDelete(item)}
         >
           <Ionicons name="trash" size={24} color="white" />
-        </Pressable>
+        </TouchableOpacity>
       </View>
     );
   };
@@ -260,7 +260,7 @@ export default function RoutineScreen() {
       >
         <View className="w-full flex flex-col justify-center px-6 h-[90px] pb-4 border-b border-neutral-700 bg-zinc-800">
           <View className="flex flex-row justify-between">
-            <TouchableOpacity className="flex flex-col gap-1 mt-1" onPress={() => openEditModal(item)}>
+            <Pressable className="flex flex-col gap-1 mt-1" onPress={() => openEditModal(item)}>
               <Text className="text-xl font-sans font-medium text-gray-300">
                 {item.title}
               </Text>
@@ -270,7 +270,7 @@ export default function RoutineScreen() {
               <Text className="text-neutral-500 font-sans text-xs mt-1">
                 Recorrente em {item.daysOfWeek.length} dias
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
       </Swipeable>
@@ -280,16 +280,16 @@ export default function RoutineScreen() {
   return (
       <SafeAreaView className={`flex-1 ${Platform.OS == 'android' && "py-[30px]" }  bg-zinc-800`}>
       <View className="mt-5 px-4 flex-row items-center justify-between">
-        <TouchableOpacity onPress={() => navigation.goBack()} className="flex-row items-center">
+        <Pressable onPress={() => navigation.goBack()} className="flex-row items-center">
           <Ionicons name="chevron-back" size={24} color="white" />
           <Text className="ml-2 text-white font-sans text-[16px]">Voltar</Text>
-        </TouchableOpacity>
+        </Pressable>
         <View className="absolute left-0 right-0 items-center">
           <Text className="text-white font-sans text-[15px]">Minha Rotina</Text>
         </View>
-        <TouchableOpacity onPress={openCreateModal}>
+        <Pressable onPress={openCreateModal}>
           <Ionicons name="add" size={24} color="white" />
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       <ScrollView 
@@ -300,13 +300,13 @@ export default function RoutineScreen() {
         style={{ flexGrow: 0 }}
       >
         {days.map(day => (
-          <TouchableOpacity
+          <Pressable
             key={day}
             onPress={() => setSelectedDay(day)}
             className={`px-4 py-1.5 rounded-full mr-2 ${selectedDay === day ? 'bg-[#ff7a7f]' : 'bg-neutral-700'}`}
           >
             <Text className={`font-sans ${selectedDay === day ? 'text-black' : 'text-white'}`}>{day}</Text>
-          </TouchableOpacity>
+          </Pressable>
         ))}
       </ScrollView>
 
@@ -380,20 +380,20 @@ export default function RoutineScreen() {
                 </View>
 
                 <View className="mb-4">
-                  <TouchableOpacity
+                  <Pressable
                     onPress={() => setShowTimePicker(true)}
                     className="px-2 py-3 flex-row items-center justify-between"
                   >
                     <Text className={`font-bold text-2xl ${formData.time ? 'text-white' : 'text-gray-400'}`}>
                       {formData.time || new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                     </Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 </View>
 
                 <View className="mb-6 mt-2">
                   <View className="flex-row flex-wrap">
                     {[1, 2, 3, 4, 5, 6, 0].map(dayNumber => (
-                      <TouchableOpacity
+                      <Pressable
                         key={dayNumber}
                         onPress={() => toggleDaySelection(dayNumber)}
                         className={`px-4 py-2 rounded-full mr-2 mb-2 ${
@@ -409,20 +409,20 @@ export default function RoutineScreen() {
                         }`}>
                           {getDayName(dayNumber)}
                         </Text>
-                      </TouchableOpacity>
+                      </Pressable>
                     ))}
                   </View>
                 </View>
               </ScrollView>
 
               <View className={`${Platform.OS == 'ios' ? 'absolute bottom-[15%] self-center flex-row flex gap-3' : 'self-center flex-row flex gap-3'}`}>
-                <TouchableOpacity
+                <Pressable
                   onPress={() => setShowModal(false)}
                   className="flex-1 bg-neutral-700 rounded-xl py-4"
                 >
                   <Text className="text-white font-sans text-center">Cancelar</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
+                </Pressable>
+                <Pressable
                   onPress={handleSave}
                   className="flex-1 bg-[#ff7a7f] rounded-xl py-4"
                   disabled={loading}
@@ -430,7 +430,7 @@ export default function RoutineScreen() {
                   <Text className="text-black font-sans text-center">
                     {loading ? 'Salvando...' : 'Salvar'}
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               </View>
             </View>
           </TouchableWithoutFeedback>

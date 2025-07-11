@@ -126,7 +126,7 @@ export default function App() {
 
   let initialRoute: keyof RootStackParamList;
   if (!isAuthenticated) {
-    initialRoute = 'MainTabs';
+    initialRoute = 'WelcomeScreen';
   } else if (hasPin) {
     initialRoute = 'PinScreen';
   } else {

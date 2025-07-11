@@ -1,5 +1,5 @@
 import { useFocusEffect } from '@react-navigation/native';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { use, useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, SafeAreaView, Alert, Animated, FlatList,
   Pressable, Modal, Dimensions,
@@ -247,8 +247,8 @@ const SwipeableTaskItem = ({
 
 export default function AgendaScreen() {
 
-  const userId = 'user123'
- 
+  const { userId } = useAuth()
+  
   const {
     tasks,
     createTask,
