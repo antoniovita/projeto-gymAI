@@ -10,7 +10,6 @@ import {
   Easing,
   Alert,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 
 interface SettingsModalProps {
   visible: boolean;
@@ -72,9 +71,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             >
               <View className="flex-row justify-between items-center mb-4">
                 <Text className="text-white text-2xl font-sans">Configurações</Text>
-                <TouchableOpacity onPress={handleClose}>
-                  <Ionicons name="close" size={28} color="white" />
-                </TouchableOpacity>
               </View>
 
               <ScrollView className="mb-4">

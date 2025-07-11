@@ -1,11 +1,12 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  View, Text, TouchableOpacity, SafeAreaView, Alert, Animated, FlatList,
+  View, Text, SafeAreaView, Alert, Animated, FlatList,
   Pressable, Modal, Dimensions,
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 import { useTask } from '../hooks/useTask';
 import { useRecurrentTaskDrafts } from '../hooks/useRecurrentTaskDrafts';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -190,15 +191,22 @@ const SwipeableTaskItem = ({
   };
 
   const renderLeftActions = () => (
-    <Pressable
+    <TouchableOpacity
       onPress={() => {
-        closeSwipeable();
-        onDelete(item.id);
+      closeSwipeable();
+      onDelete(item.id);
       }}
-      className="flex-row items-center justify-center bg-rose-500 w-[80px] h-full"
+      style={{
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: '#f43f5e',
+      width: 80,
+      height: '100%',
+      }}
     >
       <Ionicons name="trash" size={24} color="white" />
-    </Pressable>
+    </TouchableOpacity>
   );
 
   return (
@@ -212,7 +220,7 @@ const SwipeableTaskItem = ({
       >
         <View className="w-full flex flex-col justify-center px-6 h-[90px] pb-4 border-b border-neutral-700 bg-zinc-800">
           <View className="flex flex-row justify-between">
-            <TouchableOpacity className="flex flex-col gap-1 mt-1" onPress={() => onEdit(item)}>
+            <Pressable className="flex flex-col gap-1 mt-1" onPress={() => onEdit(item)}>
               <View className="flex flex-row items-center gap-2">
                 <Text className={`text-xl font-sans font-medium ${item.completed ? 'line-through text-neutral-500' : 'text-gray-300'}`}>
                   {item.title}
@@ -221,15 +229,15 @@ const SwipeableTaskItem = ({
               <Text className="text-neutral-400 text-sm mt-1 font-sans">
                 {format(new Date(item.datetime), 'dd/MM/yyyy')}  - {format(new Date(item.datetime), 'HH:mm')}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
 
-            <TouchableOpacity
+            <Pressable
               onPress={() => onToggleCompletion(item.id, item.completed)}
               className={`w-[25px] h-[25px] mt-4 border rounded-lg ${item.completed ? 'bg-rose-500' : 'border-2 border-neutral-600'}`}
               style={{ alignItems: 'center', justifyContent: 'center' }}
             >
               {item.completed ? <Ionicons name="checkmark" size={20} color="white" /> : null}
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
       </Swipeable>
@@ -238,8 +246,8 @@ const SwipeableTaskItem = ({
 };
 
 export default function AgendaScreen() {
-  // const { userId } = useAuth();
-  const userId = 'user123'
+
+  const { userId } = useAuth()
 
   const {
     tasks,
@@ -613,7 +621,7 @@ export default function AgendaScreen() {
     <SafeAreaView className="flex-1 bg-zinc-800">
       <LoadingSpinner visible={isCurrentlyLoading} />
 
-      <TouchableOpacity
+      <Pressable
         onPress={() => {
           resetModal();
           setIsCreateVisible(true);
@@ -628,23 +636,23 @@ export default function AgendaScreen() {
         }}
       >
         <Ionicons name="add" size={32} color="black" />
-      </TouchableOpacity>
+      </Pressable>
 
       <View className="flex flex-row items-center justify-between px-6 mt-[40px] mb-6">
         <Text className="text-3xl text-white font-medium font-sans">Agenda</Text>
 
         <View className="flex flex-row items-center gap-[20px]">
-          <TouchableOpacity onPress={showDatePickerDateFilter}>
+          <Pressable onPress={showDatePickerDateFilter}>
             <Text className="text-white text-lg border rounded-lg w-[110px] text-center py-1 font-sans border-[#ff7a7f]">
               {format(dateFilter, 'dd/MM/yyyy')}
             </Text>
-          </TouchableOpacity>
+          </Pressable>
 
           <RefreshButton onPress={handleRefresh} />
 
-          <TouchableOpacity onPress={() => setShowDeleteCategoryModal(true)}>
+          <Pressable onPress={() => setShowDeleteCategoryModal(true)}>
             <Ionicons name="options-outline" size={24} color="#ff7a7f" />
-          </TouchableOpacity>
+          </Pressable>
 
           <DateTimePickerModal
             isVisible={isDatePickerVisible}
@@ -668,7 +676,7 @@ export default function AgendaScreen() {
           const color = getCategoryColor(cat);
 
           return (
-            <TouchableOpacity
+            <Pressable
               key={cat}
               onPress={() =>
                 setSelectedTypes((prev) =>
@@ -680,17 +688,17 @@ export default function AgendaScreen() {
               <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color, borderWidth: 0.5, borderColor: '#fff',}} />
               
               <Text className={`${isSelected ? 'text-black' : 'text-white'}`}>{cat}</Text>
-            </TouchableOpacity>
+            </Pressable>
           );
         })}
 
-        <TouchableOpacity
+        <Pressable
           onPress={() => setIsCategoryModalVisible(true)}
           className="flex-row items-center gap-2 px-3 py-1 rounded-xl bg-zinc-700"
         >
           <Ionicons name="add" size={16} color="white" />
           <Text className="text-white text-sm font-sans">Nova Categoria</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {filteredTasks.length === 0 ? (
