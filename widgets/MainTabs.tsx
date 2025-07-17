@@ -2,10 +2,10 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { Platform } from 'react-native';
 
-import WorkoutScreen from 'components/WorkoutScreen';
 import ChatScreen from 'components/ChatScreen';
 import AgendaScreen from 'components/AgendaScreen';
 import ExpensesScreen from 'components/ExpensesScreen';
+import MoreScreen from 'components/MoreScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -39,8 +39,8 @@ export default function MainTabs() {
             case 'Agenda':
               iconName = focused ? 'calendar' : 'calendar-outline';
               break;
-            case 'Workout':
-              iconName = focused ? 'barbell' : 'barbell-outline';
+            case 'More':
+              iconName = focused ? 'file-tray-full' : 'file-tray-full-outline';
               break;
             case 'Expenses':
               iconName = focused ? 'wallet' : 'wallet-outline';
@@ -56,7 +56,7 @@ export default function MainTabs() {
       <Tab.Screen name="Chat" component={ChatScreen} />
       <Tab.Screen name="Agenda" component={AgendaScreen} />
       <Tab.Screen name="Expenses" component={ExpensesScreen} />
-      <Tab.Screen name="Workout" component={WorkoutScreen} />
+      <Tab.Screen name="More" component={MoreScreen} />
     </Tab.Navigator>
   );
 }

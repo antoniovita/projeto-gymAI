@@ -51,4 +51,33 @@ export const runMigrations = async (db: SQLiteDatabase) => {
       FOREIGN KEY (user_id) REFERENCES user(id)
     );
   `);
+
+  // table notes
+  await db.execAsync(`
+    CREATE TABLE IF NOT EXISTS notes (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      content TEXT,
+      date TEXT,
+      type TEXT,
+      user_id TEXT,
+      FOREIGN KEY (user_id) REFERENCES user(id)
+    );
+  `);
+
+  // table goals 
+  await db.execAsync(`
+  CREATE TABLE IF NOT EXISTS goals (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    created_at TEXT NOT NULL,
+    deadline TEXT,
+    progress INTEGER DEFAULT 0,
+    user_id TEXT,
+    completed INTEGER DEFAULT 0
+  );
+`);
+
+
 };

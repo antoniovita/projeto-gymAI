@@ -17,6 +17,9 @@ import InfoScreen from 'components/subScreens/InfoScreen';
 import HelpScreen from 'components/subScreens/HelpScreen';
 import PinScreen from 'components/PinScreen';
 import RoutineScreen from 'components/RoutineScreen';
+import WorkoutScreen from 'components/WorkoutScreen';
+import MoreScreen from 'components/MoreScreen';
+import NoteScreen from 'components/NoteScreen';
 // import Purchases, { LOG_LEVEL } from 'react-native-purchases';
 
 SplashScreen.preventAutoHideAsync();
@@ -148,6 +151,10 @@ export default function App() {
             <Stack.Screen name="PinScreen" component={PinScreen} />
             <Stack.Screen name="HelpScreen" component={HelpScreen} />
             <Stack.Screen name="RoutineScreen" component={RoutineScreen} />
+            <Stack.Screen name="WorkoutScreen" component={WorkoutScreen} />
+            <Stack.Screen name="MoreScreen" component={MoreScreen} />
+            <Stack.Screen name="NoteScreen" component={NoteScreen} />
+
           </Stack.Navigator>
         </NavigationContainer>
       </View>

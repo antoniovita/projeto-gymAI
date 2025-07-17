@@ -7,4 +7,7 @@ export type RootStackParamList = {
   HelpScreen: undefined;
   SubscriptionModal: undefined;
   RoutineScreen: undefined;
+  WorkoutScreen: undefined;
+  MoreScreen: undefined;
+  NoteScreen: undefined;
 };
