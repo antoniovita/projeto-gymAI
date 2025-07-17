@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { 
   View, 
   Text, 
@@ -23,10 +23,17 @@ import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from 'widgets/types';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import { useTask } from 'hooks/useTask';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function RoutineScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const {userId} = useAuth()
+
+  const {tasks} = useTask();
+
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [extraCategories, setExtraCategories] = useState<{ name: string; color: string }[]>([]);
 
   const days = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'] as const;
   type DayKey = typeof days[number];
@@ -38,6 +45,36 @@ export default function RoutineScreen() {
 
   const [showTimePicker, setShowTimePicker] = useState(false);
 
+  const categories = Array.from(
+    new Set([
+      ...tasks
+        .flatMap((task) => task.type?.split(',').map((s: string) => s.trim()) ?? [])
+        .filter((t) => t.length > 0),
+      ...extraCategories.map(cat => cat.name),
+    ])
+  );
+
+  const getCategoryColor = (catName: string) => {
+    const extraCat = extraCategories.find(c => c.name === catName);
+    return extraCat ? extraCat.color : '#999999';
+  };
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const stored = await AsyncStorage.getItem('extraCategories');
+        if (stored) {
+          setExtraCategories(JSON.parse(stored));
+          console.log('Categorias extras carregadas:', JSON.parse(stored));
+        }
+      } catch (err) {
+        console.error('Erro ao carregar categorias extras:', err);
+      }
+    };
+
+    loadCategories();
+  }, []);
+
   const [time, setTime] = useState(new Date());
   
   const [formData, setFormData] = useState({
@@ -46,7 +83,7 @@ export default function RoutineScreen() {
     time: '',
     daysOfWeek: [] as number[],
     userId,
-    type: 'rotina'
+    type: ''
   });
 
   const { 
@@ -85,8 +122,9 @@ export default function RoutineScreen() {
       time: '',
       daysOfWeek: [],
       userId,
-      type: 'rotina'
+      type: '', 
     });
+    setSelectedCategories([]);
     setTime(new Date());
     setEditingDraft(null);
   };
@@ -104,8 +142,12 @@ export default function RoutineScreen() {
       time: draft.time,
       daysOfWeek: draft.daysOfWeek,
       userId: draft.userId,
-      type: draft.type
+      type: draft.type || ''
     });
+    
+    // Definir categorias selecionadas baseado no type do draft
+    const draftCategories = draft.type ? draft.type.split(',').map((s: string) => s.trim()) : [];
+    setSelectedCategories(draftCategories);
     
     if (draft.time) {
       setTime(parseTimeString(draft.time));
@@ -127,11 +169,17 @@ export default function RoutineScreen() {
       return;
     }
 
+    const dataToSave = {
+      ...formData,
+      type: selectedCategories.join(', '),
+      userId
+    };
+
     try {
       if (modalType === 'create') {
-        await addDraft({ ...formData, userId });
+        await addDraft(dataToSave);
       } else {
-        await updateDraft({ ...editingDraft, ...formData, userId });
+        await updateDraft({ ...editingDraft, ...dataToSave });
       }
       setShowModal(false);
       resetForm();
@@ -349,10 +397,10 @@ export default function RoutineScreen() {
           keyboardVerticalOffset={0}
         >
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <View className="bg-zinc-900 rounded-t-3xl p-6" style={{ minHeight: '48%' }}>
+            <View className="bg-zinc-900 rounded-t-3xl p-6" style={{ minHeight: '53%' }}>
               <ScrollView 
                 showsVerticalScrollIndicator={false} 
-                style={{ maxHeight: 290 }}
+                style={{ maxHeight: 320 }}
                 nestedScrollEnabled={true}
                 keyboardShouldPersistTaps="handled"
                 contentContainerStyle={{ flexGrow: 1 }}
@@ -413,6 +461,51 @@ export default function RoutineScreen() {
                     ))}
                   </View>
                 </View>
+
+                {/* Seção de Categorias */}
+                <View className="mb-4">
+                  <View className="flex flex-row flex-wrap gap-2 mb-2">
+                    {categories.map((cat) => {
+                      const isSelected = selectedCategories.includes(cat);
+                      const color = getCategoryColor(cat);
+
+                      return (
+                        <Pressable
+                          key={cat}
+                          onPress={() =>
+                            setSelectedCategories((prev) =>
+                              prev.includes(cat) 
+                                ? prev.filter((c) => c !== cat) 
+                                : [...prev, cat]
+                            )
+                          }
+                          className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${
+                            isSelected ? 'bg-rose-400' : 'bg-zinc-700'
+                          }`}
+                        >
+                          <View 
+                            style={{ 
+                              width: 10, 
+                              height: 10, 
+                              borderRadius: 5, 
+                              backgroundColor: color, 
+                              borderWidth: 0.5, 
+                              borderColor: '#fff' 
+                            }} 
+                          />
+                          <Text 
+                            className={`font-sans text-sm ${
+                              isSelected ? 'text-black' : 'text-white'
+                            }`}
+                          >
+                            {cat}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </View>
+
               </ScrollView>
 
               <View className={`${Platform.OS == 'ios' ? 'absolute bottom-[15%] self-center flex-row flex gap-3' : 'self-center flex-row flex gap-3'}`}>
