@@ -622,7 +622,7 @@ export default function WorkoutScreen() {
 
           <ScrollView className="flex-1 py-4 px-8">
             <TextInput
-              placeholder="Título"
+              placeholder="Nome do treino"
               placeholderTextColor="#a1a1aa"
               value={newWorkoutTitle}
               onChangeText={setNewWorkoutTitle}

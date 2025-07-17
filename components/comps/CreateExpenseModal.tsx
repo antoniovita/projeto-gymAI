@@ -64,7 +64,7 @@ const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
 
         <ScrollView className="flex-1 py-4 px-8">
           <TextInput
-            placeholder="Título"
+            placeholder="Nome da despesa"
             placeholderTextColor="#a1a1aa"
             value={newTaskTitle}
             onChangeText={setNewTaskTitle}

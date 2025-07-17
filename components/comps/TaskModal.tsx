@@ -73,7 +73,7 @@ export default function TaskModal({
 
         <ScrollView className="flex-1 py-4 px-8">
           <TextInput
-            placeholder="Título"
+            placeholder="Nome da tarefa"
             placeholderTextColor="#a1a1aa"
             value={newTaskTitle}
             onChangeText={setNewTaskTitle}
@@ -128,27 +128,50 @@ export default function TaskModal({
             locale="pt-BR"
           />
 
-          <View className="flex flex-row flex-wrap gap-2 mb-2">
-            {categories.map((cat) => {
-              const isSelected = selectedCategories.includes(cat);
-              const color = getCategoryColor(cat);
 
-              return (
-                <TouchableOpacity
-                  key={cat}
-                  onPress={() =>
-                    setSelectedCategories((prev) =>
-                      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
-                    )
-                  }
-                  className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${isSelected ? 'bg-rose-400' : 'bg-zinc-700'}`}
+        {categories.length > 0 && (
+        <View className="flex flex-row flex-wrap gap-2">
+          {categories.map((category) => {
+            const isSelected = selectedCategories.includes(category);
+            const color = getCategoryColor(category);
+
+            return (
+              <TouchableOpacity
+                key={category}
+                onPress={() =>
+                  setSelectedCategories((prev) =>
+                    prev.includes(category)
+                      ? prev.filter((c) => c !== category)
+                      : [...prev, category]
+                  )
+                }
+                className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${
+                  isSelected ? 'bg-rose-400' : 'bg-zinc-700'
+                }`}
+              >
+                <View
+                  style={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: 5,
+                    backgroundColor: color,
+                    borderWidth: 0.5,
+                    borderColor: '#fff',
+                  }}
+                />
+                <Text
+                  className={`font-sans text-sm ${
+                    isSelected ? 'text-black' : 'text-white'
+                  }`}
                 >
-                  <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color, borderWidth: 0.5, borderColor: '#fff', }} />
-                  <Text className={`font-sans text-sm ${isSelected ? 'text-black' : 'text-white'}`}>{cat}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+                  {category}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      )}
+
 
           <TextInput
             placeholder="Descrição da tarefa"
@@ -157,7 +180,6 @@ export default function TaskModal({
             multiline
             value={taskContent}
             onChangeText={setTaskContent}
-            style={{ minHeight: 150, textAlignVertical: 'top' }}
           />
         </ScrollView>
       </View>
