@@ -1,12 +1,106 @@
-import { View, Text } from "react-native";
+import { View, Text, SafeAreaView, Pressable } from "react-native";
+import { Ionicons } from '@expo/vector-icons';
 
 const MoreScreen = () => {
-    return ( 
-        <View >
-            <Text>More Screen</Text>
-            <Text>This is the more screen.</Text>
+  const menuItems = [
+    {
+      id: 1,
+      title: "Academia",
+      subtitle: "Gerenciar treinos e exercícios",
+      icon: "barbell-outline",
+      color: "#ff7a7f",
+      onPress: () => {
+        // Navigate to workout screen
+        console.log("Navigate to Academia");
+      }
+    },
+    {
+      id: 2,
+      title: "Notas",
+      subtitle: "Criar e organizar suas anotações",
+      icon: "document-text-outline",
+      color: "#ff7a7f",
+      onPress: () => {
+        // Navigate to notes screen
+        console.log("Navigate to Notas");
+      }
+    },
+    {
+      id: 3,
+      title: "Metas",
+      subtitle: "Definir e acompanhar objetivos",
+      icon: "trophy-outline",
+      color: "#ff7a7f",
+      onPress: () => {
+        // Navigate to goals screen
+        console.log("Navigate to Metas");
+      }
+    },
+    {
+      id: 4,
+      title: "Roadmaps",
+      subtitle: "Planejar seu caminho de aprendizado",
+      icon: "map-outline",
+      color: "#ff7a7f",
+      onPress: () => {
+        // Navigate to roadmaps screen
+        console.log("Navigate to Roadmaps");
+      }
+    }
+  ];
+
+  return (
+    <SafeAreaView className="flex-1 bg-zinc-800">
+      <View className="flex flex-col px-6 mt-[40px] mb-6">
+        <Text className="text-3xl text-white font-medium font-sans mb-8">Mais recursos</Text>
+        
+        <View className="flex flex-col gap-4">
+          {menuItems.map((item) => (
+            <Pressable
+              key={item.id}
+              onPress={item.onPress}
+              className="bg-[#35353a] rounded-2xl p-4"
+              style={{
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+                elevation: 3,
+              }}
+            >
+              <View className="flex flex-row items-center justify-between">
+                <View className="flex flex-row items-center gap-4">
+                  <View 
+                    className="w-12 h-12 rounded-xl items-center justify-center"
+                    style={{ backgroundColor: 'rgba(239, 68, 68, 0.15)' }}
+                  >
+                    <Ionicons name={item.icon as any} size={24} color="#ff7a7f" />
+                  </View>
+                  
+                  <View className="flex flex-col">
+                    <Text className="text-white text-xl font-semibold font-sans">
+                      {item.title}
+                    </Text>
+                    <Text className="text-neutral-400 text-sm font-sans mt-1">
+                      {item.subtitle}
+                    </Text>
+                  </View>
+                </View>
+                
+                <Ionicons name="chevron-forward" size={24} color="#9CA3AF" />
+              </View>
+            </Pressable>
+          ))}
         </View>
-     );
-}
- 
+
+        <View className="mt-12 pt-6 border-t border-zinc-700">
+          <Text className="text-neutral-400 text-center font-sans text-sm">
+            Escolha uma das opções acima para começar
+          </Text>
+        </View>
+      </View>
+    </SafeAreaView>
+  );
+};
+
 export default MoreScreen;
