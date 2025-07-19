@@ -83,7 +83,6 @@ export default function NoteScreen() {
 
   const [categoryColors, setCategoryColors] = useState<{[key: string]: string}>({});
 
-  // Função para voltar
   const handleGoBack = () => {
     navigation.goBack();
   };
@@ -410,12 +409,12 @@ export default function NoteScreen() {
 
       <Pressable
         onPress={handleOpenCreate}
-        className="w-[50px] h-[50px] absolute bottom-[8%] right-6 z-20 rounded-full bg-rose-400 items-center justify-center shadow-lg"
+        className="w-[50px] h-[50px] absolute bottom-[6%] right-6 z-20 rounded-full bg-rose-400 items-center justify-center shadow-lg"
       >
         <Ionicons name="add" size={32} color="black" />
       </Pressable>
 
-      <View className="absolute bottom-[8%] left-6 z-20">
+      <View className="absolute bottom-[6%] left-6 z-20">
         <Pressable
           onPress={handleGoBack}
           className="flex-row items-center bg-rose-400 px-4 h-[50px] rounded-full"

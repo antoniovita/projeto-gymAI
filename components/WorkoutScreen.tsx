@@ -17,7 +17,7 @@ import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { useWorkout } from '../hooks/useWorkout';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from 'hooks/useAuth';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 const EmptyState = ({ onCreateWorkout }: { onCreateWorkout: () => void }) => {
   return (
@@ -79,6 +79,15 @@ export default function WorkoutScreen() {
   const [showDeleteCategoryModal, setShowDeleteCategoryModal] = useState(false);
 
   const [customMuscleGroups, setCustomMuscleGroups] = useState<{ name: string; color: string }[]>([]);
+
+
+  const navigation = useNavigation();
+
+
+  const handleGoBack = () => {
+    navigation.goBack();
+  };
+
 
   useEffect(() => {
     const loadMuscleGroups = async () => {
@@ -394,12 +403,23 @@ export default function WorkoutScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-zinc-800">
-      <Pressable
+
+       <Pressable
         onPress={handleOpenCreate}
-        className="w-[50px] h-[50px] absolute bottom-6 right-6 z-20 rounded-full bg-rose-400 items-center justify-center shadow-lg"
+        className="w-[50px] h-[50px] absolute bottom-[6%] right-6 z-20 rounded-full bg-rose-400 items-center justify-center shadow-lg"
       >
         <Ionicons name="add" size={32} color="black" />
       </Pressable>
+
+      <View className="absolute bottom-[6%] left-6 z-20">
+        <Pressable
+          onPress={handleGoBack}
+          className="flex-row items-center bg-rose-400 px-4 h-[50px] rounded-full"
+        >
+          <Ionicons name="chevron-back" size={20} color="black" />
+          <Text className="text-black font-sans text-lg ml-1">Voltar</Text>
+        </Pressable>
+      </View>
 
       <View className="flex flex-col px-6 mt-[40px] mb-5">
         <View className='flex flex-row justify-between items-center'>
