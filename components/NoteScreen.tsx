@@ -16,7 +16,7 @@ import { TouchableOpacity } from 'react-native-gesture-handler';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from 'hooks/useAuth';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useNotes } from 'hooks/useNotes';
 
 const EmptyState = ({ onCreateNote }: { onCreateNote: () => void }) => {
@@ -53,6 +53,7 @@ const colorOptions = [
 ];
 
 export default function NoteScreen() {
+  const navigation = useNavigation();
   const { userId } = useAuth();
   const { notes, loading, error, fetchNotes, createNote, deleteNote, updateNote } = useNotes(userId!);
 
@@ -81,6 +82,11 @@ export default function NoteScreen() {
   ];
 
   const [categoryColors, setCategoryColors] = useState<{[key: string]: string}>({});
+
+  // Função para voltar
+  const handleGoBack = () => {
+    navigation.goBack();
+  };
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -190,21 +196,12 @@ export default function NoteScreen() {
   const handleDeleteCategory = async () => {
     if (!categoryToDelete) return;
 
-    // Check if it's a default category
-    const isDefaultCategory = defaultCategories.some(cat => cat.name === categoryToDelete);
-    if (isDefaultCategory) {
-      Alert.alert('Erro', 'Não é possível excluir uma categoria padrão.');
-      setShowConfirmDeleteModal(false);
-      setCategoryToDelete(null);
-      return;
-    }
-
     const isCategoryInUse = notes.some(note =>
       note.type?.split(',').map((t: string) => t.trim()).includes(categoryToDelete)
     );
 
     if (isCategoryInUse) {
-      Alert.alert('Erro', 'Esta categoria está associada a uma ou mais notas e não pode ser excluída.');
+      Alert.alert('Atenção!', 'Esta categoria está associada a uma ou mais notas e não pode ser excluída.');
       setShowConfirmDeleteModal(false);
       setCategoryToDelete(null);
       return;
@@ -409,15 +406,27 @@ export default function NoteScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-zinc-800">
+
+
       <Pressable
         onPress={handleOpenCreate}
-        className="w-[50px] h-[50px] absolute bottom-6 right-6 z-20 rounded-full bg-rose-400 items-center justify-center shadow-lg"
+        className="w-[50px] h-[50px] absolute bottom-[8%] right-6 z-20 rounded-full bg-rose-400 items-center justify-center shadow-lg"
       >
         <Ionicons name="add" size={32} color="black" />
       </Pressable>
 
+      <View className="absolute bottom-[8%] left-6 z-20">
+        <Pressable
+          onPress={handleGoBack}
+          className="flex-row items-center bg-rose-400 px-4 h-[50px] rounded-full"
+        >
+          <Ionicons name="chevron-back" size={20} color="black" />
+          <Text className="text-black font-sans text-lg ml-1">Voltar</Text>
+        </Pressable>
+      </View>
+
       <View className="flex flex-col px-6 mt-[40px] mb-5">
-        <View className='flex flex-row justify-between items-center'>
+          <View className='flex flex-row justify-between items-center'>
           <Text className="text-3xl text-white font-medium font-sans">Notas</Text>
         
           <Pressable onPress={() => setShowDeleteCategoryModal(true)}>
@@ -455,11 +464,7 @@ export default function NoteScreen() {
                               style={{ width: 15, height: 15, borderRadius: 7.5, backgroundColor: color, borderWidth: 0.5, borderColor: '#fff'}}
                             />
                             <Text className="text-white font-sans text-lg">{cat}</Text>
-                            {isDefault && (
-                              <Text className="text-neutral-500 text-xs font-sans">(padrão)</Text>
-                            )}
                           </View>
-                          {!isDefault && (
                             <Pressable
                               onPress={() => {
                                 setCategoryToDelete(cat);
@@ -469,7 +474,6 @@ export default function NoteScreen() {
                             >
                               <Ionicons name="trash" size={20} color="#fa4d5c" />
                             </Pressable>
-                          )}
                         </View>
                       );
                     })
