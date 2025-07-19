@@ -52,7 +52,7 @@ const MoreScreen = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-zinc-800">
-      <View className="flex flex-col px-6 mt-[40px] mb-6">
+      <View className="flex flex-col px-6 mt-[40px]">
         <Text className="text-3xl text-white font-medium font-sans mb-8">Mais recursos</Text>
         
         <View className="flex flex-col gap-4">
@@ -60,14 +60,7 @@ const MoreScreen = () => {
             <Pressable
               key={item.id}
               onPress={item.onPress}
-              className="bg-[#35353a] rounded-2xl p-4"
-              style={{
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 4,
-                elevation: 3,
-              }}
+              className="bg-[#35353a] rounded-2xl p-3"
             >
               <View className="flex flex-row items-center justify-between">
                 <View className="flex flex-row items-center gap-4">
@@ -82,7 +75,7 @@ const MoreScreen = () => {
                     <Text className="text-white text-xl font-semibold font-sans">
                       {item.title}
                     </Text>
-                    <Text className="text-neutral-400 text-sm font-sans mt-1">
+                    <Text className="text-neutral-400 text-sm font-sans">
                       {item.subtitle}
                     </Text>
                   </View>
@@ -94,9 +87,9 @@ const MoreScreen = () => {
           ))}
         </View>
 
-        <View className="mt-12 pt-6 border-t border-zinc-700">
+        <View className="mt-6 pt-3 border-t border-zinc-700">
           <Text className="text-neutral-400 text-center font-sans text-sm">
-            Escolha uma das opções acima para começar
+            Para acesso completo, seja premium por R$ 5,99
           </Text>
         </View>
       </View>
