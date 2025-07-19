@@ -1,7 +1,12 @@
 import { View, Text, SafeAreaView, Pressable } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "widgets/types";
 
 const MoreScreen = () => {
+
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const menuItems = [
     {
       id: 1,
@@ -10,8 +15,7 @@ const MoreScreen = () => {
       icon: "barbell-outline",
       color: "#ff7a7f",
       onPress: () => {
-        // Navigate to workout screen
-        console.log("Navigate to Academia");
+        navigation.navigate("WorkoutScreen")
       }
     },
     {
@@ -21,8 +25,7 @@ const MoreScreen = () => {
       icon: "document-text-outline",
       color: "#ff7a7f",
       onPress: () => {
-        // Navigate to notes screen
-        console.log("Navigate to Notas");
+        navigation.navigate("NoteScreen")
       }
     },
     {
@@ -32,8 +35,7 @@ const MoreScreen = () => {
       icon: "trophy-outline",
       color: "#ff7a7f",
       onPress: () => {
-        // Navigate to goals screen
-        console.log("Navigate to Metas");
+        navigation.navigate("GoalScreen")
       }
     },
     {
@@ -43,7 +45,6 @@ const MoreScreen = () => {
       icon: "map-outline",
       color: "#ff7a7f",
       onPress: () => {
-        // Navigate to roadmaps screen
         console.log("Navigate to Roadmaps");
       }
     }
@@ -72,7 +73,7 @@ const MoreScreen = () => {
                 <View className="flex flex-row items-center gap-4">
                   <View 
                     className="w-12 h-12 rounded-xl items-center justify-center"
-                    style={{ backgroundColor: 'rgba(239, 68, 68, 0.15)' }}
+                    style={{ backgroundColor:  'rgba(239, 68, 68, 0.15)'  }}
                   >
                     <Ionicons name={item.icon as any} size={24} color="#ff7a7f" />
                   </View>
