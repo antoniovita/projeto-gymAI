@@ -45,7 +45,7 @@ const DateFilterModal: React.FC<DateFilterModalProps> = ({
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
   ];
 
-  const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
+  const years = Array.from({ length: 8}, (_, i) => currentYear - i);
 
   useEffect(() => {
     if (isVisible) {
@@ -139,7 +139,7 @@ const DateFilterModal: React.FC<DateFilterModalProps> = ({
     onYearSelect: (year: number) => void;
   }) => (
     <View className="mb-4">
-      <View className="bg-zinc-900/30 rounded-2xl p-3">
+      <View className="bg-zinc-900/10 rounded-2xl p-3">
         <View className="flex-row gap-2 flex-wrap justify-center">
           {years.map((year) => (
             <TouchableOpacity
@@ -177,7 +177,7 @@ const DateFilterModal: React.FC<DateFilterModalProps> = ({
     selectedYear?: number;
   }) => (
     <View className="mb-4">
-      <View className="bg-zinc-900/30 rounded-2xl p-3">
+      <View className="bg-zinc-900/10 rounded-2xl p-3">
         <View className="flex-row flex-wrap gap-2 justify-center">
           {months.map((month, index) => (
             <TouchableOpacity
@@ -282,7 +282,7 @@ const DateFilterModal: React.FC<DateFilterModalProps> = ({
               <ScrollView showsVerticalScrollIndicator={false}>
 
                 <FilterOption
-                  icon='file-tray-full-outline'
+                  icon='list-outline'
                   title="Todas as despesas"
                   isSelected={selectedFilter.type === 'all'}
                   onPress={() => setSelectedFilter({ type: 'all' })}
