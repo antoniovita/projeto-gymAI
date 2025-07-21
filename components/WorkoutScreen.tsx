@@ -619,69 +619,86 @@ export default function WorkoutScreen() {
         />
       )}
 
-      <Modal
-        transparent
-        animationType="slide"
-        visible={isCreateVisible}
-        onRequestClose={() => setIsCreateVisible(false)}
+<Modal
+  transparent
+  animationType="slide"
+  visible={isCreateVisible}
+  onRequestClose={() => setIsCreateVisible(false)}
+>
+  <View className={`flex-1 ${Platform.OS === 'ios' ? 'pt-12 pb-8' : 'pt-8 pb-4'} bg-zinc-800`}>
+    {/* Header */}
+    <View className="flex-row justify-between items-center px-4 py-4">
+      <Pressable
+        className="items-center flex flex-row"
+        onPress={() => setIsCreateVisible(false)}
       >
-      <View className={`flex-1 ${Platform.OS == 'ios' && "py-[50px]" }  bg-zinc-800`}>
-          <View className="flex-row justify-between items-center px-4 py-4">
-            <Pressable
-              className="items-center flex flex-row"
-              onPress={() => setIsCreateVisible(false)}
-            >
-              <Ionicons name="chevron-back" size={28} color="white" />
-              <Text className="text-white text-lg font-sans"> Voltar</Text>
-            </Pressable>
+        <Ionicons name="chevron-back" size={28} color="white" />
+        <Text className="text-white text-lg font-sans"> Voltar</Text>
+      </Pressable>
 
-            <Pressable onPress={handleSaveWorkout}>
-              <Text className="text-rose-400 font-sans text-lg font-semibold mr-4">Salvar</Text>
-            </Pressable>
-          </View>
+      <Pressable onPress={handleSaveWorkout}>
+        <Text className="text-rose-400 font-sans text-lg font-semibold mr-4">Salvar</Text>
+      </Pressable>
+    </View>
 
-          <ScrollView className="flex-1 py-4 px-8">
-            <TextInput
-              placeholder="Nome do treino"
-              placeholderTextColor="#a1a1aa"
-              value={newWorkoutTitle}
-              onChangeText={setNewWorkoutTitle}
-              className="text-gray-300 text-3xl font-semibold mb-4"
-              multiline
-            />
+    <ScrollView className="flex-1 px-6" showsVerticalScrollIndicator={false}>
+      {/* Workout Title */}
+      <View className="mt-3 mb-6">
+        <TextInput
+          placeholder="Nome do treino"
+          placeholderTextColor="#71717a"
+          value={newWorkoutTitle}
+          onChangeText={setNewWorkoutTitle}
+          className="text-white text-2xl font-sans"
+          multiline
+          autoFocus
+        />
+      </View>
 
-            <View className="flex flex-row flex-wrap gap-2 mb-4">
-              {categories.map((muscle) => {
-                const isSelected = selectedMusclesForWorkout.includes(muscle);
-                const color = muscleColors[muscle];
-
-                return (
-                  <Pressable
-                    key={muscle}
-                    onPress={() => toggleMuscleForWorkout(muscle)}
-                    className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${
-                      isSelected ? 'bg-rose-400' : 'bg-zinc-700'
-                    }`}
-                  >
-                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color, borderWidth: 0.5, borderColor: '#fff' }} />
-                    <Text className={`${isSelected ? 'text-black' : 'text-white'}`}>{muscle}</Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-
-            <TextInput
-              placeholder="Escreva o seu treino aqui"
-              placeholderTextColor="#a1a1aa"
-              value={content}
-              onChangeText={setContent}
-              className="text-gray-300 text-lg"
-              multiline
-              style={{ minHeight: 150, textAlignVertical: 'top' }}
-            />
-          </ScrollView>
+      {/* Muscle Categories */}
+      <View className="mb-8">
+        <Text className="text-zinc-400 text-sm font-medium mb-3 uppercase tracking-wide">
+          Grupos Musculares
+        </Text>
+        
+        <View className="flex flex-row flex-wrap gap-2">
+          {categories.map((muscle) => {
+            const isSelected = selectedMusclesForWorkout.includes(muscle);
+            const color = muscleColors[muscle];
+            return (
+              <Pressable
+                key={muscle}
+                onPress={() => toggleMuscleForWorkout(muscle)}
+                className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${
+                  isSelected ? 'bg-rose-400' : 'bg-zinc-700'
+                }`}
+              >
+                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color, borderWidth: 0.5, borderColor: '#fff' }} />
+                <Text className={`${isSelected ? 'text-black' : 'text-white'}`}>{muscle}</Text>
+              </Pressable>
+            );
+          })}
         </View>
-      </Modal>
+      </View>
+
+      {/* Workout Content */}
+      <View className="mb-6">
+        <Text className="text-zinc-400 text-sm font-medium mb-3 uppercase tracking-wide">
+          Descrição do Treino
+        </Text>
+        <TextInput
+          placeholder="Descreva os exercícios, séries, repetições..."
+          placeholderTextColor="#71717a"
+          className="text-white text-base leading-6 bg-zinc-700/30 font-sans border-zinc-600 rounded-xl px-4 py-3 min-h-[150px]"
+          multiline
+          textAlignVertical="top"
+          value={content}
+          onChangeText={setContent}
+        />
+      </View>
+    </ScrollView>
+  </View>
+</Modal>
     </SafeAreaView>
   );
 }

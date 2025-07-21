@@ -479,14 +479,9 @@ export default function ExpensesScreen() {
           
           <View className="flex-row items-center gap-3">
             <View 
-              className="px-2 py-1 rounded-lg"
-              style={{
-                backgroundColor: 'rgba(34, 197, 94, 0.15)',
-                borderWidth: 1,
-                borderColor: 'rgba(34, 197, 94, 0.3)',
-              }}
+              className="px-2 py-1 rounded-lg border border-zinc-400/60"
             >
-              <Text className="text-emerald-400 font-sans text-xs font-medium">
+              <Text className="text-zinc-400 font-sans text-xs font-medium">
                 {filteredExpenses.length} {filteredExpenses.length === 1 ? 'item' : 'itens'}
               </Text>
             </View>

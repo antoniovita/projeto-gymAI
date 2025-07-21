@@ -20,6 +20,7 @@ import RoutineScreen from 'components/RoutineScreen';
 import WorkoutScreen from 'components/WorkoutScreen';
 import MoreScreen from 'components/MoreScreen';
 import NoteScreen from 'components/NoteScreen';
+import GoalScreen from 'components/GoalScreen';
 // import Purchases, { LOG_LEVEL } from 'react-native-purchases';
 
 SplashScreen.preventAutoHideAsync();
@@ -154,6 +155,8 @@ export default function App() {
             <Stack.Screen name="WorkoutScreen" component={WorkoutScreen} />
             <Stack.Screen name="MoreScreen" component={MoreScreen} />
             <Stack.Screen name="NoteScreen" component={NoteScreen} />
+            <Stack.Screen name="GoalScreen" component={GoalScreen} />
+
 
           </Stack.Navigator>
         </NavigationContainer>
