@@ -335,7 +335,7 @@ export default function ChatScreen() {
   return (
     <SafeAreaView className="flex-1 bg-zinc-800">
       <View className="flex flex-col px-6 mt-[40px]">
-        <Text className="text-3xl text-white font-medium font-sans mb-4">Meu Chat</Text>
+        <Text className="text-3xl text-white font-medium font-sans mb-4">Chat Rápido</Text>
 
         <View className="flex-row items-center gap-2 mt-2">
 

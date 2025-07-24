@@ -19,6 +19,9 @@ import { Goal } from '../../api/model/Goal';
 interface Update {
   goalId: string;
   name: string;
+  progress: number;
+  timestamp: string;
+  previousProgress: number;
 }
 
 interface GoalModalProps {
@@ -38,6 +41,7 @@ interface GoalModalProps {
   updates: Update[];
   clearUpdates: () => void;
   removeUpdate: (goalId: string) => void;
+  removeSpecificUpdate: (goalId: string, timestamp: string) => void;
   onCreateUpdate: (goalId: string, progress: number, description: string) => Promise<void>;
 }
 
@@ -57,13 +61,14 @@ const GoalModal: React.FC<GoalModalProps> = ({
   loading,
   updates,
   clearUpdates,
-  removeUpdate,
+  removeSpecificUpdate,
   onCreateUpdate,
 }) => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false);
   const [updateName, setUpdateName] = useState('');
   const [updateProgress, setUpdateProgress] = useState(0);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   // Reset update states when modal opens/closes or goal changes
   useEffect(() => {
@@ -129,15 +134,59 @@ const GoalModal: React.FC<GoalModalProps> = ({
     }
   };
 
+  const handleDeleteGoal = () => {
+    if (!selectedGoal) return;
+    
+    Alert.alert(
+      'Confirmar Exclusão',
+      `Deseja realmente excluir a meta "${selectedGoal.name}"? Esta ação não pode ser desfeita.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { 
+          text: 'Excluir', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await onDeleteGoal(selectedGoal.id);
+              onClose(); // Fecha o modal após deletar
+            } catch (err: any) {
+              Alert.alert('Erro', err.message || 'Falha ao excluir meta');
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const getProgressColor = (progress: number): string => {
     if (progress >= 80) return '#10b981'; // green
     if (progress >= 50) return '#f59e0b'; // yellow
     return '#ff7a7f'; // red/pink
   };
 
-  const getGoalUpdates = () => {
+  const getGoalUpdates = (): Update[] => {
     if (!selectedGoal) return [];
-    return updates.filter((update: Update) => update.goalId === selectedGoal.id);
+    return updates
+      .filter((update: Update) => update.goalId === selectedGoal.id)
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  };
+
+  const formatTimestamp = (timestamp: string): string => {
+    const date = new Date(timestamp);
+    return date.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getProgressDifference = (currentProgress: number, previousProgress: number): string => {
+    const diff = currentProgress - previousProgress;
+    if (diff > 0) return `+${diff}%`;
+    if (diff < 0) return `${diff}%`;
+    return '0%';
   };
 
   // Handler para mudança do texto com validação
@@ -146,6 +195,49 @@ const GoalModal: React.FC<GoalModalProps> = ({
     if (text.length <= 300) {
       setUpdateName(text);
     }
+  };
+
+  const handleRemoveSpecificUpdate = (goalId: string, timestamp: string) => {
+    Alert.alert(
+      'Confirmar Exclusão',
+      'Deseja realmente excluir este update?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { 
+          text: 'Excluir', 
+          style: 'destructive',
+          onPress: () => removeSpecificUpdate(goalId, timestamp)
+        }
+      ]
+    );
+  };
+
+  const handleClearAllUpdates = () => {
+    Alert.alert(
+      'Confirmar Exclusão',
+      'Deseja realmente excluir todos os updates desta meta?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { 
+          text: 'Excluir Todos', 
+          style: 'destructive',
+          onPress: () => selectedGoal && clearUpdates()
+        }
+      ]
+    );
+  };
+
+  // Validação para habilitar o botão de salvar
+  const isSaveDisabled = () => {
+    return !goalName.trim() || loading;
+  };
+
+  // Função para formatar a data de deadline
+  const formatDeadlineDate = (date: Date): string => {
+    const today = new Date();
+    const diffTime = date.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return date.toLocaleDateString('pt-BR');
   };
 
   return (
@@ -162,7 +254,7 @@ const GoalModal: React.FC<GoalModalProps> = ({
             onPress={handleOpenUpdateModal}
             className="w-[50px] h-[50px] absolute bottom-[6%] right-6 z-30 rounded-full bg-rose-400 items-center justify-center shadow-lg"
           >
-            <Ionicons name="refresh" size={24} color="black" />
+            <Ionicons name="add" size={28} color="black" />
           </TouchableOpacity>
         )}
 
@@ -177,35 +269,20 @@ const GoalModal: React.FC<GoalModalProps> = ({
           </TouchableOpacity>
 
           <View className="flex-row items-center space-x-4">
-            {mode === 'create' && (
-              <TouchableOpacity
-                onPress={onSaveGoal}
-                className="px-4 py-2"
-                disabled={!goalName.trim() || loading}
-              >
-                <Text className={`text-lg font-semibold font-sans ${
-                  (!goalName.trim() || loading)
-                    ? 'text-zinc-500'
-                    : 'text-rose-400'
-                }`}>
-                  Criar Meta
-                </Text>
-              </TouchableOpacity>
-            )}
-
-            {mode === 'edit' && selectedGoal && (
-              <TouchableOpacity
-                onPress={() => onDeleteGoal(selectedGoal.id)}
-                className="px-4 py-2"
-                disabled={loading}
-              >
-                <Text className={`text-lg font-semibold font-sans ${
-                  loading ? 'text-zinc-500' : 'text-red-400'
-                }`}>
-                  Excluir
-                </Text>
-              </TouchableOpacity>
-            )}
+            {/* Save Button */}
+            <TouchableOpacity
+              onPress={onSaveGoal}
+              className="px-4 py-2"
+              disabled={isSaveDisabled()}
+            >
+              <Text className={`text-lg font-semibold font-sans ${
+                isSaveDisabled()
+                  ? 'text-zinc-500'
+                  : 'text-rose-400'
+              }`}>
+                {loading ? 'Salvando...' : 'Salvar'}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -221,7 +298,11 @@ const GoalModal: React.FC<GoalModalProps> = ({
               multiline
               autoFocus={mode === 'create'}
               editable={!loading}
+              maxLength={100}
             />
+            <Text className="text-zinc-500 text-xs font-sans mt-1 text-right">
+              {goalName.length}/100
+            </Text>
           </View>
 
           {/* Deadline */}
@@ -231,21 +312,27 @@ const GoalModal: React.FC<GoalModalProps> = ({
             </Text>
             <TouchableOpacity
               onPress={() => setShowDatePicker(true)}
-              className="flex-row items-center bg-zinc-700/50 border border-rose-400/30 px-4 py-3 rounded-xl"
+              className="flex-row items-center px-4 py-3 rounded-xl bg-zinc-700/30 "
               disabled={loading}
             >
-              <Ionicons name="calendar-outline" size={18} color="#fb7185" />
-              <Text className="text-white text-base font-sans ml-2">
-                {selectedDate ? selectedDate.toLocaleDateString('pt-BR') : "Selecionar prazo "}
+              <Ionicons 
+                name="calendar-outline" 
+                size={18} 
+                color={selectedDate ? "#fb7185" : "#71717a"} 
+              />
+              <Text className={`text-base font-sans ml-2 ${
+                selectedDate ? 'text-white' : 'text-zinc-400'
+              }`}>
+                {selectedDate ? formatDeadlineDate(selectedDate) : "Selecionar prazo"}
               </Text>
             </TouchableOpacity>
             {selectedDate && (
               <TouchableOpacity
                 onPress={() => setSelectedDate(null)}
-                className="flex-row items-center justify-center mt-2 py-2"
+                className="flex-row items-center  w-full bg-rose-400 rounded-xl justify-center mt-2 py-3"
                 disabled={loading}
               >
-                <Text className="text-rose-400 text-sm font-sans">Remover prazo</Text>
+                <Text className="text-white text-md font-sans ml-1">Remover prazo</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -264,7 +351,11 @@ const GoalModal: React.FC<GoalModalProps> = ({
               value={goalDescription}
               onChangeText={setGoalDescription}
               editable={!loading}
+              maxLength={500}
             />
+            <Text className="text-zinc-500 text-xs font-sans mt-1 text-right">
+              {goalDescription.length}/500
+            </Text>
           </View>
 
           {mode === 'edit' && (
@@ -274,26 +365,44 @@ const GoalModal: React.FC<GoalModalProps> = ({
                 <Text className="text-zinc-400 text-sm font-medium mb-3 uppercase tracking-wide">
                   Progresso Atual
                 </Text>
-                <View className="bg-zinc-700/50 px-4 py-4 rounded-xl">
+                <View className="bg-zinc-700/50 px-4 py-4 rounded-xl border border-zinc-600/30">
                   <View className="flex-row justify-between mb-4">
-                    <Text className="text-white font-sans">Progresso</Text>
-                    <Text className="text-rose-400 font-medium font-sans">{selectedGoal?.progress || 0}%</Text>
+                    <Text className="text-white font-sans text-lg">Progresso</Text>
+                    <View className="flex-row items-center">
+                      <Text className="text-rose-400 font-medium font-sans text-lg">
+                        {selectedGoal?.progress || 0}%
+                      </Text>
+                      {(selectedGoal?.progress || 0) === 100 && (
+                        <View className="ml-2 bg-green-500/20 px-2 py-1 rounded-full">
+                          <Text className="text-green-400 text-xs font-sans font-medium">
+                            Concluída
+                          </Text>
+                        </View>
+                      )}
+                    </View>
                   </View>
+                  
                   {/* Progress Bar */}
-                  <View className="bg-zinc-600 h-3 rounded-full overflow-hidden">
+                  <View className="bg-zinc-600 h-3 rounded-full overflow-hidden mb-3">
                     <View
-                      className="h-full rounded-full"
+                      className="h-full rounded-full transition-all duration-300"
                       style={{
                         width: `${selectedGoal?.progress || 0}%`,
                         backgroundColor: getProgressColor(selectedGoal?.progress || 0)
                       }}
                     />
                   </View>
-                  <Text className="text-zinc-400 text-xs font-sans mt-2 text-center">
-                    Use o botão flutuante para adicionar updates
-                  </Text>
+                  
+                  <View className="flex-row items-center justify-center">
+                    <Ionicons name="information-circle-outline" size={14} color="#71717a" />
+                    <Text className="text-zinc-400 text-xs font-sans ml-1">
+                      Use o botão flutuante para adicionar updates
+                    </Text>
+                  </View>
                 </View>
               </View>
+
+              
 
               {/* Updates List - Only for edit mode */}
               {getGoalUpdates().length > 0 && (
@@ -303,29 +412,72 @@ const GoalModal: React.FC<GoalModalProps> = ({
                       Atualizações Recentes ({getGoalUpdates().length})
                     </Text>
                     <TouchableOpacity
-                      onPress={() => selectedGoal && clearUpdates()}
+                      onPress={handleClearAllUpdates}
                       className="px-3 py-1"
                       disabled={loading}
                     >
                       <Text className="text-rose-400 font-sans text-sm">Limpar Todas</Text>
                     </TouchableOpacity>
                   </View>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  
+                  <View className="flex-col gap-4 space-y-3">
                     {getGoalUpdates().map((update: Update, index: number) => (
-                      <View key={index} className="bg-zinc-700/50 p-4 rounded-xl mr-3" style={{ minWidth: 250 }}>
-                        <View className="flex-row justify-between items-start mb-2">
-                          <Text className="text-white font-medium text-sm font-sans">Update #{index + 1}</Text>
+                      <View key={`${update.goalId}-${update.timestamp}`} className="bg-zinc-700/50 p-4 rounded-xl border border-zinc-600/20">
+                        {/* Header do Update */}
+                        <View className="flex-row justify-between items-start">
+                          <View className="flex-1">
+                            <View className="flex-row items-center mb-1">
+                              <Text className="text-white font-medium text-lg font-sans flex-1" numberOfLines={2}>
+                                {update.name}
+                              </Text>
+                              <View className="flex-row items-center ml-2">
+                                {update.progress > update.previousProgress ? (
+                                  <Ionicons name="trending-up" size={20} color="#10b981" />
+                                ) : update.progress < update.previousProgress ? (
+                                  <Ionicons name="trending-down" size={20} color="#f59e0b" />
+                                ) : (
+                                  <Ionicons name="remove" size={20} color="#71717a" />
+                                )}
+                                <Text className={`text-md font-sans ml-1 font-medium ${
+                                  update.progress > update.previousProgress 
+                                    ? 'text-green-400' 
+                                    : update.progress < update.previousProgress 
+                                    ? 'text-yellow-400' 
+                                    : 'text-zinc-400'
+                                }`}>
+                                  {getProgressDifference(update.progress, update.previousProgress)}
+                                </Text>
+                              </View>
+                            </View>
+                            <Text className="text-zinc-400 text-xs font-sans">
+                              {formatTimestamp(update.timestamp)}
+                            </Text>
+                          </View>
                           <TouchableOpacity
-                            onPress={() => removeUpdate(update.goalId)}
+                            onPress={() => handleRemoveSpecificUpdate(update.goalId, update.timestamp)}
                             disabled={loading}
+                            className="ml-3 p-1"
                           >
                             <Ionicons name="close-circle" size={18} color="#fb7185" />
                           </TouchableOpacity>
                         </View>
-                        <Text className="text-zinc-300 text-sm font-sans leading-5">{update.name}</Text>
+
+                        {/* Progresso do Update */}
+                        <View className="mb-2 mt-4">
+                          {/* Mini Progress Bar */}
+                          <View className="bg-zinc-600 h-2 rounded-full overflow-hidden">
+                            <View
+                              className="h-full rounded-full"
+                              style={{
+                                width: `${update.progress}%`,
+                                backgroundColor: getProgressColor(update.progress)
+                              }}
+                            />
+                          </View>
+                        </View>
                       </View>
                     ))}
-                  </ScrollView>
+                  </View>
                 </View>
               )}
             </>
@@ -350,7 +502,7 @@ const GoalModal: React.FC<GoalModalProps> = ({
           minimumDate={new Date()}
         />
 
-        {/* Update Modal (Drawer Style) - CORRIGIDO */}
+        {/* Update Modal (Drawer Style) */}
         <Modal
           transparent={true}
           animationType="slide"
@@ -366,8 +518,10 @@ const GoalModal: React.FC<GoalModalProps> = ({
               <View className="bg-zinc-800 rounded-t-3xl">
                 {/* Header com indicador visual */}
                 <View className="items-center py-4">
-                  <View className="flex-row items-center justify-between w-full px-6">
-                  </View>
+                  <View className="w-12 h-1 bg-zinc-600 rounded-full mb-4" />
+                  <Text className="text-white font-semibold text-lg font-sans">
+                    Adicionar Update
+                  </Text>
                 </View>
 
                 {/* Scrollable Content */}
@@ -382,7 +536,7 @@ const GoalModal: React.FC<GoalModalProps> = ({
                     <TextInput
                       placeholder="Descreva o progresso realizado..."
                       placeholderTextColor="#52525b"
-                      className="text-white text-base bg-zinc-700/30 font-sans rounded-xl px-4 py-4 min-h-[100px]"
+                      className="text-white text-base bg-zinc-700/30 font-sans rounded-xl px-4 py-4 min-h-[100px] border border-zinc-600/30"
                       multiline
                       textAlignVertical="top"
                       value={updateName}
@@ -398,7 +552,7 @@ const GoalModal: React.FC<GoalModalProps> = ({
                   {/* Progress Update */}
                   <View className="mb-6">
                     <Text className="text-white font-medium mb-4 font-sans text-lg">Atualizar Progresso</Text>
-                    <View className="bg-zinc-700/30 rounded-xl p-5">
+                    <View className="bg-zinc-700/30 rounded-xl p-5 border border-zinc-600/30">
                       {/* Progress Display */}
                       <View className="flex-row justify-between items-center mb-6">
                         <Text className="text-zinc-300 font-sans text-base">Progresso atual</Text>
@@ -467,11 +621,15 @@ const GoalModal: React.FC<GoalModalProps> = ({
 
                     <TouchableOpacity
                       onPress={handleAddUpdate}
-                      className="flex-1 py-4 px-6 rounded-xl items-center bg-rose-400 shadow-lg shadow-rose-400/20"
-                      disabled={loading}
+                      className={`flex-1 py-4 px-6 rounded-xl items-center ${
+                        loading 
+                          ? 'bg-zinc-600' 
+                          : 'bg-rose-400 shadow-lg shadow-rose-400/20'
+                      }`}
+                      disabled={loading || !updateName.trim()}
                     >
                       <Text className={`font-semibold font-sans ${
-                        loading ? 'text-zinc-500' : 'text-black'
+                        loading ? 'text-zinc-400' : 'text-black'
                       }`}>
                         {loading ? 'Salvando...' : 'Salvar Update'}
                       </Text>

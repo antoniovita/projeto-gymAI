@@ -3,19 +3,19 @@ import {
   View,
   Text,
   SafeAreaView,
-  TouchableOpacity,
   Alert,
   FlatList,
   Pressable,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useState, useEffect, useCallback } from 'react';
+import { Feather, Ionicons } from '@expo/vector-icons';
+import { useState, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useGoal } from '../hooks/useGoal';
 import { Goal } from '../api/model/Goal';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import GoalModal from './comps/GoalModal';
+import LoadingSpinner from './comps/LoadingSpinner';
 
 interface Update {
   goalId: string;
@@ -24,13 +24,13 @@ interface Update {
 
 const EmptyState = ({ onCreateGoal }: { onCreateGoal: () => void }) => {
   return (
-    <View className="flex-1 justify-center items-center mb-[60px] px-8 pb-20">
+    <View className="flex-1 justify-center items-center px-8 pb-20">
       <View className="items-center">
         <View className="w-20 h-20 rounded-full items-center justify-center mb-3">
           <Ionicons name="flag-outline" size={60} color="gray" />
         </View>
         
-        <Text className="text-neutral-400 text-xl font-medium font-sans mb-2 text-center">
+        <Text className="text-neutral-400 text-xl font-sans mb-2 text-center">
           Nenhuma meta criada
         </Text>
         
@@ -42,11 +42,83 @@ const EmptyState = ({ onCreateGoal }: { onCreateGoal: () => void }) => {
   );
 };
 
+const StatisticsView = ({ goals }: { goals: Goal[] }) => {
+  const totalGoals = goals.length;
+  const completedGoals = goals.filter(goal => goal.progress >= 100).length;
+  const inProgressGoals = goals.filter(goal => goal.progress > 0 && goal.progress < 100).length;
+  const notStartedGoals = goals.filter(goal => goal.progress === 0).length;
+  
+  const averageProgress = totalGoals > 0 
+    ? Math.round(goals.reduce((sum, goal) => sum + goal.progress, 0) / totalGoals)
+    : 0;
+
+  const overdueGoals = goals.filter(goal => {
+    if (!goal.deadline) return false;
+    const deadline = new Date(goal.deadline);
+    const today = new Date();
+    return deadline < today && goal.progress < 100;
+  }).length;
+
+  const completionRate = totalGoals > 0 ? Math.round((completedGoals / totalGoals) * 100) : 0;
+
+  // Calculando metas próximas ao prazo (próximos 7 dias)
+  const upcomingGoals = goals.filter(goal => {
+    if (!goal.deadline || goal.progress >= 100) return false;
+    const deadline = new Date(goal.deadline);
+    const today = new Date();
+    const diffTime = deadline.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays <= 7 && diffDays >= 0;
+  }).length;
+
+  return (
+    <View className="px-6 mb-4">
+      <View className="flex-row items-center justify-between px-4 py-3 rounded-2xl bg-[#35353a] mb-4">
+        <View className="flex-row items-center gap-3">
+          <View
+            className="p-2 rounded-xl"
+            style={{
+              backgroundColor: 'rgba(251, 113, 133, 0.15)'
+            }}
+          >
+            <Ionicons name="stats-chart" size={16} color="#fb7185" />
+          </View>
+          <View className="flex-col">
+            <Text className="text-zinc-400 font-sans text-xs mb-1">Estatísticas gerais</Text>
+            <Text className="text-white font-sans text-sm font-semibold">
+              {totalGoals} {totalGoals === 1 ? 'meta' : 'metas'}  •  {averageProgress}% de progresso médio
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Caixas de estatísticas detalhadas */}
+      <View className="flex-row items-center gap-2">
+        <Pressable className="flex-row items-center gap-1.5 bg-zinc-700 rounded-xl px-3 py-1 flex-1">
+          <Feather name="check-circle" size={14} color="#10b981" />
+            <Text className="text-white font-sans text-sm">{completedGoals} concluídas </Text>
+        </Pressable>
+
+        <Pressable className="flex-row items-center gap-1.5 bg-zinc-700 rounded-xl px-3 py-1 flex-1">
+          <Ionicons name="time-outline" size={15} color="#f59e0b" />
+            <Text className="text-white font-sans text-sm">{upcomingGoals} {goals.length == 1 ? "pendente" : "pendentes"}</Text>
+        </Pressable>
+
+        <Pressable className="flex-row items-center gap-1.5 bg-zinc-700 rounded-xl px-3 py-1 flex-1">
+          <Feather name="x-circle" size={14} color="#ff7a7f" />
+            <Text className="text-white font-sans text-sm">{overdueGoals} {overdueGoals == 1 ? "atrasada" : "atrasadas"}</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+};
+
 const GoalScreen: React.FC = () => {
   const navigation = useNavigation();
   const { userId } = useAuth();
   const { 
     loading, 
+    saving,
     error, 
     updates, 
     goals,
@@ -56,13 +128,13 @@ const GoalScreen: React.FC = () => {
     deleteGoal,
     clearUpdates, 
     removeUpdate,
+    removeSpecificUpdate,
     clearError 
   } = useGoal();
 
   // Modal states
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   
   // Form states
@@ -75,20 +147,19 @@ const GoalScreen: React.FC = () => {
     if (!userId) return;
     
     try {
-      setRefreshing(true);
       clearError();
       await getGoals(userId);
     } catch (err: any) {
       console.error('Error loading goals:', err);
       Alert.alert('Erro', 'Falha ao carregar metas');
-    } finally {
-      setRefreshing(false);
     }
-  }, [userId, getGoals, clearError]);
+  }, [userId]);
 
-  useEffect(() => {
-    loadGoals();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadGoals();
+    }, [loadGoals])
+  );
 
   const handleGoBack = () => {
     navigation.goBack();
@@ -140,7 +211,6 @@ const GoalScreen: React.FC = () => {
           selectedDate?.toISOString() || null,
           userId
         );
-        Alert.alert('Sucesso', 'Meta criada com sucesso!');
       }
       
       // Reset form and close modal
@@ -196,17 +266,8 @@ const GoalScreen: React.FC = () => {
 
   const renderLeftActions = (goal: Goal) => {
     return (
-      <View style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-        borderTopWidth: 1,
-        borderTopColor: '#f43f5e',
-        backgroundColor: '#f43f5e',
-        paddingHorizontal: 16,
-        height: '100%',
-      }}>
-        <TouchableOpacity
+      <View className="flex-row items-center justify-start border-t bg-rose-500 px-4 h-full">
+        <Pressable
           style={{
             flexDirection: 'row',
             alignItems: 'center',
@@ -218,7 +279,7 @@ const GoalScreen: React.FC = () => {
           onPress={() => handleDeleteGoal(goal.id)}
         >
           <Ionicons name="trash" size={24} color="white" />
-        </TouchableOpacity>
+        </Pressable>
       </View>
     );
   };
@@ -234,23 +295,22 @@ const GoalScreen: React.FC = () => {
         dragOffsetFromLeftEdge={80}
         friction={1}
       >
-        <TouchableOpacity onPress={() => handleOpenGoal(item)}>
+        <Pressable onPress={() => handleOpenGoal(item)}>
           <View className="w-full flex flex-col justify-center px-6 py-4 border-b border-neutral-700 bg-zinc-800">
             <View className="flex flex-row justify-between items-start mb-3">
               <View className="flex-1">
-                <Text className="text-white text-lg font-medium mb-1 font-sans">{item.name}</Text>
+                <Text className="text-white text-lg mb-1 font-sans">{item.name}</Text>
                 {item.description && (
                   <Text className="text-zinc-400 text-sm mb-2 font-sans">{item.description}</Text>
                 )}
-                <Text className="text-zinc-500 text-xs font-sans">Prazo: {formatDate(item.deadline)}</Text>
+                <Text className="text-zinc-500 text-xs font-sans">{formatDate(item.deadline)}</Text>
               </View>
             </View>
             
             {/* Progress Bar */}
             <View>
-              <View className="flex flex-row justify-between mb-2">
-                <Text className="text-zinc-400 text-sm font-sans">Progresso</Text>
-                <Text className="text-white text-sm font-medium font-sans">{item.progress}%</Text>
+              <View className="flex absolute bottom-2 right-1 flex-row justify-between mb-2">
+                <Text className="text-white text-sm font-sans">{item.progress}%</Text>
               </View>
               <View className="bg-zinc-600 h-2 rounded-full overflow-hidden">
                 <View 
@@ -263,7 +323,7 @@ const GoalScreen: React.FC = () => {
               </View>
             </View>
           </View>
-        </TouchableOpacity>
+        </Pressable>
       </Swipeable>
     );
   };
@@ -272,99 +332,95 @@ const GoalScreen: React.FC = () => {
     loadGoals();
   };
 
-  if (loading && goals.length === 0) {
-    return (
-      <SafeAreaView className="flex-1 bg-zinc-800 justify-center items-center">
-        <Text className="text-white text-lg font-sans">Carregando metas...</Text>
-      </SafeAreaView>
-    );
-  }
+  const isCurrentlyLoading = loading || saving;
 
   return (
     <SafeAreaView className="flex-1 bg-zinc-800">
+      <LoadingSpinner visible={isCurrentlyLoading} />
+      
       {/* Floating Action Buttons */}
       <Pressable
-      onPress={handleOpenCreate}
-      className="w-[50px] h-[50px] absolute bottom-[6%] right-6 z-20 rounded-full bg-rose-400 items-center justify-center shadow-lg"
+        onPress={handleOpenCreate}
+        className="w-[50px] h-[50px] absolute bottom-[6%] right-6 z-20 rounded-full bg-rose-400 items-center justify-center shadow-lg"
       >
-      <Ionicons name="add" size={32} color="black" />
+        <Ionicons name="add" size={32} color="black" />
       </Pressable>
 
       <View className="absolute bottom-[6%] left-6 z-20">
-      <Pressable
-        onPress={handleGoBack}
-        className="flex-row items-center bg-rose-400 px-4 h-[50px] rounded-full"
-      >
-        <Ionicons name="chevron-back" size={20} color="black" />
-        <Text className="text-black font-sans text-lg ml-1">Voltar</Text>
-      </Pressable>
+        <Pressable
+          onPress={handleGoBack}
+          className="flex-row items-center bg-rose-400 px-4 h-[50px] rounded-full"
+        >
+          <Ionicons name="chevron-back" size={20} color="black" />
+          <Text className="text-black font-sans text-lg ml-1">Voltar</Text>
+        </Pressable>
       </View>
 
       {/* Header */}
       <View className="flex flex-col px-6 mt-[40px] mb-5">
-      <View className="flex flex-row justify-between items-center">
-        <Text className="text-3xl text-white font-medium font-sans">Metas</Text>
-        
-        <View className="flex flex-row items-center space-x-4">
-        <Pressable onPress={handleRefresh} disabled={refreshing}>
-          <Ionicons 
-          name="refresh" 
-          size={24} 
-          color={refreshing ? "#71717a" : "#fb7185"} 
-          />
-        </Pressable>
+        <View className="flex flex-row justify-between items-center">
+          <Text className="text-3xl text-white font-sans">Metas</Text>
+          
+          <View className="flex flex-row items-center space-x-4">
+            <Pressable onPress={handleRefresh} disabled={isCurrentlyLoading}>
+              <Ionicons 
+                name="refresh-circle-outline" 
+                size={24} 
+                color="#fb7185" 
+              />
+            </Pressable>
+          </View>
         </View>
+
+        {/* Error Display */}
+        {error && (
+          <View className="mt-4 bg-red-900/20 border border-red-500/30 rounded-lg p-3">
+            <Text className="text-red-400 font-sans text-sm">{error}</Text>
+            <Pressable onPress={clearError} className="mt-2">
+              <Text className="text-red-300 font-sans text-xs">Dispensar</Text>
+            </Pressable>
+          </View>
+        )}
       </View>
 
-      {/* Error Display */}
-      {error && (
-        <View className="mt-4 bg-red-900/20 border border-red-500/30 rounded-lg p-3">
-        <Text className="text-red-400 font-sans text-sm">{error}</Text>
-        <TouchableOpacity onPress={clearError} className="mt-2">
-          <Text className="text-red-300 font-sans text-xs">Dispensar</Text>
-        </TouchableOpacity>
-        </View>
-      )}
-      </View>
+      <StatisticsView goals={goals} />
 
       {/* Goals List */}
       {goals.length === 0 ? (
-      <EmptyState onCreateGoal={handleOpenCreate} />
+        <EmptyState onCreateGoal={handleOpenCreate} />
       ) : (
-      <FlatList
-        data={goals}
-        keyExtractor={(item) => item.id}
-        renderItem={renderGoalItem}
-        contentContainerStyle={{ paddingBottom: 120 }}
-        refreshing={refreshing}
-        onRefresh={handleRefresh}
-        showsVerticalScrollIndicator={false}
-      />
+        <FlatList
+          data={goals}
+          keyExtractor={(item) => item.id}
+          renderItem={renderGoalItem}
+          contentContainerStyle={{ paddingBottom: 120 }}
+          showsVerticalScrollIndicator={false}
+        />
       )}
 
       {/* Goal Modal */}
       <GoalModal
-      isVisible={isModalVisible}
-      onClose={handleCloseModal}
-      mode={modalMode}
-      selectedGoal={selectedGoal}
-      goalName={goalName}
-      setGoalName={setGoalName}
-      goalDescription={goalDescription}
-      setGoalDescription={setGoalDescription}
-      selectedDate={selectedDate}
-      setSelectedDate={setSelectedDate}
-      onSaveGoal={handleSaveGoal}
-      onDeleteGoal={selectedGoal ? handleDeleteGoal : async () => {}}
-      loading={loading}
-      updates={updates}
-      clearUpdates={clearUpdates}
-      removeUpdate={removeUpdate}
-      onCreateUpdate={handleCreateUpdate}
+        isVisible={isModalVisible}
+        onClose={handleCloseModal}
+        mode={modalMode}
+        selectedGoal={selectedGoal}
+        goalName={goalName}
+        setGoalName={setGoalName}
+        goalDescription={goalDescription}
+        setGoalDescription={setGoalDescription}
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
+        onSaveGoal={handleSaveGoal}
+        onDeleteGoal={selectedGoal ? handleDeleteGoal : async () => { } }
+        loading={saving}
+        updates={updates}
+        clearUpdates={clearUpdates}
+        removeUpdate={removeUpdate}
+        onCreateUpdate={handleCreateUpdate}
+        removeSpecificUpdate={removeSpecificUpdate}
       />
     </SafeAreaView>
   );
 };
 
 export default GoalScreen;
-            
