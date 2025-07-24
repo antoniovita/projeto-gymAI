@@ -24,10 +24,10 @@ interface Update {
 
 const EmptyState = ({ onCreateGoal }: { onCreateGoal: () => void }) => {
   return (
-    <View className="flex-1 justify-center items-center px-8 pb-20">
+    <View className="flex-1 justify-center items-center px-8 pb-[160px]">
       <View className="items-center">
         <View className="w-20 h-20 rounded-full items-center justify-center mb-3">
-          <Ionicons name="flag-outline" size={60} color="gray" />
+          <Ionicons name="trophy-outline" size={60} color="gray" />
         </View>
         
         <Text className="text-neutral-400 text-xl font-sans mb-2 text-center">
