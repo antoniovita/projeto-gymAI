@@ -2,19 +2,22 @@ import React from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
   ScrollView,
   TextInput,
   Modal,
   Alert,
   Platform,
   KeyboardAvoidingView,
+  Pressable,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import Slider from '@react-native-community/slider';
+import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { Goal } from '../../api/model/Goal';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 interface Update {
   goalId: string;
@@ -70,6 +73,10 @@ const GoalModal: React.FC<GoalModalProps> = ({
   const [updateProgress, setUpdateProgress] = useState(0);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
+  // Animation refs
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(300)).current;
+
   // Reset update states when modal opens/closes or goal changes
   useEffect(() => {
     if (isUpdateModalVisible && selectedGoal) {
@@ -77,6 +84,39 @@ const GoalModal: React.FC<GoalModalProps> = ({
       setUpdateProgress(selectedGoal.progress);
     }
   }, [isUpdateModalVisible, selectedGoal]);
+
+  // Handle modal animations
+  useEffect(() => {
+    if (isUpdateModalVisible) {
+      // Show modal with fade in and slide up
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      // Hide modal with fade out and slide down
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 300,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [isUpdateModalVisible]);
 
   const handleOpenUpdateModal = () => {
     if (!selectedGoal) return;
@@ -155,6 +195,42 @@ const GoalModal: React.FC<GoalModalProps> = ({
           }
         }
       ]
+    );
+  };
+
+  const handleDeleteUpdate = (goalId: string, timestamp: string) => {
+    Alert.alert(
+      'Confirmar Exclusão',
+      'Deseja realmente excluir este update?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { 
+          text: 'Excluir', 
+          style: 'destructive',
+          onPress: () => removeSpecificUpdate(goalId, timestamp)
+        }
+      ]
+    );
+  };
+
+  const renderLeftActions = (update: Update) => {
+    return (
+      <View className="flex-row items-center justify-start px-4 h-full rounded-xl">
+        <TouchableOpacity
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 64,
+            height: 64,
+            borderRadius: 32,
+            backgroundColor: "#f43f5e"
+          }}
+          onPress={() => handleDeleteUpdate(update.goalId, update.timestamp)}
+        >
+          <Ionicons name="trash" size={24} color="white" />
+        </TouchableOpacity>
+      </View>
     );
   };
 
@@ -250,27 +326,27 @@ const GoalModal: React.FC<GoalModalProps> = ({
       <View className={`flex-1 ${Platform.OS === 'ios' ? 'pt-12 pb-8' : 'pt-8 pb-4'} bg-zinc-800`}>
         {/* Floating Update Button - Only show in edit mode */}
         {mode === 'edit' && (
-          <TouchableOpacity
+          <Pressable
             onPress={handleOpenUpdateModal}
             className="w-[50px] h-[50px] absolute bottom-[6%] right-6 z-30 rounded-full bg-rose-400 items-center justify-center shadow-lg"
           >
             <Ionicons name="add" size={28} color="black" />
-          </TouchableOpacity>
+          </Pressable>
         )}
 
         {/* Header */}
         <View className="flex-row justify-between items-center px-4 py-4">
-          <TouchableOpacity
+          <Pressable
             className="items-center flex flex-row"
             onPress={onClose}
           >
             <Ionicons name="chevron-back" size={28} color="white" />
             <Text className="text-white text-lg font-sans ml-1">Voltar</Text>
-          </TouchableOpacity>
+          </Pressable>
 
           <View className="flex-row items-center space-x-4">
             {/* Save Button */}
-            <TouchableOpacity
+            <Pressable
               onPress={onSaveGoal}
               className="px-4 py-2"
               disabled={isSaveDisabled()}
@@ -282,7 +358,7 @@ const GoalModal: React.FC<GoalModalProps> = ({
               }`}>
                 {loading ? 'Salvando...' : 'Salvar'}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
 
@@ -310,7 +386,7 @@ const GoalModal: React.FC<GoalModalProps> = ({
             <Text className="text-zinc-400 text-sm font-medium mb-3 uppercase tracking-wide">
               Prazo (Opcional)
             </Text>
-            <TouchableOpacity
+            <Pressable
               onPress={() => setShowDatePicker(true)}
               className="flex-row items-center px-4 py-3 rounded-xl bg-zinc-700/30 "
               disabled={loading}
@@ -325,15 +401,15 @@ const GoalModal: React.FC<GoalModalProps> = ({
               }`}>
                 {selectedDate ? formatDeadlineDate(selectedDate) : "Selecionar prazo"}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
             {selectedDate && (
-              <TouchableOpacity
+              <Pressable
                 onPress={() => setSelectedDate(null)}
                 className="flex-row items-center  w-full bg-rose-400 rounded-xl justify-center mt-2 py-3"
                 disabled={loading}
               >
                 <Text className="text-white text-md font-sans ml-1">Remover prazo</Text>
-              </TouchableOpacity>
+              </Pressable>
             )}
           </View>
 
@@ -365,20 +441,20 @@ const GoalModal: React.FC<GoalModalProps> = ({
                 <Text className="text-zinc-400 text-sm font-medium mb-3 uppercase tracking-wide">
                   Progresso Atual
                 </Text>
-                <View className="bg-zinc-700/50 px-4 py-4 rounded-xl border border-zinc-600/30">
+                <View className="bg-zinc-700/30 px-4 py-4 rounded-xl">
                   <View className="flex-row justify-between mb-4">
                     <Text className="text-white font-sans text-lg">Progresso</Text>
                     <View className="flex-row items-center">
-                      <Text className="text-rose-400 font-medium font-sans text-lg">
-                        {selectedGoal?.progress || 0}%
-                      </Text>
                       {(selectedGoal?.progress || 0) === 100 && (
-                        <View className="ml-2 bg-green-500/20 px-2 py-1 rounded-full">
+                        <View className="mr-2 bg-green-500/20 px-2 py-1 rounded-full">
                           <Text className="text-green-400 text-xs font-sans font-medium">
                             Concluída
                           </Text>
                         </View>
                       )}
+                      <Text className="text-rose-400 font-medium font-sans text-lg">
+                        {selectedGoal?.progress || 0}%
+                      </Text>  
                     </View>
                   </View>
                   
@@ -402,8 +478,6 @@ const GoalModal: React.FC<GoalModalProps> = ({
                 </View>
               </View>
 
-              
-
               {/* Updates List - Only for edit mode */}
               {getGoalUpdates().length > 0 && (
                 <View className="mb-8">
@@ -411,71 +485,75 @@ const GoalModal: React.FC<GoalModalProps> = ({
                     <Text className="text-zinc-400 text-sm font-medium uppercase tracking-wide">
                       Atualizações Recentes ({getGoalUpdates().length})
                     </Text>
-                    <TouchableOpacity
+                    <Pressable
                       onPress={handleClearAllUpdates}
                       className="px-3 py-1"
                       disabled={loading}
                     >
                       <Text className="text-rose-400 font-sans text-sm">Limpar Todas</Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   </View>
                   
                   <View className="flex-col gap-4 space-y-3">
                     {getGoalUpdates().map((update: Update, index: number) => (
-                      <View key={`${update.goalId}-${update.timestamp}`} className="bg-zinc-700/50 p-4 rounded-xl border border-zinc-600/20">
-                        {/* Header do Update */}
-                        <View className="flex-row justify-between items-start">
-                          <View className="flex-1">
-                            <View className="flex-row items-center mb-1">
-                              <Text className="text-white font-medium text-lg font-sans flex-1" numberOfLines={2}>
-                                {update.name}
-                              </Text>
-                              <View className="flex-row items-center ml-2">
-                                {update.progress > update.previousProgress ? (
-                                  <Ionicons name="trending-up" size={20} color="#10b981" />
-                                ) : update.progress < update.previousProgress ? (
-                                  <Ionicons name="trending-down" size={20} color="#f59e0b" />
-                                ) : (
-                                  <Ionicons name="remove" size={20} color="#71717a" />
-                                )}
-                                <Text className={`text-md font-sans ml-1 font-medium ${
-                                  update.progress > update.previousProgress 
-                                    ? 'text-green-400' 
-                                    : update.progress < update.previousProgress 
-                                    ? 'text-yellow-400' 
-                                    : 'text-zinc-400'
-                                }`}>
-                                  {getProgressDifference(update.progress, update.previousProgress)}
+                      <Swipeable
+                        key={`${update.goalId}-${update.timestamp}`}
+                        renderLeftActions={() => renderLeftActions(update)}
+                        leftThreshold={40}
+                        rightThreshold={40}
+                        overshootLeft={false}
+                        overshootRight={false}
+                        dragOffsetFromLeftEdge={80}
+                        friction={1}
+                      >
+                        <View className="bg-[#2e2e32] p-4 rounded-xl">
+                          {/* Header do Update */}
+                          <View className="flex-row justify-between items-start">
+                            <View className="flex-1">
+                              <View className="flex-row items-center mb-1">
+                                <Text className="text-white font-medium text-lg font-sans flex-1" numberOfLines={2}>
+                                  {update.name}
                                 </Text>
+                                <View className="flex-row items-center ml-2">
+                                  {update.progress > update.previousProgress ? (
+                                    <Ionicons name="trending-up" size={20} color="#10b981" />
+                                  ) : update.progress < update.previousProgress ? (
+                                    <Ionicons name="trending-down" size={20} color="#f59e0b" />
+                                  ) : (
+                                    <Ionicons name="remove" size={20} color="#71717a" />
+                                  )}
+                                  <Text className={`text-md font-sans ml-1 font-medium ${
+                                    update.progress > update.previousProgress 
+                                      ? 'text-green-400' 
+                                      : update.progress < update.previousProgress 
+                                      ? 'text-yellow-400' 
+                                      : 'text-zinc-400'
+                                  }`}>
+                                    {getProgressDifference(update.progress, update.previousProgress)}
+                                  </Text>
+                                </View>
                               </View>
+                              <Text className="text-zinc-400 text-xs font-sans">
+                                {formatTimestamp(update.timestamp)}
+                              </Text>
                             </View>
-                            <Text className="text-zinc-400 text-xs font-sans">
-                              {formatTimestamp(update.timestamp)}
-                            </Text>
                           </View>
-                          <TouchableOpacity
-                            onPress={() => handleRemoveSpecificUpdate(update.goalId, update.timestamp)}
-                            disabled={loading}
-                            className="ml-3 p-1"
-                          >
-                            <Ionicons name="close-circle" size={18} color="#fb7185" />
-                          </TouchableOpacity>
-                        </View>
 
-                        {/* Progresso do Update */}
-                        <View className="mb-2 mt-4">
-                          {/* Mini Progress Bar */}
-                          <View className="bg-zinc-600 h-2 rounded-full overflow-hidden">
-                            <View
-                              className="h-full rounded-full"
-                              style={{
-                                width: `${update.progress}%`,
-                                backgroundColor: getProgressColor(update.progress)
-                              }}
-                            />
+                          {/* Progresso do Update */}
+                          <View className="mb-2 mt-4">
+                            {/* Mini Progress Bar */}
+                            <View className="bg-zinc-600 h-2 rounded-full overflow-hidden">
+                              <View
+                                className="h-full rounded-full"
+                                style={{
+                                  width: `${update.progress}%`,
+                                  backgroundColor: getProgressColor(update.progress)
+                                }}
+                              />
+                            </View>
                           </View>
                         </View>
-                      </View>
+                      </Swipeable>
                     ))}
                   </View>
                 </View>
@@ -502,144 +580,129 @@ const GoalModal: React.FC<GoalModalProps> = ({
           minimumDate={new Date()}
         />
 
-        {/* Update Modal (Drawer Style) */}
-        <Modal
-          transparent={true}
-          animationType="slide"
-          visible={isUpdateModalVisible}
-          onRequestClose={handleCloseUpdateModal}
-          presentationStyle="overFullScreen"
-        >
-          <View className="flex-1 justify-end bg-black/60">
-            <KeyboardAvoidingView
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-              className="w-full justify-end"
+        {/* Update Modal (Drawer Style) with Custom Animation */}
+        {isUpdateModalVisible && (
+          <Modal
+            transparent={true}
+            visible={isUpdateModalVisible}
+            onRequestClose={handleCloseUpdateModal}
+            presentationStyle="overFullScreen"
+            animationType="none"
+          >
+            <Animated.View 
+              className="flex-1 justify-end"
+              style={{
+                backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                opacity: fadeAnim,
+              }}
             >
-              <View className="bg-zinc-800 rounded-t-3xl">
-                {/* Header com indicador visual */}
-                <View className="items-center py-4">
-                  <View className="w-12 h-1 bg-zinc-600 rounded-full mb-4" />
-                  <Text className="text-white font-semibold text-lg font-sans">
-                    Adicionar Update
-                  </Text>
-                </View>
-
-                {/* Scrollable Content */}
-                <ScrollView
-                  className="max-h-[400px] px-6"
-                  showsVerticalScrollIndicator={false}
-                  contentContainerStyle={{ paddingBottom: 20 }}
+              <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                className="w-full justify-end"
+              >
+                <Animated.View 
+                  className="bg-zinc-800 rounded-t-3xl"
+                  style={{
+                    transform: [{ translateY: slideAnim }],
+                  }}
                 >
-                  {/* Update Description */}
-                  <View className="mb-2">
-                    <Text className="text-white font-medium mb-4 font-sans text-lg">Descrição do Update</Text>
-                    <TextInput
-                      placeholder="Descreva o progresso realizado..."
-                      placeholderTextColor="#52525b"
-                      className="text-white text-base bg-zinc-700/30 font-sans rounded-xl px-4 py-4 min-h-[100px] border border-zinc-600/30"
-                      multiline
-                      textAlignVertical="top"
-                      value={updateName}
-                      onChangeText={handleUpdateNameChange}
-                      editable={!loading}
-                      maxLength={300}
-                    />
-                    <Text className="text-zinc-500 text-xs font-sans mt-2 text-right">
-                      {updateName.length}/300
-                    </Text>
+                  {/* Header com indicador visual */}
+                  <View className="items-center py-4">
                   </View>
 
-                  {/* Progress Update */}
-                  <View className="mb-6">
-                    <Text className="text-white font-medium mb-4 font-sans text-lg">Atualizar Progresso</Text>
-                    <View className="bg-zinc-700/30 rounded-xl p-5 border border-zinc-600/30">
-                      {/* Progress Display */}
-                      <View className="flex-row justify-between items-center mb-6">
-                        <Text className="text-zinc-300 font-sans text-base">Progresso atual</Text>
-                        <View className="flex-row items-center">
-                          <Text className="text-zinc-400 font-sans mr-2">{selectedGoal?.progress}%</Text>
-                          <Ionicons name="arrow-forward" size={16} color="#71717a" />
-                          <Text className="text-rose-400 font-semibold font-sans text-lg ml-2">
-                            {updateProgress}%
-                          </Text>
-                        </View>
-                      </View>
-
-                      {/* Slider */}
-                      <Slider
-                        style={{ width: '100%', height: 50 }}
-                        minimumValue={0}
-                        maximumValue={100}
-                        step={1}
-                        value={updateProgress}
-                        onValueChange={setUpdateProgress}
-                        minimumTrackTintColor="#fb7185"
-                        maximumTrackTintColor="#3f3f46"
-                        disabled={loading}
+                  {/* Scrollable Content */}
+                  <ScrollView
+                    className="max-h-[400px] px-6"
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={{ paddingBottom: 20 }}
+                  >
+                    {/* Update Description */}
+                    <View className="mb-2">
+                      <TextInput
+                        placeholder="Insira o progresso realizado..."
+                        placeholderTextColor="#52525b"
+                        className="text-white text-xl font-sans py-4"
+                        multiline
+                        textAlignVertical="top"
+                        value={updateName}
+                        onChangeText={handleUpdateNameChange}
+                        editable={!loading}
+                        maxLength={100}
                       />
-                      <View className="flex-row justify-between mt-2">
-                        <Text className="text-zinc-500 text-sm font-sans">0%</Text>
-                        <Text className="text-zinc-500 text-sm font-sans">100%</Text>
-                      </View>
+                      <Text className="text-zinc-500 text-xs font-sans mt-2 text-right">
+                        {updateName.length}/100
+                      </Text>
+                    </View>
 
-                      {/* Progress Change Indicator */}
-                      {updateProgress !== selectedGoal?.progress && (
-                        <View className="mt-4 p-4 bg-zinc-800/60 border border-zinc-600/30 rounded-lg">
-                          <View className="flex-row items-center justify-center">
-                            {updateProgress > (selectedGoal?.progress || 0) ? (
-                              <Ionicons name="trending-up" size={18} color="#10b981" />
-                            ) : (
-                              <Ionicons name="trending-down" size={18} color="#f59e0b" />
-                            )}
-                            <Text className={`font-sans text-sm ml-2 font-medium ${
-                              updateProgress > (selectedGoal?.progress || 0)
-                                ? 'text-green-400'
-                                : 'text-yellow-400'
-                            }`}>
-                              {updateProgress > (selectedGoal?.progress || 0)
-                                ? `+${updateProgress - (selectedGoal?.progress || 0)}% de progresso`
-                                : `${updateProgress - (selectedGoal?.progress || 0)}% de progresso`
-                              }
+                    {/* Progress Update */}
+                    <View className="mt-6">
+                      <View className="bg-zinc-700/30 rounded-xl p-5">
+                        {/* Progress Display */}
+                        <View className="flex-row justify-between items-center mb-6">
+                          <Text className="text-zinc-300 font-sans text-base">Progresso atual</Text>
+                          <View className="flex-row items-center">
+                            <Text className="text-zinc-400 font-sans mr-2">{selectedGoal?.progress}%</Text>
+                            <Ionicons name="arrow-forward" size={16} color="#71717a" />
+                            <Text className="text-rose-400 font-semibold font-sans text-lg ml-2">
+                              {updateProgress}%
                             </Text>
                           </View>
                         </View>
-                      )}
+
+                        {/* Slider */}
+                        <Slider
+                          style={{ width: '100%', height: 50 }}
+                          minimumValue={0}
+                          maximumValue={100}
+                          step={1}
+                          value={updateProgress}
+                          onValueChange={setUpdateProgress}
+                          minimumTrackTintColor="#fb7185"
+                          maximumTrackTintColor="#3f3f46"
+                          disabled={loading}
+                        />
+                        <View className="flex-row justify-between mt-2">
+                          <Text className="text-zinc-500 text-sm font-sans">0%</Text>
+                          <Text className="text-zinc-500 text-sm font-sans">100%</Text>
+                        </View>
+                        
+                      </View>
+                    </View>
+                  </ScrollView>
+
+                  {/* Footer Buttons */}
+                  <View className="px-6 py-3 bg-zinc-800/50">
+                    <View className="flex-row gap-3 px-1 py-4 space-x-3">
+                      <Pressable
+                        onPress={handleCloseUpdateModal}
+                        className="flex-1 py-4 px-6 bg-zinc-700/30 rounded-xl items-center"
+                        disabled={loading}
+                      >
+                        <Text className="text-zinc-300 font-sans font-medium">Cancelar</Text>
+                      </Pressable>
+
+                      <Pressable
+                        onPress={handleAddUpdate}
+                        className={`flex-1 py-4 px-6 rounded-xl items-center ${
+                          loading 
+                            ? 'bg-zinc-600' 
+                            : 'bg-rose-400 shadow-lg shadow-rose-400/20'
+                        }`}
+                        disabled={loading || !updateName.trim()}
+                      >
+                        <Text className={`font-semibold font-sans ${
+                          loading ? 'text-zinc-400' : 'text-black'
+                        }`}>
+                          {loading ? 'Salvando...' : 'Salvar Update'}
+                        </Text>
+                      </Pressable>
                     </View>
                   </View>
-                </ScrollView>
-
-                {/* Footer Buttons */}
-                <View className="px-6 py-3 bg-zinc-800/50">
-                  <View className="flex-row gap-3 px-1 py-4 space-x-3">
-                    <TouchableOpacity
-                      onPress={handleCloseUpdateModal}
-                      className="flex-1 py-4 px-6 bg-zinc-700/30 rounded-xl items-center"
-                      disabled={loading}
-                    >
-                      <Text className="text-zinc-300 font-sans font-medium">Cancelar</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      onPress={handleAddUpdate}
-                      className={`flex-1 py-4 px-6 rounded-xl items-center ${
-                        loading 
-                          ? 'bg-zinc-600' 
-                          : 'bg-rose-400 shadow-lg shadow-rose-400/20'
-                      }`}
-                      disabled={loading || !updateName.trim()}
-                    >
-                      <Text className={`font-semibold font-sans ${
-                        loading ? 'text-zinc-400' : 'text-black'
-                      }`}>
-                        {loading ? 'Salvando...' : 'Salvar Update'}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-            </KeyboardAvoidingView>
-          </View>
-        </Modal>
+                </Animated.View>
+              </KeyboardAvoidingView>
+            </Animated.View>
+          </Modal>
+        )}
       </View>
     </Modal>
   );

@@ -37,7 +37,7 @@ const EmptyState = ({ selectedCategory, onCreateExpense }: { selectedCategory: s
   };
 
   return (
-    <View className="flex-1 justify-center items-center px-8 pb-20">
+    <View className="flex-1 justify-center items-center px-8 pb-[150px]">
       <View className="items-center">
         <View className="w-20 h-20 rounded-full items-center justify-center mb-3">
           <Ionicons name="wallet-outline" size={60} color="gray" />
