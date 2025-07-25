@@ -425,9 +425,11 @@ export default function WorkoutScreen() {
         <View className='flex flex-row justify-between items-center'>
           <Text className="text-3xl text-white font-medium font-sans">Academia</Text>
         
-          <Pressable onPress={() => setShowDeleteCategoryModal(true)}>
-            <Ionicons name="options-outline" size={24} color="#ff7a7f" />
-          </Pressable>
+            <Pressable 
+              onPress={() => setShowDeleteCategoryModal(true)}
+            >
+              <Ionicons name="folder" size={22} color="#ff7a7f" />
+            </Pressable>
 
           <Modal
             transparent

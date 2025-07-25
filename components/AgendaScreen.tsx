@@ -18,8 +18,127 @@ import RefreshButton from './comps/refreshButton';
 import TaskModal from '../components/comps/TaskModal';
 import CategoryModal from '../components/comps/CategoryModal';
 import DeleteCategoryModal from '../components/comps/DeleteCategoryModal';
-import LoadingSpinner from '../components/comps/LoadingSpinner';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
+const { width, height } = Dimensions.get('window');
+
+  const LoadingSpinner = ({ visible }: { visible: boolean }) => {
+    const spinValue = useRef(new Animated.Value(0)).current;
+    const fadeValue = useRef(new Animated.Value(0)).current;
+    const scaleValue = useRef(new Animated.Value(0.8)).current;
+    const spinAnimation = useRef<Animated.CompositeAnimation | null>(null);
+
+    useEffect(() => {
+      if (visible) {
+
+        Animated.parallel([
+          Animated.timing(fadeValue, {
+            toValue: 1,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+          Animated.spring(scaleValue, {
+            toValue: 1,
+            tension: 100,
+            friction: 8,
+            useNativeDriver: true,
+          }),
+        ]).start();
+
+        spinValue.setValue(0);
+        spinAnimation.current = Animated.loop(
+          Animated.timing(spinValue, {
+            toValue: 1,
+            duration: 1200,
+            useNativeDriver: true,
+          })
+        );
+        spinAnimation.current.start();
+      } else {
+        Animated.parallel([
+          Animated.timing(fadeValue, {
+            toValue: 0,
+            duration: 150,
+            useNativeDriver: true,
+          }),
+          Animated.timing(scaleValue, {
+            toValue: 0.8,
+            duration: 150,
+            useNativeDriver: true,
+          }),
+        ]).start();
+
+        spinAnimation.current?.stop();
+      }
+    }, [visible]);
+
+    const spin = spinValue.interpolate({
+      inputRange: [0, 1],
+      outputRange: ['0deg', '360deg'],
+    });
+
+    return (
+      <Modal
+        transparent
+        visible={visible}
+        animationType="none"
+        statusBarTranslucent
+      >
+        <Animated.View
+          style={{
+            opacity: fadeValue,
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: width,
+            height: height,
+            backgroundColor: 'rgba(0, 0, 0, 0.4)',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <Animated.View
+            style={{
+              transform: [{ scale: scaleValue }],
+              backgroundColor: 'rgba(28, 28, 30, 0.9)',
+              borderRadius: 16,
+              padding: 24,
+              alignItems: 'center',
+              justifyContent: 'center',
+              minWidth: 120,
+              minHeight: 120,
+              shadowColor: '#000',
+              shadowOffset: {
+                width: 0,
+                height: 8,
+              },
+              shadowOpacity: 0.25,
+              shadowRadius: 16,
+              elevation: 10,
+            }}
+          >
+            <Animated.View
+              style={{
+                transform: [{ rotate: spin }],
+                marginBottom: 12,
+              }}
+            >
+              <Feather name="loader" size={32} color="#ff7a7f" />
+            </Animated.View>
+            <Text style={{
+              color: 'white',
+              fontSize: 16,
+              fontFamily: 'Poppins',
+              textAlign: 'center',
+              opacity: 0.9,
+            }}>
+              Carregando...
+            </Text>
+          </Animated.View>
+        </Animated.View>
+      </Modal>
+    );
+  };
 
 const EmptyState = ({ dateFilter, onCreateTask }: { dateFilter: Date, onCreateTask: () => void }) => {
   const getDayOfWeek = (date: Date) => {
@@ -519,21 +638,34 @@ export default function AgendaScreen() {
         <Ionicons name="add" size={32} color="black" />
       </Pressable>
 
+
       <View className="flex flex-row items-center justify-between px-6 mt-[40px] mb-6">
         <Text className="text-3xl text-white font-medium font-sans">Agenda</Text>
 
-        <View className="flex flex-row items-center gap-[20px]">
-          <Pressable onPress={showDatePickerDateFilter}>
-            <Text className="text-white text-lg border rounded-lg w-[110px] text-center py-1 font-sans border-[#ff7a7f]">
+        <View className="flex flex-row items-center gap-3">
+          <Pressable 
+            onPress={showDatePickerDateFilter} 
+            className='flex-row items-center rounded-lg px-3 py-1.5 border border-white'
+          >
+            <Ionicons name="calendar-outline" size={17} color="#ff7a7f" style={{ marginRight: 8 }} />
+            <Text className="text-white text-[14px] font-sans">
               {format(dateFilter, 'dd/MM/yyyy')}
             </Text>
           </Pressable>
 
-          <RefreshButton onPress={handleRefresh} />
+        <View className='flex-row items-center gap-4'>
+            <Pressable 
+              onPress={handleRefresh}
+            >
+              <Ionicons name="refresh-circle" size={26} color="#ff7a7f" />
+            </Pressable>
 
-          <Pressable onPress={() => setShowDeleteCategoryModal(true)}>
-            <Ionicons name="options-outline" size={24} color="#ff7a7f" />
-          </Pressable>
+            <Pressable 
+              onPress={() => setShowDeleteCategoryModal(true)}
+            >
+              <Ionicons name="folder" size={22} color="#ff7a7f" />
+            </Pressable>
+          </View>
 
           <DateTimePickerModal
             isVisible={isDatePickerVisible}

@@ -443,15 +443,17 @@ export default function ExpensesScreen() {
         <Text className="text-3xl text-white font-medium font-sans">Despesas</Text>
 
         <View className='flex flex-row gap-4 items-center'>
-          <View className={`${gains - losses >= 0 ? 'border-emerald-300' : 'border-[#ff7a7f]'} flex flex-row items-center gap-4 border rounded-lg px-3 py-1`}>
-            <Text className="text-lg font-sans text-white">
+          <View className={`${gains - losses >= 0 ? 'border-emerald-300' : 'border-[#ff7a7f]'} flex flex-row items-center gap-4 border rounded-lg px-2 py-1.5`}>
+            <Text className="text-[15px] font-sans text-white">
               {currencyFormat(Math.abs(gains - losses))}
             </Text>
           </View>
-
-          <Pressable onPress={() => setShowDeleteCategoryModal(true)}>
-            <Ionicons name="options-outline" size={24} color="#ff7a7f" />
-          </Pressable>
+            
+            <Pressable 
+              onPress={() => setShowDeleteCategoryModal(true)}
+            >
+              <Ionicons name="folder" size={22} color="#ff7a7f" />
+            </Pressable>
         </View>
       </View>
 

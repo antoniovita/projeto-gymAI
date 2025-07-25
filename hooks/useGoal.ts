@@ -66,7 +66,7 @@ export const useGoal = () => {
       const goalId = await GoalService.createGoal(name, description, createdAt, deadline, userId);
       const newGoal: Goal = {
         id: goalId,
-        name,
+        name: name.trim(),
         description,
         progress: 0,
         deadline: deadline || undefined,
@@ -76,7 +76,6 @@ export const useGoal = () => {
       };
       setGoals(prev => [...prev, newGoal]);
       
-      // Delay mínimo para mostrar o loading spinner
       await new Promise(resolve => setTimeout(resolve, 800));
       
       return goalId;
@@ -97,7 +96,6 @@ export const useGoal = () => {
     setSaving(true);
     setError(null);
     try {
-      // Prepare updates object with only the fields that are provided
       const goalUpdates: Partial<Goal> = {};
       if (name !== undefined) goalUpdates.name = name;
       if (description !== undefined) goalUpdates.description = description;
@@ -105,7 +103,6 @@ export const useGoal = () => {
 
       const updatedCount = await GoalService.updateGoal(goalId, goalUpdates);
 
-      // Update local state
       setGoals(prev => prev.map(goal =>
         goal.id === goalId
           ? { ...goal, ...goalUpdates }
@@ -129,20 +126,17 @@ export const useGoal = () => {
     setSaving(true);
     setError(null);
     try {
-      // Get current goal to track previous progress
       const currentGoal = goals.find(goal => goal.id === goalId);
       const previousProgress = currentGoal?.progress || 0;
 
       const updatedCount = await GoalService.updateProgress(goalId, progress);
 
-      // Update local state
       setGoals(prev => prev.map(goal =>
         goal.id === goalId
           ? { ...goal, progress }
           : goal
       ));
 
-      // Add to updates with progress and timestamp included
       const newUpdate: Update = {
         goalId,
         name,
@@ -155,7 +149,6 @@ export const useGoal = () => {
       setUpdates(updatedUpdates);
       await AsyncStorage.setItem(GOALS_UPDATE_KEY, JSON.stringify(updatedUpdates));
 
-      // Delay mínimo para mostrar o loading spinner
       await new Promise(resolve => setTimeout(resolve, 600));
 
       return updatedCount;
@@ -173,7 +166,6 @@ export const useGoal = () => {
     try {
       const updatedCount = await GoalService.updateGoal(goalId, updates);
 
-      // Update local state
       setGoals(prev => prev.map(goal =>
         goal.id === goalId
           ? { ...goal, ...updates }
@@ -195,13 +187,10 @@ export const useGoal = () => {
     try {
       const success = await GoalService.deleteGoal(goalId);
 
-      // Remove from local state
       setGoals(prev => prev.filter(goal => goal.id !== goalId));
 
-      // Remove from updates if exists
       await removeUpdate(goalId);
 
-      // Delay mínimo para mostrar o loading spinner
       await new Promise(resolve => setTimeout(resolve, 600));
 
       return success;

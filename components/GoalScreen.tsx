@@ -125,6 +125,7 @@ const GoalScreen: React.FC = () => {
     getGoals,
     createGoal, 
     createUpdateGoal, 
+    editGoal,
     deleteGoal,
     clearUpdates, 
     removeUpdate,
@@ -206,10 +207,17 @@ const GoalScreen: React.FC = () => {
       if (modalMode === 'create') {
         await createGoal(
           goalName,
-          goalDescription || '', // Permite descrição vazia
+          goalDescription || '',
           new Date().toISOString(),
           selectedDate?.toISOString() || null,
           userId
+        );
+      } else if (modalMode === 'edit' && selectedGoal) {
+        await editGoal(
+          selectedGoal.id,
+          goalName,
+          goalDescription || '',
+          selectedDate?.toISOString() || null
         );
       }
       
@@ -235,7 +243,6 @@ const GoalScreen: React.FC = () => {
             try {
               await deleteGoal(goalId);
               handleCloseModal();
-              Alert.alert('Sucesso', 'Meta excluída com sucesso!');
             } catch (err: any) {
               console.error('Error deleting goal:', err);
               Alert.alert('Erro', err.message || 'Falha ao excluir meta');
@@ -299,9 +306,9 @@ const GoalScreen: React.FC = () => {
           <View className="w-full flex flex-col justify-center px-6 py-4 border-b border-neutral-700 bg-zinc-800">
             <View className="flex flex-row justify-between items-start mb-3">
               <View className="flex-1">
-                <Text className="text-white text-lg mb-1 font-sans">{item.name}</Text>
+                <Text className="text-white text-lg mb-1 font-sans line-clamp-1">{item.name}</Text>
                 {item.description && (
-                  <Text className="text-zinc-400 text-sm mb-2 font-sans">{item.description}</Text>
+                  <Text className="text-zinc-400 text-sm mb-2 font-sans line-clamp-1">{item.description}</Text>
                 )}
                 <Text className="text-zinc-500 text-xs font-sans">{formatDate(item.deadline)}</Text>
               </View>
@@ -362,12 +369,10 @@ const GoalScreen: React.FC = () => {
           <Text className="text-3xl text-white font-sans">Metas</Text>
           
           <View className="flex flex-row items-center space-x-4">
-            <Pressable onPress={handleRefresh} disabled={isCurrentlyLoading}>
-              <Ionicons 
-                name="refresh-circle-outline" 
-                size={24} 
-                color="#fb7185" 
-              />
+             <Pressable 
+              onPress={handleRefresh}
+            >
+              <Ionicons name="refresh-circle" size={26} color="#ff7a7f" />
             </Pressable>
           </View>
         </View>

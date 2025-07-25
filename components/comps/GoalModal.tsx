@@ -73,11 +73,9 @@ const GoalModal: React.FC<GoalModalProps> = ({
   const [updateProgress, setUpdateProgress] = useState(0);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
-  // Animation refs
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(300)).current;
 
-  // Reset update states when modal opens/closes or goal changes
   useEffect(() => {
     if (isUpdateModalVisible && selectedGoal) {
       setUpdateName('');
@@ -85,10 +83,9 @@ const GoalModal: React.FC<GoalModalProps> = ({
     }
   }, [isUpdateModalVisible, selectedGoal]);
 
-  // Handle modal animations
   useEffect(() => {
     if (isUpdateModalVisible) {
-      // Show modal with fade in and slide up
+      // Animação de abertura (subir)
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
@@ -102,7 +99,7 @@ const GoalModal: React.FC<GoalModalProps> = ({
         }),
       ]).start();
     } else {
-      // Hide modal with fade out and slide down
+      // Animação de fechamento (descer)
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 0,
@@ -124,9 +121,24 @@ const GoalModal: React.FC<GoalModalProps> = ({
   };
 
   const handleCloseUpdateModal = () => {
-    setUpdateName('');
-    setUpdateProgress(selectedGoal?.progress || 0);
-    setIsUpdateModalVisible(false);
+    // Primeiro executa a animação de fechamento
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 300,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      // Depois que a animação termina, fecha o modal
+      setIsUpdateModalVisible(false);
+      setUpdateName('');
+      setUpdateProgress(selectedGoal?.progress || 0);
+    });
   };
 
   const handleAddUpdate = async () => {
@@ -163,39 +175,27 @@ const GoalModal: React.FC<GoalModalProps> = ({
   const performUpdate = async () => {
     try {
       await onCreateUpdate(selectedGoal!.id, updateProgress, updateName.trim());
-      // Close update modal and reset states
-      setIsUpdateModalVisible(false);
-      setUpdateName('');
-      setUpdateProgress(selectedGoal!.progress);
-      Alert.alert('Sucesso', 'Update adicionado e progresso atualizado!');
+      // Anima o fechamento após salvar
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 300,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setIsUpdateModalVisible(false);
+        setUpdateName('');
+        setUpdateProgress(selectedGoal!.progress);
+      });
     } catch (err: any) {
       console.error('Error adding update:', err);
       Alert.alert('Erro', err.message || 'Falha ao adicionar update');
     }
-  };
-
-  const handleDeleteGoal = () => {
-    if (!selectedGoal) return;
-    
-    Alert.alert(
-      'Confirmar Exclusão',
-      `Deseja realmente excluir a meta "${selectedGoal.name}"? Esta ação não pode ser desfeita.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { 
-          text: 'Excluir', 
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await onDeleteGoal(selectedGoal.id);
-              onClose(); // Fecha o modal após deletar
-            } catch (err: any) {
-              Alert.alert('Erro', err.message || 'Falha ao excluir meta');
-            }
-          }
-        }
-      ]
-    );
   };
 
   const handleDeleteUpdate = (goalId: string, timestamp: string) => {
@@ -265,9 +265,7 @@ const GoalModal: React.FC<GoalModalProps> = ({
     return '0%';
   };
 
-  // Handler para mudança do texto com validação
   const handleUpdateNameChange = (text: string) => {
-    // Limita o texto a 300 caracteres
     if (text.length <= 300) {
       setUpdateName(text);
     }
@@ -303,12 +301,10 @@ const GoalModal: React.FC<GoalModalProps> = ({
     );
   };
 
-  // Validação para habilitar o botão de salvar
   const isSaveDisabled = () => {
     return !goalName.trim() || loading;
   };
 
-  // Função para formatar a data de deadline
   const formatDeadlineDate = (date: Date): string => {
     const today = new Date();
     const diffTime = date.getTime() - today.getTime();
@@ -324,7 +320,7 @@ const GoalModal: React.FC<GoalModalProps> = ({
       onRequestClose={onClose}
     >
       <View className={`flex-1 ${Platform.OS === 'ios' ? 'pt-12 pb-8' : 'pt-8 pb-4'} bg-zinc-800`}>
-        {/* Floating Update Button - Only show in edit mode */}
+
         {mode === 'edit' && (
           <Pressable
             onPress={handleOpenUpdateModal}
@@ -376,9 +372,6 @@ const GoalModal: React.FC<GoalModalProps> = ({
               editable={!loading}
               maxLength={100}
             />
-            <Text className="text-zinc-500 text-xs font-sans mt-1 text-right">
-              {goalName.length}/100
-            </Text>
           </View>
 
           {/* Deadline */}
@@ -429,9 +422,6 @@ const GoalModal: React.FC<GoalModalProps> = ({
               editable={!loading}
               maxLength={500}
             />
-            <Text className="text-zinc-500 text-xs font-sans mt-1 text-right">
-              {goalDescription.length}/500
-            </Text>
           </View>
 
           {mode === 'edit' && (
@@ -671,7 +661,7 @@ const GoalModal: React.FC<GoalModalProps> = ({
                   </ScrollView>
 
                   {/* Footer Buttons */}
-                  <View className="px-6 py-3 bg-zinc-800/50">
+                  <View className="px-6 py-3 bg-zinc-800/50 mb-4">
                     <View className="flex-row gap-3 px-1 py-4 space-x-3">
                       <Pressable
                         onPress={handleCloseUpdateModal}
