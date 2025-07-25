@@ -72,16 +72,17 @@ export default function NoteScreen() {
   const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false);
   const [showDeleteCategoryModal, setShowDeleteCategoryModal] = useState(false);
 
-  // Categorias padrão para notas
-  const defaultCategories = [
+  // Categorias padrão para notas - agora armazenadas no estado
+  const [defaultCategories, setDefaultCategories] = useState([
     { name: 'Trabalho', color: '#3B82F6' },
     { name: 'Pessoal', color: '#10B981' },
     { name: 'Estudos', color: '#EAB308' },
     { name: 'Ideias', color: '#8B5CF6' },
     { name: 'Lembrete', color: '#EF4444' },
-  ];
+  ]);
 
   const [categoryColors, setCategoryColors] = useState<{[key: string]: string}>({});
+  const [deletedDefaultCategories, setDeletedDefaultCategories] = useState<string[]>([]);
 
   const handleGoBack = () => {
     navigation.goBack();
@@ -105,6 +106,12 @@ export default function NoteScreen() {
             defaultColors[cat.name] = cat.color;
           });
           setCategoryColors(defaultColors);
+        }
+
+        // Carregar categorias padrão deletadas
+        const deletedDefaults = await AsyncStorage.getItem('deletedDefaultCategories');
+        if (deletedDefaults) {
+          setDeletedDefaultCategories(JSON.parse(deletedDefaults));
         }
       } catch (err) {
         console.error('Erro ao carregar categorias das notas.', err);
@@ -135,15 +142,30 @@ export default function NoteScreen() {
     saveColors();
   }, [categoryColors]);
 
+  useEffect(() => {
+    const saveDeletedDefaults = async () => {
+      try {
+        await AsyncStorage.setItem('deletedDefaultCategories', JSON.stringify(deletedDefaultCategories));
+      } catch (err) {
+        console.error('Erro ao salvar categorias padrão deletadas:', err);
+      }
+    };
+    saveDeletedDefaults();
+  }, [deletedDefaultCategories]);
+
   useFocusEffect(
     useCallback(() => {
       fetchNotes();
     }, [fetchNotes])
   );
 
+  const activeDefaultCategories = defaultCategories.filter(
+    cat => !deletedDefaultCategories.includes(cat.name)
+  );
+
   const categories = Array.from(
     new Set([
-      ...defaultCategories.map(cat => cat.name),
+      ...activeDefaultCategories.map(cat => cat.name),
       ...notes
         .flatMap((note) => note.type?.split(',').map((s: string) => s.trim()) ?? [])
         .filter((t) => t.length > 0),
@@ -152,15 +174,12 @@ export default function NoteScreen() {
   );
 
   const getCategoryColor = (catName: string) => {
-    // Check extra categories first
     const extraCat = extraCategories.find(c => c.name === catName);
     if (extraCat) return extraCat.color;
 
-    // Check default categories
-    const defaultCat = defaultCategories.find(c => c.name === catName);
+    const defaultCat = activeDefaultCategories.find(c => c.name === catName);
     if (defaultCat) return defaultCat.color;
 
-    // Check stored colors
     if (categoryColors[catName]) return categoryColors[catName];
 
     return '#999999';
@@ -176,7 +195,7 @@ export default function NoteScreen() {
       extraCategories.find(
         cat => cat.name.toLowerCase() === newCategoryName.trim().toLowerCase()
       ) ||
-      defaultCategories.find(
+      activeDefaultCategories.find(
         cat => cat.name.toLowerCase() === newCategoryName.trim().toLowerCase()
       )
     ) {
@@ -206,10 +225,15 @@ export default function NoteScreen() {
       return;
     }
 
-    const newExtras = extraCategories.filter(c => c.name !== categoryToDelete);
-    setExtraCategories(newExtras);
-
-    await AsyncStorage.setItem('noteCategories', JSON.stringify(newExtras));
+    const isDefaultCategory = defaultCategories.some(cat => cat.name === categoryToDelete);
+    
+    if (isDefaultCategory) {
+      setDeletedDefaultCategories(prev => [...prev, categoryToDelete]);
+    } else {
+      const newExtras = extraCategories.filter(c => c.name !== categoryToDelete);
+      setExtraCategories(newExtras);
+      await AsyncStorage.setItem('noteCategories', JSON.stringify(newExtras));
+    }
 
     setShowConfirmDeleteModal(false);
     setCategoryToDelete(null);
@@ -453,7 +477,6 @@ export default function NoteScreen() {
                   ) : (
                     categories.map((cat) => {
                       const color = getCategoryColor(cat);
-                      const isDefault = defaultCategories.some(defaultCat => defaultCat.name === cat);
                       
                       return (
                         <View
@@ -647,7 +670,6 @@ export default function NoteScreen() {
     </View>
 
     <ScrollView className="flex-1 px-6" showsVerticalScrollIndicator={false}>
-      {/* Note Title */}
       <View className="mt-3 mb-6">
         <TextInput
           placeholder="Título da nota"
@@ -660,7 +682,6 @@ export default function NoteScreen() {
         />
       </View>
 
-      {/* Categories */}
       <View className="mb-8">
         <Text className="text-zinc-400 text-sm font-medium mb-3 uppercase tracking-wide">
           Categorias
@@ -686,7 +707,6 @@ export default function NoteScreen() {
         </View>
       </View>
 
-      {/* Note Content */}
       <View className="mb-6">
         <Text className="text-zinc-400 text-sm font-medium mb-3 uppercase tracking-wide">
           Conteúdo

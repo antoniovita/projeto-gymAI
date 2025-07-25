@@ -351,7 +351,7 @@ export default function RoutineScreen() {
           <Pressable
             key={day}
             onPress={() => setSelectedDay(day)}
-            className={`px-4 py-1.5 rounded-full mr-2 ${selectedDay === day ? 'bg-[#ff7a7f]' : 'bg-neutral-700'}`}
+            className={`px-4 py-1.5 rounded-full mr-2 ${selectedDay === day ? 'bg-[#ff7a7f]' : 'bg-zinc-700'}`}
           >
             <Text className={`font-sans ${selectedDay === day ? 'text-black' : 'text-white'}`}>{day}</Text>
           </Pressable>
@@ -397,7 +397,7 @@ export default function RoutineScreen() {
           keyboardVerticalOffset={0}
         >
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <View className="bg-zinc-900 rounded-t-3xl p-6" style={{ minHeight: '53%' }}>
+            <View className="bg-[#1e1e1e] rounded-t-3xl p-6" style={{ minHeight: '53%' }}>
               <ScrollView 
                 showsVerticalScrollIndicator={false} 
                 style={{ maxHeight: 320 }}
@@ -447,7 +447,7 @@ export default function RoutineScreen() {
                         className={`px-4 py-2 rounded-full mr-2 mb-2 ${
                           formData.daysOfWeek.includes(dayNumber)
                             ? 'bg-[#ff7a7f]'
-                            : 'bg-neutral-700'
+                            : 'bg-zinc-800'
                         }`}
                       >
                         <Text className={`font-sans ${
@@ -480,7 +480,7 @@ export default function RoutineScreen() {
                             )
                           }
                           className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${
-                            isSelected ? 'bg-rose-400' : 'bg-zinc-700'
+                            isSelected ? 'bg-rose-400' : 'bg-zinc-700/50'
                           }`}
                         >
                           <View 
@@ -511,7 +511,7 @@ export default function RoutineScreen() {
               <View className={`${Platform.OS == 'ios' ? 'absolute bottom-[15%] self-center flex-row flex gap-3' : 'self-center flex-row flex gap-3'}`}>
                 <Pressable
                   onPress={() => setShowModal(false)}
-                  className="flex-1 bg-neutral-700 rounded-xl py-4"
+                  className="flex-1 bg-zinc-800 rounded-xl py-4"
                 >
                   <Text className="text-white font-sans text-center">Cancelar</Text>
                 </Pressable>

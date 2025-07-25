@@ -101,7 +101,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </ScrollView>
 
               <TouchableOpacity
-                className="bg-rose-500 py-3 rounded-xl items-center mb-4"
+                className="bg-rose-400 py-3 rounded-xl items-center mb-4"
                 onPress={handleClose}
               >
                 <Text className="text-white text-lg font-sans">Salvar</Text>
