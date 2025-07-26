@@ -7,6 +7,7 @@ import {
   Linking,
   ScrollView,
   Platform,
+  Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -17,6 +18,7 @@ type HelpItemProps = {
   label: string;
   onPress: () => void;
   rightIcon?: keyof typeof Ionicons.glyphMap;
+  destructive?: boolean;
 };
 
 const HelpItem: React.FC<HelpItemProps> = ({
@@ -25,17 +27,52 @@ const HelpItem: React.FC<HelpItemProps> = ({
   label,
   onPress,
   rightIcon = 'chevron-forward',
+  destructive = false,
 }) => (
-  <TouchableOpacity
-    className="flex flex-row items-center justify-between py-7 border-b border-zinc-700"
+  <Pressable
+    className="flex flex-row items-center justify-between px-6 h-[70px] border-b border-neutral-700 bg-zinc-800"
     onPress={onPress}
   >
     <View className="flex flex-row items-center gap-3">
-      <Ionicons name={icon} size={20} color={color} />
-      <Text className="text-white text-[16px] font-sans">{label}</Text>
+      <View className={`w-8 h-8 rounded-lg items-center justify-center ${destructive ? 'bg-rose-500/20' : 'bg-zinc-700'}`}>
+        <Ionicons name={icon} size={18} color={color} />
+      </View>
+      <Text className={`text-[16px] font-sans ${destructive ? 'text-rose-400' : 'text-gray-300'}`}>
+        {label}
+      </Text>
     </View>
     <Ionicons name={rightIcon} size={20} color="#a1a1aa" />
-  </TouchableOpacity>
+  </Pressable>
+);
+
+type SectionHeaderProps = {
+  title: string;
+};
+
+const SectionHeader: React.FC<SectionHeaderProps> = ({ title }) => (
+  <View className="px-4 pt-6">
+    <Text className="text-neutral-400 font-sans uppercase text-sm tracking-wide">
+      {title}
+    </Text>
+  </View>
+);
+
+const AttendanceInfo: React.FC = () => (
+  <View className="px-6 mb-6">
+    <View className="px-4 py-4 rounded-2xl bg-[#35353a] border border-zinc-700">
+      <View className="flex flex-row items-center gap-3 mb-2">
+        <View className="w-8 h-8 rounded-lg items-center justify-center bg-zinc-700">
+          <Ionicons name="time-outline" size={18} color="white" />
+        </View>
+        <Text className="text-white text-[16px] font-sans font-medium">Horário de Atendimento</Text>
+      </View>
+      <Text className="text-zinc-400 text-[14px] font-sans ml-11 leading-5">
+        Segunda à Sexta: 9h às 18h (Brasília){'\n'}
+        Sábados: 9h às 14h{'\n'}
+        Domingos: Emergências apenas
+      </Text>
+    </View>
+  </View>
 );
 
 export default function HelpScreen() {
@@ -61,6 +98,10 @@ export default function HelpScreen() {
     Linking.openURL('https://linkedin.com/company/meuapp');
   };
 
+  const handleTiktokPress = () => {
+    Linking.openURL('https://tiktok.com/@meuapp');
+  };
+
   const handleWebsitePress = () => {
     Linking.openURL('https://meuapp.com/suporte');
   };
@@ -82,32 +123,32 @@ export default function HelpScreen() {
   };
 
   return (
-    <SafeAreaView className={`flex-1 ${Platform.OS == 'android' && "py-[30px]" }  bg-zinc-900`}>
-            <View className="flex-row items-center justify-between px-4 py-2">
-        <TouchableOpacity 
-          onPress={() => navigation.goBack()} 
-          className="flex-row items-center py-2"
-          activeOpacity={0.7}
-        >
+    <SafeAreaView className={`flex-1 ${Platform.OS == 'android' && "py-[30px]"} bg-zinc-800`}>
+      {/* Header */}
+      <View className="mt-5 px-4 mb-2 flex-row items-center justify-between">
+        <Pressable onPress={() => navigation.goBack()} className="flex-row items-center">
           <Ionicons name="chevron-back" size={24} color="white" />
-          <Text className="text-white font-sans text-[16px] ml-1">Voltar</Text>
-        </TouchableOpacity>
-        
-        <Text className="text-white font-sans text-[15px] font-semibold">Ajuda & Suporte</Text>
-        
-        <View style={{ width: 70 }} />
+          <Text className="ml-2 text-white font-sans text-[16px]">Voltar</Text>
+        </Pressable>
+        <View className="absolute left-0 right-0 items-center">
+          <Text className="text-white font-sans text-[15px]">Ajuda & Suporte</Text>
+        </View>
       </View>
 
-      <ScrollView className="flex-1 mt-10 px-6" contentContainerStyle={{ paddingBottom: 40 }}>
-        <Text className="text-zinc-400 uppercase font-sans text-xs mb-2">Contato Direto</Text>
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 40 }}>
+        <SectionHeader title="Contato Direto" />
         <HelpItem
           icon="mail-outline"
-          color="#ffff"
           label="E-mail"
           onPress={handleEmailPress}
         />
+        <HelpItem
+          icon="logo-whatsapp"
+          label="WhatsApp"
+          onPress={handleWhatsappPress}
+        />
 
-        <Text className="text-zinc-400 font-sans uppercase text-xs mt-6 mb-2">Redes Sociais</Text>
+        <SectionHeader title="Redes Sociais" />
         <HelpItem
           icon="logo-instagram"
           color="#ff7a7f"
@@ -129,11 +170,11 @@ export default function HelpScreen() {
         <HelpItem
           icon="logo-tiktok"
           color="#ff7a7f"
-          label="Tiktok"
-          onPress={handleWebsitePress}
+          label="TikTok"
+          onPress={handleTiktokPress}
         />
 
-        <Text className="text-zinc-400 uppercase text-xs mt-6 mb-2">Informações</Text>
+        <SectionHeader title="Informações" />
         <HelpItem
           icon="help-circle-outline"
           label="Perguntas Frequentes"
@@ -145,7 +186,7 @@ export default function HelpScreen() {
           onPress={handleDocumentationPress}
         />
         <HelpItem
-          icon="shield-outline"
+          icon="shield-checkmark-outline"
           label="Política de Privacidade"
           onPress={handlePrivacyPress}
         />
@@ -154,17 +195,14 @@ export default function HelpScreen() {
           label="Termos de Uso"
           onPress={handleTermsPress}
         />
+        <HelpItem
+          icon="globe-outline"
+          label="Site Oficial"
+          onPress={handleWebsitePress}
+        />
 
-        <Text className="text-zinc-400 uppercase text-xs mt-6 mb-2">Atendimento</Text>
-        <View className="py-4 border-b border-zinc-700">
-          <View className="flex flex-row items-center gap-3">
-            <Ionicons name="time-outline" size={20} color="#ffff" />
-            <Text className="text-white text-[16px] font-sans">Horário de Atendimento</Text>
-          </View>
-          <Text className="text-zinc-400 text-[12px] font-sans mt-2 ml-8">
-            Segunda à Sexta: 9h às 18h (Brasília)
-          </Text>
-        </View>
+        <SectionHeader title="Atendimento" />
+        <AttendanceInfo />
       </ScrollView>
     </SafeAreaView>
   );

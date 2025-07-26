@@ -10,6 +10,7 @@ import {
   Animated,
   Dimensions,
   Platform,
+  Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -28,6 +29,7 @@ type SettingsItemProps = {
   label: string;
   onPress: () => void;
   rightIcon?: keyof typeof Ionicons.glyphMap;
+  destructive?: boolean;
 };
 
 const SettingsItem: React.FC<SettingsItemProps> = ({
@@ -36,17 +38,34 @@ const SettingsItem: React.FC<SettingsItemProps> = ({
   label,
   onPress,
   rightIcon = 'chevron-forward',
+  destructive = false,
 }) => (
-  <TouchableOpacity
-    className="flex flex-row items-center justify-between py-7 border-b border-zinc-700"
+  <Pressable
+    className="flex flex-row items-center justify-between px-6 h-[70px] border-b border-neutral-700 bg-zinc-800"
     onPress={onPress}
   >
     <View className="flex flex-row items-center gap-3">
-      <Ionicons name={icon} size={20} color={color} />
-      <Text className="text-white text-[16px] font-sans">{label}</Text>
+      <View className={`w-8 h-8 rounded-lg items-center justify-center ${destructive ? 'bg-rose-500/20' : 'bg-zinc-700'}`}>
+        <Ionicons name={icon} size={18} color={color} />
+      </View>
+      <Text className={`text-[16px] font-sans ${destructive ? 'text-rose-400' : 'text-gray-300'}`}>
+        {label}
+      </Text>
     </View>
     <Ionicons name={rightIcon} size={20} color="#a1a1aa" />
-  </TouchableOpacity>
+  </Pressable>
+);
+
+type SectionHeaderProps = {
+  title: string;
+};
+
+const SectionHeader: React.FC<SectionHeaderProps> = ({ title }) => (
+  <View className="px-4 pt-6">
+    <Text className="text-neutral-400 font-sans uppercase text-sm tracking-wide">
+      {title}
+    </Text>
+  </View>
 );
 
 type BottomSheetModalProps = {
@@ -133,7 +152,7 @@ const BottomSheetModal: React.FC<BottomSheetModalProps> = ({
         style={[
           {
             flex: 1,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
             opacity: opacityAnim,
           },
         ]}
@@ -150,48 +169,48 @@ const BottomSheetModal: React.FC<BottomSheetModalProps> = ({
                 bottom: 0,
                 left: 0,
                 right: 0,
-                backgroundColor: '#18181b',
+                backgroundColor: '#27272a',
                 borderTopLeftRadius: 20,
                 borderTopRightRadius: 20,
                 paddingHorizontal: 24,
-                paddingTop: 12,
+                paddingTop: 16,
                 paddingBottom: 40,
                 transform: [{ translateY: slideAnim }],
               },
             ]}
           >
-            <View className="w-12 h-1 bg-zinc-600 rounded-full self-center mb-6" />
+            <View className="w-12 h-1 bg-zinc-600 rounded-full self-center mb-8" />
             
-            <View className="w-16 h-16 rounded-full items-center justify-center self-center mb-6">
+            <View className={`w-16 h-16 rounded-full items-center justify-center self-center mb-6 ${destructive ? 'bg-rose-500/20' : 'bg-zinc-700'}`}>
               <Ionicons name={icon} size={32} color={iconColor} />
             </View>
 
-            <Text className="text-white text-xl font-sans text-center mb-3">
+            <Text className="text-white text-xl font-sans text-center mb-3 font-medium">
               {title}
             </Text>
 
-            <Text className="text-zinc-400 text-base font-sans text-center mb-8 leading-6">
+            <Text className="text-zinc-400 text-base font-sans text-center mb-8 leading-6 px-2">
               {description}
             </Text>
 
             <View className="gap-3">
-              <TouchableOpacity
-                className={`py-4`}
+              <Pressable
+                className={`py-4 rounded-xl ${destructive ? 'bg-rose-500/20' : 'bg-rose-400'}`}
                 onPress={onConfirm}
               >
                 <Text className={`text-center text-base font-sans font-semibold ${destructive ? 'text-rose-400' : 'text-black'}`}>
                   {confirmText}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
 
-              <TouchableOpacity
-                className="py-4 rounded-xl bg-zinc-800"
+              <Pressable
+                className="py-4 rounded-xl bg-zinc-700"
                 onPress={handleClose}
               >
                 <Text className="text-white text-center text-base font-sans">
                   {cancelText}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </Animated.View>
         </TouchableOpacity>
@@ -335,59 +354,89 @@ export default function SettingsScreen() {
     : '';
 
   return (
-    <SafeAreaView className={`flex-1 ${Platform.OS == 'android' && "py-[30px]" }  bg-zinc-900`}>
-      <View className="mt-[20px] flex flex-row items-center px-2">
-        <TouchableOpacity onPress={() => navigation.goBack()} className="flex flex-row items-center">
+    <SafeAreaView className={`flex-1 ${Platform.OS == 'android' && "py-[30px]"} bg-zinc-800`}>
+      {/* Header */}
+      <View className="mt-5 px-4 mb-8 flex-row items-center justify-between">
+        <Pressable onPress={() => navigation.goBack()} className="flex-row items-center">
           <Ionicons name="chevron-back" size={24} color="white" />
-          <Text className="text-white font-sans text-[16px] ml-1">Voltar</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View className="flex flex-row items-center gap-3 mt-10 px-6">
-        <View className="w-12 h-12 flex items-center justify-center rounded-full bg-zinc-800">
-          <Text className="text-lg font-sans text-white">{initials}</Text>
+          <Text className="ml-2 text-white font-sans text-[16px]">Voltar</Text>
+        </Pressable>
+        <View className="absolute left-0 right-0 items-center">
+          <Text className="text-white font-sans text-[15px]">Configurações</Text>
         </View>
-        <Text className="text-white text-xl font-sans">{userName}</Text>
       </View>
 
-      <ScrollView className="flex-1 mt-10 px-6" contentContainerStyle={{ paddingBottom: 40 }}>
-        <Text className="text-zinc-400 uppercase font-sans text-xs mb-2">Conta</Text>
+      {/* User Profile Card */}
+      <View className="px-4 pb-3">
+        <View className="flex-row items-center justify-between px-4 py-4 rounded-2xl bg-[#35353a]">
+          <View className="flex-row items-center gap-4">
+            <View className="w-12 h-12 flex items-center justify-center rounded-full bg-rose-400">
+              <Text className="text-lg font-sans text-black font-semibold">{initials}</Text>
+            </View>
+            <View className="flex-col">
+              <Text className="text-zinc-400 font-sans text-xs mb-1">Usuário ativo</Text>
+              <Text className="text-white text-lg font-sans font-medium">{userName}</Text>
+            </View>
+          </View>
+          <View className="p-2 rounded-xl bg-zinc-700">
+            <Ionicons name="person-outline" size={18} color="#a1a1aa" />
+          </View>
+        </View>
+      </View>
+
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 40 }}>
+        <SectionHeader title="Conta" />
         <SettingsItem
           icon="person-outline"
-          label="Informações"
+          label="Informações Pessoais"
           onPress={() => navigation.navigate('InfoScreen')}
         />
         <SettingsItem
           icon="card-outline"
-          label="Assinatura"
-          onPress={() => Alert.alert('Configurações', 'Gerencie sua privacidade')}
+          label="Plano & Assinatura"
+          onPress={() => Alert.alert('Configurações', 'Gerencie sua assinatura')}
         />
 
-        <Text className="text-zinc-400 font-sans uppercase text-xs mt-6 mb-2">Dados</Text>
+        <SectionHeader title="Dados" />
         <SettingsItem
           icon="barbell-outline"
+          color="#ff7a7f"
           label="Remover dados de Treinos"
           onPress={confirmClearTrainings}
+          destructive={true}
         />
         <SettingsItem
           icon="checkmark-done-outline"
+          color="#ff7a7f"
           label="Remover dados de Tarefas"
           onPress={confirmClearTasks}
+          destructive={true}
         />
 
-        <Text className="text-zinc-400 uppercase text-xs mt-6 mb-2">Suporte</Text>
+        <SectionHeader title="Suporte" />
         <SettingsItem
           icon="help-circle-outline"
           label="Ajuda & Suporte"
           onPress={() => navigation.navigate('HelpScreen')}
         />
+        <SettingsItem
+          icon="document-text-outline"
+          label="Termos de Uso"
+          onPress={() => Alert.alert('Termos', 'Visualizar termos de uso')}
+        />
+        <SettingsItem
+          icon="shield-checkmark-outline"
+          label="Política de Privacidade"
+          onPress={() => Alert.alert('Privacidade', 'Visualizar política de privacidade')}
+        />
 
-        <Text className="text-zinc-400 uppercase text-xs mt-6 mb-2">Conta</Text>
+        <SectionHeader title="Conta" />
         <SettingsItem
           icon="refresh-outline"
           color="#ff7a7f"
-          label="Restaurar"
+          label="Restaurar Conta"
           onPress={confirmLogout}
+          destructive={true}
         />
       </ScrollView>
 

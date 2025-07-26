@@ -13,6 +13,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -29,6 +30,7 @@ type InfoItemProps = {
   label: string;
   onPress: () => void;
   rightIcon?: keyof typeof Ionicons.glyphMap;
+  destructive?: boolean;
 };
 
 const InfoItem: React.FC<InfoItemProps> = ({
@@ -37,17 +39,34 @@ const InfoItem: React.FC<InfoItemProps> = ({
   label,
   onPress,
   rightIcon = 'chevron-forward',
+  destructive = false,
 }) => (
-  <TouchableOpacity
-    className="flex flex-row items-center justify-between py-7 border-b border-zinc-700"
+  <Pressable
+    className="flex flex-row items-center justify-between px-6 h-[70px] border-b border-neutral-700 bg-zinc-800"
     onPress={onPress}
   >
     <View className="flex flex-row items-center gap-3">
-      <Ionicons name={icon} size={20} color={color} />
-      <Text className="text-white text-[16px] font-sans">{label}</Text>
+      <View className={`w-8 h-8 rounded-lg items-center justify-center ${destructive ? 'bg-rose-500/20' : 'bg-zinc-700'}`}>
+        <Ionicons name={icon} size={18} color={color} />
+      </View>
+      <Text className={`text-[16px] font-sans ${destructive ? 'text-rose-400' : 'text-gray-300'}`}>
+        {label}
+      </Text>
     </View>
     <Ionicons name={rightIcon} size={20} color="#a1a1aa" />
-  </TouchableOpacity>
+  </Pressable>
+);
+
+type SectionHeaderProps = {
+  title: string;
+};
+
+const SectionHeader: React.FC<SectionHeaderProps> = ({ title }) => (
+  <View className="px-4 pt-6">
+    <Text className="text-neutral-400 font-sans uppercase text-sm tracking-wide">
+      {title}
+    </Text>
+  </View>
 );
 
 interface ChangeNameModalProps {
@@ -116,7 +135,6 @@ export const ChangeNameModal: React.FC<ChangeNameModalProps> = ({
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-        {/* backdrop */}
         <TouchableWithoutFeedback onPress={handleClose}>
           <View style={{ flex: 1 }} />
         </TouchableWithoutFeedback>
@@ -127,7 +145,6 @@ export const ChangeNameModal: React.FC<ChangeNameModalProps> = ({
           }}
           className="bg-[#1e1e1e] rounded-t-3xl p-6 max-h-[60%]"
         >
-          {/* header */}
           <View className="flex-row justify-between items-center mb-4">
             <Text className="text-white font-sans text-[20px]">
               Alterar Nome
@@ -335,25 +352,27 @@ export default function InfoScreen() {
   };
 
   return (
-    <SafeAreaView className={`flex-1 ${Platform.OS == 'android' && "py-[30px]" }  bg-zinc-900`}>
-      <View className="mt-5 px-4 flex-row items-center justify-between">
-        <TouchableOpacity onPress={() => navigation.goBack()} className="flex-row items-center">
+    <SafeAreaView className={`flex-1 ${Platform.OS == 'android' && "py-[30px]"} bg-zinc-800`}>
+      {/* Header */}
+      <View className="mt-5 px-4 mb-2 flex-row items-center justify-between">
+        <Pressable onPress={() => navigation.goBack()} className="flex-row items-center">
           <Ionicons name="chevron-back" size={24} color="white" />
           <Text className="ml-2 text-white font-sans text-[16px]">Voltar</Text>
-        </TouchableOpacity>
-        <Text className="text-white absolute left-[43%] font-sans text-[15px]">Informações</Text>
-        <View style={{ width: 24 }} />
+        </Pressable>
+        <View className="absolute left-0 right-0 items-center">
+          <Text className="text-white font-sans text-[15px]">Informações</Text>
+        </View>
       </View>
 
-      <ScrollView className="flex-1 mt-10 px-6" contentContainerStyle={{ paddingBottom: 40 }}>
-        <Text className="text-zinc-400 uppercase font-sans text-xs mb-2">Perfil</Text>
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 40 }}>
+        <SectionHeader title="Perfil" />
         <InfoItem
           icon="person-outline"
           label="Alterar Nome de Usuário"
           onPress={() => setShowNameModal(true)}
         />
 
-        <Text className="text-zinc-400 font-sans uppercase text-xs mt-6 mb-2">Segurança</Text>
+        <SectionHeader title="Segurança" />
         <InfoItem
           icon="key-outline"
           label="Alterar PIN"
@@ -364,6 +383,7 @@ export default function InfoScreen() {
           color="#ff7a7f"
           label="Remover PIN"
           onPress={confirmRemovePin}
+          destructive={true}
         />
       </ScrollView>
 

@@ -2,9 +2,9 @@ import React from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
   Modal,
   ScrollView,
+  Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -63,7 +63,7 @@ const DeleteCategoryModal: React.FC<DeleteCategoryModalProps> = ({
                     />
                     <Text className="text-white font-sans text-lg">{cat.name}</Text>
                   </View>
-                  <TouchableOpacity
+                  <Pressable
                     onPress={() => {
                       if (cat.name !== 'Ganhos' && cat.name !== 'Gastos') {
                         onDeleteCategory(cat);
@@ -76,17 +76,17 @@ const DeleteCategoryModal: React.FC<DeleteCategoryModalProps> = ({
                     ) : (
                       <Ionicons name="trash" size={20} color="#fa4d5c" />
                     )}
-                  </TouchableOpacity>
+                  </Pressable>
                 </View>
               ))}
             </ScrollView>
 
-            <TouchableOpacity
+            <Pressable
               onPress={onClose}
               className="bg-neutral-700 rounded-xl p-3 items-center"
             >
               <Text className="text-white text-lg font-sans font-semibold">Fechar</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
       </Modal>
@@ -112,19 +112,19 @@ const DeleteCategoryModal: React.FC<DeleteCategoryModalProps> = ({
             </Text>
 
             <View className="flex-row w-full justify-between gap-3">
-              <TouchableOpacity
+              <Pressable
                 onPress={() => setShowConfirmDeleteModal(false)}
                 className="flex-1 bg-neutral-700 py-3 rounded-xl items-center"
               >
                 <Text className="text-white font-semibold font-sans">Cancelar</Text>
-              </TouchableOpacity>
+              </Pressable>
 
-              <TouchableOpacity
+              <Pressable
                 onPress={onConfirmDelete}
                 className="flex-1 bg-rose-500 py-3 rounded-xl items-center"
               >
                 <Text className="text-black font-sans font-semibold">Apagar</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </View>
         </View>

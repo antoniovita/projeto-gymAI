@@ -647,7 +647,7 @@ export default function AgendaScreen() {
             onPress={showDatePickerDateFilter} 
             className='flex-row items-center rounded-lg px-3 py-1.5 border border-white'
           >
-            <Ionicons name="calendar-outline" size={17} color="#ff7a7f" style={{ marginRight: 8 }} />
+            <Ionicons name="calendar" size={17} color="#ff7a7f" style={{ marginRight: 8 }} />
             <Text className="text-white text-[14px] font-sans">
               {format(dateFilter, 'dd/MM/yyyy')}
             </Text>

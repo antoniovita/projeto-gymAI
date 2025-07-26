@@ -159,11 +159,6 @@ export default function RoutineScreen() {
   };
 
   const handleSave = async () => {
-    if (!formData.title || !formData.time || formData.daysOfWeek.length === 0) {
-      Alert.alert('Erro', 'Preencha todos os campos obrigatórios');
-      return;
-    }
-
     if (!userId) {
       Alert.alert('Erro', 'Usuário não autenticado');
       return;
