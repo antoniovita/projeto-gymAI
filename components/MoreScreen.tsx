@@ -40,12 +40,12 @@ const MoreScreen = () => {
     },
     {
       id: 4,
-      title: "Roadmaps",
+      title: "Pomodoro",
       subtitle: "Planejar seu caminho de aprendizado",
       icon: "map-outline",
       color: "#ff7a7f",
       onPress: () => {
-        console.log("Navigate to Roadmaps");
+        navigation.navigate("TimerScreen");
       }
     }
   ];

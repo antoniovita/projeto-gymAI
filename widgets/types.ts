@@ -11,4 +11,5 @@ export type RootStackParamList = {
   MoreScreen: undefined;
   NoteScreen: undefined;
   GoalScreen: undefined;
+  TimerScreen: undefined;
 };

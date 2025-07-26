@@ -9,7 +9,6 @@ function normalizeText(text: string): string {
   return text
     .replace(/\b(\d{1,2})\s+horas?\b/gi, '$1:00')
     .replace(/\b(\d{1,2})\s*h\b/gi, '$1:00')
-
     .replace(/\bamn\b/gi, 'amanhã')
     .replace(/\bamnh\b/gi, 'amanhã')
     .replace(/\bdps\b/gi, 'depois')
@@ -48,13 +47,64 @@ function isTemporalExpression(text: string): boolean {
   return temporalOnly.test(text.trim());
 }
 
+function getNextWeekday(targetDay: string): Date {
+  const daysMap: { [key: string]: number } = {
+    'domingo': 0, 'dom': 0,
+    'segunda': 1, 'seg': 1, 'segunda-feira': 1,
+    'terça': 2, 'ter': 2, 'terça-feira': 2,
+    'quarta': 3, 'qua': 3, 'quarta-feira': 3,
+    'quinta': 4, 'qui': 4, 'quinta-feira': 4,
+    'sexta': 5, 'sex': 5, 'sexta-feira': 5,
+    'sábado': 6, 'sab': 6
+  };
+
+  const today = new Date();
+  const currentDay = today.getDay();
+  const targetDayNum = daysMap[targetDay.toLowerCase()];
+
+  if (targetDayNum === undefined) {
+    return today;
+  }
+
+  let daysUntilTarget = targetDayNum - currentDay;
+  
+  if (daysUntilTarget <= 0) {
+    daysUntilTarget += 7;
+  }
+
+  const nextDate = new Date(today);
+  nextDate.setDate(today.getDate() + daysUntilTarget);
+  
+  return nextDate;
+}
+
+function handleQueVemPattern(text: string): Date | null {
+  const queVemPattern = /\b(domingo|dom|segunda|seg|segunda-feira|terça|ter|terça-feira|quarta|qua|quarta-feira|quinta|qui|quinta-feira|sexta|sex|sexta-feira|sábado|sab)\s+(que|q|qu|ki)\s+(vem|vm)\b/i;
+  
+  const match = text.match(queVemPattern);
+  if (match) {
+    const dayName = match[1];
+    return getNextWeekday(dayName);
+  }
+  
+  return null;
+}
+
 export async function parseDate(text: string): Promise<{ datetimeISO: string; rawText: string } | null> {
   const normalizedText = normalizeText(text);
-
+  
   if (hasStrongFinancialContext(normalizedText) && !isTemporalExpression(normalizedText)) {
     if (!hasStrongTaskContext(normalizedText)) {
       return null;
     }
+  }
+
+  const queVemDate = handleQueVemPattern(normalizedText);
+  if (queVemDate) {
+    return {
+      datetimeISO: queVemDate.toISOString(),
+      rawText: text,
+    };
   }
 
   const chronoResult = chrono.pt.parse(normalizedText);
@@ -69,7 +119,7 @@ export async function parseDate(text: string): Promise<{ datetimeISO: string; ra
   const translated = translateKeywordLocally(normalizedText);
   const doc = nlp(translated);
   const dates = (doc as any).dates().json();
-
+  
   if (dates.length > 0) {
     const dateStr = dates[0].dates[0]?.start;
     if (dateStr) {

@@ -58,7 +58,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ title }) => (
 );
 
 const AttendanceInfo: React.FC = () => (
-  <View className="px-6 mb-6">
+  <View className="px-6 mb-6 mt-3">
     <View className="px-4 py-4 rounded-2xl bg-[#35353a] border border-zinc-700">
       <View className="flex flex-row items-center gap-3 mb-2">
         <View className="w-8 h-8 rounded-lg items-center justify-center bg-zinc-700">
