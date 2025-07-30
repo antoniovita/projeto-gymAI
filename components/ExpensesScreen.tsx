@@ -443,7 +443,7 @@ export default function ExpensesScreen() {
         <Text className="text-3xl text-white font-medium font-sans">Despesas</Text>
 
         <View className='flex flex-row gap-4 items-center'>
-          <View className={`${gains - losses >= 0 ? 'border-emerald-300' : 'border-[#ff7a7f]'} flex flex-row items-center gap-4 border rounded-lg px-2 py-1.5`}>
+          <View className={`${gains - losses >= 0 ? 'border-emerald-300' : 'border-[#ff7a7f]'} flex flex-row items-center gap-4 border rounded-lg px-2 py-1`}>
             <Text className="text-[15px] font-sans text-white">
               {currencyFormat(Math.abs(gains - losses))}
             </Text>

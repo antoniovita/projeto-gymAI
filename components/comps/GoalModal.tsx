@@ -253,8 +253,6 @@ const GoalModal: React.FC<GoalModalProps> = ({
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
     });
   };
 
@@ -436,15 +434,17 @@ const GoalModal: React.FC<GoalModalProps> = ({
                     <Text className="text-white font-sans text-lg">Progresso</Text>
                     <View className="flex-row items-center">
                       {(selectedGoal?.progress || 0) === 100 && (
-                        <View className="mr-2 bg-green-500/20 px-2 py-1 rounded-full">
+                        <View className=" bg-green-500/20 px-2 py-1 rounded-full">
                           <Text className="text-green-400 text-xs font-sans font-medium">
                             Concluída
                           </Text>
                         </View>
                       )}
-                      <Text className="text-rose-400 font-medium font-sans text-lg">
+                       {!(selectedGoal?.progress! === 100) && (
+                      <Text className="text-white font-medium font-sans text-lg">
                         {selectedGoal?.progress || 0}%
-                      </Text>  
+                      </Text> 
+                      )} 
                     </View>
                   </View>
                   
@@ -462,7 +462,7 @@ const GoalModal: React.FC<GoalModalProps> = ({
                   <View className="flex-row items-center justify-center">
                     <Ionicons name="information-circle-outline" size={14} color="#71717a" />
                     <Text className="text-zinc-400 text-xs font-sans ml-1">
-                      Use o botão flutuante para adicionar updates
+                      Use o botão flutuante para adicionar atualizações
                     </Text>
                   </View>
                 </View>
@@ -505,18 +505,18 @@ const GoalModal: React.FC<GoalModalProps> = ({
                                   {update.name}
                                 </Text>
                                 <View className="flex-row items-center ml-2">
-                                  {update.progress > update.previousProgress ? (
-                                    <Ionicons name="trending-up" size={20} color="#10b981" />
+                                  {/* {update.progress > update.previousProgress ? (
+                                    <Ionicons name="trending-up" className="absolute right-[110%]" size={20} color="#10b981" />
                                   ) : update.progress < update.previousProgress ? (
-                                    <Ionicons name="trending-down" size={20} color="#f59e0b" />
+                                    <Ionicons name="trending-down" className="absolute right-[110%]" size={20} color="#fb7185" />
                                   ) : (
-                                    <Ionicons name="remove" size={20} color="#71717a" />
-                                  )}
+                                    <Ionicons name="remove-circle-outline" className="absolute right-[160%]" size={20} color="#71717a" />
+                                  )} */}
                                   <Text className={`text-md font-sans ml-1 font-medium ${
                                     update.progress > update.previousProgress 
                                       ? 'text-green-400' 
                                       : update.progress < update.previousProgress 
-                                      ? 'text-yellow-400' 
+                                      ? 'text-rose-400' 
                                       : 'text-zinc-400'
                                   }`}>
                                     {getProgressDifference(update.progress, update.previousProgress)}
@@ -607,7 +607,7 @@ const GoalModal: React.FC<GoalModalProps> = ({
                     contentContainerStyle={{ paddingBottom: 20 }}
                   >
                     {/* Update Description */}
-                    <View className="mb-2">
+                    <View className="mb-2 px-1">
                       <TextInput
                         placeholder="Insira o progresso realizado..."
                         placeholderTextColor="#52525b"
@@ -619,9 +619,7 @@ const GoalModal: React.FC<GoalModalProps> = ({
                         editable={!loading}
                         maxLength={100}
                       />
-                      <Text className="text-zinc-500 text-xs font-sans mt-2 text-right">
-                        {updateName.length}/100
-                      </Text>
+
                     </View>
 
                     {/* Progress Update */}
@@ -630,13 +628,12 @@ const GoalModal: React.FC<GoalModalProps> = ({
                         {/* Progress Display */}
                         <View className="flex-row justify-between items-center mb-6">
                           <Text className="text-zinc-300 font-sans text-base">Progresso atual</Text>
-                          <View className="flex-row items-center">
-                            <Text className="text-zinc-400 font-sans mr-2">{selectedGoal?.progress}%</Text>
-                            <Ionicons name="arrow-forward" size={16} color="#71717a" />
-                            <Text className="text-rose-400 font-semibold font-sans text-lg ml-2">
+                          <View className='bg-zinc-800 w-[80px] h-[40px] absolute right-2 top-[-100%] rounded-b-2xl flex items-center justify-center'>
+                            <Text className="text-white font-semibold font-sans text-xl ml-2">
                               {updateProgress}%
                             </Text>
                           </View>
+
                         </View>
 
                         {/* Slider */}

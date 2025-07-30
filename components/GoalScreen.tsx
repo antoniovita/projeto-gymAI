@@ -17,11 +17,6 @@ import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import GoalModal from './comps/GoalModal';
 import LoadingSpinner from './comps/LoadingSpinner';
 
-interface Update {
-  goalId: string;
-  name: string;
-}
-
 const EmptyState = ({ onCreateGoal }: { onCreateGoal: () => void }) => {
   return (
     <View className="flex-1 justify-center items-center px-8 pb-[160px]">

@@ -2,22 +2,57 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
   SafeAreaView,
-  Dimensions,
   Animated,
   Vibration,
   Pressable,
+  FlatList,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle } from 'react-native-svg';
-
-const { width, height } = Dimensions.get('window');
+import { GestureHandlerRootView, Swipeable, TouchableOpacity } from 'react-native-gesture-handler';
+import { useTimerHook } from 'hooks/useTimerHook';
+import { CustomTimer } from "hooks/useTimerHook";
+import { useNavigation } from '@react-navigation/native';
+import uuid from 'react-native-uuid';
+import TimerModal from './comps/TimerModal';
 
 interface TimerScreenProps {}
 
 const TimerScreen: React.FC<TimerScreenProps> = () => {
+  const navigation = useNavigation();
+  
+  const handleGoBack = () => {
+    navigation.goBack();
+  };
+
+  const EmptyState = () => {
+    return (
+      <View className="flex-1 justify-center items-center px-8">
+        <View className="items-center">
+          {/* Ícone de Timer */}
+          <View className="w-20 h-20 items-center justify-center">
+            <Ionicons name="timer-outline" size={40} color="#71717a" />
+          </View>
+          
+          {/* Texto principal */}
+          <Text className="text-white text-2xl font-semibold font-sans mb-3 text-center">
+            Nenhum timer personalizado
+          </Text>
+          
+          {/* Texto descritivo */}
+          <Text className="text-zinc-400 text-base font-sans mb-8 text-center leading-6" style={{ maxWidth: 280 }}>
+            Crie seus próprios timers personalizados para facilitar o uso no dia a dia
+          </Text>
+          
+        </View>
+      </View>
+    );
+  };
+
+  const { customTimer, createCustomTimer, removeCustomTimer } = useTimerHook();
+  
   const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(0);
   const [seconds, setSeconds] = useState(0);
@@ -25,12 +60,14 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
   const [remainingTime, setRemainingTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  
+  const [customTimerName, setCustomTimerName] = useState("");
+  const [secondsCreate, setSecondsCreate] = useState(0);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+
   const progressAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Calcular total de segundos quando os valores mudam
   useEffect(() => {
     const total = hours * 3600 + minutes * 60 + seconds;
     setTotalSeconds(total);
@@ -39,7 +76,6 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
     }
   }, [hours, minutes, seconds, isRunning]);
 
-  // Timer principal
   useEffect(() => {
     if (isRunning && !isPaused && remainingTime > 0) {
       intervalRef.current = setInterval(() => {
@@ -57,17 +93,18 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
     } else {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
     }
 
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
     };
   }, [isRunning, isPaused, remainingTime]);
 
-  // Animação do progresso
   useEffect(() => {
     if (totalSeconds > 0) {
       const progress = (totalSeconds - remainingTime) / totalSeconds;
@@ -77,9 +114,8 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
         useNativeDriver: false,
       }).start();
     }
-  }, [remainingTime, totalSeconds]);
+  }, [remainingTime, totalSeconds, progressAnim]);
 
-  // Animação de pulso quando timer está ativo
   useEffect(() => {
     if (isRunning && !isPaused) {
       const pulse = () => {
@@ -102,7 +138,7 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
     } else {
       pulseAnim.setValue(1);
     }
-  }, [isRunning, isPaused]);
+  }, [isRunning, isPaused, pulseAnim]);
 
   const formatTime = (time: number) => {
     const hrs = Math.floor(time / 3600);
@@ -122,6 +158,22 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
     }
   };
 
+  const startTimerFromCustom = (timer: CustomTimer) => {
+    const hrs = Math.floor(timer.seconds / 3600);
+    const mins = Math.floor((timer.seconds % 3600) / 60);
+    const secs = timer.seconds % 60;
+    
+    setHours(hrs);
+    setMinutes(mins);
+    setSeconds(secs);
+    
+    // Aguarda um pouco para os states serem atualizados
+    setTimeout(() => {
+      setIsRunning(true);
+      setIsPaused(false);
+    }, 100);
+  };
+
   const pauseTimer = () => {
     setIsPaused(!isPaused);
   };
@@ -133,11 +185,130 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
     progressAnim.setValue(0);
   };
 
+  const handleOpenCreate = () => {
+    setCustomTimerName('');
+    setSecondsCreate(0);
+    setIsModalVisible(true);
+  };
+
+  const handleCloseModal = () => {
+    setCustomTimerName('');
+    setSecondsCreate(0);
+    setIsModalVisible(false);
+  };
+
+  const handleSaveTimer = async (name: string, seconds: number) => {
+    const id = uuid.v4() as string;
+    try {
+      await createCustomTimer(id, name, seconds);
+      handleCloseModal();
+    } catch (error) {
+      console.log("Erro detectado: ", error);
+    }
+  };
+
+  const handleDeleteTimer = async (id: string) => {
+    try {
+      await removeCustomTimer(id);
+    } catch (error) {
+      console.log("Erro detectado: ", error);
+    }
+  };
+
+  const handleSelectCustomTimer = (timer: CustomTimer) => {
+    const hrs = Math.floor(timer.seconds / 3600);
+    const mins = Math.floor((timer.seconds % 3600) / 60);
+    const secs = timer.seconds % 60;
+    
+    setHours(hrs);
+    setMinutes(mins);
+    setSeconds(secs);
+  };
+
+  const SwipeableTimerItem = ({
+    item,
+    onDelete,
+    onSelect,
+    onStartTimer
+  }: {
+    item: CustomTimer;
+    onDelete: (taskId: string) => void;
+    onSelect: (timer: CustomTimer) => void;
+    onStartTimer: (timer: CustomTimer) => void;
+  }) => {
+    let swipeableRow: any;
+
+    const closeSwipeable = () => {
+      swipeableRow?.close();
+    };
+
+    const renderLeftActions = () => (
+      <TouchableOpacity
+        onPress={() => {
+          closeSwipeable();
+          onDelete(item.id);
+        }}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#f43f5e',
+          width: 80,
+          height: '100%',
+          borderTopWidth: 1,
+        }}
+      >
+        <Ionicons name="trash" size={24} color="white" />
+      </TouchableOpacity>
+    );
+
+    return (
+      <GestureHandlerRootView>
+        <Swipeable
+          ref={(ref: any) => { swipeableRow = ref; }}
+          renderLeftActions={renderLeftActions}
+          leftThreshold={40}
+          friction={1}
+          overshootLeft={false}
+        >
+          <View className="w-full flex flex-row items-center px-6 h-[90px] border-b border-neutral-700 bg-zinc-800">
+
+            <Pressable
+              onPress={() => onSelect(item)}
+              className="flex-1 flex flex-row justify-between items-center py-4"
+            >
+              <View className="flex flex-col gap-1">
+                <Text className="text-xl font-sans font-medium max-w-[250px] text-white">
+                  {item.name}
+                </Text>
+
+                <Text className="text-zinc-400 mt-2 text-sm font-sans">
+                  {formatTime(item.seconds)}
+                </Text>
+
+              </View>
+            </Pressable>
+
+            {/* Botão Play - Separado */}
+            <Pressable
+              onPress={() => onStartTimer(item)}
+              className="w-10 h-10 rounded-full bg-zinc-700 items-center justify-center ml-2"
+            >
+              <Ionicons name="play" size={15} color="white" />
+            </Pressable>
+          </View>
+        </Swipeable>
+      </GestureHandlerRootView>
+    );
+  };
+
   const CircularProgress = () => {
     const radius = 120;
     const strokeWidth = 6;
     const circumference = 2 * Math.PI * radius;
-    
+    const progress = totalSeconds > 0 ? (totalSeconds - remainingTime) / totalSeconds : 0;
+    const strokeDashoffset = circumference - (progress * circumference);
+
     return (
       <View style={{ width: radius * 2 + strokeWidth * 2, height: radius * 2 + strokeWidth * 2 }}>
         <Svg width={radius * 2 + strokeWidth * 2} height={radius * 2 + strokeWidth * 2}>
@@ -151,108 +322,55 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
             fill="transparent"
           />
           {/* Progress circle */}
-          <Animated.View>
-            <Circle
-              cx={radius + strokeWidth}
-              cy={radius + strokeWidth}
-              r={radius}
-              stroke="#ff7a7f"
-              strokeWidth={strokeWidth}
-              fill="transparent"
-              strokeDasharray={circumference}
-              strokeLinecap="round"
-              transform={`rotate(-90 ${radius + strokeWidth} ${radius + strokeWidth})`}
-            />
-          </Animated.View>
+          <Circle
+            cx={radius + strokeWidth}
+            cy={radius + strokeWidth}
+            r={radius}
+            stroke="#ff7a7f"
+            strokeWidth={strokeWidth}
+            fill="transparent"
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+            strokeLinecap="round"
+            transform={`rotate(-90 ${radius + strokeWidth} ${radius + strokeWidth})`}
+          />
         </Svg>
       </View>
     );
   };
 
-  const EmptyState = () => {
-    return (
-      <View className="flex-1 justify-center items-center px-8 pb-20">
-        <View className="items-center">
-          <View className="w-20 h-20 rounded-full items-center justify-center mb-3">
-            <Ionicons name="timer-outline" size={60} color="gray" />
-          </View>
-          <Text className="text-neutral-400 text-xl font-medium font-sans mb-2 text-center">
-            Configure seu timer
-          </Text>
-          <Text className="text-neutral-400 text-sm font-sans mb-4 text-center" style={{ maxWidth: 230 }}>
-            Defina horas, minutos e segundos para começar
-          </Text>
-        </View>
-      </View>
-    );
-  };
+  const renderCustomTimerItem = ({ item }: { item: CustomTimer }) => (
+    <SwipeableTimerItem
+      item={item}
+      onDelete={handleDeleteTimer}
+      onSelect={handleSelectCustomTimer}
+      onStartTimer={startTimerFromCustom}
+    />
+  );
 
   return (
     <SafeAreaView className="flex-1 bg-zinc-800">
       {/* Header */}
       <View className="flex flex-row items-center justify-between px-6 mt-[40px] mb-6">
-        <Text className="text-3xl text-white font-medium font-sans">Timer</Text>
+        <Text className="text-3xl text-white font-medium font-sans">Timer Pomodoro</Text>
         <View className='flex flex-row gap-4 items-center'>
-          {isRunning && (
-            <View className={`${isPaused ? 'border-zinc-400' : 'border-[#ff7a7f]'} flex flex-row items-center gap-4 border rounded-lg px-2 py-1.5`}>
-              <Text className="text-[15px] font-sans text-white">
-                {isPaused ? 'Pausado' : 'Ativo'}
-              </Text>
-            </View>
-          )}
-          <Pressable onPress={resetTimer}>
-            <Ionicons name="refresh" size={22} color="#ff7a7f" />
-          </Pressable>
         </View>
       </View>
 
       {!isRunning ? (
         // Timer Setup View
         <View className="flex-1">
-          {totalSeconds === 0 ? (
-            <EmptyState />
-          ) : null}
-          
-          {/* Time Display Card */}
-          <View className="px-6 mb-6">
-            <Pressable className="flex-row items-center justify-between px-4 py-4 rounded-2xl bg-[#35353a]">
-              <View className="flex-row items-center gap-3">
-                <View
-                  className="p-2 rounded-xl"
-                  style={{
-                    backgroundColor: 'rgba(255, 122, 127, 0.15)'
-                  }}
-                >
-                  <Ionicons name="time-outline" size={16} color="#ff7a7f" />
-                </View>
-                <View className="flex-col">
-                  <Text className="text-zinc-400 font-sans text-xs mb-1">Tempo configurado</Text>
-                  <Text className="text-white font-sans text-lg font-semibold">
-                    {totalSeconds > 0 ? formatTime(totalSeconds) : '00:00'}
-                  </Text>
-                </View>
-              </View>
-              <View className="flex-row items-center gap-3">
-                <View className="px-2 py-1 rounded-lg border border-zinc-400/60">
-                  <Text className="text-zinc-400 font-sans text-xs font-medium">
-                    {totalSeconds > 0 ? 'Pronto' : 'Configure'}
-                  </Text>
-                </View>
-              </View>
-            </Pressable>
-          </View>
-          
           {/* Time Pickers */}
           <View className="px-6 mb-6">
-            <View className="flex-row items-center justify-center bg-[#35353a] rounded-2xl overflow-hidden py-4">
+            <View className="flex-row items-center justify-center rounded-2xl overflow-hidden py-4">
               {/* Hours */}
               <View className="items-center px-4 flex-1">
                 <Text className="text-zinc-400 text-sm mb-2 font-sans">horas</Text>
                 <Picker
                   selectedValue={hours}
                   onValueChange={setHours}
-                  style={{ width: '100%', height: 150 }}
-                  itemStyle={{ color: 'white', fontSize: 20, fontFamily: 'System' }}
+                  style={{ width: '100%', height: 200 }}
+                  itemStyle={{ color: 'white', fontSize: 20, fontFamily: 'Poppins' }}
                 >
                   {Array.from({ length: 24 }, (_, i) => (
                     <Picker.Item key={i} label={i.toString().padStart(2, '0')} value={i} />
@@ -266,8 +384,8 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
                 <Picker
                   selectedValue={minutes}
                   onValueChange={setMinutes}
-                  style={{ width: '100%', height: 150 }}
-                  itemStyle={{ color: 'white', fontSize: 20, fontFamily: 'System' }}
+                  style={{ width: '100%', height: 200 }}
+                  itemStyle={{ color: 'white', fontSize: 20, fontFamily: 'Poppins' }}
                 >
                   {Array.from({ length: 60 }, (_, i) => (
                     <Picker.Item key={i} label={i.toString().padStart(2, '0')} value={i} />
@@ -281,8 +399,8 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
                 <Picker
                   selectedValue={seconds}
                   onValueChange={setSeconds}
-                  style={{ width: '100%', height: 150 }}
-                  itemStyle={{ color: 'white', fontSize: 20, fontFamily: 'System' }}
+                  style={{ width: '100%', height: 200 }}
+                  itemStyle={{ color: 'white', fontSize: 20, fontFamily: 'Poppins' }}
                 >
                   {Array.from({ length: 60 }, (_, i) => (
                     <Picker.Item key={i} label={i.toString().padStart(2, '0')} value={i} />
@@ -293,34 +411,97 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
           </View>
 
           {/* Quick Time Buttons */}
-          <View className="px-6 mb-8">
-            <Text className="text-zinc-400 text-sm font-sans mb-3">Tempos rápidos</Text>
-            <View className="flex-row flex-wrap gap-2">
-              {[
-                { label: '1 min', time: 60 },
-                { label: '3 min', time: 180 },
-                { label: '5 min', time: 300 },
-                { label: '10 min', time: 600 },
-                { label: '15 min', time: 900 },
-                { label: '30 min', time: 1800 },
-              ].map((preset) => (
-                <Pressable
-                  key={preset.label}
-                  onPress={() => {
-                    const hrs = Math.floor(preset.time / 3600);
-                    const mins = Math.floor((preset.time % 3600) / 60);
-                    const secs = preset.time % 60;
-                    setHours(hrs);
-                    setMinutes(mins);
-                    setSeconds(secs);
-                  }}
-                  className="px-3 py-1 rounded-xl bg-zinc-700"
-                >
-                  <Text className="text-white text-sm font-sans">{preset.label}</Text>
-                </Pressable>
-              ))}
+          <View className="px-6 mb-8 flex flex-row gap-1">
+            <View className='flex flex-col'>
+              <Text className="text-zinc-400 text-sm font-sans mb-4">Tempos rápidos</Text>
+              <View className="flex-row flex-wrap gap-2 max-w-[290px]">
+                {[
+                  { label: '1 min', time: 60 },
+                  { label: '3 min', time: 180 },
+                  { label: '5 min', time: 300 },
+                  { label: '10 min', time: 600 },
+                  { label: '15 min', time: 900 },
+                  { label: '30 min', time: 1800 },
+                  { label: '45 min', time: 2700 },
+                  { label: '1 hora', time: 3600 },
+                ].map((preset) => (
+                  <Pressable
+                    key={preset.label}
+                    onPress={() => {
+                      const hrs = Math.floor(preset.time / 3600);
+                      const mins = Math.floor((preset.time % 3600) / 60);
+                      const secs = preset.time % 60;
+                      setHours(hrs);
+                      setMinutes(mins);
+                      setSeconds(secs);
+                    }}
+                    className="px-3 py-1 rounded-xl bg-zinc-700"
+                  >
+                    <Text className="text-white text-sm font-sans">{preset.label}</Text>
+                  </Pressable>
+                ))}
+              </View>
             </View>
+
+            <Pressable
+              onPress={startTimer}
+              disabled={totalSeconds === 0}
+              className={`w-[65px] h-[65px] mt-8 rounded-full items-center justify-center ${
+                totalSeconds > 0 ? 'bg-rose-400' : 'bg-zinc-700'
+              }`}
+            >
+                <Text className='font-sans text-white text-md'> Iniciar </Text>
+            </Pressable>
           </View>
+
+          {/* Seção de Timers Personalizados */}
+          <View className="flex-1">
+            {customTimer.length === 0 ? (
+              <EmptyState />
+            ) : (
+              <>
+                <View className="border-b border-neutral-700 w-full">
+
+                </View>
+                <FlatList
+                  data={customTimer}
+                  keyExtractor={(item) => item.id.toString()}
+                  renderItem={renderCustomTimerItem}
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={{ paddingBottom: 100 }}
+                />
+              </>
+            )}
+          </View>
+
+          {/* Botões fixos na parte inferior */}
+          <Pressable
+            onPress={handleOpenCreate}
+            className="w-[50px] h-[50px] absolute bottom-[2%] right-6 z-20 rounded-full bg-rose-400 items-center justify-center shadow-lg"
+          >
+            <Ionicons name="add" size={32} color="black" />
+          </Pressable>
+
+          <View className="absolute bottom-[2%] left-6 z-20">
+            <Pressable
+              onPress={handleGoBack}
+              className="flex-row items-center bg-rose-400 px-4 h-[50px] rounded-full"
+            >
+              <Ionicons name="chevron-back" size={20} color="black" />
+              <Text className="text-black font-sans text-lg ml-1">Voltar</Text>
+            </Pressable>
+          </View>
+
+          <TimerModal
+            isVisible={isModalVisible}
+            onClose={handleCloseModal}
+            secondsCreate={secondsCreate}
+            customTimerName={customTimerName}
+            setCustomTimerName={setCustomTimerName}
+            setSecondsCreate={setSecondsCreate}
+            onSaveGoal={handleSaveTimer}
+          />
+          
         </View>
       ) : (
         // Running Timer View
@@ -328,7 +509,7 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
           {/* Circular Progress */}
           <View className="relative mb-8">
             <CircularProgress />
-            <Animated.View 
+            <Animated.View
               className="absolute inset-0 justify-center items-center"
               style={{ transform: [{ scale: pulseAnim }] }}
             >
@@ -345,12 +526,9 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
           <View className="mb-8 items-center">
             <View className="px-3 py-1 rounded-lg border border-zinc-400/60 mb-2">
               <Text className="text-zinc-400 font-sans text-xs font-medium">
-                {Math.round(((totalSeconds - remainingTime) / totalSeconds) * 100)}% concluído
+                {totalSeconds > 0 ? Math.round(((totalSeconds - remainingTime) / totalSeconds) * 100) : 0}% concluído
               </Text>
             </View>
-            <Text className="text-zinc-500 text-xs font-sans">
-              Tempo total: {formatTime(totalSeconds)}
-            </Text>
           </View>
 
           {/* Control Buttons */}
@@ -368,14 +546,13 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
               onPress={pauseTimer}
               className="w-16 h-16 rounded-full bg-[#ff7a7f] items-center justify-center"
             >
-              <Ionicons 
-                name={isPaused ? "play" : "pause"} 
-                size={24} 
-                color="white" 
+              <Ionicons
+                name={isPaused ? "play" : "pause"}
+                size={24}
+                color="white"
               />
             </Pressable>
 
-            {/* Add Time Button */}
             <Pressable
               onPress={() => setRemainingTime(prev => prev + 60)}
               className="w-14 h-14 rounded-full bg-zinc-700 items-center justify-center"
@@ -384,30 +561,6 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
             </Pressable>
           </View>
         </View>
-      )}
-
-      {/* Start Button - Only show when not running */}
-      {!isRunning && (
-        <Pressable
-          onPress={startTimer}
-          disabled={totalSeconds === 0}
-          className={`w-[50px] h-[50px] absolute bottom-6 right-6 z-20 rounded-full items-center justify-center shadow-lg ${
-            totalSeconds > 0 ? 'bg-[#ff7a7f]' : 'bg-zinc-700'
-          }`}
-          style={{
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.25,
-            shadowRadius: 3.84,
-            elevation: 5,
-          }}
-        >
-          <Ionicons 
-            name="play" 
-            size={24} 
-            color={totalSeconds > 0 ? 'white' : 'gray'} 
-          />
-        </Pressable>
       )}
     </SafeAreaView>
   );
