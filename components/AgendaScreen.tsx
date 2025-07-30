@@ -2,7 +2,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { use, useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, SafeAreaView, Alert, Animated, FlatList,
-  Pressable, Modal, Dimensions,
+  Pressable, Modal, Dimensions, Platform,
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
@@ -618,7 +618,7 @@ export default function AgendaScreen() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-zinc-800">
+    <SafeAreaView className={`flex-1 bg-zinc-800 ${Platform.OS === 'android' && 'py-[30px]'}`}>
       <LoadingSpinner visible={isCurrentlyLoading} />
 
       <Pressable
@@ -638,52 +638,119 @@ export default function AgendaScreen() {
         <Ionicons name="add" size={32} color="black" />
       </Pressable>
 
+      {/* Header */}
+      <View className="mt-5 px-4 mb-6 flex-row items-center justify-between">
+        <View className="w-[80px]" />
+        <View className="absolute left-0 right-0 items-center">
+          <Text className="text-white font-sans text-[18px] font-medium">Agenda</Text>
+        </View>
+        <View className="flex-row items-center gap-4">
+          <Pressable onPress={handleRefresh}>
+            <Ionicons name="refresh-circle" size={26} color="#ff7a7f" />
+          </Pressable>
+          <Pressable onPress={() => setShowDeleteCategoryModal(true)}>
+            <Ionicons name="folder" size={22} color="#ff7a7f" />
+          </Pressable>
+        </View>
+      </View>
 
-      <View className="flex flex-row items-center justify-between px-6 mt-[40px] mb-6">
-        <Text className="text-3xl text-white font-medium font-sans">Agenda</Text>
-
-        <View className="flex flex-row items-center gap-3">
+{/* Date Picker Section com Stats */}
+      <View className="px-4 mb-6">
+        <View className="flex-row items-center gap-3">
+          {/* Date Picker */}
           <Pressable 
             onPress={showDatePickerDateFilter} 
-            className='flex-row items-center rounded-lg px-3 py-1.5 border border-white'
+            className="flex-row items-center justify-center rounded-xl px-4 py-3 bg-[#35353a] border border-neutral-600"
+            style={{ height: 54 }}
           >
-            <Ionicons name="calendar" size={17} color="#ff7a7f" style={{ marginRight: 8 }} />
-            <Text className="text-white text-[14px] font-sans">
+            <Ionicons name="calendar" size={18} color="#ff7a7f" style={{ marginRight: 12 }} />
+            <Text className="text-white text-[16px] font-sans font-medium">
               {format(dateFilter, 'dd/MM/yyyy')}
             </Text>
           </Pressable>
 
-        <View className='flex-row items-center gap-4'>
-            <Pressable 
-              onPress={handleRefresh}
-            >
-              <Ionicons name="refresh-circle" size={26} color="#ff7a7f" />
-            </Pressable>
-
-            <Pressable 
-              onPress={() => setShowDeleteCategoryModal(true)}
-            >
-              <Ionicons name="folder" size={22} color="#ff7a7f" />
-            </Pressable>
+          {/* Stats Container */}
+          <View className="bg-[#35353a] border border-neutral-600 rounded-xl px-3 py-3 flex-row items-center" style={{ height: 54 }}>
+            {/* Stats */}
+            <View className="flex">
+              <View className="flex-row items-center justify-between mb-1">
+                <View className="flex-row items-center">
+                  <View className="w-2 h-2 rounded-full bg-[#ff7a7f] mr-2" />
+                  <Text className="text-neutral-300 text-xs font-sans">Pendentes</Text>
+                </View>
+                <Text className="text-[#ff7a7f] text-sm font-sans font-bold">
+                  {filteredTasks.filter(task => !task.completed).length}
+                </Text>
+              </View>
+              
+              <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center">
+                  <View className="w-2 h-2 rounded-full bg-green-400 mr-2" />
+                  <Text className="text-neutral-300 text-xs font-sans">Concluídas</Text>
+                </View>
+                <Text className="text-green-400 text-sm font-sans font-bold ml-4">
+                  {filteredTasks.filter(task => task.completed).length}
+                </Text>
+              </View>
+            </View>
+            
+            {/* Progress Circle */}
+            <View className="ml-10 items-center justify-center" style={{ width: 38, height: 38 }}>
+              <View 
+                className="rounded-full border-4 border-neutral-700"
+                style={{ width: 38, height: 38 }}
+              />
+              <View 
+                className="rounded-full border-4 border-[#ff7a7f]"
+                style={{ 
+                  width: 38, 
+                  height: 38,
+                  position: 'absolute',
+                  transform: [{ rotate: '-90deg' }],
+                  borderTopColor: filteredTasks.length > 0 
+                    ? '#ff7a7f' 
+                    : 'transparent',
+                  borderRightColor: filteredTasks.length > 0 && 
+                    (filteredTasks.filter(task => task.completed).length / filteredTasks.length) > 0.25
+                    ? '#ff7a7f' 
+                    : 'transparent',
+                  borderBottomColor: filteredTasks.length > 0 && 
+                    (filteredTasks.filter(task => task.completed).length / filteredTasks.length) > 0.5
+                    ? '#ff7a7f' 
+                    : 'transparent',
+                  borderLeftColor: filteredTasks.length > 0 && 
+                    (filteredTasks.filter(task => task.completed).length / filteredTasks.length) > 0.75
+                    ? '#ff7a7f' 
+                    : 'transparent',
+                }}
+              />
+              <Text className="text-white text-xs font-sans font-bold" style={{ position: 'absolute' }}>
+                {filteredTasks.length > 0 
+                  ? `${Math.round((filteredTasks.filter(task => task.completed).length / filteredTasks.length) * 100)}%`
+                  : '0%'
+                }
+              </Text>
+            </View>
           </View>
-
-          <DateTimePickerModal
-            isVisible={isDatePickerVisible}
-            mode="date"
-            date={dateFilter}
-            onConfirm={handleConfirm}
-            onCancel={hideDatePicker}
-            textColor="#ff0000"
-            accentColor="#ff7a7f"
-            buttonTextColorIOS='#ff7a7f'
-            themeVariant='light'
-            display='inline'
-            locale="pt-BR"
-          />
         </View>
+
+        <DateTimePickerModal
+          isVisible={isDatePickerVisible}
+          mode="date"
+          date={dateFilter}
+          onConfirm={handleConfirm}
+          onCancel={hideDatePicker}
+          textColor="#ff0000"
+          accentColor="#ff7a7f"
+          buttonTextColorIOS='#ff7a7f'
+          themeVariant='light'
+          display='inline'
+          locale="pt-BR"
+        />
       </View>
 
-      <View className=' flex flex-row flex-wrap gap-2 px-6 pb-3'>
+      {/* Categories Filter */}
+      <View className="flex flex-row flex-wrap gap-2 px-4 pb-4">
         {categories.map((cat) => {
           const isSelected = selectedTypes.includes(cat);
           const color = getCategoryColor(cat);
@@ -696,18 +763,17 @@ export default function AgendaScreen() {
                   prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
                 )
               }
-              className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${isSelected ? 'bg-rose-400' : 'bg-zinc-700'}`}
+              className={`flex-row items-center gap-2 px-3 py-1.5 rounded-xl ${isSelected ? 'bg-rose-400' : 'bg-zinc-700'}`}
             >
               <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color, borderWidth: 0.5, borderColor: '#fff',}} />
-              
-              <Text className={`${isSelected ? 'text-black' : 'text-white'}`}>{cat}</Text>
+              <Text className={`${isSelected ? 'text-black' : 'text-white'} text-sm font-sans`}>{cat}</Text>
             </Pressable>
           );
         })}
 
         <Pressable
           onPress={() => setIsCategoryModalVisible(true)}
-          className="flex-row items-center gap-2 px-3 py-1 rounded-xl bg-zinc-700"
+          className="flex-row items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-700"
         >
           <Ionicons name="add" size={16} color="white" />
           <Text className="text-white text-sm font-sans">Nova Categoria</Text>
