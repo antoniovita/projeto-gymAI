@@ -7,11 +7,13 @@ import {
 import { Feather, Ionicons } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { TouchableOpacity } from 'react-native-gesture-handler';
+import { Calendar } from 'react-native-calendars';
 import { useTask } from '../hooks/useTask';
 import { useRecurrentTaskDrafts } from '../hooks/useRecurrentTaskDrafts';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { format, isSameDay, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { useAuth } from 'hooks/useAuth';
 import { Task } from 'api/model/Task';
 import RefreshButton from './comps/refreshButton';
@@ -280,7 +282,6 @@ export default function AgendaScreen() {
   const [newCategoryColor, setNewCategoryColor] = useState('#EF4444');
   const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
 
-  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [dateFilter, setDateFilter] = useState(new Date());
 
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
@@ -556,19 +557,7 @@ export default function AgendaScreen() {
     setIsCreateVisible(true);
   };
 
-  const showDatePickerDateFilter = () => setDatePickerVisibility(true);
-  const hideDatePicker = () => setDatePickerVisibility(false);
-  
-  const handleConfirm = async (date: Date) => {
-    setDateFilter(date);
-    hideDatePicker();
-    
-    if (userId) {
-      await filterTasks(date);
-    }
-  };
-
-    const handleDeleteTask = (taskId: string) => {
+  const handleDeleteTask = (taskId: string) => {
     const taskToDelete = tasks.find(task => task.id === taskId);
     
     if (!taskToDelete) {
@@ -603,6 +592,66 @@ export default function AgendaScreen() {
     if (userId) {
       await filterTasks(dateFilter);
       console.log(dateFilter)
+    }
+  };
+
+  // Estado para controlar a semana atual
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => {
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0 = domingo, 1 = segunda, etc.
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - dayOfWeek);
+    return startOfWeek;
+  });
+
+  // Função para gerar os 7 dias da semana atual
+  const getWeekDays = () => {
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const day = new Date(currentWeekStart);
+      day.setDate(currentWeekStart.getDate() + i);
+      days.push(day);
+    }
+    return days;
+  };
+
+  // Função para ir para a semana anterior
+  const goToPreviousWeek = () => {
+    const newWeekStart = new Date(currentWeekStart);
+    newWeekStart.setDate(currentWeekStart.getDate() - 7);
+    setCurrentWeekStart(newWeekStart);
+  };
+
+  // Função para ir para a próxima semana
+  const goToNextWeek = () => {
+    const newWeekStart = new Date(currentWeekStart);
+    newWeekStart.setDate(currentWeekStart.getDate() + 7);
+    setCurrentWeekStart(newWeekStart);
+  };
+
+  // Função para verificar se um dia tem tarefas
+  const dayHasTasks = (date: Date) => {
+    const dateString = date.toISOString().split('T')[0];
+    return tasks.some(task => task.datetime && task.datetime.split('T')[0] === dateString);
+  };
+
+  // Função para verificar se é o dia selecionado
+  const isSelectedDay = (date: Date) => {
+    return date.toDateString() === dateFilter.toDateString();
+  };
+
+  // Função para verificar se é hoje
+  const isToday = (date: Date) => {
+    const today = new Date();
+    return date.toDateString() === today.toDateString();
+  };
+
+  // Função para selecionar um dia
+  const onDaySelect = async (date: Date) => {
+    setDateFilter(date);
+    
+    if (userId) {
+      await filterTasks(date);
     }
   };
 
@@ -654,99 +703,67 @@ export default function AgendaScreen() {
         </View>
       </View>
 
-{/* Date Picker Section com Stats */}
-      <View className="px-4 mb-6">
-        <View className="flex-row items-center gap-3">
-          {/* Date Picker */}
-          <Pressable 
-            onPress={showDatePickerDateFilter} 
-            className="flex-row items-center justify-center rounded-xl px-4 py-3 bg-[#35353a] border border-neutral-600"
-            style={{ height: 54 }}
-          >
-            <Ionicons name="calendar" size={18} color="#ff7a7f" style={{ marginRight: 12 }} />
-            <Text className="text-white text-[16px] font-sans font-medium">
-              {format(dateFilter, 'dd/MM/yyyy')}
+      {/* Calendar Section */}
+      <View className="px-4 mb-4">
+        <View className="bg-[#35353a] border border-neutral-600 rounded-xl overflow-hidden">
+          <View className="flex-row items-center px-6 py-3 border-b border-neutral-600">
+            <Text className="text-white text-base font-sans">
+              {format(currentWeekStart, 'MMMM yyyy', { locale: ptBR })}
             </Text>
-          </Pressable>
+          </View>
 
-          {/* Stats Container */}
-          <View className="bg-[#35353a] border border-neutral-600 rounded-xl px-3 py-3 flex-row items-center" style={{ height: 54 }}>
-            {/* Stats */}
-            <View className="flex">
-              <View className="flex-row items-center justify-between mb-1">
-                <View className="flex-row items-center">
-                  <View className="w-2 h-2 rounded-full bg-[#ff7a7f] mr-2" />
-                  <Text className="text-neutral-300 text-xs font-sans">Pendentes</Text>
-                </View>
-                <Text className="text-[#ff7a7f] text-sm font-sans font-bold">
-                  {filteredTasks.filter(task => !task.completed).length}
-                </Text>
-              </View>
-              
-              <View className="flex-row items-center justify-between">
-                <View className="flex-row items-center">
-                  <View className="w-2 h-2 rounded-full bg-green-400 mr-2" />
-                  <Text className="text-neutral-300 text-xs font-sans">Concluídas</Text>
-                </View>
-                <Text className="text-green-400 text-sm font-sans font-bold ml-4">
-                  {filteredTasks.filter(task => task.completed).length}
-                </Text>
-              </View>
-            </View>
-            
-            {/* Progress Circle */}
-            <View className="ml-10 items-center justify-center" style={{ width: 38, height: 38 }}>
-              <View 
-                className="rounded-full border-4 border-neutral-700"
-                style={{ width: 38, height: 38 }}
-              />
-              <View 
-                className="rounded-full border-4 border-[#ff7a7f]"
-                style={{ 
-                  width: 38, 
-                  height: 38,
-                  position: 'absolute',
-                  transform: [{ rotate: '-90deg' }],
-                  borderTopColor: filteredTasks.length > 0 
-                    ? '#ff7a7f' 
-                    : 'transparent',
-                  borderRightColor: filteredTasks.length > 0 && 
-                    (filteredTasks.filter(task => task.completed).length / filteredTasks.length) > 0.25
-                    ? '#ff7a7f' 
-                    : 'transparent',
-                  borderBottomColor: filteredTasks.length > 0 && 
-                    (filteredTasks.filter(task => task.completed).length / filteredTasks.length) > 0.5
-                    ? '#ff7a7f' 
-                    : 'transparent',
-                  borderLeftColor: filteredTasks.length > 0 && 
-                    (filteredTasks.filter(task => task.completed).length / filteredTasks.length) > 0.75
-                    ? '#ff7a7f' 
-                    : 'transparent',
-                }}
-              />
-              <Text className="text-white text-xs font-sans font-bold" style={{ position: 'absolute' }}>
-                {filteredTasks.length > 0 
-                  ? `${Math.round((filteredTasks.filter(task => task.completed).length / filteredTasks.length) * 100)}%`
-                  : '0%'
-                }
+          {/* Headers dos dias da semana */}
+          <View className="flex-row justify-around py-2 border-b border-neutral-700">
+            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
+              <Text key={index} className="text-neutral-400 text-xs font-sans text-center w-10">
+                {day}
               </Text>
+            ))}
+          </View>
+
+          {/* Linha dos 7 dias com setas */}
+          <View className="flex-row items-center py-3">
+            {/* Seta esquerda */}
+            <Pressable onPress={goToPreviousWeek} className="px-3">
+              <Ionicons name="chevron-back" size={20} color="#ff7a7f" />
+            </Pressable>
+
+            {/* Os 7 dias */}
+            <View className="flex-1 flex-row justify-around">
+              {getWeekDays().map((day, index) => {
+                const selected = isSelectedDay(day);
+                const today = isToday(day);
+                const hasTasks = dayHasTasks(day);
+                
+                return (
+                  <Pressable
+                    key={index}
+                    onPress={() => onDaySelect(day)}
+                    className={`w-8 h-8 rounded-full items-center justify-center ${
+                      selected ? 'bg-[#ff7a7f]' : 'bg-transparent'
+                    }`}
+                  >
+                    <Text className={`text-sm font-sans ${
+                      selected ? 'text-black font-bold' : 
+                      today ? 'text-[#ff7a7f] font-medium' : 
+                      'text-white'
+                    }`}>
+                      {day.getDate()}
+                    </Text>
+                    {hasTasks && !selected && (
+                      <View className="w-1 h-1 bg-[#ff7a7f] rounded-full absolute bottom-0" />
+                    )}
+                  </Pressable>
+                );
+              })}
             </View>
+
+            {/* Seta direita */}
+            <Pressable onPress={goToNextWeek} className="px-3">
+              <Ionicons name="chevron-forward" size={20} color="#ff7a7f" />
+            </Pressable>
           </View>
         </View>
-
-        <DateTimePickerModal
-          isVisible={isDatePickerVisible}
-          mode="date"
-          date={dateFilter}
-          onConfirm={handleConfirm}
-          onCancel={hideDatePicker}
-          textColor="#ff0000"
-          accentColor="#ff7a7f"
-          buttonTextColorIOS='#ff7a7f'
-          themeVariant='light'
-          display='inline'
-          locale="pt-BR"
-        />
       </View>
 
       {/* Categories Filter */}
