@@ -327,7 +327,7 @@ export default function ChatScreen() {
 
   return (
     <SafeAreaView className={`flex-1 bg-zinc-800 ${Platform.OS === 'android' && 'py-[30px]'}`}>
-      {/* Header no estilo da Agenda */}
+
       <View className="mt-8 px-4 mb-6 flex-row items-center justify-between">
         <View className="w-[80px]" />
         <View className="absolute left-0 right-0 items-center">
@@ -336,29 +336,30 @@ export default function ChatScreen() {
         <View className="w-[80px]" />
       </View>
 
-      {/* Botões originais */}
       <View className="px-4 mb-4 mt-3">
         <View className="flex-row items-center gap-2">
           <TouchableOpacity
             onPress={() => navigation.navigate('RoutineScreen')}
-            className="flex-row items-center gap-2 bg-zinc-700 rounded-xl px-3 py-1"
+            className="flex-row items-center gap-2 bg-zinc-700 rounded-xl px-5 py-2"
           >
-            <Feather name="calendar" size={14} color="white" />
-            <Text className="text-white font-sans font-medium text-sm">Rotina</Text>
+            <Feather name="calendar" size={15} color="white" />
+            <Text className="text-white font-sans font-medium text-[13.5px]">Rotina</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setSettingsVisible(true)}
-            className="flex-row items-center gap-2 bg-zinc-700 rounded-xl px-3 py-1"
-          >
-            <Ionicons name="options-outline" size={15} color="white" />
-            <Text className="text-white font-sans font-medium text-sm">Opções</Text>
-          </TouchableOpacity>
+
           <TouchableOpacity
             onPress={() => navigation.navigate('SettingsScreen')}
-            className="flex-row items-center gap-2 bg-zinc-700 rounded-xl px-3 py-1"
+            className="flex-row items-center gap-2 bg-zinc-700 rounded-xl px-5 py-2"
           >
-            <Feather name="settings" size={14} color="white" />
-            <Text className="text-white font-sans font-medium text-sm">Configurações</Text>
+            <Feather name="settings" size={15} color="white" />
+            <Text className="text-white font-sans font-medium text-[13px]">Configurações</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => setSettingsVisible(true)}
+            className="flex-row items-center gap-2 bg-zinc-700 rounded-xl px-5 py-2"
+          >
+            <Ionicons name="options-outline" size={17} color="white" />
+            <Text className="text-white font-sans font-medium text-[13px]">Opções</Text>
           </TouchableOpacity>
         </View>
       </View>

@@ -326,12 +326,6 @@ export default function ExpensesScreen() {
     }
   };
 
-  const handleRefresh = async () => {
-    if (userId) {
-      await fetchExpenses(userId);
-    }
-  };
-
   const renderLeftActions = (item: any) => {
     return (
     <View className="flex-row items-center justify-start border-t bg-rose-500 px-4 h-full">
@@ -472,9 +466,6 @@ export default function ExpensesScreen() {
           <Text className="text-white font-sans text-[18px] font-medium">Despesas</Text>
         </View>
         <View className="flex-row items-center gap-4 mr-1">
-          <Pressable onPress={handleRefresh}>
-            <Ionicons name="refresh-circle" size={26} color="#ff7a7f" />
-          </Pressable>
           <Pressable onPress={() => setShowDeleteCategoryModal(true)}>
             <Ionicons name="folder" size={22} color="#ff7a7f" />
           </Pressable>
@@ -484,7 +475,7 @@ export default function ExpensesScreen() {
       {/* Seção de Filtro de Data e Saldo */}
       <View className="px-4 mb-4 flex-row gap-3">
         {/* Filtro de Data */}
-        <View className="flex h-18 bg-[#35353a] border border-neutral-600 rounded-xl overflow-hidden">
+        <View className="flex h-18 bg-[#35353a] rounded-xl overflow-hidden">
           <Pressable
             onPress={handleDateFilterModalOpen}
             className="flex-row items-center justify-between px-4 py-4"
@@ -509,7 +500,7 @@ export default function ExpensesScreen() {
         </View>
 
         {/* Saldo */}
-        <View className="bg-[#35353a] flex-row border gap-3 flex-1 border-neutral-600 rounded-xl px-4 py-3.5">
+        <View className="bg-[#35353a] flex-row gap-3 flex-1 rounded-xl px-4 py-3.5">
           <View
             className="h-10 w-10 rounded-xl items-center justify-center"
             style={{

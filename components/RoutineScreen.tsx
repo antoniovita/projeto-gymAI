@@ -14,7 +14,7 @@ import {
   Keyboard,
   FlatList,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather, Ionicons } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { useRecurrentTaskDrafts } from '../hooks/useRecurrentTaskDrafts';
@@ -322,17 +322,29 @@ export default function RoutineScreen() {
 
   return (
       <SafeAreaView className={`flex-1 ${Platform.OS == 'android' && "py-[30px]" }  bg-zinc-800`}>
+
+      <Pressable
+        onPress={openCreateModal}
+        className="w-[50px] h-[50px] absolute bottom-[6%] right-6 z-20 rounded-full bg-rose-400 items-center justify-center shadow-lg"
+        style={{
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.25,
+          shadowRadius: 3.84,
+          elevation: 5,
+        }}
+      >
+        <Feather name="plus" strokeWidth={3} size={32} color="black" />
+      </Pressable>
+      
       <View className="mt-5 px-4 flex-row items-center justify-between">
         <Pressable onPress={() => navigation.goBack()} className="flex-row items-center">
           <Ionicons name="chevron-back" size={24} color="white" />
-          <Text className="ml-2 text-white font-sans text-[16px]">Voltar</Text>
+          <Text className="ml-1 text-white font-sans text-[16px]">Voltar</Text>
         </Pressable>
         <View className="absolute left-0 right-0 items-center">
-          <Text className="text-white font-sans text-[15px]">Minha Rotina</Text>
+          <Text className="text-white font-sans text-[17px]"> Minha Rotina</Text>
         </View>
-        <Pressable onPress={openCreateModal}>
-          <Ionicons name="add" size={24} color="white" />
-        </Pressable>
       </View>
 
       <ScrollView 

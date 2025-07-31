@@ -595,11 +595,12 @@ export default function AgendaScreen() {
     }
   };
 
+  // Estado da semana alterado para centrar o hoje
   const [currentWeekStart, setCurrentWeekStart] = useState(() => {
     const today = new Date();
-    const dayOfWeek = today.getDay(); // 0 = domingo, 1 = segunda, etc.
+    // Subtrai 3 dias para que hoje seja sempre o dia do meio (posição 3)
     const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - dayOfWeek);
+    startOfWeek.setDate(today.getDate() - 3);
     return startOfWeek;
   });
 
@@ -623,6 +624,13 @@ export default function AgendaScreen() {
     const newWeekStart = new Date(currentWeekStart);
     newWeekStart.setDate(currentWeekStart.getDate() + 7);
     setCurrentWeekStart(newWeekStart);
+  };
+
+  const goToCurrentWeek = () => {
+    const today = new Date();
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - 3);
+    setCurrentWeekStart(startOfWeek);
   };
 
   const dayHasTasks = (date: Date) => {
@@ -686,6 +694,9 @@ export default function AgendaScreen() {
           <Text className="text-white font-sans text-[18px] font-medium">Agenda</Text>
         </View>
         <View className="flex-row items-center gap-4 mr-1">
+          <Pressable onPress={goToCurrentWeek}>
+            <Ionicons name="today" size={22} color="#ff7a7f" />
+          </Pressable>
           <Pressable onPress={handleRefresh}>
             <Ionicons name="refresh-circle" size={26} color="#ff7a7f" />
           </Pressable>
@@ -697,15 +708,15 @@ export default function AgendaScreen() {
 
       {/* Calendar Section */}
       <View className="px-4 mb-4">
-        <View className="bg-[#35353a] border border-neutral-600 rounded-xl overflow-hidden">
-          <View className="flex-row items-center px-6 py-3 border-b border-neutral-600">
+        <View className="bg-[#35353a] rounded-xl overflow-hidden">
+          <View className="flex-row items-center px-6 py-3 ">
             <Text className="text-white text-base font-sans">
             {format(currentWeekStart, 'MMMM yyyy', { locale: ptBR }).replace(/^./, (c) => c.toUpperCase())}
             </Text>
           </View>
 
           {/* Headers dos dias da semana */}
-          <View className="flex-row justify-around py-2 border-b border-neutral-700">
+          <View className="flex-row justify-around py-2 bg-zinc-800/80">
             {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
               <Text key={index} className="text-neutral-400 text-xs font-sans text-center w-10">
                 {day}
