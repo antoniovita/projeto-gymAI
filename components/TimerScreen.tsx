@@ -32,12 +32,9 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
     return (
       <View className="flex-1 justify-center items-center px-8 pb-18">
         <View className="items-center">
-          {/* Ícone de Timer */}
-          {/* Texto principal */}
           <Text className="text-white text-xl font-sans mb-2 text-center">
             Nenhum timer personalizado
           </Text>
-          {/* Texto descritivo */}
           <Text className="text-zinc-400 text-sm font-sans mb-4 text-center leading-6" style={{ maxWidth: 280 }}>
             Crie seus próprios timers personalizados para facilitar o uso no dia a dia
           </Text>
@@ -244,7 +241,7 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
           backgroundColor: 'transparent',
           width: 80,
           height: '100%',
-          paddingRight: 20,
+          paddingLeft: 20,
         }}
       >
         <TouchableOpacity
@@ -256,7 +253,7 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
             width: 56,
             height: 56,
             borderRadius: 28,
-            backgroundColor: '#dc2626',
+            backgroundColor: '#f43f5e',
             alignItems: 'center',
             justifyContent: 'center',
             shadowColor: '#000',
@@ -283,16 +280,16 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
           friction={1}
           overshootLeft={false}
         >
-          <View className="bg-[#3f3f46] mx-5 mb-3 rounded-2xl flex flex-row items-center px-6 h-[90px]">
+          <View className="bg-[#2d2d32] mx-5 mb-3 rounded-2xl flex flex-row items-center px-6 h-[90px]">
             <Pressable
               onPress={() => onSelect(item)}
               className="flex-1 flex flex-row justify-between items-center py-4"
             >
               <View className="flex flex-col gap-1">
-                <Text className="text-xl font-sans font-medium max-w-[250px] text-white">
+                <Text className="text-[20px] font-sans font-medium max-w-[250px] text-white">
                   {item.name}
                 </Text>
-                <Text className="text-zinc-300 mt-2 text-sm font-sans">
+                <Text className="text-zinc-300 text-sm font-sans">
                   {formatTime(item.seconds)}
                 </Text>
               </View>
@@ -300,9 +297,11 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
             {/* Botão Play - Separado */}
             <Pressable
               onPress={() => onStartTimer(item)}
-              className="w-10 h-10 rounded-full bg-zinc-800 items-center justify-center ml-2"
+              className="w-[50px] h-[50px] rounded-full items-center justify-center ml-2"
+              style={{ backgroundColor: 'rgba(255, 122, 127, 0.15)' }}
+
             >
-              <Ionicons name="play" size={15} color="white" />
+              <Ionicons name="play" size={18} color="#ff7a7f" />
             </Pressable>
           </View>
         </Swipeable>
@@ -434,7 +433,7 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
             </View>
 
             {/* Quick Time Buttons */}
-            <View className="px-6 mb-8 flex flex-row gap-1">
+            <View className="px-6 mb-8 flex flex-row">
               <View className='flex flex-col'>
                 <Text className="text-zinc-400 text-sm font-sans mb-4">Tempos rápidos</Text>
                 <View className="flex-row flex-wrap gap-2 max-w-[290px]">
@@ -469,18 +468,26 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
                 onPress={startTimer}
                 disabled={totalSeconds === 0}
                 className={`w-[65px] h-[65px] mt-8 rounded-full items-center justify-center ${
-                  totalSeconds > 0 ? 'bg-rose-400' : 'bg-zinc-700'
-                }`}
-              >
+                  totalSeconds > 0 ? 'bg-[#FF7A7F26]' : 'bg-zinc-600/10'
+                }`}>
                 <Text className={`font-sans  text-md ${
-                  totalSeconds > 0 ? 'text-black' : 'text-white'}`}> Iniciar 
+                  totalSeconds > 0 ? 'text-[#ff7a7f]' : 'text-zinc-500'
+                }`}> Iniciar 
                 </Text>
               </Pressable>
             </View>
 
             {/* Seção de Timers Personalizados */}
             <View className="flex-1">
-            <Text className="text-zinc-400 px-7 text-sm font-sans">Tempos personalizados</Text>
+              <View className='flex flex-row justify-between items-center px-7'> 
+                <Text className="text-zinc-400  text-sm font-sans">Tempos personalizados</Text>
+                <Pressable
+                  onPress={handleOpenCreate}
+                >
+                  <Feather name='plus' color="#a1a1aa" size={18}></Feather>
+                </Pressable>
+              </View>
+           
 
               {customTimer.length === 0 ? (
                 <EmptyState />
@@ -498,14 +505,6 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
                 </>
               )}
             </View>
-
-            {/* Botão de adicionar */}
-            <Pressable
-              onPress={handleOpenCreate}
-              className="w-[50px] h-[50px] absolute bottom-[2%] right-6 z-20 rounded-full bg-rose-400 items-center justify-center shadow-lg"
-            >
-              <Feather name="plus" size={32} color="black" />
-            </Pressable>
 
             <TimerModal
               isVisible={isModalVisible}

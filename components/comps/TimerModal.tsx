@@ -55,7 +55,6 @@ const TimerModal: React.FC<TimerModalProps> = ({
     setSeconds(secs);
   }, [secondsCreate]);
 
-  // Atualizar secondsCreate quando os valores mudam
   useEffect(() => {
     const total = hours * 3600 + minutes * 60 + seconds;
     setSecondsCreate(total);
