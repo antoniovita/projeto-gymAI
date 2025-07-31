@@ -8,6 +8,7 @@ import {
   Pressable,
   FlatList,
   Platform,
+  Alert,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { Feather, Ionicons } from '@expo/vector-icons';
@@ -198,11 +199,27 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
   };
 
   const handleDeleteTimer = async (id: string) => {
-    try {
-      await removeCustomTimer(id);
-    } catch (error) {
-      console.log("Erro detectado: ", error);
-    }
+    Alert.alert(
+      "Excluir Timer",
+      "Tem certeza que deseja excluir este timer personalizado?",
+      [
+        {
+          text: "Cancelar",
+          style: "cancel"
+        },
+        {
+          text: "Excluir",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await removeCustomTimer(id);
+            } catch (error) {
+              console.log("Erro detectado: ", error);
+            }
+          }
+        }
+      ]
+    );
   };
 
   const handleSelectCustomTimer = (timer: CustomTimer) => {
@@ -493,7 +510,7 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
                 <EmptyState />
               ) : (
                 <>
-                  <View className="w-full mt-4">
+                  <View className="w-full mt-5">
                   </View>
                   <FlatList
                     data={customTimer}
@@ -519,23 +536,8 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
         </>
       ) : (
         <>
-          {/* Header para timer em execução */}
-          <View className="mt-5 px-4 mb-6 flex-row items-center justify-between">
-            <Pressable onPress={resetTimer} className="flex-row items-center">
-              <Ionicons name="chevron-back" size={24} color="white" />
-              <Text className="ml-1 text-white font-sans text-[16px]">Voltar</Text>
-            </Pressable>
-            <View className="absolute left-0 right-0 items-center">
-              <Text className="text-white font-sans text-[18px] font-medium">Timer Ativo</Text>
-            </View>
-            <View className="flex-row items-center gap-4 mr-1">
-              {/* Placeholder para manter simetria */}
-              <View style={{ width: 22, height: 22 }} />
-            </View>
-          </View>
-
-          {/* Running Timer View */}
-          <View className="flex-1 justify-center items-center px-6">
+          {/* Running Timer View - Sem Header */}
+          <View className="flex-1 justify-center items-center px-6 pt-16">
             {/* Circular Progress */}
             <View className="relative mb-8">
               <CircularProgress />
@@ -561,33 +563,32 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
               </View>
             </View>
 
-            {/* Control Buttons */}
+            {/* Control Buttons - Estilo Iniciar */}
             <View className="flex-row items-center justify-center gap-6">
               {/* Reset Button */}
               <Pressable
                 onPress={resetTimer}
-                className="w-14 h-14 rounded-full bg-zinc-700 items-center justify-center"
+                className="w-[70px] h-[70px] rounded-full items-center justify-center bg-zinc-700/30"
               >
-                <Ionicons name="stop" size={20} color="white" />
+                <Text className="text-zinc-400 font-sans text-sm">Parar</Text>
               </Pressable>
 
               {/* Play/Pause Button */}
               <Pressable
                 onPress={pauseTimer}
-                className="w-16 h-16 rounded-full bg-[#ff7a7f] items-center justify-center"
+                className="w-[70px] h-[70px] rounded-full items-center justify-center bg-[#FF7A7F26]"
               >
-                <Ionicons
-                  name={isPaused ? "play" : "pause"}
-                  size={24}
-                  color="white"
-                />
+                <Text className="text-[#ff7a7f] font-sans text-sm">
+                  {isPaused ? "Retomar" : "Pausar"}
+                </Text>
               </Pressable>
 
+              {/* Add Minute Button */}
               <Pressable
                 onPress={() => setRemainingTime(prev => prev + 60)}
-                className="w-14 h-14 rounded-full bg-zinc-700 items-center justify-center"
+                className="w-[70px] h-[70px] rounded-full items-center justify-center bg-zinc-700/30"
               >
-                <Ionicons name="add" size={20} color="white" />
+                <Text className="text-zinc-400 font-sans text-sm">+1min</Text>
               </Pressable>
             </View>
           </View>

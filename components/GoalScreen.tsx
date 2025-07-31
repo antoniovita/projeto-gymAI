@@ -346,7 +346,7 @@ const GoalScreen: React.FC = () => {
         onPress={handleOpenCreate}
         className="w-[50px] h-[50px] absolute bottom-[6%] right-6 z-20 rounded-full bg-rose-400 items-center justify-center shadow-lg"
       >
-        <Ionicons name="add" size={32} color="black" />
+        <Feather name="plus" strokeWidth={3} size={32} color="black" />
       </Pressable>
 
       {/* Header */}
