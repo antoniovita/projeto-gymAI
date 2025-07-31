@@ -6,6 +6,7 @@ import {
   Alert,
   FlatList,
   Pressable,
+  Platform,
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { useState, useCallback } from 'react';
@@ -337,7 +338,7 @@ const GoalScreen: React.FC = () => {
   const isCurrentlyLoading = loading || saving;
 
   return (
-    <SafeAreaView className="flex-1 bg-zinc-800">
+    <SafeAreaView className={`flex-1 bg-zinc-800 ${Platform.OS === 'android' && 'py-[30px]'}`}>
       <LoadingSpinner visible={isCurrentlyLoading} />
       
       {/* Floating Action Buttons */}
@@ -348,40 +349,33 @@ const GoalScreen: React.FC = () => {
         <Ionicons name="add" size={32} color="black" />
       </Pressable>
 
-      <View className="absolute bottom-[6%] left-6 z-20">
-        <Pressable
-          onPress={handleGoBack}
-          className="flex-row items-center bg-rose-400 px-4 h-[50px] rounded-full"
-        >
-          <Ionicons name="chevron-back" size={20} color="black" />
-          <Text className="text-black font-sans text-lg ml-1">Voltar</Text>
-        </Pressable>
-      </View>
-
       {/* Header */}
-      <View className="flex flex-col px-6 mt-[40px] mb-5">
-        <View className="flex flex-row justify-between items-center">
-          <Text className="text-3xl text-white font-sans">Metas</Text>
-          
-          <View className="flex flex-row items-center space-x-4">
-             <Pressable 
-              onPress={handleRefresh}
-            >
-              <Ionicons name="refresh-circle" size={26} color="#ff7a7f" />
-            </Pressable>
-          </View>
+      <View className="mt-5 px-4 mb-6 flex-row items-center justify-between">
+        <Pressable onPress={handleGoBack} className="flex-row items-center">
+          <Ionicons name="chevron-back" size={24} color="white" />
+          <Text className="ml-1 text-white font-sans text-[16px]">Voltar</Text>
+        </Pressable>
+        <View className="absolute left-0 right-0 items-center">
+          <Text className="text-white font-sans text-[18px] font-medium">Metas</Text>
         </View>
-
-        {/* Error Display */}
-        {error && (
-          <View className="mt-4 bg-red-900/20 border border-red-500/30 rounded-lg p-3">
-            <Text className="text-red-400 font-sans text-sm">{error}</Text>
-            <Pressable onPress={clearError} className="mt-2">
-              <Text className="text-red-300 font-sans text-xs">Dispensar</Text>
-            </Pressable>
-          </View>
-        )}
+        <View className="flex-row items-center gap-4 mr-1">
+          <Pressable 
+            onPress={handleRefresh}
+          >
+            <Ionicons name="refresh-circle" size={26} color="#ff7a7f" />
+          </Pressable>
+        </View>
       </View>
+
+      {/* Error Display */}
+      {error && (
+        <View className="mx-6 mb-4 bg-red-900/20 border border-red-500/30 rounded-lg p-3">
+          <Text className="text-red-400 font-sans text-sm">{error}</Text>
+          <Pressable onPress={clearError} className="mt-2">
+            <Text className="text-red-300 font-sans text-xs">Dispensar</Text>
+          </Pressable>
+        </View>
+      )}
 
       <StatisticsView goals={goals} />
 

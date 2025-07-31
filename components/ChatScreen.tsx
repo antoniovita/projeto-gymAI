@@ -331,7 +331,7 @@ export default function ChatScreen() {
       <View className="mt-8 px-4 mb-6 flex-row items-center justify-between">
         <View className="w-[80px]" />
         <View className="absolute left-0 right-0 items-center">
-          <Text className="text-white font-sans text-[18px] font-medium">Chat Rápido</Text>
+          <Text className="text-white font-sans text-[18px] font-medium">Assistente</Text>
         </View>
         <View className="w-[80px]" />
       </View>

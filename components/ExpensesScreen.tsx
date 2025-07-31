@@ -512,7 +512,13 @@ export default function ExpensesScreen() {
           <View className="flex-col justify-center flex-1">
             <Text className="text-zinc-400 font-sans text-xs">Saldo</Text>
             <Text 
-              className={`font-sans font-medium ${gains - losses >= 0 ? 'text-emerald-400' : 'text-[#ff7a7f]'}`}
+              className={`font-sans font-medium ${
+                gains - losses > 0
+                  ? 'text-emerald-400'
+                  : gains - losses < 0
+                  ? 'text-[#ff7a7f]'
+                  : 'text-white'
+              }`}
               style={{
                 fontSize: 17,
                 flexShrink: 1
