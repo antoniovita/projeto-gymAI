@@ -7,8 +7,9 @@ import {
   FlatList,
   Animated,
   Pressable,
+  Platform,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather, Ionicons } from '@expo/vector-icons';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { useExpenses } from '../hooks/useExpenses';
@@ -37,7 +38,7 @@ const EmptyState = ({ selectedCategory, onCreateExpense }: { selectedCategory: s
   };
 
   return (
-    <View className="flex-1 justify-center items-center px-8 pb-[150px]">
+    <View className="flex-1 justify-center items-center px-8 pb-[90px]">
       <View className="items-center">
         <View className="w-20 h-20 rounded-full items-center justify-center mb-3">
           <Ionicons name="wallet-outline" size={60} color="gray" />
@@ -280,7 +281,6 @@ export default function ExpensesScreen() {
 
   const handleDateFilterModalOpen = () => {
     setShowDateFilterModal(true);
-
   };
 
   const handleDateFilterModalClose = () => {
@@ -326,6 +326,12 @@ export default function ExpensesScreen() {
     }
   };
 
+  const handleRefresh = async () => {
+    if (userId) {
+      await fetchExpenses(userId);
+    }
+  };
+
   const renderLeftActions = (item: any) => {
     return (
     <View className="flex-row items-center justify-start border-t bg-rose-500 px-4 h-full">
@@ -344,6 +350,24 @@ export default function ExpensesScreen() {
         </TouchableOpacity>
       </View>
     );
+  };
+
+  const formatLargeNumber = (value: number) => {
+    const absValue = Math.abs(value);
+    
+    if (absValue >= 1000000000) {
+      return `${(value / 1000000000).toFixed(1).replace('.0', '')}B`;
+    } else if (absValue >= 1000000) {
+      return `${(value / 1000000).toFixed(1).replace('.0', '')}M`;
+    } else if (absValue >= 1000) {
+      return `${(value / 1000).toFixed(1).replace('.0', '')}K`;
+    }
+    
+    return currencyFormat(value);
+  };
+
+  const isLargeNumber = (value: number) => {
+    return Math.abs(value) >= 1000000; // 1 milhão ou mais
   };
 
   const renderExpenseItem = ({ item }: { item: any }) => {
@@ -369,7 +393,10 @@ export default function ExpensesScreen() {
               </Text>
             </Pressable>
             <Text className={`font-sans ${item.type == "Ganhos" ? "text-emerald-400" : "text-[#ff7a7f]"} text-2xl mt-6`}>
-              {currencyFormat(Number(item.amount))}
+                  {isLargeNumber(Number(item.amount)) 
+                    ? `R$ ${formatLargeNumber(Number(item.amount))}`
+                    : currencyFormat(Number(item.amount))
+                  }            
             </Text>
           </View>
         </View>
@@ -382,7 +409,6 @@ export default function ExpensesScreen() {
   }, []);
 
   useEffect(() => {
-
     const dateFilteredExpenses = filterExpensesByDate(expenses, dateFilter);
     
     const totalGains = dateFilteredExpenses
@@ -424,7 +450,7 @@ export default function ExpensesScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-zinc-800">
+    <SafeAreaView className={`flex-1 bg-zinc-800 ${Platform.OS === 'android' && 'py-[30px]'}`}>
       <Pressable
         onPress={openCreateModal}
         className="w-[50px] h-[50px] absolute bottom-6 right-6 z-20 rounded-full bg-rose-400 items-center justify-center shadow-lg"
@@ -436,73 +462,85 @@ export default function ExpensesScreen() {
           elevation: 5,
         }}
       >
-        <Ionicons name="add" size={32} color="black" />
+        <Feather name="plus" strokeWidth={3} size={32} color="black" />
       </Pressable>
 
-      <View className="flex flex-row items-center justify-between px-6 mt-[40px] mb-6">
-        <Text className="text-3xl text-white font-medium font-sans">Despesas</Text>
-
-        <View className='flex flex-row gap-4 items-center'>
-          <View className={`${gains - losses >= 0 ? 'border-emerald-300' : 'border-[#ff7a7f]'} flex flex-row items-center gap-4 border rounded-lg px-2 py-1`}>
-            <Text className="text-[15px] font-sans text-white">
-              {currencyFormat(Math.abs(gains - losses))}
-            </Text>
-          </View>
-            
-            <Pressable 
-              onPress={() => setShowDeleteCategoryModal(true)}
-            >
-              <Ionicons name="folder" size={22} color="#ff7a7f" />
-            </Pressable>
+      {/* Header no estilo da Agenda */}
+      <View className="mt-5 px-4 mb-6 flex-row items-center justify-between">
+        <View className="w-[80px]" />
+        <View className="absolute left-0 right-0 items-center">
+          <Text className="text-white font-sans text-[18px] font-medium">Despesas</Text>
+        </View>
+        <View className="flex-row items-center gap-4 mr-1">
+          <Pressable onPress={handleRefresh}>
+            <Ionicons name="refresh-circle" size={26} color="#ff7a7f" />
+          </Pressable>
+          <Pressable onPress={() => setShowDeleteCategoryModal(true)}>
+            <Ionicons name="folder" size={22} color="#ff7a7f" />
+          </Pressable>
         </View>
       </View>
 
-      <View className="px-6 mb-4">
-        <Pressable
-          onPress={handleDateFilterModalOpen}
-          className="flex-row items-center justify-between px-4 py-3 rounded-2xl bg-[#35353a]"
-        >
-          <View className="flex-row items-center gap-3">
-            <View 
-              className="p-2 rounded-xl"
-              style={{
-                backgroundColor: 'rgba(239, 68, 68, 0.15)'
-              }}
-            >
-              <Ionicons name="calendar-number-outline" size={16} color="#ff7a7f" />
+      {/* Seção de Filtro de Data e Saldo */}
+      <View className="px-4 mb-4 flex-row gap-3">
+        {/* Filtro de Data */}
+        <View className="flex h-18 bg-[#35353a] border border-neutral-600 rounded-xl overflow-hidden">
+          <Pressable
+            onPress={handleDateFilterModalOpen}
+            className="flex-row items-center justify-between px-4 py-4"
+          >
+            <View className="flex-row items-center gap-3">
+              <View 
+                className="h-10 w-10 rounded-xl items-center justify-center"
+                style={{
+                  backgroundColor: 'rgba(239, 68, 68, 0.15)'
+                }}
+              >
+                <Ionicons name="calendar-number-outline" size={16} color="#ff7a7f" />
+              </View>
+              <View className="flex-col">
+                <Text className="text-zinc-400 font-sans text-xs mb-1">Período</Text>
+                <Text className="text-white font-sans text-[12px] font-medium">
+                  {getDateFilterDisplayText()}
+                </Text>
+              </View>
             </View>
-            <View className="flex-col">
-              <Text className="text-zinc-400 font-sans text-xs mb-1">Período selecionado</Text>
-              <Text className="text-white font-sans text-sm font-semibold">
-                {getDateFilterDisplayText()}
-              </Text>
-            </View>
+          </Pressable>
+        </View>
+
+        {/* Saldo */}
+        <View className="bg-[#35353a] flex-row border gap-3 flex-1 border-neutral-600 rounded-xl px-4 py-3.5">
+          <View
+            className="h-10 w-10 rounded-xl items-center justify-center"
+            style={{
+              backgroundColor: 'rgba(239, 68, 68, 0.15)'
+            }}
+          >
+            <Feather name='dollar-sign' size={16} color="#ff7a7f" />
           </View>
-          
-          <View className="flex-row items-center gap-3">
-            <View 
-              className="px-2 py-1 rounded-lg border border-zinc-400/60"
-            >
-              <Text className="text-zinc-400 font-sans text-xs font-medium">
-                {filteredExpenses.length} {filteredExpenses.length === 1 ? 'item' : 'itens'}
-              </Text>
-            </View>
-            <Animated.View
+          <View className="flex-col justify-center flex-1">
+            <Text className="text-zinc-400 font-sans text-xs">Saldo</Text>
+            <Text 
+              className={`font-sans font-medium ${gains - losses >= 0 ? 'text-emerald-400' : 'text-[#ff7a7f]'}`}
               style={{
-                transform: [{
-                  rotate: rotationAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: ['0deg', '180deg']
-                  })
-                }]
+                fontSize: 17,
+                flexShrink: 1
               }}
+              numberOfLines={1}
+              adjustsFontSizeToFit={true}
+              minimumFontScale={0.6}
             >
-            </Animated.View>
+              {isLargeNumber(gains - losses) 
+                ? `R$ ${formatLargeNumber(Math.abs(gains - losses))}`
+                : currencyFormat(Math.abs(gains - losses))
+              }
+            </Text>
           </View>
-        </Pressable>
+        </View>
       </View>
 
-      <View className='flex flex-row flex-wrap gap-2 px-6 pb-3'>
+      {/* Categorias */}
+      <View className='flex flex-row flex-wrap gap-2 px-4 pb-4'>
         {categories.map((category) => {
           const isSelected = selectedCategory === category.name;
           return (

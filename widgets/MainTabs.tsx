@@ -14,15 +14,20 @@ export default function MainTabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarShowLabel: false,
+        tabBarShowLabel: true, // mostra o nome abaixo do ícone
         tabBarActiveTintColor: '#ff7a7f',
         tabBarInactiveTintColor: '#9CA3AF',
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '600',
+          paddingTop: 3
+        },
         tabBarStyle: {
           backgroundColor: '#1e1e1e',
           borderTopWidth: 0,
-          height: 70,
-          paddingBottom: 90,
-          paddingTop: 20,
+          height: 110,
+          paddingBottom: Platform.OS === 'android' ? 10 : 20,
+          paddingTop: 10,
           ...(Platform.OS === 'android' && {
             elevation: 0,
             borderTopWidth: 0,
@@ -49,14 +54,30 @@ export default function MainTabs() {
               iconName = 'ellipse';
           }
 
-          return <Ionicons name={iconName} size={25} color={color} />;
+          return <Ionicons name={iconName} size={24} color={color} />;
         },
       })}
     >
-      <Tab.Screen name="Chat" component={ChatScreen} />
-      <Tab.Screen name="Agenda" component={AgendaScreen} />
-      <Tab.Screen name="Expenses" component={ExpensesScreen} />
-      <Tab.Screen name="More" component={MoreScreen} />
+      <Tab.Screen
+        name="Chat"
+        component={ChatScreen}
+        options={{ tabBarLabel: 'Assistente' }} // nome alternativo
+      />
+      <Tab.Screen
+        name="Agenda"
+        component={AgendaScreen}
+        options={{ tabBarLabel: 'Agenda' }}
+      />
+      <Tab.Screen
+        name="Expenses"
+        component={ExpensesScreen}
+        options={{ tabBarLabel: 'Despesas' }}
+      />
+      <Tab.Screen
+        name="More"
+        component={MoreScreen}
+        options={{ tabBarLabel: 'Mais' }}
+      />
     </Tab.Navigator>
   );
 }

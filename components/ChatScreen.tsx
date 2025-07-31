@@ -9,6 +9,7 @@ import {
   TouchableWithoutFeedback,
   SafeAreaView,
   FlatList,
+  Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -20,7 +21,6 @@ import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../hooks/useAuth';
 import { useMessageParser } from '../hooks/useMessageParser';
 import { SettingsModal } from './comps/configModal';
-
 
 type ChatMessage = {
   role: 'user' | 'ai';
@@ -56,7 +56,7 @@ export default function ChatScreen() {
   const [fontSize, setFontSize] = useState<'small' | 'medium' | 'large'>('medium');
   const [isTyping, setIsTyping] = useState(false);
   const [typingText, setTypingText] = useState('');
-
+  
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { userId } = useAuth();
   const { processMessage } = useMessageParser(userId);
@@ -94,7 +94,6 @@ export default function ChatScreen() {
     const userMessage: ChatMessage = { role: 'user', text: input };
     const updatedMessages = [...messages, userMessage];
     await saveMessages(updatedMessages);
-
     setInput('');
     setIsTyping(true);
 
@@ -102,7 +101,7 @@ export default function ChatScreen() {
       return text
         .toLowerCase()
         .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '') 
+        .replace(/[\u0300-\u036f]/g, '')
         .replace(/\s+/g, ' ')
         .trim();
     };
@@ -196,7 +195,6 @@ export default function ChatScreen() {
     };
 
     let intent = 'unknown';
-    
     if (matchesPattern(thanksPatterns)) {
       intent = 'thanks';
     } else if (matchesPattern(greetingPatterns)) {
@@ -304,17 +302,14 @@ export default function ChatScreen() {
       // Efeito de digitação mais realista
       let index = 0;
       setTypingText('');
-
       const typingSpeed = Math.random() * 30 + 25; // Velocidade variável entre 25-55ms
-      
+
       const interval = setInterval(() => {
         setTypingText((prev) => {
           const next = finalText.slice(0, index + 1);
           index++;
-
           if (index === finalText.length) {
             clearInterval(interval);
-            
             // Pequena pausa antes de finalizar
             setTimeout(() => {
               const systemReply: ChatMessage = { role: 'ai', text: finalText };
@@ -324,21 +319,26 @@ export default function ChatScreen() {
               setTypingText('');
             }, 200);
           }
-
           return next;
         });
       }, typingSpeed);
     }, thinkingTime);
   };
 
-
   return (
-    <SafeAreaView className="flex-1 bg-zinc-800">
-      <View className="flex flex-col px-6 mt-[40px]">
-        <Text className="text-3xl text-white font-medium font-sans mb-4">Chat Rápido</Text>
+    <SafeAreaView className={`flex-1 bg-zinc-800 ${Platform.OS === 'android' && 'py-[30px]'}`}>
+      {/* Header no estilo da Agenda */}
+      <View className="mt-8 px-4 mb-6 flex-row items-center justify-between">
+        <View className="w-[80px]" />
+        <View className="absolute left-0 right-0 items-center">
+          <Text className="text-white font-sans text-[18px] font-medium">Chat Rápido</Text>
+        </View>
+        <View className="w-[80px]" />
+      </View>
 
-        <View className="flex-row items-center gap-2 mt-2">
-
+      {/* Botões originais */}
+      <View className="px-4 mb-4 mt-3">
+        <View className="flex-row items-center gap-2">
           <TouchableOpacity
             onPress={() => navigation.navigate('RoutineScreen')}
             className="flex-row items-center gap-2 bg-zinc-700 rounded-xl px-3 py-1"
@@ -346,7 +346,6 @@ export default function ChatScreen() {
             <Feather name="calendar" size={14} color="white" />
             <Text className="text-white font-sans font-medium text-sm">Rotina</Text>
           </TouchableOpacity>
-
           <TouchableOpacity
             onPress={() => setSettingsVisible(true)}
             className="flex-row items-center gap-2 bg-zinc-700 rounded-xl px-3 py-1"
@@ -354,7 +353,6 @@ export default function ChatScreen() {
             <Ionicons name="options-outline" size={15} color="white" />
             <Text className="text-white font-sans font-medium text-sm">Opções</Text>
           </TouchableOpacity>
-
           <TouchableOpacity
             onPress={() => navigation.navigate('SettingsScreen')}
             className="flex-row items-center gap-2 bg-zinc-700 rounded-xl px-3 py-1"
@@ -370,7 +368,7 @@ export default function ChatScreen() {
         className="flex-1"
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View className="flex-1 justify-between mt-[20px]">
+          <View className="flex-1 justify-between">
             {messages.length === 0 && !isTyping ? (
               <EmptyState />
             ) : (
@@ -420,10 +418,10 @@ export default function ChatScreen() {
                   className="flex-1 font-sans text-white font-light text-xl"
                 />
                 <TouchableOpacity
-                  className="w-[28px] h-[28px] rounded-full mr-8 mt-2 bg-rose-400 justify-center items-center"
+                  className="w-[30px] h-[30px] rounded-full mr-4 pl-1 mt-2 bg-rose-400 justify-center items-center"
                   onPress={handleInputSubmit}
                 >
-                  <Ionicons name="caret-forward" size={18} color="black" />
+                  <Ionicons name="send" size={16} color="black" />
                 </TouchableOpacity>
               </View>
             </View>
@@ -442,8 +440,6 @@ export default function ChatScreen() {
         setFontSize={setFontSize}
         clearMessages={clearMessages}
       />
-
-
     </SafeAreaView>
   );
 }

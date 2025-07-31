@@ -595,7 +595,6 @@ export default function AgendaScreen() {
     }
   };
 
-  // Estado para controlar a semana atual
   const [currentWeekStart, setCurrentWeekStart] = useState(() => {
     const today = new Date();
     const dayOfWeek = today.getDay(); // 0 = domingo, 1 = segunda, etc.
@@ -604,7 +603,6 @@ export default function AgendaScreen() {
     return startOfWeek;
   });
 
-  // Função para gerar os 7 dias da semana atual
   const getWeekDays = () => {
     const days = [];
     for (let i = 0; i < 7; i++) {
@@ -615,38 +613,32 @@ export default function AgendaScreen() {
     return days;
   };
 
-  // Função para ir para a semana anterior
   const goToPreviousWeek = () => {
     const newWeekStart = new Date(currentWeekStart);
     newWeekStart.setDate(currentWeekStart.getDate() - 7);
     setCurrentWeekStart(newWeekStart);
   };
 
-  // Função para ir para a próxima semana
   const goToNextWeek = () => {
     const newWeekStart = new Date(currentWeekStart);
     newWeekStart.setDate(currentWeekStart.getDate() + 7);
     setCurrentWeekStart(newWeekStart);
   };
 
-  // Função para verificar se um dia tem tarefas
   const dayHasTasks = (date: Date) => {
     const dateString = date.toISOString().split('T')[0];
     return tasks.some(task => task.datetime && task.datetime.split('T')[0] === dateString);
   };
 
-  // Função para verificar se é o dia selecionado
   const isSelectedDay = (date: Date) => {
     return date.toDateString() === dateFilter.toDateString();
   };
 
-  // Função para verificar se é hoje
   const isToday = (date: Date) => {
     const today = new Date();
     return date.toDateString() === today.toDateString();
   };
 
-  // Função para selecionar um dia
   const onDaySelect = async (date: Date) => {
     setDateFilter(date);
     
@@ -684,7 +676,7 @@ export default function AgendaScreen() {
           elevation: 5,
         }}
       >
-        <Ionicons name="add" size={32} color="black" />
+        <Feather name="plus" strokeWidth={3} size={32} color="black" />
       </Pressable>
 
       {/* Header */}
@@ -693,7 +685,7 @@ export default function AgendaScreen() {
         <View className="absolute left-0 right-0 items-center">
           <Text className="text-white font-sans text-[18px] font-medium">Agenda</Text>
         </View>
-        <View className="flex-row items-center gap-4">
+        <View className="flex-row items-center gap-4 mr-1">
           <Pressable onPress={handleRefresh}>
             <Ionicons name="refresh-circle" size={26} color="#ff7a7f" />
           </Pressable>
@@ -708,7 +700,7 @@ export default function AgendaScreen() {
         <View className="bg-[#35353a] border border-neutral-600 rounded-xl overflow-hidden">
           <View className="flex-row items-center px-6 py-3 border-b border-neutral-600">
             <Text className="text-white text-base font-sans">
-              {format(currentWeekStart, 'MMMM yyyy', { locale: ptBR })}
+            {format(currentWeekStart, 'MMMM yyyy', { locale: ptBR }).replace(/^./, (c) => c.toUpperCase())}
             </Text>
           </View>
 
@@ -780,17 +772,17 @@ export default function AgendaScreen() {
                   prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
                 )
               }
-              className={`flex-row items-center gap-2 px-3 py-1.5 rounded-xl ${isSelected ? 'bg-rose-400' : 'bg-zinc-700'}`}
+              className={`flex-row items-center gap-2 px-2 py-1 rounded-xl ${isSelected ? 'bg-rose-400' : 'bg-zinc-700'}`}
             >
               <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color, borderWidth: 0.5, borderColor: '#fff',}} />
-              <Text className={`${isSelected ? 'text-black' : 'text-white'} text-sm font-sans`}>{cat}</Text>
+              <Text className={`font-sans text-sm ${isSelected ? 'text-black' : 'text-white'}`}>{cat}</Text>
             </Pressable>
           );
         })}
 
         <Pressable
           onPress={() => setIsCategoryModalVisible(true)}
-          className="flex-row items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-700"
+          className="flex-row items-center gap-2 px-3 py-1 rounded-xl bg-zinc-700"
         >
           <Ionicons name="add" size={16} color="white" />
           <Text className="text-white text-sm font-sans">Nova Categoria</Text>

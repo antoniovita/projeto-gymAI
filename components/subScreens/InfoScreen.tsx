@@ -360,7 +360,7 @@ export default function InfoScreen() {
           <Text className="ml-2 text-white font-sans text-[16px]">Voltar</Text>
         </Pressable>
         <View className="absolute left-0 right-0 items-center">
-          <Text className="text-white font-sans text-[15px]">Informações</Text>
+          <Text className="text-white font-sans text-[16px]">Informações</Text>
         </View>
       </View>
 

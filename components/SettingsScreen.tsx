@@ -362,12 +362,12 @@ export default function SettingsScreen() {
           <Text className="ml-2 text-white font-sans text-[16px]">Voltar</Text>
         </Pressable>
         <View className="absolute left-0 right-0 items-center">
-          <Text className="text-white font-sans text-[15px]">Configurações</Text>
+          <Text className="text-white font-sans text-[16px]">Configurações</Text>
         </View>
       </View>
 
       {/* User Profile Card */}
-      <View className="px-4 pb-3">
+      <View className="px-4 pb-5">
         <View className="flex-row items-center justify-between px-4 py-4 rounded-2xl bg-[#35353a]">
           <View className="flex-row items-center gap-4">
             <View className="w-12 h-12 flex items-center justify-center rounded-full bg-rose-400">
