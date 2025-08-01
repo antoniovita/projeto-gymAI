@@ -19,6 +19,7 @@ import { Exercise, Workout } from '../api/model/Workout';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from 'hooks/useAuth';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { Picker } from '@react-native-picker/picker';
 
 const EmptyState = ({ onCreateWorkout }: { onCreateWorkout: () => void }) => {
   return (
@@ -70,7 +71,8 @@ export default function WorkoutScreen() {
   const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
   const [selectedMusclesForWorkout, setSelectedMusclesForWorkout] = useState<string[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
-
+  
+  const [isVisibleExerciseModal, setIsVisibleExerciseModal] = useState(false)
   const [extraCatWorkout, setextraCatWorkout] = useState<{ name: string; color: string }[]>([]);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('#EF4444');
@@ -772,9 +774,117 @@ export default function WorkoutScreen() {
 
             {/* Exercícios */}
             <View className="mb-8">
-              <Text className="text-zinc-400 text-sm font-medium mb-3 uppercase tracking-wide">
-                Exercícios ({exercises.length})
-              </Text>
+              <View className='flex-row justify-between items-center'>
+                <Text className="text-zinc-400 text-sm font-medium mb-3 uppercase tracking-wide">
+                  Exercícios ({exercises.length})
+                </Text>
+
+                <Pressable
+                  onPress={() => setIsVisibleExerciseModal(true)}>
+                  <Feather name='plus' size={18} color='#a1a1aa' />
+                </Pressable>
+
+                <Modal
+                  visible={isVisibleExerciseModal}
+                  transparent
+                  animationType="slide"
+                  onRequestClose={() => setIsVisibleExerciseModal(false)}
+                >
+                  <View className="flex-1 justify-end bg-black/50">
+                    <View className={`bg-zinc-800 rounded-t-3xl ${Platform.OS === 'ios' ? 'pb-8' : 'pb-4'}`}>
+
+                      <ScrollView className="px-6 pt-5" showsVerticalScrollIndicator={false}>
+
+                        <View className="">
+                          <TextInput
+                            placeholder="Nome do exercício"
+                            placeholderTextColor="#71717a"
+                            value={newExerciseName}
+                            onChangeText={setNewExerciseName}
+                            className="text-white font-sans text-xl p-3"
+                          />
+                        </View>
+
+                        <View className="flex-row gap-4 mb-8">
+                          <View className="flex-1">
+                            <View className=" rounded-xl overflow-hidden">
+                              <Picker
+                                selectedValue={newExerciseSeries}
+                                onValueChange={(itemValue) => setNewExerciseSeries(itemValue)}
+                                style={{
+                                  color: 'white',
+                                  backgroundColor: 'transparent',
+                                  height: Platform.OS === 'ios' ? 180 : 50,
+                                }}
+                                itemStyle={{
+                                  color: 'white',
+                                  fontSize: 18,
+                                  fontWeight: '500',
+                                }}
+                              >
+                                {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
+                                  <Picker.Item 
+                                    key={num} 
+                                    label={`${num} série${num > 1 ? 's' : ''}`} 
+                                    value={num.toString()} 
+                                  />
+                                ))}
+                              </Picker>
+                            </View>
+                          </View>
+
+                          <View className="flex-1">
+                            <View className="rounded-xl overflow-hidden">
+                              <Picker
+                                selectedValue={newExerciseReps}
+                                onValueChange={(itemValue) => setNewExerciseReps(itemValue)}
+                                style={{
+                                  color: 'white',
+                                  backgroundColor: 'transparent',
+                                  height: Platform.OS === 'ios' ? 180 : 50,
+                                }}
+                                itemStyle={{
+                                  color: 'white',
+                                  fontSize: 18,
+                                  fontWeight: '500',
+                                }}
+                              >
+                                {Array.from({ length: 50 }, (_, i) => i + 1).map((num) => (
+                                  <Picker.Item 
+                                    key={num} 
+                                    label={`${num} rep${num > 1 ? 's' : ''}`} 
+                                    value={num.toString()} 
+                                  />
+                                ))}
+                              </Picker>
+                            </View>
+                          </View>
+                        </View>
+
+                        <Pressable
+                          onPress={() => {
+                            handleAddExercise();
+                            setIsVisibleExerciseModal(false);
+                          }}
+                          className="bg-rose-400 rounded-xl p-4 items-center mb-4"
+                        >
+                          <Text className="text-black font-sans font-semibold text-lg">
+                            Adicionar Exercício
+                          </Text>
+                        </Pressable>
+
+                        <Pressable
+                          onPress={() => setIsVisibleExerciseModal(false)}
+                          className="items-center py-2 mb-4"
+                        >
+                          <Text className="text-zinc-400 font-sans">Cancelar</Text>
+                        </Pressable>
+                      </ScrollView>
+                    </View>
+                  </View>
+                </Modal>
+            </View>
+
 
               {/* Lista de exercícios */}
               {exercises.map((exercise, index) => (
@@ -794,60 +904,8 @@ export default function WorkoutScreen() {
                 </View>
               ))}
 
-              {/* Adicionar novo exercício */}
-              <View className="bg-zinc-700/30 rounded-xl p-4 mb-3">
-                <Text className="text-white font-sans text-lg font-medium mb-3">
-                  Adicionar Exercício
-                </Text>
-                
-                <TextInput
-                  placeholder="Nome do exercício (ex: Supino reto)"
-                  placeholderTextColor="#71717a"
-                  value={newExerciseName}
-                  onChangeText={setNewExerciseName}
-                  className="text-white font-sans text-base mb-3 border-b border-zinc-600 pb-2"
-                />
-                
-                <View className="flex-row gap-3 mb-3">
-                  <View className="flex-1">
-                    <Text className="text-zinc-400 text-xs font-sans mb-1 uppercase tracking-wide">
-                      SÉRIES
-                    </Text>
-                    <TextInput
-                      placeholder="0"
-                      placeholderTextColor="#71717a"
-                      value={newExerciseSeries}
-                      onChangeText={setNewExerciseSeries}
-                      keyboardType="numeric"
-                      className="text-white font-sans text-base bg-zinc-600/30 rounded-lg px-3 py-2"
-                    />
-                  </View>
-                  
-                  <View className="flex-1">
-                    <Text className="text-zinc-400 text-xs font-sans mb-1 uppercase tracking-wide">
-                      REPETIÇÕES
-                    </Text>
-                    <TextInput
-                      placeholder="0"
-                      placeholderTextColor="#71717a"
-                      value={newExerciseReps}
-                      onChangeText={setNewExerciseReps}
-                      keyboardType="numeric"
-                      className="text-white font-sans text-base bg-zinc-600/30 rounded-lg px-3 py-2"
-                    />
-                  </View>
-                </View>
-
-                <Pressable
-                  onPress={handleAddExercise}
-                  className="bg-rose-400 rounded-lg py-3 items-center"
-                >
-                  <Text className="text-black font-sans font-semibold">Adicionar Exercício</Text>
-                </Pressable>
-              </View>
-
               {exercises.length === 0 && (
-                <View className="items-center justify-center py-8">
+                <View className="items-center justify-center py-32">
                   <Ionicons name="barbell-outline" size={48} color="#71717a" />
                   <Text className="text-zinc-400 font-sans text-center mt-2">
                     Nenhum exercício adicionado
