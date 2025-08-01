@@ -15,6 +15,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { useWorkout } from '../hooks/useWorkout';
+import { Exercise, Workout } from '../api/model/Workout';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from 'hooks/useAuth';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -66,9 +67,9 @@ export default function WorkoutScreen() {
   const [isCreateVisible, setIsCreateVisible] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [newWorkoutTitle, setNewWorkoutTitle] = useState('');
-  const [selectedWorkout, setSelectedWorkout] = useState<any | null>(null);
+  const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
   const [selectedMusclesForWorkout, setSelectedMusclesForWorkout] = useState<string[]>([]);
-  const [content, setContent] = useState('');
+  const [exercises, setExercises] = useState<Exercise[]>([]);
 
   const [extraCatWorkout, setextraCatWorkout] = useState<{ name: string; color: string }[]>([]);
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -79,6 +80,11 @@ export default function WorkoutScreen() {
   const [showDeleteCategoryModal, setShowDeleteCategoryModal] = useState(false);
 
   const [customMuscleGroups, setCustomMuscleGroups] = useState<{ name: string; color: string }[]>([]);
+
+  // Estados para controle dos exercícios
+  const [newExerciseName, setNewExerciseName] = useState('');
+  const [newExerciseReps, setNewExerciseReps] = useState('');
+  const [newExerciseSeries, setNewExerciseSeries] = useState('');
 
   const navigation = useNavigation();
 
@@ -228,21 +234,67 @@ export default function WorkoutScreen() {
     setSelectedWorkout(null);
     setNewWorkoutTitle('');
     setSelectedMusclesForWorkout([]);
-    setContent('');
+    setExercises([]);
+    setNewExerciseName('');
+    setNewExerciseReps('');
+    setNewExerciseSeries('');
     setIsCreateVisible(true);
   };
 
-  const handleOpenEdit = (workout: any) => {
+  const handleOpenEdit = (workout: Workout) => {
     setSelectedWorkout(workout);
     setNewWorkoutTitle(workout.name);
     setSelectedMusclesForWorkout(workout.type ? workout.type.split(',') : []);
-    setContent(workout.content);
+    setExercises(workout.exercises || []);
+    setNewExerciseName('');
+    setNewExerciseReps('');
+    setNewExerciseSeries('');
     setIsCreateVisible(true);
+  };
+
+  const handleAddExercise = () => {
+    if (!newExerciseName.trim()) {
+      Alert.alert('Erro', 'O nome do exercício não pode estar vazio.');
+      return;
+    }
+
+    if (!newExerciseReps.trim() || !newExerciseSeries.trim()) {
+      Alert.alert('Erro', 'Repetições e séries são obrigatórias.');
+      return;
+    }
+
+    const reps = parseInt(newExerciseReps);
+    const series = parseInt(newExerciseSeries);
+
+    if (isNaN(reps) || isNaN(series) || reps <= 0 || series <= 0) {
+      Alert.alert('Erro', 'Repetições e séries devem ser números positivos.');
+      return;
+    }
+
+    const newExercise: Exercise = {
+      name: newExerciseName.trim(),
+      reps,
+      series,
+    };
+
+    setExercises(prev => [...prev, newExercise]);
+    setNewExerciseName('');
+    setNewExerciseReps('');
+    setNewExerciseSeries('');
+  };
+
+  const handleRemoveExercise = (index: number) => {
+    setExercises(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSaveWorkout = async () => {
     if (!newWorkoutTitle.trim()) {
       Alert.alert('Erro!', 'O título do treino não pode estar vazio.');
+      return;
+    }
+
+    if (exercises.length === 0) {
+      Alert.alert('Erro!', 'Adicione pelo menos um exercício ao treino.');
       return;
     }
 
@@ -254,21 +306,25 @@ export default function WorkoutScreen() {
       if (selectedWorkout) {
         await updateWorkout(selectedWorkout.id, {
           name: newWorkoutTitle,
-          content,
+          exercises,
           date: formattedDate,
           type,
         });
       } else {
-        await createWorkout(newWorkoutTitle, content, formattedDate, userId!, type);
+        await createWorkout(newWorkoutTitle, exercises, formattedDate, userId!, type);
       }
 
       setIsCreateVisible(false);
       setNewWorkoutTitle('');
       setSelectedMusclesForWorkout([]);
-      setContent('');
+      setExercises([]);
+      setNewExerciseName('');
+      setNewExerciseReps('');
+      setNewExerciseSeries('');
       await fetchWorkouts(userId!);
     } catch (err) {
       console.error(err);
+      Alert.alert('Erro', 'Não foi possível salvar o treino.');
     }
   };
 
@@ -302,7 +358,7 @@ export default function WorkoutScreen() {
         workout.type?.split(',').some((muscle) => selectedCategories.includes(muscle))
       );
 
-  const renderLeftActions = (item: any) => {
+  const renderLeftActions = (item: Workout) => {
     return (
     <View style={{
       flexDirection: 'row',
@@ -331,8 +387,9 @@ export default function WorkoutScreen() {
     );
   };
 
-  const renderWorkoutItem = ({ item }: { item: any }) => {
+  const renderWorkoutItem = ({ item }: { item: Workout }) => {
     const muscles = item.type ? item.type.split(',') : [];
+    const exerciseCount = item.exercises?.length || 0;
 
     return (
       <Swipeable
@@ -351,9 +408,14 @@ export default function WorkoutScreen() {
               onPress={() => handleOpenEdit(item)}
             >
               <Text className="text-xl font-sans font-medium text-gray-300">{item.name}</Text>
-              <Text className="text-neutral-400 text-sm mt-1 font-sans">
-                {new Date(item.date ?? '').toLocaleDateString('pt-BR')}
-              </Text>
+              <View className="flex-row items-center gap-2">
+                <Text className="text-neutral-400 text-sm mt-1 font-sans">
+                  {new Date(item.date ?? '').toLocaleDateString('pt-BR')}
+                </Text>
+                <Text className="text-neutral-400 text-sm font-sans">
+                  • {exerciseCount} exercício{exerciseCount !== 1 ? 's' : ''}
+                </Text>
+              </View>
             </Pressable>
           </View>
 
@@ -363,14 +425,14 @@ export default function WorkoutScreen() {
                 <View
                   key={muscle}
                   className="px-3 py-1 rounded-xl max-w-[80px] overflow-hidden"
-                  style={{ backgroundColor: muscleColors[muscle] ?? '#94a3b8' }}
+                  style={{ backgroundColor: getCategoryColor(muscle.trim()) }}
                 >
                   <Text
                     className="text-xs font-medium text-white font-sans"
                     numberOfLines={1}
                     ellipsizeMode="tail"
                   >
-                    {muscle}
+                    {muscle.trim()}
                   </Text>
                 </View>
               ))
@@ -422,6 +484,7 @@ export default function WorkoutScreen() {
         </View>
       </View>
 
+      {/* Modal de Gerenciar Categorias */}
       <Modal
         transparent
         animationType="fade"
@@ -430,11 +493,14 @@ export default function WorkoutScreen() {
       >
         <View className="flex-1 bg-black/80 justify-center items-center px-6">
           <View className="bg-zinc-800 rounded-2xl w-full max-h-[80%] p-4">
-            <ScrollView className="mb-4">
+            <Text className="text-white text-xl font-sans font-semibold mb-4 text-center">
+              Gerenciar Categorias
+            </Text>
+            <ScrollView className="mb-4" showsVerticalScrollIndicator={false}>
               {categories.length === 0 ? (
                 <View className="items-center justify-center py-12">
-                  <Ionicons name="folder-open-outline" size={64} color="#aaa" className="mb-4" />
-                  <Text className="text-neutral-400 text-lg font-sans text-center">
+                  <Ionicons name="folder-open-outline" size={64} color="#aaa" />
+                  <Text className="text-neutral-400 text-lg font-sans text-center mt-4">
                     Você ainda não criou categorias.
                   </Text>
                 </View>
@@ -444,11 +510,18 @@ export default function WorkoutScreen() {
                   return (
                     <View
                       key={cat}
-                      className="flex-row justify-between items-center py-2 border-b border-neutral-700"
+                      className="flex-row justify-between items-center py-3 border-b border-neutral-700"
                     >
                       <View className="flex-row items-center gap-3">
                         <View
-                          style={{ width: 15, height: 15, borderRadius: 7.5, backgroundColor: color, borderWidth: 0.5, borderColor: '#fff',}}
+                          style={{ 
+                            width: 15, 
+                            height: 15, 
+                            borderRadius: 7.5, 
+                            backgroundColor: color, 
+                            borderWidth: 0.5, 
+                            borderColor: '#fff'
+                          }}
                         />
                         <Text className="text-white font-sans text-lg">{cat}</Text>
                       </View>
@@ -459,7 +532,7 @@ export default function WorkoutScreen() {
                         }}
                         className="p-2 bg-neutral-700 rounded-xl"
                       >
-                      <Ionicons name="trash" size={20} color="#fa4d5c" />
+                        <Ionicons name="trash" size={20} color="#fa4d5c" />
                       </Pressable>
                     </View>
                   );
@@ -474,46 +547,48 @@ export default function WorkoutScreen() {
               <Text className="text-white text-lg font-sans font-semibold">Fechar</Text>
             </Pressable>
           </View>
-
-          <Modal
-            transparent
-            animationType="fade"
-            visible={showConfirmDeleteModal}
-            onRequestClose={() => setShowConfirmDeleteModal(false)}
-          >
-            <View className="flex-1 bg-black/80 justify-center items-center px-8">
-              <View className="bg-zinc-800 w-full rounded-2xl p-6 items-center shadow-lg">
-                <Ionicons name="alert-circle" size={48} color="#ff7a7f" className="mb-4" />
-                <Text className="text-white text-xl font-semibold mb-2 font-sans text-center">
-                  Apagar Categoria
-                </Text>
-                <Text className="text-neutral-400 font-sans text-center mb-6">
-                  {categoryToDelete
-                    ? `Tem certeza que deseja apagar a categoria "${categoryToDelete}"? Esta ação não pode ser desfeita.`
-                    : 'Tem certeza que deseja apagar esta categoria? Esta ação não pode ser desfeita.'}
-                </Text>
-
-                <View className="flex-row w-full justify-between gap-3">
-                  <Pressable
-                    onPress={() => setShowConfirmDeleteModal(false)}
-                    className="flex-1 bg-neutral-700 py-3 rounded-xl items-center"
-                  >
-                    <Text className="text-white font-semibold font-sans">Cancelar</Text>
-                  </Pressable>
-
-                  <Pressable
-                    onPress={handleDeleteCategory}
-                    className="flex-1 bg-rose-500 py-3 rounded-xl items-center"
-                  >
-                    <Text className="text-black font-sans font-semibold">Apagar</Text>
-                  </Pressable>
-                </View>
-              </View>
-            </View>
-          </Modal>
         </View>
       </Modal>
 
+      {/* Modal de Confirmação de Exclusão */}
+      <Modal
+        transparent
+        animationType="fade"
+        visible={showConfirmDeleteModal}
+        onRequestClose={() => setShowConfirmDeleteModal(false)}
+      >
+        <View className="flex-1 bg-black/80 justify-center items-center px-8">
+          <View className="bg-zinc-800 w-full rounded-2xl p-6 items-center shadow-lg">
+            <Ionicons name="alert-circle" size={48} color="#ff7a7f" className="mb-4" />
+            <Text className="text-white text-xl font-semibold mb-2 font-sans text-center">
+              Apagar Categoria
+            </Text>
+            <Text className="text-neutral-400 font-sans text-center mb-6">
+              {categoryToDelete
+                ? `Tem certeza que deseja apagar a categoria "${categoryToDelete}"? Esta ação não pode ser desfeita.`
+                : 'Tem certeza que deseja apagar esta categoria? Esta ação não pode ser desfeita.'}
+            </Text>
+
+            <View className="flex-row w-full justify-between gap-3">
+              <Pressable
+                onPress={() => setShowConfirmDeleteModal(false)}
+                className="flex-1 bg-neutral-700 py-3 rounded-xl items-center"
+              >
+                <Text className="text-white font-semibold font-sans">Cancelar</Text>
+              </Pressable>
+
+              <Pressable
+                onPress={handleDeleteCategory}
+                className="flex-1 bg-rose-500 py-3 rounded-xl items-center"
+              >
+                <Text className="text-black font-sans font-semibold">Apagar</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Filtros de Categoria */}
       <View className="flex flex-col px-6 mb-5">
         <View className="flex flex-row flex-wrap gap-2">
           {categories.map((cat) => {
@@ -532,7 +607,14 @@ export default function WorkoutScreen() {
                   isSelected ? 'bg-rose-400' : 'bg-zinc-700'
                 }`}
               >
-                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color, borderWidth: 0.5, borderColor: '#fff' }} />
+                <View style={{ 
+                  width: 10, 
+                  height: 10, 
+                  borderRadius: 5, 
+                  backgroundColor: color, 
+                  borderWidth: 0.5, 
+                  borderColor: '#fff' 
+                }} />
                 <Text className={`font-sans text-sm ${isSelected ? 'text-black' : 'text-white'}`}>
                   {cat}
                 </Text>
@@ -547,60 +629,68 @@ export default function WorkoutScreen() {
             <Ionicons name="add" size={16} color="white" />
             <Text className="text-white text-sm font-sans">Nova Categoria</Text>
           </Pressable>
-
-          <Modal
-            transparent
-            animationType="fade"
-            visible={isCategoryModalVisible}
-            onRequestClose={() => setIsCategoryModalVisible(false)}
-          >
-            <View className="flex-1 justify-center items-center bg-black/90 px-8">
-              <View className="bg-zinc-800 p-6 rounded-2xl w-full">
-
-                <TextInput
-                  placeholder="Nome da categoria"
-                  placeholderTextColor="#a1a1aa"
-                  value={newCategoryName}
-                  onChangeText={setNewCategoryName}
-                  className="text-white font-sans font-3xl p-2 rounded mb-4"
-                />
-
-                <View className="flex flex-row flex-wrap gap-2 mb-4">
-                  {colorOptions.map((color) => (
-                    <Pressable
-                      key={color}
-                      onPress={() => setNewCategoryColor(color)}
-                      style={{
-                        backgroundColor: color,
-                        width: 40,
-                        height: 40,
-                        borderRadius: 20,
-                        borderWidth: newCategoryColor === color ? 3 : 1,
-                        borderColor: newCategoryColor === color ? '#fff' : '#333',
-                      }}
-                    />
-                  ))}
-                </View>
-
-                <Pressable
-                  onPress={handleAddCategory}
-                  className="bg-rose-400 p-3 mt-3 rounded-xl items-center"
-                >
-                  <Text className="text-black font-semibold font-sans">Adicionar Categoria</Text>
-                </Pressable>
-
-                <Pressable
-                  onPress={() => setIsCategoryModalVisible(false)}
-                  className="mt-4 p-2"
-                >
-                  <Text className="text-neutral-400 text-center font-sans">Cancelar</Text>
-                </Pressable>
-              </View>
-            </View>
-          </Modal>
         </View>
       </View>
+
+      {/* Modal de Nova Categoria */}
+      <Modal
+        transparent
+        animationType="fade"
+        visible={isCategoryModalVisible}
+        onRequestClose={() => setIsCategoryModalVisible(false)}
+      >
+        <View className="flex-1 justify-center items-center bg-black/90 px-8">
+          <View className="bg-zinc-800 p-6 rounded-2xl w-full">
+            <Text className="text-white text-xl font-sans font-semibold mb-4 text-center">
+              Nova Categoria
+            </Text>
+
+            <TextInput
+              placeholder="Nome da categoria"
+              placeholderTextColor="#a1a1aa"
+              value={newCategoryName}
+              onChangeText={setNewCategoryName}
+              className="text-white font-sans text-lg p-3 bg-zinc-700/30 rounded-xl mb-4"
+            />
+
+            <Text className="text-zinc-400 text-sm font-medium mb-3 uppercase tracking-wide">
+              Cor da Categoria
+            </Text>
+            <View className="flex flex-row flex-wrap gap-2 mb-6">
+              {colorOptions.map((color) => (
+                <Pressable
+                  key={color}
+                  onPress={() => setNewCategoryColor(color)}
+                  style={{
+                    backgroundColor: color,
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    borderWidth: newCategoryColor === color ? 3 : 1,
+                    borderColor: newCategoryColor === color ? '#fff' : '#333',
+                  }}
+                />
+              ))}
+            </View>
+
+            <Pressable
+              onPress={handleAddCategory}
+              className="bg-rose-400 p-3 rounded-xl items-center"
+            >
+              <Text className="text-black font-semibold font-sans text-lg">Adicionar Categoria</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setIsCategoryModalVisible(false)}
+              className="mt-4 p-2"
+            >
+              <Text className="text-neutral-400 text-center font-sans">Cancelar</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
       
+      {/* Lista de Treinos ou Estado Vazio */}
       {filteredWorkouts.length === 0 ? (
         <EmptyState onCreateWorkout={handleOpenCreate} />
       ) : (
@@ -609,89 +699,168 @@ export default function WorkoutScreen() {
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={{ paddingBottom: 24 }}
           renderItem={renderWorkoutItem}
+          showsVerticalScrollIndicator={false}
         />
       )}
 
-<Modal
-  transparent
-  animationType="slide"
-  visible={isCreateVisible}
-  onRequestClose={() => setIsCreateVisible(false)}
->
-  <View className={`flex-1 ${Platform.OS === 'ios' ? 'pt-12 pb-8' : 'pt-8 pb-4'} bg-zinc-800`}>
-    {/* Header */}
-    <View className="flex-row justify-between items-center px-4 py-4">
-      <Pressable
-        className="items-center flex flex-row"
-        onPress={() => setIsCreateVisible(false)}
+      {/* Modal de Criar/Editar Treino */}
+      <Modal
+        transparent
+        animationType="slide"
+        visible={isCreateVisible}
+        onRequestClose={() => setIsCreateVisible(false)}
       >
-        <Ionicons name="chevron-back" size={28} color="white" />
-        <Text className="text-white text-lg font-sans"> Voltar</Text>
-      </Pressable>
+        <View className={`flex-1 ${Platform.OS === 'ios' ? 'pt-12 pb-8' : 'pt-8 pb-4'} bg-zinc-800`}>
 
-      <Pressable onPress={handleSaveWorkout}>
-        <Text className="text-rose-400 font-sans text-lg font-semibold mr-4">Salvar</Text>
-      </Pressable>
-    </View>
+          {/* Header */}
+          <View className="flex-row justify-between items-center px-4 py-4">
+            <Pressable
+              className="items-center flex flex-row"
+              onPress={() => setIsCreateVisible(false)}
+            >
+              <Ionicons name="chevron-back" size={28} color="white" />
+              <Text className="text-white text-lg font-sans"> Voltar</Text>
+            </Pressable>
 
-    <ScrollView className="flex-1 px-6" showsVerticalScrollIndicator={false}>
-      {/* Workout Title */}
-      <View className="mt-3 mb-6">
-        <TextInput
-          placeholder="Nome do treino"
-          placeholderTextColor="#71717a"
-          value={newWorkoutTitle}
-          onChangeText={setNewWorkoutTitle}
-          className="text-white text-2xl font-sans"
-          multiline
-          autoFocus
-        />
-      </View>
+            <Pressable onPress={handleSaveWorkout}>
+              <Text className="text-rose-400 font-sans text-lg font-semibold mr-4">Salvar</Text>
+            </Pressable>
+          </View>
 
-      {/* Muscle Categories */}
-      <View className="mb-8">
-        <Text className="text-zinc-400 text-sm font-medium mb-3 uppercase tracking-wide">
-          Grupos Musculares
-        </Text>
-        
-        <View className="flex flex-row flex-wrap gap-2">
-          {categories.map((muscle) => {
-            const isSelected = selectedMusclesForWorkout.includes(muscle);
-            const color = muscleColors[muscle];
-            return (
-              <Pressable
-                key={muscle}
-                onPress={() => toggleMuscleForWorkout(muscle)}
-                className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${
-                  isSelected ? 'bg-rose-400' : 'bg-zinc-700'
-                }`}
-              >
-                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color, borderWidth: 0.5, borderColor: '#fff' }} />
-                <Text className={`${isSelected ? 'text-black' : 'text-white'}`}>{muscle}</Text>
-              </Pressable>
-            );
-          })}
+          <ScrollView className="flex-1 px-6" showsVerticalScrollIndicator={false}>
+
+            {/* Título do Treino */}
+            <View className="mt-6 mb-6">
+              <TextInput
+                placeholder="Nome do treino"
+                placeholderTextColor="#71717a"
+                value={newWorkoutTitle}
+                onChangeText={setNewWorkoutTitle}
+                className="text-white text-2xl font-sans py-3"
+                multiline
+                autoFocus
+              />
+            </View>
+
+            {/* Grupos Musculares */}
+            <View className="mb-8">
+              <Text className="text-zinc-400 text-sm font-medium mb-3 uppercase tracking-wide">
+                Grupos Musculares
+              </Text>
+              
+              <View className="flex flex-row flex-wrap gap-2">
+                {categories.map((muscle) => {
+                  const isSelected = selectedMusclesForWorkout.includes(muscle);
+                  const color = getCategoryColor(muscle);
+                  return (
+                    <Pressable
+                      key={muscle}
+                      onPress={() => toggleMuscleForWorkout(muscle)}
+                      className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${
+                      isSelected ? 'bg-rose-400' : 'bg-zinc-700'
+                      }`}
+                    >
+                      <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color, borderWidth: 0.5, borderColor: '#fff' }} />
+                      <Text className={`font-sans ${isSelected ? 'text-black' : 'text-white'}`}>
+                        {muscle}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+
+            {/* Exercícios */}
+            <View className="mb-8">
+              <Text className="text-zinc-400 text-sm font-medium mb-3 uppercase tracking-wide">
+                Exercícios ({exercises.length})
+              </Text>
+
+              {/* Lista de exercícios */}
+              {exercises.map((exercise, index) => (
+                <View key={index} className="bg-zinc-700/30 rounded-xl p-4 mb-3 flex-row justify-between items-center">
+                  <View className="flex-1">
+                    <Text className="text-white font-sans text-lg font-medium">{exercise.name}</Text>
+                    <Text className="text-zinc-400 font-sans text-sm">
+                      {exercise.series} séries x {exercise.reps} repetições
+                    </Text>
+                  </View>
+                  <Pressable
+                    onPress={() => handleRemoveExercise(index)}
+                    className="p-2 bg-rose-500/20 rounded-lg"
+                  >
+                    <Ionicons name="trash" size={18} color="#f43f5e" />
+                  </Pressable>
+                </View>
+              ))}
+
+              {/* Adicionar novo exercício */}
+              <View className="bg-zinc-700/30 rounded-xl p-4 mb-3">
+                <Text className="text-white font-sans text-lg font-medium mb-3">
+                  Adicionar Exercício
+                </Text>
+                
+                <TextInput
+                  placeholder="Nome do exercício (ex: Supino reto)"
+                  placeholderTextColor="#71717a"
+                  value={newExerciseName}
+                  onChangeText={setNewExerciseName}
+                  className="text-white font-sans text-base mb-3 border-b border-zinc-600 pb-2"
+                />
+                
+                <View className="flex-row gap-3 mb-3">
+                  <View className="flex-1">
+                    <Text className="text-zinc-400 text-xs font-sans mb-1 uppercase tracking-wide">
+                      SÉRIES
+                    </Text>
+                    <TextInput
+                      placeholder="0"
+                      placeholderTextColor="#71717a"
+                      value={newExerciseSeries}
+                      onChangeText={setNewExerciseSeries}
+                      keyboardType="numeric"
+                      className="text-white font-sans text-base bg-zinc-600/30 rounded-lg px-3 py-2"
+                    />
+                  </View>
+                  
+                  <View className="flex-1">
+                    <Text className="text-zinc-400 text-xs font-sans mb-1 uppercase tracking-wide">
+                      REPETIÇÕES
+                    </Text>
+                    <TextInput
+                      placeholder="0"
+                      placeholderTextColor="#71717a"
+                      value={newExerciseReps}
+                      onChangeText={setNewExerciseReps}
+                      keyboardType="numeric"
+                      className="text-white font-sans text-base bg-zinc-600/30 rounded-lg px-3 py-2"
+                    />
+                  </View>
+                </View>
+
+                <Pressable
+                  onPress={handleAddExercise}
+                  className="bg-rose-400 rounded-lg py-3 items-center"
+                >
+                  <Text className="text-black font-sans font-semibold">Adicionar Exercício</Text>
+                </Pressable>
+              </View>
+
+              {exercises.length === 0 && (
+                <View className="items-center justify-center py-8">
+                  <Ionicons name="barbell-outline" size={48} color="#71717a" />
+                  <Text className="text-zinc-400 font-sans text-center mt-2">
+                    Nenhum exercício adicionado
+                  </Text>
+                  <Text className="text-zinc-500 font-sans text-sm text-center mt-1">
+                    Adicione exercícios para compor seu treino
+                  </Text>
+                </View>
+              )}
+            </View>
+          </ScrollView>
         </View>
-      </View>
-
-      {/* Workout Content */}
-      <View className="mb-6">
-        <Text className="text-zinc-400 text-sm font-medium mb-3 uppercase tracking-wide">
-          Descrição do Treino
-        </Text>
-        <TextInput
-          placeholder="Descreva os exercícios, séries, repetições..."
-          placeholderTextColor="#71717a"
-          className="text-white text-base leading-6 bg-zinc-700/30 font-sans border-zinc-600 rounded-xl px-4 py-3 min-h-[150px]"
-          multiline
-          textAlignVertical="top"
-          value={content}
-          onChangeText={setContent}
-        />
-      </View>
-    </ScrollView>
-  </View>
-</Modal>
+      </Modal>
     </SafeAreaView>
   );
 }

@@ -44,7 +44,7 @@ export const runMigrations = async (db: SQLiteDatabase) => {
     CREATE TABLE IF NOT EXISTS workouts (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
-      content TEXT,
+      exercises TEXT NOT NULL,
       date TEXT,
       type TEXT,
       user_id TEXT,

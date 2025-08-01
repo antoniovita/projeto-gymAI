@@ -1,10 +1,16 @@
 import uuid from 'react-native-uuid';
 import * as SQLite from 'expo-sqlite';
 
+export interface Exercise {
+  name: string;
+  reps: number;
+  series: number;
+}
+
 export interface Workout {
   id: string;
   name: string;
-  content: string;
+  exercises: Exercise[];
   date: string;
   type?: string;
   user_id: string;
@@ -12,23 +18,24 @@ export interface Workout {
 
 export const WorkoutModel = {
 
-  // POST criar novo workout
+  // POST - criar novo workout
   createWorkout: async (
     db: SQLite.SQLiteDatabase,
     name: string,
-    content: string,
+    exercises: Exercise[],
     date: string,
     userId: string,
     type?: string,
   ) => {
     const workoutId = uuid.v4() as string;
+    const exercisesJson = JSON.stringify(exercises);
 
-    const result = await db.runAsync(
-      `INSERT INTO workouts (id, name, content, date, type, user_id)
+    await db.runAsync(
+      `INSERT INTO workouts (id, name, exercises, date, type, user_id)
        VALUES (?, ?, ?, ?, ?, ?)`,
       workoutId,
       name,
-      content,
+      exercisesJson,
       date,
       type ?? null,
       userId,
@@ -37,13 +44,17 @@ export const WorkoutModel = {
     return workoutId;
   },
 
-  // GET - pegar todos os workouts de um usuario
+  // GET - pegar todos os workouts de um usuário
   getWorkoutsByUserId: async (db: SQLite.SQLiteDatabase, userId: string) => {
     const workouts = await db.getAllAsync(
       'SELECT * FROM workouts WHERE user_id = ?',
       userId
     );
-    return workouts as Workout[];
+
+    return workouts.map((workout: any) => ({
+      ...workout,
+      exercises: JSON.parse(workout.exercises),
+    })) as Workout[];
   },
 
   // GET - pegar workouts por tipo
@@ -53,26 +64,53 @@ export const WorkoutModel = {
       userId,
       type
     );
-    return workouts as Workout[];
+
+    return workouts.map((workout: any) => ({
+      ...workout,
+      exercises: JSON.parse(workout.exercises),
+    })) as Workout[];
   },
 
-  // PUT - atualizar nome, conteúdo, data ou tipo do workout
+  // PUT - atualizar workout
   updateWorkout: async (
-    db: SQLite.SQLiteDatabase,
-    workoutId: string,
-    updates: Partial<Omit<Workout, 'id' | 'user_id'>>
-  ) => {
-    const fields = Object.keys(updates).map((key) => `${key} = ?`).join(', ');
-    const values = Object.values(updates);
+  db: SQLite.SQLiteDatabase,
+  workoutId: string,
+  updates: Partial<Omit<Workout, 'id' | 'user_id'>>
+) => {
+  const fields: string[] = [];
+  const values: any[] = [];
 
-    const result = await db.runAsync(
-      `UPDATE workouts SET ${fields} WHERE id = ?`,
-      ...values,
-      workoutId
-    );
+  if (updates.name !== undefined) {
+    fields.push('name = ?');
+    values.push(updates.name);
+  }
 
-    return result.changes;
-  },
+  if (updates.date !== undefined) {
+    fields.push('date = ?');
+    values.push(updates.date);
+  }
+
+  if (updates.type !== undefined) {
+    fields.push('type = ?');
+    values.push(updates.type);
+  }
+
+  if (updates.exercises !== undefined) {
+    fields.push('exercises = ?');
+    values.push(JSON.stringify(updates.exercises));
+  }
+
+  if (fields.length === 0) return 0;
+
+  const result = await db.runAsync(
+    `UPDATE workouts SET ${fields.join(', ')} WHERE id = ?`,
+    ...values,
+    workoutId
+  );
+
+  return result.changes;
+},
+
 
   // DELETE - deletar workout por id
   deleteWorkout: async (db: SQLite.SQLiteDatabase, workoutId: string) => {

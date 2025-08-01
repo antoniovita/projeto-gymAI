@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { WorkoutService } from '../api/service/workoutService';
-import { Workout } from 'api/model/Workout';
+import { Workout, Exercise } from 'api/model/Workout';
 
 export const useWorkout = () => {
   const [loading, setLoading] = useState(false);
@@ -9,7 +9,7 @@ export const useWorkout = () => {
 
   const createWorkout = async (
     name: string,
-    content: string,
+    exercises: Exercise[],
     date: string,
     userId: string,
     type?: string,
@@ -17,7 +17,7 @@ export const useWorkout = () => {
     setLoading(true);
     setError(null);
     try {
-      const workoutId = await WorkoutService.createWorkout(name, content, date, userId, type);
+      const workoutId = await WorkoutService.createWorkout(name, exercises, date, userId, type);
       return workoutId;
     } catch (err: any) {
       setError(err.message);
@@ -55,7 +55,12 @@ export const useWorkout = () => {
 
   const updateWorkout = async (
     workoutId: string,
-    updates: Partial<{ name?: string; content?: string; date?: string; type?: string; }>
+    updates: Partial<{
+      name?: string;
+      exercises?: Exercise[];
+      date?: string;
+      type?: string;
+    }>
   ) => {
     setLoading(true);
     setError(null);

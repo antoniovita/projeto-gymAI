@@ -8,7 +8,7 @@ import * as Notifications from 'expo-notifications';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import "./global.css";
 import { AuthService } from 'api/service/authService';
-import { initDatabase, getDb } from 'database';
+import { initDatabase, getDb, deleteDatabase } from 'database';
 import WelcomeScreen from './components/WelcomeScreen';
 import MainTabs from './widgets/MainTabs';
 import SettingsScreen from 'components/SettingsScreen';

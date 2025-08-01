@@ -1,12 +1,12 @@
 import { getDb } from '../../database';
-import { WorkoutModel } from '../model/Workout';
+import { WorkoutModel, Exercise } from '../model/Workout';
 
 export const WorkoutController = {
 
-    // cria workout 
+  // cria workout 
   createWorkout: async (
     name: string,
-    content: string,
+    exercises: Exercise[],
     date: string,
     userId: string,
     type?: string,
@@ -16,7 +16,7 @@ export const WorkoutController = {
       const workoutId = await WorkoutModel.createWorkout(
         db,
         name,
-        content,
+        exercises,
         date,
         userId,
         type,
@@ -55,7 +55,12 @@ export const WorkoutController = {
   // atualiza um workout por id
   updateWorkout: async (
     workoutId: string,
-    updates: Partial<Omit<Parameters<typeof WorkoutModel.updateWorkout>[2], 'id' | 'user_id'>>
+    updates: Partial<{
+      name: string;
+      exercises: Exercise[];
+      date: string;
+      type: string;
+    }>
   ) => {
     const db = getDb();
     try {
