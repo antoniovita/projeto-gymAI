@@ -282,7 +282,7 @@ export default function RoutineScreen() {
           className="flex-row items-center justify-center w-16 h-16 rounded-full"
           onPress={() => handleDelete(item)}
         >
-          <Ionicons name="trash" size={24} color="white" />
+          <Ionicons className='ml-4' name="trash" size={24} color="white" />
         </TouchableOpacity>
       </View>
     );
@@ -301,16 +301,16 @@ export default function RoutineScreen() {
         childrenContainerStyle={{ backgroundColor: '#27272a' }}
         enableTrackpadTwoFingerGesture={false}
       >
-        <View className="w-full flex flex-col justify-center px-6 h-[90px] pb-4 border-b border-neutral-700 bg-zinc-800">
+        <View className="w-full flex flex-col justify-center px-6 h-[90px] pb-4 border-b border-neutral-700 pt-4 bg-zinc-800">
           <View className="flex flex-row justify-between">
-            <Pressable className="flex flex-col gap-1 mt-1" onPress={() => openEditModal(item)}>
+            <Pressable className="flex flex-col gap-1" onPress={() => openEditModal(item)}>
               <Text className="text-xl font-sans font-medium text-gray-300">
                 {item.title}
               </Text>
-              <Text className="text-neutral-400 text-sm mt-1 font-sans">
+              <Text className="text-neutral-400 text-sm font-sans">
                 {item.time}
               </Text>
-              <Text className="text-neutral-500 font-sans text-xs mt-1">
+              <Text className="text-neutral-500 font-sans text-xs">
                 Recorrente em {item.daysOfWeek.length} dias
               </Text>
             </Pressable>
@@ -404,10 +404,10 @@ export default function RoutineScreen() {
           keyboardVerticalOffset={0}
         >
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <View className="bg-[#1e1e1e] rounded-t-3xl p-6" style={{ minHeight: '53%' }}>
+            <View className="bg-[#1e1e1e] rounded-t-3xl p-6" style={{ minHeight: '50%' }}>
               <ScrollView 
                 showsVerticalScrollIndicator={false} 
-                style={{ maxHeight: 320 }}
+                style={{ maxHeight: 300 }}
                 nestedScrollEnabled={true}
                 keyboardShouldPersistTaps="handled"
                 contentContainerStyle={{ flexGrow: 1 }}
@@ -515,7 +515,7 @@ export default function RoutineScreen() {
 
               </ScrollView>
 
-              <View className={`${Platform.OS == 'ios' ? 'absolute bottom-[15%] self-center flex-row flex gap-3' : 'self-center flex-row flex gap-3'}`}>
+              <View className={`${Platform.OS == 'ios' ? 'absolute bottom-[10%] self-center flex-row flex gap-3' : 'self-center flex-row flex gap-3'}`}>
                 <Pressable
                   onPress={() => setShowModal(false)}
                   className="flex-1 bg-zinc-800 rounded-xl py-4"

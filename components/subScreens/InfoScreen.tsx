@@ -156,10 +156,10 @@ export const ChangeNameModal: React.FC<ChangeNameModalProps> = ({
 
           <ScrollView>
             <Text className="text-gray-300 font-sans mb-4">
-              Atualize o nome que será exibido em seu perfil. Escolha um nome que seus contatos reconheçam facilmente.
+              Atualize o nome que será exibido em seu perfil.
             </Text>
             <TextInput
-              className="bg-zinc-800 text-white rounded-xl px-4 py-4 font-sans text-base mb-6"
+              className="bg-zinc-800 text-white rounded-xl px-4 py-4 font-sans text-lg mb-6"
               placeholder="Digite novo nome"
               placeholderTextColor="#a1a1aa"
               value={name}
@@ -169,10 +169,10 @@ export const ChangeNameModal: React.FC<ChangeNameModalProps> = ({
 
           <TouchableOpacity
             onPress={handleSave}
-            className="w-full bg-[#ff7a7f] py-3 rounded-2xl items-center mb-4"
+            className="w-full bg-[#ff7a7f] py-3 rounded-xl items-center mb-4"
           >
-            <Text className="text-white font-sans text-base">
-              Salvar
+            <Text className="text-black font-sans text-lg">
+              Salvar mudanças
             </Text>
           </TouchableOpacity>
         </Animated.View>
@@ -273,14 +273,14 @@ const ChangePinModal: React.FC<{
             <Text className="text-gray-300 font-sans mb-4">
               Defina um novo código de 6 dígitos para proteger sua conta.
             </Text>
-            <View className="flex-row justify-center gap-2 mb-6">
+            <View className="flex-row justify-center gap-3 mb-6">
               {digits.map((digit, idx) => (
                 <TextInput
                   key={idx}
                   ref={ref => {
                     inputRefs.current[idx] = ref;
                   }}
-                  className="w-12 h-[50px] bg-zinc-800 text-white rounded-lg text-center font-sans text-xl"
+                  className="w-14 h-[65px] bg-zinc-800 text-white rounded-xl text-center font-sans text-2xl"
                   keyboardType="numeric"
                   maxLength={1}
                   value={digit}
@@ -294,9 +294,9 @@ const ChangePinModal: React.FC<{
 
           <TouchableOpacity
             onPress={handleSave}
-            className="w-full bg-[#ff7a7f] py-3 rounded-2xl items-center mb-4"
+            className="w-full bg-[#ff7a7f] py-3 rounded-xl items-center mb-4"
           >
-            <Text className="text-white font-sans text-base">Salvar</Text>
+            <Text className="text-black font-sans text-lg">Salvar mudanças</Text>
           </TouchableOpacity>
         </Animated.View>
       </KeyboardAvoidingView>

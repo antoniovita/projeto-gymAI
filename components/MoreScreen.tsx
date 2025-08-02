@@ -40,7 +40,7 @@ const MoreScreen = () => {
     },
     {
       id: 4,
-      title: "Pomodoro",
+      title: "Temporizador",
       subtitle: "Técnica de produtividade e foco",
       icon: "timer-outline",
       color: "#ff7a7f",

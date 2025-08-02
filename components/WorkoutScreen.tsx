@@ -89,8 +89,8 @@ export default function WorkoutScreen() {
 
   // Estados para controle dos exercícios
   const [newExerciseName, setNewExerciseName] = useState('');
-  const [newExerciseReps, setNewExerciseReps] = useState('');
-  const [newExerciseSeries, setNewExerciseSeries] = useState('');
+  const [newExerciseReps, setNewExerciseReps] = useState('10');
+  const [newExerciseSeries, setNewExerciseSeries] = useState('3');
 
   // Animações para o modal de exercício
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -993,7 +993,7 @@ export default function WorkoutScreen() {
                     dragOffsetFromLeftEdge={80}
                     friction={1}
                   >
-                    <View className="bg-[#2d2d32] rounded-3xl p-5 mb-4">
+                    <View className="bg-[#2d2d32] rounded-3xl p-4 mb-4">
                       <View className="flex-row items-center justify-between">
                         {/* Lado esquerdo: Ícone e Nome do exercício */}
                         <View className="flex-row items-center flex-1 pr-4">
@@ -1004,7 +1004,7 @@ export default function WorkoutScreen() {
                           
                           {/* Nome e detalhes */}
                           <View className="flex-1">
-                            <Text className="text-white font-sans text-lg font-bold mb-1">
+                            <Text className="text-white font-sans text-lg font-bold">
                               {exercise.name}
                             </Text>
                             <Text className="text-zinc-400 text-sm font-medium">
@@ -1018,11 +1018,6 @@ export default function WorkoutScreen() {
                           {/* Séries */}
                           <View className="items-center">
                             <View className="flex-row items-center mb-2">
-                              <Ionicons 
-                                name="repeat" 
-                                size={14} 
-                                color="#9CA3AF" 
-                              />
                               <Text className="text-zinc-400 text-xs font-semibold ml-1 uppercase tracking-wide">
                                 Séries
                               </Text>
@@ -1034,17 +1029,10 @@ export default function WorkoutScreen() {
                             </View>
                           </View>
 
-                          {/* Separador visual */}
-                          <View className="mx-1" />
 
                           {/* Repetições */}
                           <View className="items-center">
                             <View className="flex-row items-center mb-2">
-                              <Ionicons 
-                                name="refresh" 
-                                size={14} 
-                                color="#9CA3AF" 
-                              />
                               <Text className="text-zinc-400 text-xs font-semibold ml-1 uppercase tracking-wide">
                                 Reps
                               </Text>

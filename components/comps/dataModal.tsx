@@ -152,7 +152,7 @@ export function DataModal({
                 </View>
 
                 <TouchableOpacity
-                  className="flex-row items-center mt-3 mb-4 px-5"
+                  className="flex-row items-center mt-3 mb-4 px-6"
                   onPress={toggleSkipPin}
                 >
                   <Ionicons
@@ -166,7 +166,7 @@ export function DataModal({
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  className="flex-row items-center mb-6 px-5"
+                  className="flex-row items-center mb-6 px-6"
                   onPress={toggleAcceptTerms}
                 >
                   <Ionicons

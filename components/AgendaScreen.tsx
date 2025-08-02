@@ -706,68 +706,67 @@ export default function AgendaScreen() {
         </View>
       </View>
 
-      {/* Calendar Section */}
-      <View className="px-4 mb-4">
-        <View className="bg-[#35353a] rounded-xl overflow-hidden">
-          <View className="flex-row items-center px-6 py-3 ">
-            <Text className="text-white text-base font-sans">
+    {/* Calendar Section */}
+    <View className="px-4 mb-4">
+      <View className="bg-[#35353a] rounded-xl overflow-hidden">
+        <View className="flex-row items-center px-6 py-3 ">
+          <Text className="text-white text-base font-sans">
             {format(currentWeekStart, 'MMMM yyyy', { locale: ptBR }).replace(/^./, (c) => c.toUpperCase())}
-            </Text>
-          </View>
-
-          {/* Headers dos dias da semana */}
-          <View className="flex-row justify-around py-2 bg-zinc-800/80">
-            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
+          </Text>
+        </View>
+        {/* Headers dos dias da semana */}
+        <View className="flex-row justify-around py-2 bg-zinc-800/80">
+          {getWeekDays().map((day, index) => {
+            // Pega a primeira letra do nome do dia da semana em português
+            const dayLetter = format(day, 'EEEEE', { locale: ptBR }).toUpperCase();
+            return (
               <Text key={index} className="text-neutral-400 text-xs font-sans text-center w-10">
-                {day}
+                {dayLetter}
               </Text>
-            ))}
+            );
+          })}
+        </View>
+        {/* Linha dos 7 dias com setas */}
+        <View className="flex-row items-center py-3">
+          {/* Seta esquerda */}
+          <Pressable onPress={goToPreviousWeek} className="px-3">
+            <Ionicons name="chevron-back" size={20} color="#ff7a7f" />
+          </Pressable>
+          {/* Os 7 dias */}
+          <View className="flex-1 flex-row justify-around">
+            {getWeekDays().map((day, index) => {
+              const selected = isSelectedDay(day);
+              const today = isToday(day);
+              const hasTasks = dayHasTasks(day);
+              return (
+                <Pressable
+                  key={index}
+                  onPress={() => onDaySelect(day)}
+                  className={`w-8 h-8 rounded-full items-center justify-center ${
+                    selected ? 'bg-[#ff7a7f]' : 'bg-transparent'
+                  }`}
+                >
+                  <Text className={`text-sm font-sans ${
+                    selected ? 'text-black font-bold' :
+                    today ? 'text-[#ff7a7f] font-medium' :
+                    'text-white'
+                  }`}>
+                    {day.getDate()}
+                  </Text>
+                  {hasTasks && !selected && (
+                    <View className="w-1 h-1 bg-[#ff7a7f] rounded-full absolute bottom-0" />
+                  )}
+                </Pressable>
+              );
+            })}
           </View>
-
-          {/* Linha dos 7 dias com setas */}
-          <View className="flex-row items-center py-3">
-            {/* Seta esquerda */}
-            <Pressable onPress={goToPreviousWeek} className="px-3">
-              <Ionicons name="chevron-back" size={20} color="#ff7a7f" />
-            </Pressable>
-
-            {/* Os 7 dias */}
-            <View className="flex-1 flex-row justify-around">
-              {getWeekDays().map((day, index) => {
-                const selected = isSelectedDay(day);
-                const today = isToday(day);
-                const hasTasks = dayHasTasks(day);
-                
-                return (
-                  <Pressable
-                    key={index}
-                    onPress={() => onDaySelect(day)}
-                    className={`w-8 h-8 rounded-full items-center justify-center ${
-                      selected ? 'bg-[#ff7a7f]' : 'bg-transparent'
-                    }`}
-                  >
-                    <Text className={`text-sm font-sans ${
-                      selected ? 'text-black font-bold' : 
-                      today ? 'text-[#ff7a7f] font-medium' : 
-                      'text-white'
-                    }`}>
-                      {day.getDate()}
-                    </Text>
-                    {hasTasks && !selected && (
-                      <View className="w-1 h-1 bg-[#ff7a7f] rounded-full absolute bottom-0" />
-                    )}
-                  </Pressable>
-                );
-              })}
-            </View>
-
-            {/* Seta direita */}
-            <Pressable onPress={goToNextWeek} className="px-3">
-              <Ionicons name="chevron-forward" size={20} color="#ff7a7f" />
-            </Pressable>
-          </View>
+          {/* Seta direita */}
+          <Pressable onPress={goToNextWeek} className="px-3">
+            <Ionicons name="chevron-forward" size={20} color="#ff7a7f" />
+          </Pressable>
         </View>
       </View>
+    </View>
 
       {/* Categories Filter */}
       <View className="flex flex-row flex-wrap gap-2 px-4 pb-4">

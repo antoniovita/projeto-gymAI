@@ -9,6 +9,7 @@ import {
   FlatList,
   Platform,
   Alert,
+  StyleSheet,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { Feather, Ionicons } from '@expo/vector-icons';
@@ -31,12 +32,13 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
 
   const EmptyState = () => {
     return (
-      <View className="flex-1 justify-center items-center px-8 pb-18">
-        <View className="items-center">
-          <Text className="text-white text-xl font-sans mb-2 text-center">
+      <View style={styles.emptyState}>
+        <View style={styles.emptyStateContent}>
+          <Ionicons style={{ marginBottom: 12 }} name='timer-outline' size={50} color='#a1a1aa' />
+          <Text style={styles.emptyStateTitle}>
             Nenhum timer personalizado
           </Text>
-          <Text className="text-zinc-400 text-sm font-sans mb-4 text-center leading-6" style={{ maxWidth: 280 }}>
+          <Text style={styles.emptyStateSubtitle}>
             Crie seus próprios timers personalizados para facilitar o uso no dia a dia
           </Text>
         </View>
@@ -60,13 +62,14 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Corrigido: Evitar loops infinitos
   useEffect(() => {
     const total = hours * 3600 + minutes * 60 + seconds;
     setTotalSeconds(total);
     if (!isRunning) {
       setRemainingTime(total);
     }
-  }, [hours, minutes, seconds, isRunning]);
+  }, [hours, minutes, seconds]); // Removido isRunning da dependência
 
   useEffect(() => {
     if (isRunning && !isPaused && remainingTime > 0) {
@@ -97,6 +100,7 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
     };
   }, [isRunning, isPaused, remainingTime]);
 
+  // Corrigido: Animação de progresso
   useEffect(() => {
     if (totalSeconds > 0) {
       const progress = (totalSeconds - remainingTime) / totalSeconds;
@@ -106,12 +110,15 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
         useNativeDriver: false,
       }).start();
     }
-  }, [remainingTime, totalSeconds, progressAnim]);
+  }, [remainingTime, totalSeconds]);
 
+  // Corrigido: Animação de pulso
   useEffect(() => {
+    let pulseAnimation: any;
+    
     if (isRunning && !isPaused) {
       const pulse = () => {
-        Animated.sequence([
+        pulseAnimation = Animated.sequence([
           Animated.timing(pulseAnim, {
             toValue: 1.02,
             duration: 1000,
@@ -122,20 +129,32 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
             duration: 1000,
             useNativeDriver: true,
           }),
-        ]).start(() => {
+        ]);
+        
+        pulseAnimation.start(() => {
           if (isRunning && !isPaused) pulse();
         });
       };
       pulse();
     } else {
+      if (pulseAnimation) {
+        pulseAnimation.stop();
+      }
       pulseAnim.setValue(1);
     }
-  }, [isRunning, isPaused, pulseAnim]);
+
+    return () => {
+      if (pulseAnimation) {
+        pulseAnimation.stop();
+      }
+    };
+  }, [isRunning, isPaused]);
 
   const formatTime = (time: number) => {
     const hrs = Math.floor(time / 3600);
     const mins = Math.floor((time % 3600) / 60);
     const secs = time % 60;
+    
     if (hrs > 0) {
       return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
@@ -153,16 +172,16 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
     const hrs = Math.floor(timer.seconds / 3600);
     const mins = Math.floor((timer.seconds % 3600) / 60);
     const secs = timer.seconds % 60;
-
+    
     setHours(hrs);
     setMinutes(mins);
     setSeconds(secs);
-
-    // Aguarda um pouco para os states serem atualizados
-    setTimeout(() => {
+    
+    // Usar requestAnimationFrame em vez de setTimeout
+    requestAnimationFrame(() => {
       setIsRunning(true);
       setIsPaused(false);
-    }, 100);
+    });
   };
 
   const pauseTimer = () => {
@@ -226,7 +245,7 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
     const hrs = Math.floor(timer.seconds / 3600);
     const mins = Math.floor((timer.seconds % 3600) / 60);
     const secs = timer.seconds % 60;
-
+    
     setHours(hrs);
     setMinutes(mins);
     setSeconds(secs);
@@ -250,38 +269,13 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
     };
 
     const renderLeftActions = () => (
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: 'transparent',
-          width: 80,
-          height: '100%',
-          paddingLeft: 20,
-        }}
-      >
+      <View style={styles.swipeActionContainer}>
         <TouchableOpacity
           onPress={() => {
             closeSwipeable();
             onDelete(item.id);
           }}
-          style={{
-            width: 56,
-            height: 56,
-            borderRadius: 28,
-            backgroundColor: '#f43f5e',
-            alignItems: 'center',
-            justifyContent: 'center',
-            shadowColor: '#000',
-            shadowOffset: {
-              width: 0,
-              height: 2,
-            },
-            shadowOpacity: 0.25,
-            shadowRadius: 3.84,
-            elevation: 5,
-          }}
+          style={styles.deleteButton}
         >
           <Ionicons name="trash" size={24} color="white" />
         </TouchableOpacity>
@@ -297,26 +291,24 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
           friction={1}
           overshootLeft={false}
         >
-          <View className="bg-[#2d2d32] mx-5 mb-3 rounded-2xl flex flex-row items-center px-6 h-[90px]">
+          <View style={styles.timerItem}>
             <Pressable
               onPress={() => onSelect(item)}
-              className="flex-1 flex flex-row justify-between items-center py-4"
+              style={styles.timerItemContent}
             >
-              <View className="flex flex-col gap-1">
-                <Text className="text-[20px] font-sans font-medium max-w-[250px] text-white">
+              <View style={styles.timerItemInfo}>
+                <Text style={styles.timerItemName}>
                   {item.name}
                 </Text>
-                <Text className="text-zinc-300 text-sm font-sans">
+                <Text style={styles.timerItemTime}>
                   {formatTime(item.seconds)}
                 </Text>
               </View>
             </Pressable>
-            {/* Botão Play - Separado */}
+            
             <Pressable
               onPress={() => onStartTimer(item)}
-              className="w-[50px] h-[50px] rounded-full items-center justify-center ml-2"
-              style={{ backgroundColor: 'rgba(255, 122, 127, 0.15)' }}
-
+              style={styles.playButton}
             >
               <Ionicons name="play" size={18} color="#ff7a7f" />
             </Pressable>
@@ -336,7 +328,6 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
     return (
       <View style={{ width: radius * 2 + strokeWidth * 2, height: radius * 2 + strokeWidth * 2 }}>
         <Svg width={radius * 2 + strokeWidth * 2} height={radius * 2 + strokeWidth * 2}>
-          {/* Background circle */}
           <Circle
             cx={radius + strokeWidth}
             cy={radius + strokeWidth}
@@ -345,7 +336,6 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
             strokeWidth={strokeWidth}
             fill="transparent"
           />
-          {/* Progress circle */}
           <Circle
             cx={radius + strokeWidth}
             cy={radius + strokeWidth}
@@ -372,98 +362,101 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
     />
   );
 
+  const quickTimePresets = [
+    { label: '1 min', time: 60 },
+    { label: '3 min', time: 180 },
+    { label: '5 min', time: 300 },
+    { label: '10 min', time: 600 },
+    { label: '15 min', time: 900 },
+    { label: '30 min', time: 1800 },
+    { label: '45 min', time: 2700 },
+    { label: '1 hora', time: 3600 },
+  ];
+
   return (
-    <SafeAreaView className={`flex-1 bg-zinc-800 ${Platform.OS === 'android' && 'py-[30px]'}`}>
+    <SafeAreaView style={[styles.container, Platform.OS === 'android' && { paddingVertical: 30 }]}>
       {!isRunning ? (
         <>
           {/* Header */}
-          <View className="mt-5 px-4 mb-6 flex-row items-center justify-between">
-            <Pressable onPress={handleGoBack} className="flex-row items-center">
+          <View style={styles.header}>
+            <Pressable onPress={handleGoBack} style={styles.backButton}>
               <Ionicons name="chevron-back" size={24} color="white" />
-              <Text className="ml-1 text-white font-sans text-[16px]">Voltar</Text>
+              <Text style={styles.backButtonText}>Voltar</Text>
             </Pressable>
-            <View className="absolute left-0 right-0 items-center">
-              <Text className="text-white font-sans text-[18px] font-medium">Timer Pomodoro</Text>
-            </View>
-            <View className="flex-row items-center gap-4 mr-1">
-              {/* Placeholder para manter simetria */}
-              <View style={{ width: 22, height: 22 }} />
+            <View style={styles.headerTitleContainer}>
+              <Text style={styles.headerTitle}>Temporizador</Text>
             </View>
           </View>
 
           {/* Timer Setup View */}
-          <View className="flex-1">
+          <View style={styles.timerSetup}>
             {/* Time Pickers */}
-            <View className="px-6 mb-6">
-              <View className="flex-row items-center justify-center rounded-2xl overflow-hidden py-4">
-                {/* Hours */}
-                <View className="items-center px-4 flex-1">
-                  <Text className="text-zinc-400 text-sm mb-2 font-sans">Horas</Text>
-                  <Picker
-                    selectedValue={hours}
-                    onValueChange={setHours}
-                    style={{ width: '100%', height: 200 }}
-                    itemStyle={{ color: 'white', fontSize: 20, fontFamily: 'Poppins' }}
-                  >
-                    {Array.from({ length: 24 }, (_, i) => (
-                      <Picker.Item key={i} label={i.toString().padStart(2, '0')} value={i} />
-                    ))}
-                  </Picker>
-                </View>
+            <View style={styles.pickersContainer}>
+              <View style={styles.pickersWrapper}>
+                <View style={styles.pickerRow}>
+                  {/* Hours */}
+                  <View style={styles.pickerContainer}>
+                    <Picker
+                      selectedValue={hours}
+                      onValueChange={setHours}
+                      style={styles.picker}
+                      itemStyle={styles.pickerItem}
+                    >
+                      {Array.from({ length: 24 }, (_, i) => (
+                        <Picker.Item
+                          key={i}
+                          label={i === 0 ? '0 horas' : i === 1 ? '1 hora' : `${i} horas`}
+                          value={i}
+                        />
+                      ))}
+                    </Picker>
+                  </View>
 
-                {/* Divisor vertical */}
-                <View className="w-[1px] bg-zinc-700 h-64" />
+                  {/* Minutes */}
+                  <View style={styles.pickerContainer}>
+                    <Picker
+                      selectedValue={minutes}
+                      onValueChange={setMinutes}
+                      style={styles.picker}
+                      itemStyle={styles.pickerItem}
+                    >
+                      {Array.from({ length: 60 }, (_, i) => (
+                        <Picker.Item
+                          key={i}
+                          label={i === 0 ? '0 min' : i === 1 ? '1 min' : `${i} min`}
+                          value={i}
+                        />
+                      ))}
+                    </Picker>
+                  </View>
 
-                {/* Minutes */}
-                <View className="items-center px-4 flex-1">
-                  <Text className="text-zinc-400 text-sm mb-2 font-sans">Minutos</Text>
-                  <Picker
-                    selectedValue={minutes}
-                    onValueChange={setMinutes}
-                    style={{ width: '100%', height: 200 }}
-                    itemStyle={{ color: 'white', fontSize: 20, fontFamily: 'Poppins' }}
-                  >
-                    {Array.from({ length: 60 }, (_, i) => (
-                      <Picker.Item key={i} label={i.toString().padStart(2, '0')} value={i} />
-                    ))}
-                  </Picker>
-                </View>
-
-                {/* Divisor vertical */}
-                <View className="w-[1px] bg-zinc-700 h-64" />
-
-                {/* Seconds */}
-                <View className="items-center px-4 flex-1">
-                  <Text className="text-zinc-400 text-sm mb-2 font-sans">Segundos</Text>
-                  <Picker
-                    selectedValue={seconds}
-                    onValueChange={setSeconds}
-                    style={{ width: '100%', height: 200 }}
-                    itemStyle={{ color: 'white', fontSize: 20, fontFamily: 'Poppins' }}
-                  >
-                    {Array.from({ length: 60 }, (_, i) => (
-                      <Picker.Item key={i} label={i.toString().padStart(2, '0')} value={i} />
-                    ))}
-                  </Picker>
+                  {/* Seconds */}
+                  <View style={styles.pickerContainer}>
+                    <Picker
+                      selectedValue={seconds}
+                      onValueChange={setSeconds}
+                      style={styles.picker}
+                      itemStyle={styles.pickerItem}
+                    >
+                      {Array.from({ length: 60 }, (_, i) => (
+                        <Picker.Item
+                          key={i}
+                          label={i === 0 ? '0 seg' : i === 1 ? '1 seg' : `${i} seg`}
+                          value={i}
+                        />
+                      ))}
+                    </Picker>
+                  </View>
                 </View>
               </View>
             </View>
 
             {/* Quick Time Buttons */}
-            <View className="px-6 mb-8 flex flex-row">
-              <View className='flex flex-col'>
-                <Text className="text-zinc-400 text-sm font-sans mb-4">Tempos rápidos</Text>
-                <View className="flex-row flex-wrap gap-2 max-w-[290px]">
-                  {[
-                    { label: '1 min', time: 60 },
-                    { label: '3 min', time: 180 },
-                    { label: '5 min', time: 300 },
-                    { label: '10 min', time: 600 },
-                    { label: '15 min', time: 900 },
-                    { label: '30 min', time: 1800 },
-                    { label: '45 min', time: 2700 },
-                    { label: '1 hora', time: 3600 },
-                  ].map((preset) => (
+            <View style={styles.quickTimesContainer}>
+              <View style={styles.quickTimesContent}>
+                <Text style={styles.quickTimesTitle}>Tempos rápidos</Text>
+                <View style={styles.quickTimesButtons}>
+                  {quickTimePresets.map((preset) => (
                     <Pressable
                       key={preset.label}
                       onPress={() => {
@@ -474,44 +467,45 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
                         setMinutes(mins);
                         setSeconds(secs);
                       }}
-                      className="px-3 py-1 rounded-xl bg-zinc-700"
+                      style={styles.quickTimeButton}
                     >
-                      <Text className="text-white text-sm font-sans">{preset.label}</Text>
+                      <Text style={styles.quickTimeButtonText}>{preset.label}</Text>
                     </Pressable>
                   ))}
                 </View>
               </View>
+
               <Pressable
                 onPress={startTimer}
                 disabled={totalSeconds === 0}
-                className={`w-[65px] h-[65px] mt-8 rounded-full items-center justify-center ${
-                  totalSeconds > 0 ? 'bg-[#FF7A7F26]' : 'bg-zinc-600/10'
-                }`}>
-                <Text className={`font-sans  text-md ${
-                  totalSeconds > 0 ? 'text-[#ff7a7f]' : 'text-zinc-500'
-                }`}> Iniciar 
+                style={[
+                  styles.startButton,
+                  totalSeconds > 0 ? styles.startButtonActive : styles.startButtonInactive
+                ]}
+              >
+                <Text style={[
+                  styles.startButtonText,
+                  totalSeconds > 0 ? styles.startButtonTextActive : styles.startButtonTextInactive
+                ]}>
+                  Iniciar
                 </Text>
               </Pressable>
             </View>
 
             {/* Seção de Timers Personalizados */}
-            <View className="flex-1">
-              <View className='flex flex-row justify-between items-center px-7'> 
-                <Text className="text-zinc-400  text-sm font-sans">Tempos personalizados</Text>
-                <Pressable
-                  onPress={handleOpenCreate}
-                >
-                  <Feather name='plus' color="#a1a1aa" size={18}></Feather>
+            <View style={styles.customTimersSection}>
+              <View style={styles.customTimersHeader}>
+                <Text style={styles.customTimersTitle}>Tempos personalizados</Text>
+                <Pressable onPress={handleOpenCreate}>
+                  <Feather name='plus' color="#a1a1aa" size={18} />
                 </Pressable>
               </View>
-           
 
               {customTimer.length === 0 ? (
                 <EmptyState />
               ) : (
                 <>
-                  <View className="w-full mt-5">
-                  </View>
+                  <View style={{ width: '100%', marginTop: 20 }} />
                   <FlatList
                     data={customTimer}
                     keyExtractor={(item) => item.id.toString()}
@@ -536,59 +530,52 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
         </>
       ) : (
         <>
-          {/* Running Timer View - Sem Header */}
-          <View className="flex-1 justify-center items-center px-6 pt-16">
+          {/* Running Timer View */}
+          <View style={styles.runningTimerContainer}>
             {/* Circular Progress */}
-            <View className="relative mb-8">
+            <View style={styles.circularProgressContainer}>
               <CircularProgress />
               <Animated.View
-                className="absolute inset-0 justify-center items-center"
-                style={{ transform: [{ scale: pulseAnim }] }}
+                style={[
+                  styles.timerDisplay,
+                  { transform: [{ scale: pulseAnim }] }
+                ]}
               >
-                <Text className="text-white text-4xl font-light font-sans">
+                <Text style={styles.remainingTimeText}>
                   {formatTime(remainingTime)}
                 </Text>
-                <Text className="text-zinc-400 text-sm mt-2 font-sans">
+                <Text style={styles.timerStatusText}>
                   {isPaused ? 'Pausado' : 'Em andamento'}
                 </Text>
               </Animated.View>
             </View>
 
             {/* Progress Info */}
-            <View className="mb-8 items-center">
-              <View className="px-3 py-1 rounded-lg border border-zinc-400/60 mb-2">
-                <Text className="text-zinc-400 font-sans text-xs font-medium">
+            <View style={styles.progressInfo}>
+              <View style={styles.progressBadge}>
+                <Text style={styles.progressText}>
                   {totalSeconds > 0 ? Math.round(((totalSeconds - remainingTime) / totalSeconds) * 100) : 0}% concluído
                 </Text>
               </View>
             </View>
 
-            {/* Control Buttons - Estilo Iniciar */}
-            <View className="flex-row items-center justify-center gap-6">
-              {/* Reset Button */}
-              <Pressable
-                onPress={resetTimer}
-                className="w-[70px] h-[70px] rounded-full items-center justify-center bg-zinc-700/30"
-              >
-                <Text className="text-zinc-400 font-sans text-sm">Parar</Text>
+            {/* Control Buttons */}
+            <View style={styles.controlButtons}>
+              <Pressable onPress={resetTimer} style={styles.controlButton}>
+                <Text style={styles.controlButtonText}>Parar</Text>
               </Pressable>
 
-              {/* Play/Pause Button */}
-              <Pressable
-                onPress={pauseTimer}
-                className="w-[70px] h-[70px] rounded-full items-center justify-center bg-[#FF7A7F26]"
-              >
-                <Text className="text-[#ff7a7f] font-sans text-sm">
+              <Pressable onPress={pauseTimer} style={styles.pauseButton}>
+                <Text style={styles.pauseButtonText}>
                   {isPaused ? "Retomar" : "Pausar"}
                 </Text>
               </Pressable>
 
-              {/* Add Minute Button */}
               <Pressable
                 onPress={() => setRemainingTime(prev => prev + 60)}
-                className="w-[70px] h-[70px] rounded-full items-center justify-center bg-zinc-700/30"
+                style={styles.controlButton}
               >
-                <Text className="text-zinc-400 font-sans text-sm">+1min</Text>
+                <Text style={styles.controlButtonText}>+1min</Text>
               </Pressable>
             </View>
           </View>
@@ -597,5 +584,301 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
     </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#27272a',
+  },
+  header: {
+    marginTop: 20,
+    paddingHorizontal: 16,
+    marginBottom: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backButtonText: {
+    marginLeft: 4,
+    color: 'white',
+    fontSize: 16,
+  },
+  headerTitleContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  headerTitle: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: '500',
+  },
+  timerSetup: {
+    flex: 1,
+  },
+  pickersContainer: {
+    paddingHorizontal: 16,
+  },
+  pickersWrapper: {
+    marginBottom: 24,
+  },
+  pickerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 16,
+    overflow: 'hidden',
+    paddingVertical: 16,
+  },
+  pickerContainer: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  picker: {
+    width: '100%',
+    height: 200,
+  },
+  pickerItem: {
+    color: 'white',
+    fontSize: 16,
+    fontFamily: 'Poppins',
+  },
+  quickTimesContainer: {
+    paddingHorizontal: 24,
+    marginBottom: 32,
+    flexDirection: 'row',
+  },
+  quickTimesContent: {
+    flex: 1,
+  },
+  quickTimesTitle: {
+    color: '#a1a1aa',
+    fontSize: 14,
+    marginBottom: 16,
+  },
+  quickTimesButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    maxWidth: 290,
+  },
+  quickTimeButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: '#3f3f46',
+  },
+  quickTimeButtonText: {
+    color: 'white',
+    fontSize: 14,
+  },
+  startButton: {
+    width: 65,
+    height: 65,
+    marginTop: 32,
+    borderRadius: 32.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  startButtonActive: {
+    backgroundColor: 'rgba(255, 122, 127, 0.15)',
+  },
+  startButtonInactive: {
+    backgroundColor: 'rgba(161, 161, 170, 0.1)',
+  },
+  startButtonText: {
+    fontSize: 14,
+  },
+  startButtonTextActive: {
+    color: '#ff7a7f',
+  },
+  startButtonTextInactive: {
+    color: '#71717a',
+  },
+  customTimersSection: {
+    flex: 1,
+  },
+  customTimersHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 28,
+  },
+  customTimersTitle: {
+    color: '#a1a1aa',
+    fontSize: 14,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+    paddingBottom: 72,
+  },
+  emptyStateContent: {
+    alignItems: 'center',
+  },
+  emptyStateTitle: {
+    color: '#a1a1aa',
+    fontSize: 20,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptyStateSubtitle: {
+    color: '#a1a1aa',
+    fontSize: 14,
+    marginBottom: 16,
+    textAlign: 'center',
+    lineHeight: 24,
+    maxWidth: 280,
+  },
+  swipeActionContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+    width: 80,
+    height: '100%',
+    paddingLeft: 20,
+  },
+  deleteButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#f43f5e',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  timerItem: {
+    backgroundColor: '#2d2d32',
+    marginHorizontal: 20,
+    marginBottom: 12,
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    height: 90,
+  },
+  timerItemContent: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 16,
+  },
+  timerItemInfo: {
+    flexDirection: 'column',
+    gap: 4,
+  },
+  timerItemName: {
+    fontSize: 20,
+    fontWeight: '500',
+    maxWidth: 250,
+    color: 'white',
+  },
+  timerItemTime: {
+    color: '#d4d4d8',
+    fontSize: 14,
+  },
+  playButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8,
+    backgroundColor: 'rgba(255, 122, 127, 0.15)',
+  },
+  runningTimerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 64,
+  },
+  circularProgressContainer: {
+    position: 'relative',
+    marginBottom: 32,
+  },
+  timerDisplay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  remainingTimeText: {
+    color: 'white',
+    fontSize: 36,
+    fontWeight: '300',
+  },
+  timerStatusText: {
+    color: '#a1a1aa',
+    fontSize: 14,
+    marginTop: 8,
+  },
+  progressInfo: {
+    marginBottom: 32,
+    alignItems: 'center',
+  },
+  progressBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(161, 161, 170, 0.6)',
+    marginBottom: 8,
+  },
+  progressText: {
+    color: '#a1a1aa',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  controlButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 24,
+  },
+  controlButton: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(63, 63, 70, 0.3)',
+  },
+  controlButtonText: {
+    color: '#a1a1aa',
+    fontSize: 14,
+  },
+  pauseButton: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 122, 127, 0.15)',
+  },
+  pauseButtonText: {
+    color: '#ff7a7f',
+    fontSize: 14,
+  },
+});
 
 export default TimerScreen;
