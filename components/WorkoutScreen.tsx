@@ -8,10 +8,12 @@ import {
   ScrollView,
   FlatList,
   Pressable,
-  Platform
+  Platform,
+  Animated,
+  Dimensions
 } from 'react-native';
-import { Feather, Ionicons } from '@expo/vector-icons';
-import { useState, useEffect, useCallback } from 'react';
+import { Feather, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { useWorkout } from '../hooks/useWorkout';
@@ -20,6 +22,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from 'hooks/useAuth';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker';
+
+const { height: screenHeight } = Dimensions.get('window');
 
 const EmptyState = ({ onCreateWorkout }: { onCreateWorkout: () => void }) => {
   return (
@@ -87,6 +91,10 @@ export default function WorkoutScreen() {
   const [newExerciseName, setNewExerciseName] = useState('');
   const [newExerciseReps, setNewExerciseReps] = useState('');
   const [newExerciseSeries, setNewExerciseSeries] = useState('');
+
+  // Animações para o modal de exercício
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(screenHeight)).current;
 
   const navigation = useNavigation();
 
@@ -254,6 +262,43 @@ export default function WorkoutScreen() {
     setIsCreateVisible(true);
   };
 
+  // Funções de animação para o modal de exercício
+  const showExerciseModal = () => {
+    setIsVisibleExerciseModal(true);
+    
+    // Fade in do fundo
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+
+    // Slide up da gavetinha
+    Animated.timing(slideAnim, {
+      toValue: 0,
+      duration: 400,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const hideExerciseModal = () => {
+    // Slide down da gavetinha
+    Animated.timing(slideAnim, {
+      toValue: screenHeight,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+
+    // Fade out do fundo
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => {
+      setIsVisibleExerciseModal(false);
+    });
+  };
+
   const handleAddExercise = () => {
     if (!newExerciseName.trim()) {
       Alert.alert('Erro', 'O nome do exercício não pode estar vazio.');
@@ -389,6 +434,36 @@ export default function WorkoutScreen() {
     );
   };
 
+
+  const renderLeftActionsExercise = (index: number) => {
+  return (
+    <View style={{
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      paddingHorizontal: 20,
+      height: '100%',
+      marginBottom: 16,
+    }}>
+      <TouchableOpacity
+        style={{
+          backgroundColor: '#f43f5e',
+          width: 60,
+          height: 60,
+          borderRadius: 30,
+          alignItems: 'center',
+          justifyContent: 'center',
+          elevation: 5,
+        }}
+        onPress={() => handleRemoveExercise(index)}
+      >
+        <Ionicons name="trash" size={24} color="white" />
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+
   const renderWorkoutItem = ({ item }: { item: Workout }) => {
     const muscles = item.type ? item.type.split(',') : [];
     const exerciseCount = item.exercises?.length || 0;
@@ -463,7 +538,7 @@ export default function WorkoutScreen() {
 
        <Pressable
         onPress={handleOpenCreate}
-        className="w-[50px] h-[50px] absolute bottom-[6%] right-6 z-20 rounded-full bg-rose-400 items-center justify-center shadow-lg"
+        className="w-[50px] h-[50px] absolute bottom-[6%] right-6 z-20 rounded-full bg-rose-400 items-center justify-center"
       >
         <Feather name="plus" size={32} color="black" />
       </Pressable>
@@ -560,7 +635,7 @@ export default function WorkoutScreen() {
         onRequestClose={() => setShowConfirmDeleteModal(false)}
       >
         <View className="flex-1 bg-black/80 justify-center items-center px-8">
-          <View className="bg-zinc-800 w-full rounded-2xl p-6 items-center shadow-lg">
+          <View className="bg-zinc-800 w-full rounded-2xl p-6 items-center">
             <Ionicons name="alert-circle" size={48} color="#ff7a7f" className="mb-4" />
             <Text className="text-white text-xl font-semibold mb-2 font-sans text-center">
               Apagar Categoria
@@ -779,19 +854,39 @@ export default function WorkoutScreen() {
                   Exercícios ({exercises.length})
                 </Text>
 
-                <Pressable
-                  onPress={() => setIsVisibleExerciseModal(true)}>
+                <Pressable onPress={showExerciseModal}>
                   <Feather name='plus' size={18} color='#a1a1aa' />
                 </Pressable>
 
+                {/* Modal de Exercício com Animações Customizadas */}
                 <Modal
                   visible={isVisibleExerciseModal}
                   transparent
-                  animationType="slide"
-                  onRequestClose={() => setIsVisibleExerciseModal(false)}
+                  animationType="none"
+                  onRequestClose={hideExerciseModal}
                 >
-                  <View className="flex-1 justify-end bg-black/50">
-                    <View className={`bg-zinc-800 rounded-t-3xl ${Platform.OS === 'ios' ? 'pb-8' : 'pb-4'}`}>
+                  <Animated.View 
+                    style={{
+                      flex: 1,
+                      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                      justifyContent: 'flex-end',
+                      opacity: fadeAnim,
+                    }}
+                  >
+                    <Pressable 
+                      style={{ flex: 1 }} 
+                      onPress={hideExerciseModal}
+                    />
+                    
+                    <Animated.View 
+                      style={{
+                        backgroundColor: '#27272a',
+                        borderTopLeftRadius: 24,
+                        borderTopRightRadius: 24,
+                        paddingBottom: Platform.OS === 'ios' ? 32 : 16,
+                        transform: [{ translateY: slideAnim }],
+                      }}
+                    >
 
                       <ScrollView className="px-6 pt-5" showsVerticalScrollIndicator={false}>
 
@@ -807,7 +902,8 @@ export default function WorkoutScreen() {
 
                         <View className="flex-row gap-4 mb-8">
                           <View className="flex-1">
-                            <View className=" rounded-xl overflow-hidden">
+                       
+                            <View className="overflow-hidden">
                               <Picker
                                 selectedValue={newExerciseSeries}
                                 onValueChange={(itemValue) => setNewExerciseSeries(itemValue)}
@@ -818,7 +914,7 @@ export default function WorkoutScreen() {
                                 }}
                                 itemStyle={{
                                   color: 'white',
-                                  fontSize: 18,
+                                  fontSize: 16,
                                   fontWeight: '500',
                                 }}
                               >
@@ -834,7 +930,7 @@ export default function WorkoutScreen() {
                           </View>
 
                           <View className="flex-1">
-                            <View className="rounded-xl overflow-hidden">
+                            <View className="overflow-hidden">
                               <Picker
                                 selectedValue={newExerciseReps}
                                 onValueChange={(itemValue) => setNewExerciseReps(itemValue)}
@@ -845,7 +941,7 @@ export default function WorkoutScreen() {
                                 }}
                                 itemStyle={{
                                   color: 'white',
-                                  fontSize: 18,
+                                  fontSize: 16,
                                   fontWeight: '500',
                                 }}
                               >
@@ -864,7 +960,7 @@ export default function WorkoutScreen() {
                         <Pressable
                           onPress={() => {
                             handleAddExercise();
-                            setIsVisibleExerciseModal(false);
+                            hideExerciseModal();
                           }}
                           className="bg-rose-400 rounded-xl p-4 items-center mb-4"
                         >
@@ -872,37 +968,99 @@ export default function WorkoutScreen() {
                             Adicionar Exercício
                           </Text>
                         </Pressable>
-
                         <Pressable
-                          onPress={() => setIsVisibleExerciseModal(false)}
-                          className="items-center py-2 mb-4"
+                          onPress={hideExerciseModal}
+                          className="items-center py-2"
                         >
                           <Text className="text-zinc-400 font-sans">Cancelar</Text>
                         </Pressable>
                       </ScrollView>
-                    </View>
-                  </View>
+                    </Animated.View>
+                  </Animated.View>
                 </Modal>
-            </View>
-
+              </View>
 
               {/* Lista de exercícios */}
-              {exercises.map((exercise, index) => (
-                <View key={index} className="bg-zinc-700/30 rounded-xl p-4 mb-3 flex-row justify-between items-center">
-                  <View className="flex-1">
-                    <Text className="text-white font-sans text-lg font-medium">{exercise.name}</Text>
-                    <Text className="text-zinc-400 font-sans text-sm">
-                      {exercise.series} séries x {exercise.reps} repetições
-                    </Text>
-                  </View>
-                  <Pressable
-                    onPress={() => handleRemoveExercise(index)}
-                    className="p-2 bg-rose-500/20 rounded-lg"
+              <View className='mt-2'>
+                {exercises.map((exercise, index) => (
+                  <Swipeable
+                    key={index}
+                    renderLeftActions={() => renderLeftActionsExercise(index)}
+                    leftThreshold={40}
+                    rightThreshold={40}
+                    overshootLeft={false}
+                    overshootRight={false}
+                    dragOffsetFromLeftEdge={80}
+                    friction={1}
                   >
-                    <Ionicons name="trash" size={18} color="#f43f5e" />
-                  </Pressable>
-                </View>
-              ))}
+                    <View className="bg-[#2d2d32] rounded-3xl p-5 mb-4">
+                      <View className="flex-row items-center justify-between">
+                        {/* Lado esquerdo: Ícone e Nome do exercício */}
+                        <View className="flex-row items-center flex-1 pr-4">
+                          {/* Ícone do exercício */}
+                          <View className=" bg-[#533f44] w-12 h-12 rounded-2xl items-center justify-center mr-4">
+                            <MaterialCommunityIcons name="dumbbell" size={24} color="#fb7185" />
+                          </View>
+                          
+                          {/* Nome e detalhes */}
+                          <View className="flex-1">
+                            <Text className="text-white font-sans text-lg font-bold mb-1">
+                              {exercise.name}
+                            </Text>
+                            <Text className="text-zinc-400 text-sm font-medium">
+                              Exercício #{index + 1}
+                            </Text>
+                          </View>
+                        </View>
+
+                        {/* Lado direito: Séries e Reps */}
+                        <View className="flex-row gap-3">
+                          {/* Séries */}
+                          <View className="items-center">
+                            <View className="flex-row items-center mb-2">
+                              <Ionicons 
+                                name="repeat" 
+                                size={14} 
+                                color="#9CA3AF" 
+                              />
+                              <Text className="text-zinc-400 text-xs font-semibold ml-1 uppercase tracking-wide">
+                                Séries
+                              </Text>
+                            </View>
+                            <View className="bg-zinc-800/80 h-12 w-12 rounded-xl items-center justify-center">
+                              <Text className="text-white font-bold text-base">
+                                {exercise.series || '-'}
+                              </Text>
+                            </View>
+                          </View>
+
+                          {/* Separador visual */}
+                          <View className="mx-1" />
+
+                          {/* Repetições */}
+                          <View className="items-center">
+                            <View className="flex-row items-center mb-2">
+                              <Ionicons 
+                                name="refresh" 
+                                size={14} 
+                                color="#9CA3AF" 
+                              />
+                              <Text className="text-zinc-400 text-xs font-semibold ml-1 uppercase tracking-wide">
+                                Reps
+                              </Text>
+                            </View>
+                            <View className="bg-zinc-800/80 h-12 w-12 rounded-xl items-center justify-center">
+                              <Text className="text-white font-bold text-base">
+                                {exercise.reps || '-'}
+                              </Text>
+                            </View>
+                          </View>
+                        </View>
+                      </View>
+                    </View>
+                  </Swipeable>
+                ))}
+              </View>
 
               {exercises.length === 0 && (
                 <View className="items-center justify-center py-32">

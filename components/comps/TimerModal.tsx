@@ -181,33 +181,23 @@ const TimerModal: React.FC<TimerModalProps> = ({
               transform: [{ translateY }],
             }}
           >
-            {/* Handle */}
-            <View className="items-center py-4">
-              <View className="w-12 h-1 bg-zinc-600 rounded-full" />
-            </View>
 
             {/* Content */}
-            <View className="flex-1 px-6">
+            <View className="flex-1 px-6 pt-7">
               {/* Nome do Timer (Opcional) */}
               <View className="mb-6">
-                <Text className="text-zinc-400 text-sm font-sans mb-2">
-                  Nome do Timer (opcional)
-                </Text>
                 <TextInput
                   value={customTimerName}
                   onChangeText={setCustomTimerName}
-                  placeholder={`Ex: ${formatTimeForName(secondsCreate || 300)}`}
+                  placeholder={`Nome do Timer (opcional)`}
                   placeholderTextColor="#71717a"
-                  className="bg-zinc-800 text-white py-3 rounded-xl font-sans text-lg"
+                  className="bg-zinc-800 text-white py-3 px-3 rounded-xl font-sans text-lg"
                   maxLength={50}
                 />
               </View>
 
               {/* Time Pickers */}
               <View className="mb-6">
-                <Text className="text-zinc-400 text-sm font-sans mb-3">
-                  Definir Tempo
-                </Text>
                 <View className="flex-row bg-zinc-800 rounded-xl overflow-hidden">
                   {/* Hours */}
                   <View className="flex-1 items-center">
@@ -215,12 +205,12 @@ const TimerModal: React.FC<TimerModalProps> = ({
                     <Picker
                       selectedValue={hours}
                       onValueChange={setHours}
-                      style={{ width: '100%', height: 120 }}
+                      style={{ width: '100%', height: 180 }}
                       itemStyle={{ 
                         color: 'white', 
                         fontSize: 18, 
                         fontFamily: 'System',
-                        height: 120 
+                        height: 180 
                       }}
                     >
                       {Array.from({ length: 24 }, (_, i) => (
@@ -239,12 +229,12 @@ const TimerModal: React.FC<TimerModalProps> = ({
                     <Picker
                       selectedValue={minutes}
                       onValueChange={setMinutes}
-                      style={{ width: '100%', height: 120 }}
+                      style={{ width: '100%', height: 180 }}
                       itemStyle={{ 
                         color: 'white', 
                         fontSize: 18, 
                         fontFamily: 'System',
-                        height: 120 
+                        height: 180 
                       }}
                     >
                       {Array.from({ length: 60 }, (_, i) => (
@@ -263,12 +253,12 @@ const TimerModal: React.FC<TimerModalProps> = ({
                     <Picker
                       selectedValue={seconds}
                       onValueChange={setSeconds}
-                      style={{ width: '100%', height: 120 }}
+                      style={{ width: '100%', height: 180 }}
                       itemStyle={{ 
                         color: 'white', 
                         fontSize: 18, 
                         fontFamily: 'System',
-                        height: 120 
+                        height: 180 
                       }}
                     >
                       {Array.from({ length: 60 }, (_, i) => (
