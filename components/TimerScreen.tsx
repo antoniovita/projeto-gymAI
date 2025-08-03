@@ -69,7 +69,7 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
     if (!isRunning) {
       setRemainingTime(total);
     }
-  }, [hours, minutes, seconds]); // Removido isRunning da dependência
+  }, [hours, minutes, seconds]);
 
   useEffect(() => {
     if (isRunning && !isPaused && remainingTime > 0) {
@@ -193,6 +193,24 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
     setIsPaused(false);
     setRemainingTime(totalSeconds);
     progressAnim.setValue(0);
+  };
+
+  // CORREÇÃO: Função para adicionar tempo que atualiza o totalSeconds
+  const addOneMinute = () => {
+    const newRemainingTime = remainingTime + 60;
+    const newTotalSeconds = totalSeconds + 60;
+    
+    setRemainingTime(newRemainingTime);
+    setTotalSeconds(newTotalSeconds);
+    
+    // Atualizar também os valores dos pickers para manter consistência
+    const hrs = Math.floor(newTotalSeconds / 3600);
+    const mins = Math.floor((newTotalSeconds % 3600) / 60);
+    const secs = newTotalSeconds % 60;
+    
+    setHours(hrs);
+    setMinutes(mins);
+    setSeconds(secs);
   };
 
   const handleOpenCreate = () => {
@@ -364,7 +382,6 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
 
   const quickTimePresets = [
     { label: '1 min', time: 60 },
-    { label: '3 min', time: 180 },
     { label: '5 min', time: 300 },
     { label: '10 min', time: 600 },
     { label: '15 min', time: 900 },
@@ -572,7 +589,7 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
               </Pressable>
 
               <Pressable
-                onPress={() => setRemainingTime(prev => prev + 60)}
+                onPress={addOneMinute}
                 style={styles.controlButton}
               >
                 <Text style={styles.controlButtonText}>+1min</Text>
@@ -700,7 +717,7 @@ const styles = StyleSheet.create({
   startButtonTextInactive: {
     color: '#71717a',
   },
-  customTimersSection: {
+  'customTimersSection': {
     flex: 1,
   },
   customTimersHeader: {
@@ -765,7 +782,7 @@ const styles = StyleSheet.create({
   timerItem: {
     backgroundColor: '#2d2d32',
     marginHorizontal: 20,
-    marginBottom: 12,
+    marginBottom: 16,
     borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',

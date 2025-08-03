@@ -40,7 +40,7 @@ const TimerModal: React.FC<TimerModalProps> = ({
   const [minutes, setMinutes] = useState(0);
   const [seconds, setSeconds] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const translateY = useRef(new Animated.Value(DRAWER_HEIGHT)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
 
@@ -49,7 +49,7 @@ const TimerModal: React.FC<TimerModalProps> = ({
     const hrs = Math.floor(secondsCreate / 3600);
     const mins = Math.floor((secondsCreate % 3600) / 60);
     const secs = secondsCreate % 60;
-    
+
     setHours(hrs);
     setMinutes(mins);
     setSeconds(secs);
@@ -106,7 +106,7 @@ const TimerModal: React.FC<TimerModalProps> = ({
     const hrs = Math.floor(time / 3600);
     const mins = Math.floor((time % 3600) / 60);
     const secs = time % 60;
-    
+
     if (hrs > 0 && mins > 0) {
       return `${hrs}h ${mins}min`;
     } else if (hrs > 0) {
@@ -147,8 +147,8 @@ const TimerModal: React.FC<TimerModalProps> = ({
       onRequestClose={closeDrawer}
       statusBarTranslucent
     >
-      <KeyboardAvoidingView 
-        style={{ flex: 1 }} 
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <View style={{ flex: 1 }}>
@@ -181,7 +181,6 @@ const TimerModal: React.FC<TimerModalProps> = ({
               transform: [{ translateY }],
             }}
           >
-
             {/* Content */}
             <View className="flex-1 px-6 pt-7">
               {/* Nome do Timer (Opcional) */}
@@ -191,81 +190,75 @@ const TimerModal: React.FC<TimerModalProps> = ({
                   onChangeText={setCustomTimerName}
                   placeholder={`Nome do Timer (opcional)`}
                   placeholderTextColor="#71717a"
-                  className="bg-zinc-800 text-white py-3 px-3 rounded-xl font-sans text-lg"
+                  className="bg-zinc-800 text-white pt-3 px-3 rounded-xl font-sans text-xl"
                   maxLength={50}
                 />
               </View>
 
-              {/* Time Pickers */}
               <View className="mb-6">
                 <View className="flex-row bg-zinc-800 rounded-xl overflow-hidden">
-                  {/* Hours */}
+
                   <View className="flex-1 items-center">
-                    <Text className="text-zinc-400 text-xs py-2 font-sans">Horas</Text>
                     <Picker
                       selectedValue={hours}
                       onValueChange={setHours}
-                      style={{ width: '100%', height: 180 }}
-                      itemStyle={{ 
-                        color: 'white', 
-                        fontSize: 18, 
+                      style={{ width: '100%', height: 250 }}
+                      itemStyle={{
+                        color: 'white',
+                        fontSize: 16,
                         fontFamily: 'System',
-                        height: 180 
+                        height: 250
                       }}
                     >
                       {Array.from({ length: 24 }, (_, i) => (
-                        <Picker.Item 
-                          key={i} 
-                          label={i.toString().padStart(2, '0')} 
-                          value={i} 
+                        <Picker.Item
+                          key={i}
+                          label={i === 0 ? '0 horas' : i === 1 ? '1 hora' : `${i} horas`}
+                          value={i}
                         />
                       ))}
                     </Picker>
                   </View>
 
-                  {/* Minutes */}
-                  <View className="flex-1 items-center border-l border-r border-zinc-700">
-                    <Text className="text-zinc-400 text-xs py-2 font-sans">Minutos</Text>
+                  <View className="flex-1 items-center">
                     <Picker
                       selectedValue={minutes}
                       onValueChange={setMinutes}
-                      style={{ width: '100%', height: 180 }}
-                      itemStyle={{ 
-                        color: 'white', 
-                        fontSize: 18, 
+                      style={{ width: '100%', height: 250 }}
+                      itemStyle={{
+                        color: 'white',
+                        fontSize: 16,
                         fontFamily: 'System',
-                        height: 180 
+                        height: 250
                       }}
                     >
                       {Array.from({ length: 60 }, (_, i) => (
-                        <Picker.Item 
-                          key={i} 
-                          label={i.toString().padStart(2, '0')} 
-                          value={i} 
+                        <Picker.Item
+                          key={i}
+                          label={i === 0 ? '0 min' : i === 1 ? '1 min' : `${i} min`}
+                          value={i}
                         />
                       ))}
                     </Picker>
                   </View>
 
-                  {/* Seconds */}
                   <View className="flex-1 items-center">
-                    <Text className="text-zinc-400 text-xs py-2 font-sans">Segundos</Text>
                     <Picker
                       selectedValue={seconds}
                       onValueChange={setSeconds}
-                      style={{ width: '100%', height: 180 }}
-                      itemStyle={{ 
-                        color: 'white', 
-                        fontSize: 18, 
+                      style={{ width: '100%', height: 250 }}
+                      itemStyle={{
+                        color: 'white',
+                        fontSize: 16,
                         fontFamily: 'System',
-                        height: 180 
+                        height: 250
                       }}
                     >
                       {Array.from({ length: 60 }, (_, i) => (
-                        <Picker.Item 
-                          key={i} 
-                          label={i.toString().padStart(2, '0')} 
-                          value={i} 
+                        <Picker.Item
+                          key={i}
+                          label={i === 0 ? '0 seg' : i === 1 ? '1 seg' : `${i} seg`}
+                          value={i}
                         />
                       ))}
                     </Picker>
@@ -290,7 +283,7 @@ const TimerModal: React.FC<TimerModalProps> = ({
                     Salvando...
                   </Text>
                 ) : (
-                  <Text 
+                  <Text
                     className={`font-sans font-semibold text-base ${
                       isFormValid ? 'text-black' : 'text-zinc-400'
                     }`}
