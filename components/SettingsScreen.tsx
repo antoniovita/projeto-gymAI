@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -81,40 +81,27 @@ type BottomSheetModalProps = {
   destructive?: boolean;
 };
 
-const BottomSheetModal: React.FC<BottomSheetModalProps> = ({
-  visible,
-  onClose,
-  onConfirm,
-  title,
-  description,
-  confirmText,
-  cancelText,
-  icon,
-  iconColor = '#ff7a7f',
-  destructive = false,
-}) => {
-  const slideAnim = React.useRef(new Animated.Value(SCREEN_HEIGHT)).current;
-  const opacityAnim = React.useRef(new Animated.Value(0)).current;
+const BottomSheetModal = React.forwardRef<{ handleClose: () => void }, BottomSheetModalProps>(
+  ({
+    visible,
+    onClose,
+    onConfirm,
+    title,
+    description,
+    confirmText,
+    cancelText,
+    icon,
+    iconColor = '#ff7a7f',
+    destructive = false,
+  }, ref) => {
+    const slideAnim = React.useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+    const opacityAnim = React.useRef(new Animated.Value(0)).current;
 
-  React.useEffect(() => {
-    if (visible) {
-      Animated.parallel([
-        Animated.timing(slideAnim, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(opacityAnim, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    } else {
+    const handleClose = () => {
       Animated.parallel([
         Animated.timing(slideAnim, {
           toValue: SCREEN_HEIGHT,
-          duration: 250,
+          duration: 400,
           useNativeDriver: true,
         }),
         Animated.timing(opacityAnim, {
@@ -122,102 +109,121 @@ const BottomSheetModal: React.FC<BottomSheetModalProps> = ({
           duration: 250,
           useNativeDriver: true,
         }),
-      ]).start();
-    }
-  }, [visible]);
+      ]).start(() => onClose());
+    };
 
-  const handleClose = () => {
-    Animated.parallel([
-      Animated.timing(slideAnim, {
-        toValue: SCREEN_HEIGHT,
-        duration: 250,
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacityAnim, {
-        toValue: 0,
-        duration: 250,
-        useNativeDriver: true,
-      }),
-    ]).start(() => onClose());
-  };
+    React.useImperativeHandle(ref, () => ({
+      handleClose,
+    }));
 
-  return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="none"
-      onRequestClose={handleClose}
-    >
-      <Animated.View
-        style={[
-          {
-            flex: 1,
-            backgroundColor: 'rgba(0, 0, 0, 0.6)',
-            opacity: opacityAnim,
-          },
-        ]}
+    React.useEffect(() => {
+      if (visible) {
+        Animated.parallel([
+          Animated.timing(slideAnim, {
+            toValue: 0,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+          Animated.timing(opacityAnim, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      } else {
+        Animated.parallel([
+          Animated.timing(slideAnim, {
+            toValue: SCREEN_HEIGHT,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+          Animated.timing(opacityAnim, {
+            toValue: 0,
+            duration: 250,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      }
+    }, [visible]);
+
+    return (
+      <Modal
+        visible={visible}
+        transparent
+        animationType="none"
+        onRequestClose={handleClose}
       >
-        <TouchableOpacity
-          style={{ flex: 1 }}
-          activeOpacity={1}
-          onPress={handleClose}
+        <Animated.View
+          style={[
+            {
+              flex: 1,
+              backgroundColor: 'rgba(0, 0, 0, 0.6)',
+              opacity: opacityAnim,
+            },
+          ]}
         >
-          <Animated.View
-            style={[
-              {
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                backgroundColor: '#27272a',
-                borderTopLeftRadius: 20,
-                borderTopRightRadius: 20,
-                paddingHorizontal: 24,
-                paddingTop: 16,
-                paddingBottom: 40,
-                transform: [{ translateY: slideAnim }],
-              },
-            ]}
+          <TouchableOpacity
+            style={{ flex: 1 }}
+            activeOpacity={1}
+            onPress={handleClose}
           >
-            <View className="w-12 h-1 bg-zinc-600 rounded-full self-center mb-8" />
-            
-            <View className={`w-16 h-16 rounded-full items-center justify-center self-center mb-6 ${destructive ? 'bg-rose-500/20' : 'bg-zinc-700'}`}>
-              <Ionicons name={icon} size={32} color={iconColor} />
-            </View>
+            <Animated.View
+              style={[
+                {
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  backgroundColor: '#27272a',
+                  borderTopLeftRadius: 20,
+                  borderTopRightRadius: 20,
+                  paddingHorizontal: 24,
+                  paddingTop: 16,
+                  paddingBottom: 40,
+                  transform: [{ translateY: slideAnim }],
+                },
+              ]}
+            >
+              <View className="w-12 h-1 bg-zinc-600 rounded-full self-center mb-8" />
+              
+              <View className={`w-16 h-16 rounded-full items-center justify-center self-center mb-6 ${destructive ? 'bg-rose-500/20' : 'bg-zinc-700'}`}>
+                <Ionicons name={icon} size={32} color={iconColor} />
+              </View>
 
-            <Text className="text-white text-xl font-sans text-center mb-3 font-medium">
-              {title}
-            </Text>
+              <Text className="text-white text-xl font-sans text-center mb-3 font-medium">
+                {title}
+              </Text>
 
-            <Text className="text-zinc-400 text-base font-sans text-center mb-8 leading-6 px-2">
-              {description}
-            </Text>
+              <Text className="text-zinc-400 text-base font-sans text-center mb-8 leading-6 px-2">
+                {description}
+              </Text>
 
-            <View className="gap-3">
-              <Pressable
-                className={`py-4 rounded-xl ${destructive ? 'bg-rose-500/20' : 'bg-rose-400'}`}
-                onPress={onConfirm}
-              >
-                <Text className={`text-center text-base font-sans font-semibold ${destructive ? 'text-rose-400' : 'text-black'}`}>
-                  {confirmText}
-                </Text>
-              </Pressable>
+              <View className="gap-3">
+                <Pressable
+                  className={`py-4 rounded-xl ${destructive ? 'bg-rose-500/20' : 'bg-rose-400'}`}
+                  onPress={onConfirm}
+                >
+                  <Text className={`text-center text-base font-sans font-semibold ${destructive ? 'text-rose-400' : 'text-black'}`}>
+                    {confirmText}
+                  </Text>
+                </Pressable>
 
-              <Pressable
-                className="py-4 rounded-xl bg-zinc-700"
-                onPress={handleClose}
-              >
-                <Text className="text-white text-center text-base font-sans">
-                  {cancelText}
-                </Text>
-              </Pressable>
-            </View>
-          </Animated.View>
-        </TouchableOpacity>
-      </Animated.View>
-    </Modal>
-  );
-};
+                <Pressable
+                  className="py-4 rounded-xl bg-zinc-700"
+                  onPress={handleClose}
+                >
+                  <Text className="text-white text-center text-base font-sans">
+                    {cancelText}
+                  </Text>
+                </Pressable>
+              </View>
+            </Animated.View>
+          </TouchableOpacity>
+        </Animated.View>
+      </Modal>
+    );
+  }
+);
 
 export default function SettingsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -226,6 +232,7 @@ export default function SettingsScreen() {
   const { clearWorkoutsByUser } = useWorkout();
 
   const [modalVisible, setModalVisible] = useState(false);
+  const modalRef = useRef<{ handleClose: () => void }>(null);
   const [modalConfig, setModalConfig] = useState({
     title: '',
     description: '',
@@ -251,7 +258,6 @@ export default function SettingsScreen() {
       iconColor: '#ff7a7f',
       destructive: true,
       onConfirm: () => {
-        setModalVisible(false);
         Alert.alert(
           'Você tem certeza?',
           'Esta é sua última chance! Todos os treinos serão permanentemente removidos. Deseja continuar?',
@@ -263,9 +269,11 @@ export default function SettingsScreen() {
               onPress: async () => {
                 try {
                   await clearWorkoutsByUser(userId!);
+                  modalRef.current?.handleClose();
                   Alert.alert('Sucesso', 'Todos os treinos foram removidos com sucesso.');
                 } catch (error) {
                   console.error('Erro ao limpar treinos:', error);
+                  modalRef.current?.handleClose();
                   Alert.alert('Erro', 'Não foi possível remover os treinos.');
                 }
               },
@@ -285,7 +293,6 @@ export default function SettingsScreen() {
       iconColor: '#ff7a7f',
       destructive: true,
       onConfirm: () => {
-        setModalVisible(false);
         Alert.alert(
           'Você tem certeza?',
           'Esta é sua última chance! Todas as tarefas serão permanentemente removidas. Deseja continuar?',
@@ -297,9 +304,11 @@ export default function SettingsScreen() {
               onPress: async () => {
                 try {
                   await clearTasksByUser(userId!);
+                  modalRef.current?.handleClose();
                   Alert.alert('Sucesso', 'Todas as tarefas foram removidas com sucesso.');
                 } catch (error) {
                   console.error('Erro ao limpar tarefas:', error);
+                  modalRef.current?.handleClose();
                   Alert.alert('Erro', 'Não foi possível remover as tarefas.');
                 }
               },
@@ -319,7 +328,6 @@ export default function SettingsScreen() {
       iconColor: '#ff7a7f',
       destructive: true,
       onConfirm: () => {
-        setModalVisible(false);
         Alert.alert(
           'Você tem certeza?',
           'Você tem certeza absoluta que deseja restaurar sua conta? Todos os dados locais serão perdidos para sempre!',
@@ -331,9 +339,11 @@ export default function SettingsScreen() {
               onPress: async () => {
                 try {
                   await logout();
+                  modalRef.current?.handleClose();
                   navigation.navigate('WelcomeScreen');
                 } catch (error) {
                   console.error('Erro ao fazer logout:', error);
+                  modalRef.current?.handleClose();
                   Alert.alert('Erro', 'Não foi possível restaurar a conta.');
                 }
               },
@@ -441,6 +451,7 @@ export default function SettingsScreen() {
       </ScrollView>
 
       <BottomSheetModal
+        ref={modalRef}
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         onConfirm={modalConfig.onConfirm}

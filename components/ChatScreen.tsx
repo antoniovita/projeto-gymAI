@@ -340,7 +340,7 @@ export default function ChatScreen() {
         <View className="flex-row items-center gap-2">
           <TouchableOpacity
             onPress={() => navigation.navigate('RoutineScreen')}
-            className="flex-row items-center gap-2 bg-zinc-700 rounded-xl px-5 py-2"
+            className="flex-row items-center gap-2 bg-[#35353a] rounded-xl px-5 py-2"
           >
             <Feather name="calendar" size={15} color="white" />
             <Text className="text-white font-sans font-medium text-[13.5px]">Rotina</Text>
@@ -348,7 +348,7 @@ export default function ChatScreen() {
 
           <TouchableOpacity
             onPress={() => navigation.navigate('SettingsScreen')}
-            className="flex-row items-center gap-2 bg-zinc-700 rounded-xl px-5 py-2"
+            className="flex-row items-center gap-2 bg-[#35353a] rounded-xl px-5 py-2"
           >
             <Feather name="settings" size={15} color="white" />
             <Text className="text-white font-sans font-medium text-[13px]">Configurações</Text>
@@ -356,7 +356,7 @@ export default function ChatScreen() {
 
           <TouchableOpacity
             onPress={() => setSettingsVisible(true)}
-            className="flex-row items-center gap-2 bg-zinc-700 rounded-xl px-5 py-2"
+            className="flex-row items-center gap-2 bg-[#35353a] rounded-xl px-5 py-2"
           >
             <Ionicons name="options-outline" size={17} color="white" />
             <Text className="text-white font-sans font-medium text-[13px]">Opções</Text>
