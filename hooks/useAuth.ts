@@ -36,19 +36,14 @@ export function useAuth() {
   const register = async (name: string) => {
     setLoading(true);
     try {
-
-      const newUserId = Date.now().toString();
-      
-      const userId = await UserService.createUser(newUserId, name);
-      
+      const userId = await UserService.createUser(name);
       await Promise.all([
         AuthService.saveUserId(userId!),
         AuthService.saveUserName(name)
       ]);
-      
       setUserId(userId!);
       setUserName(name);
-      console.log('Usuário registrado:', name);
+      console.log('Usuário registrado:', name, 'com ID:', userId);
     } catch (error) {
       console.error('Erro ao registrar usuário:', error);
       throw error;

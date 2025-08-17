@@ -2,13 +2,13 @@ import { getDb } from '../../database';
 import { UserModel } from '../model/User';
 
 export const UserController = {
-  createUser: async (id: string, name: string) => {
+  createUser: async (name: string) => {
     const db = getDb();
     try {
-      const userId = await UserModel.createUser(db, id, name);
+      const userId = await UserModel.createUser(db, name);
       return { success: true, userId };
     } catch (error) {
-      console.error('Erro ao criar usuário com ID externo no controller:', error);
+      console.error('Erro ao criar usuário no controller:', error);
       return { success: false, error: 'Erro ao criar usuário.' };
     }
   },
@@ -66,21 +66,26 @@ export const UserController = {
     }
   },
 
+  // tenho que ler essa funcao para entender o q ela esta fazendo exatamente aqui
+  // mas ela esta funcionadno perfeitamente
   addExperience: async (
-    id: string,
-    xpToAdd: number,
-    base: number = 200,  // XP base para Lv2
-    step: number = 50    // incremento extra que aumenta a cada nível
-  ) => {
-    const db = getDb();
+  id: string,
+  xpToAdd: number,
+  base: number = 200, 
+  step: number = 50
+) => {
+  const db = getDb();
+  try {
+    const user = await UserModel.getUserById(db, id);
+    if (!user) return { success: false, error: 'Usuário não encontrado.' };
 
-    try {
-      const user = await UserModel.getUserById(db, id);
-      if (!user) return { success: false, error: 'Usuário não encontrado.' };
+    let newXp = user.xp + xpToAdd;
+    let newLevel = user.level;
 
-      let newXp = user.xp + xpToAdd;
-      let newLevel = user.level;
-
+    if (newXp < 0) {
+      newXp = 0;
+      newLevel = 1;
+    } else {
       const totalXpToReachLevel = (level: number) => {
         if (level <= 1) return 0;
         let total = 0;
@@ -90,32 +95,52 @@ export const UserController = {
         return total;
       };
 
-      while (newXp >= totalXpToReachLevel(newLevel + 1)) {
-        newLevel++;
+      // se está ganhando XP - verifica se sobe de nível
+      if (xpToAdd >= 0) {
+        while (newXp >= totalXpToReachLevel(newLevel + 1)) {
+          newLevel++;
+        }
+      } else {
+        // se está perdendo XP - verifica se desce de nível
+        while (newLevel > 1 && newXp < totalXpToReachLevel(newLevel)) {
+          newLevel--;
+        }
       }
-
-      const leveledUp = newLevel > user.level;
-      const changes = await UserModel.updateUserLevel(db, id, newLevel, newXp);
-
-      return {
-        success: changes > 0,
-        data: {
-          previousLevel: user.level,
-          newLevel,
-          previousXp: user.xp,
-          newXp,
-          xpAdded: xpToAdd,
-          leveledUp
-        },
-        message: leveledUp
-          ? `Parabéns! Você subiu para o nível ${newLevel}!`
-          : `${xpToAdd} XP adicionado!`
-      };
-    } catch (error) {
-      console.error('Erro ao adicionar experiência no controller:', error);
-      return { success: false, error: 'Erro ao adicionar experiência.' };
     }
-  },
+
+    const leveledUp = newLevel > user.level;
+    const leveledDown = newLevel < user.level;
+    const changes = await UserModel.updateUserLevel(db, id, newLevel, newXp);
+
+    let message;
+    if (leveledUp) {
+      message = `Parabéns! Você subiu para o nível ${newLevel}!`;
+    } else if (leveledDown) {
+      message = `Você desceu para o nível ${newLevel}.`;
+    } else {
+      message = xpToAdd >= 0 
+        ? `${xpToAdd} XP adicionado!` 
+        : `${Math.abs(xpToAdd)} XP removido!`;
+    }
+
+    return {
+      success: changes > 0,
+      data: {
+        previousLevel: user.level,
+        newLevel,
+        previousXp: user.xp,
+        newXp,
+        xpAdded: xpToAdd,
+        leveledUp,
+        leveledDown
+      },
+      message
+    };
+  } catch (error) {
+    console.error('Erro ao adicionar experiência no controller:', error);
+    return { success: false, error: 'Erro ao adicionar experiência.' };
+  }
+},
 
 
   deleteUser: async (id: string) => {

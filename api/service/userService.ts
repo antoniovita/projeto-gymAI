@@ -1,8 +1,8 @@
 import { UserController } from '../controller/userController';
 
 export const UserService = {
-  createUser: async (id: string, name: string) => {
-    const response = await UserController.createUser(id, name);
+  createUser: async (name: string) => {
+    const response = await UserController.createUser(name);
     if (!response.success) {
       throw new Error(response.error || 'Erro ao criar usuário.');
     }

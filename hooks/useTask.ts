@@ -164,28 +164,48 @@ export const useTask = () => {
     }
   };
 
-  const updateTaskCompletion = async (userId: string, taskId: string, completed: 0 | 1, xp_awarded: 0 | 1 = 0) => {
-    setLoading(true);
-    setError(null);
-    try {
-      console.log('[updateTaskCompletion] Atualizando status:', { taskId, completed, xp_awarded });
-      const updatedCount = await TaskService.updateTaskCompletion(taskId, completed, xp_awarded);
-      console.log('[updateTaskCompletion] Atualizações aplicadas:', updatedCount);
-
-      // Adiciona XP apenas quando a tarefa é completada e ainda não foi dado xp
-      if (completed === 1 && xp_awarded === 0) {
-        addExperience(userId, 50);
-      }
-
-      return updatedCount;
-    } catch (err: any) {
-      setError(err.message);
-      console.error('[updateTaskCompletion] Erro:', err);
-      throw err;
-    } finally {
-      setLoading(false);
+const updateTaskCompletion = async (userId: string, taskId: string, completed: 0 | 1) => {
+  setLoading(true);
+  setError(null);
+  try {
+    console.log('[updateTaskCompletion] Atualizando status:', { taskId, completed });
+    
+    // Busca o estado atual da tarefa para comparar
+    const currentTask = tasks.find(task => task.id === taskId);
+    if (!currentTask) {
+      throw new Error('Tarefa não encontrada');
     }
-  };
+
+    // Determina o valor de xp_awarded baseado na ação
+    let xp_awarded: 0 | 1;
+    
+    if (completed === 1 && currentTask.completed === 0) {
+      // Tarefa está sendo completada - marca xp como concedido
+      xp_awarded = 1;
+      console.log('[updateTaskCompletion] Adicionando 50 XP por completar tarefa');
+      addExperience(userId, 50);
+    } else if (completed === 0 && currentTask.completed === 1) {
+      // Tarefa está sendo desmarcada - marca xp como não concedido
+      xp_awarded = 0;
+      console.log('[updateTaskCompletion] Removendo 50 XP por desmarcar tarefa');
+      addExperience(userId, -50);
+    } else {
+      // Mantém o estado atual de xp_awarded se não houve mudança relevante
+      xp_awarded = currentTask.xp_awarded as 0 | 1;
+    }
+
+    const updatedCount = await TaskService.updateTaskCompletion(taskId, completed, xp_awarded);
+    console.log('[updateTaskCompletion] Atualizações aplicadas:', updatedCount, { completed, xp_awarded });
+
+    return updatedCount;
+  } catch (err: any) {
+    setError(err.message);
+    console.error('[updateTaskCompletion] Erro:', err);
+    throw err;
+  } finally {
+    setLoading(false);
+  }
+};
 
   const clearTasksByUser = async (userId: string) => {
     setLoading(true);
