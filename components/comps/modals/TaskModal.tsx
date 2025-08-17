@@ -57,7 +57,7 @@ export default function TaskModal({
       onRequestClose={onClose}
     >
       <View className={`flex-1 ${Platform.OS === 'ios' ? 'pt-12 pb-8' : 'pt-8 pb-4'} bg-zinc-800`}>
-        {/* Header */}
+
         <View className="flex-row justify-between items-center px-4 py-4">
           <TouchableOpacity
             className="items-center flex flex-row"
@@ -187,7 +187,7 @@ export default function TaskModal({
             <TextInput
               placeholder="Adicione uma descrição para sua tarefa..."
               placeholderTextColor="#71717a"
-              className="text-white text-base leading-6 bg-zinc-700/30 fonts-sans text-lg  border-zinc-600 rounded-xl px-4 py-3 min-h-[100px]"
+              className="text-white leading-6 bg-zinc-700/30 fonts-sans text-lg  border-zinc-600 rounded-xl px-4 py-3 min-h-[100px]"
               multiline
               textAlignVertical="top"
               value={taskContent}

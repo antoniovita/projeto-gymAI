@@ -9,7 +9,7 @@ import {
 import { MotiView } from 'moti';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { ProgressBar } from './progressBar';
+import { ProgressBar } from './../progressBar';
 import { Easing } from 'react-native-reanimated';
 
 

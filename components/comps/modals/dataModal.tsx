@@ -18,7 +18,7 @@ import {
   useClearByFocusCell,
 } from 'react-native-confirmation-code-field';
 import { Ionicons } from '@expo/vector-icons';
-import { ProgressBar } from '../comps/progressBar';
+import { ProgressBar } from '../../comps/progressBar';
 import { Easing } from 'react-native-reanimated';
 
 interface DataModalProps {

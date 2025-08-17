@@ -15,7 +15,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useGoal } from '../hooks/useGoal';
 import { Goal } from '../api/model/Goal';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
-import GoalModal from './comps/GoalModal';
+import GoalModal from './comps/modals/GoalModal';
 import LoadingSpinner from './comps/LoadingSpinner';
 
 const EmptyState = ({ onCreateGoal }: { onCreateGoal: () => void }) => {

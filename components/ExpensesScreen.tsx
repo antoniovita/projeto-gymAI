@@ -16,10 +16,10 @@ import { useExpenses } from '../hooks/useExpenses';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../hooks/useAuth';
 import { useFocusEffect } from '@react-navigation/native';
-import CreateExpenseModal from '../components/comps/CreateExpenseModal';
-import CreateCategoryModal from '../components/comps/CreateCategoryModal';
-import DeleteCategoryModal from '../components/comps/DeleteCategoryModalExp';
-import DateFilterModal from '../components/comps/DateFilterModal';
+import CreateExpenseModal from './comps/modals/CreateExpenseModal';
+import CreateCategoryModal from './comps/modals/CreateCategoryModal';
+import DeleteCategoryModal from './comps/modals/DeleteCategoryModalExp';
+import DateFilterModal from './comps/modals/DateFilterModal';
 
 export interface DateFilter {
   type: 'all' | 'month' | 'year' | 'custom' | 'date';

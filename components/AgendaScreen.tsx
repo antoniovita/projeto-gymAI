@@ -1,179 +1,25 @@
 import { useFocusEffect } from '@react-navigation/native';
-import { use, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
-  View, Text, SafeAreaView, Alert, Animated, FlatList,
-  Pressable, Modal, Dimensions, Platform,
+  View, Text, SafeAreaView, Alert, FlatList,
+  Pressable, Platform,
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { TouchableOpacity } from 'react-native-gesture-handler';
-import { Calendar } from 'react-native-calendars';
 import { useTask } from '../hooks/useTask';
 import { useRecurrentTaskDrafts } from '../hooks/useRecurrentTaskDrafts';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import { format, isSameDay, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAuth } from 'hooks/useAuth';
 import { Task } from 'api/model/Task';
-import RefreshButton from './comps/refreshButton';
-import TaskModal from '../components/comps/TaskModal';
-import CategoryModal from '../components/comps/CategoryModal';
-import DeleteCategoryModal from '../components/comps/DeleteCategoryModal';
+import TaskModal from './comps/modals/TaskModal';
+import CategoryModal from './comps/modals/CategoryModal';
+import DeleteCategoryModal from './comps/modals/DeleteCategoryModal';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-
-const { width, height } = Dimensions.get('window');
-
-  const LoadingSpinner = ({ visible }: { visible: boolean }) => {
-    const spinValue = useRef(new Animated.Value(0)).current;
-    const fadeValue = useRef(new Animated.Value(0)).current;
-    const scaleValue = useRef(new Animated.Value(0.8)).current;
-    const spinAnimation = useRef<Animated.CompositeAnimation | null>(null);
-
-    useEffect(() => {
-      if (visible) {
-
-        Animated.parallel([
-          Animated.timing(fadeValue, {
-            toValue: 1,
-            duration: 200,
-            useNativeDriver: true,
-          }),
-          Animated.spring(scaleValue, {
-            toValue: 1,
-            tension: 100,
-            friction: 8,
-            useNativeDriver: true,
-          }),
-        ]).start();
-
-        spinValue.setValue(0);
-        spinAnimation.current = Animated.loop(
-          Animated.timing(spinValue, {
-            toValue: 1,
-            duration: 1200,
-            useNativeDriver: true,
-          })
-        );
-        spinAnimation.current.start();
-      } else {
-        Animated.parallel([
-          Animated.timing(fadeValue, {
-            toValue: 0,
-            duration: 150,
-            useNativeDriver: true,
-          }),
-          Animated.timing(scaleValue, {
-            toValue: 0.8,
-            duration: 150,
-            useNativeDriver: true,
-          }),
-        ]).start();
-
-        spinAnimation.current?.stop();
-      }
-    }, [visible]);
-
-    const spin = spinValue.interpolate({
-      inputRange: [0, 1],
-      outputRange: ['0deg', '360deg'],
-    });
-
-    return (
-      <Modal
-        transparent
-        visible={visible}
-        animationType="none"
-        statusBarTranslucent
-      >
-        <Animated.View
-          style={{
-            opacity: fadeValue,
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: width,
-            height: height,
-            backgroundColor: 'rgba(0, 0, 0, 0.4)',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
-          <Animated.View
-            style={{
-              transform: [{ scale: scaleValue }],
-              backgroundColor: 'rgba(28, 28, 30, 0.9)',
-              borderRadius: 16,
-              padding: 24,
-              alignItems: 'center',
-              justifyContent: 'center',
-              minWidth: 120,
-              minHeight: 120,
-              shadowColor: '#000',
-              shadowOffset: {
-                width: 0,
-                height: 8,
-              },
-              shadowOpacity: 0.25,
-              shadowRadius: 16,
-              elevation: 10,
-            }}
-          >
-            <Animated.View
-              style={{
-                transform: [{ rotate: spin }],
-                marginBottom: 12,
-              }}
-            >
-              <Feather name="loader" size={32} color="#ff7a7f" />
-            </Animated.View>
-            <Text style={{
-              color: 'white',
-              fontSize: 16,
-              fontFamily: 'Poppins',
-              textAlign: 'center',
-              opacity: 0.9,
-            }}>
-              Carregando...
-            </Text>
-          </Animated.View>
-        </Animated.View>
-      </Modal>
-    );
-  };
-
-const EmptyState = ({ dateFilter, onCreateTask }: { dateFilter: Date, onCreateTask: () => void }) => {
-  const getDayOfWeek = (date: Date) => {
-    const dayNames = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-    return dayNames[date.getDay()];
-  };
-
-  const isToday = (date: Date) => {
-    const today = new Date();
-    return date.toDateString() === today.toDateString();
-  };
-
-  return (
-    <View className="flex-1 justify-center items-center px-8 pb-20">
-      <View className="items-center">
-        <View className="w-20 h-20 rounded-full  items-center justify-center mb-3">
-          <Ionicons name="calendar-outline" size={60} color="gray" />
-        </View>
-
-        <Text className="text-neutral-400 text-xl font-medium font-sans mb-2 text-center">
-          Nenhuma tarefa {isToday(dateFilter) ? 'hoje' : `para ${getDayOfWeek(dateFilter).toLowerCase()}`}
-        </Text>
-
-        <Text
-          className="text-neutral-400 text-sm font-sans mb-4 text-center"
-          style={{ maxWidth: 230 }}
-        >
-          Crie novas tarefas para organizar sua rotina
-        </Text>
-      </View>
-    </View>
-  );
-};
+import LoadingSpinner from './comps/LoadingSpinner';
+import { EmptyState } from './comps/EmptyState';
 
 const SwipeableTaskItem = ({ 
   item, 
@@ -359,8 +205,10 @@ export default function AgendaScreen() {
   };
 
   useEffect(() => {
-    getAllTasksDebug();
-  }, []);
+    if (userId) {
+      getAllTasksDebug();
+    }
+  }, [userId]); 
 
   const processTasksForDate = async (targetDate: Date) => {
     if (!userId) {
@@ -392,26 +240,18 @@ export default function AgendaScreen() {
     }
   };
 
-  const filterTasks = async (filterDate: Date) => {
+  const processAndRefreshTasks = async (filterDate: Date) => {
     try {
       setIsLoading(true);
-
+      console.log(`=== PROCESSANDO DRAFTS PARA ${format(filterDate, 'dd/MM/yyyy')} ===`);
+      
       await processTasksForDate(filterDate);
-
-      const filtered = tasks.filter(task => {
-        if (!task.datetime) return false;
-        const taskDate = parseISO(task.datetime);
-        const types = task.type?.split(',').map(t => t.trim()) || [];
-        const categoryMatches =
-          selectedTypes.length === 0 || selectedTypes.some(cat => types.includes(cat));
-        return isSameDay(taskDate, filterDate) && categoryMatches;
-      });
-
-      setFilteredTasks(filtered);
-      console.log(`Filtradas ${filtered.length} tasks para ${format(filterDate, 'dd/MM/yyyy')}`);
+      await fetchTasks(userId!);
+      
+      console.log('=== PROCESSAMENTO CONCLUÍDO ===');
     } catch (error) {
-      console.error('Erro ao filtrar tasks:', error);
-      Alert.alert('Erro', 'Falha ao filtrar tarefas');
+      console.error('Erro ao processar tasks:', error);
+      Alert.alert('Erro', 'Falha ao processar tarefas');
     } finally {
       setIsLoading(false);
     }
@@ -421,14 +261,11 @@ export default function AgendaScreen() {
     useCallback(() => {
       const loadInitialData = async () => {
         if (!userId) return;
-
         try {
           setIsLoading(true);
           console.log('=== CARREGAMENTO INICIAL DA AGENDA ===');
-          
           await fetchTasks(userId);
-          await filterTasks(new Date());
-          
+          await processAndRefreshTasks(dateFilter); 
           console.log('=== CARREGAMENTO INICIAL CONCLUÍDO ===');
         } catch (error) {
           console.error('Erro no carregamento inicial:', error);
@@ -437,29 +274,35 @@ export default function AgendaScreen() {
           setIsLoading(false);
         }
       };
-
       loadInitialData();
-    }, [tasks])
+    }, [userId, dateFilter])
   );
 
   useEffect(() => {
-    if (tasks.length > 0) {
-      const filtered = tasks.filter(task => {
-        if (!task.datetime) return false;
 
-        const taskDateISO = task.datetime.split('T')[0];
-        const selectedDateISO = dateFilter.toISOString().split('T')[0];
-
-        const types = task.type?.split(',').map(t => t.trim()) || [];
-        const categoryMatches =
-          selectedTypes.length === 0 || selectedTypes.some(cat => types.includes(cat));
-
-        return taskDateISO === selectedDateISO && categoryMatches;
-      });
-
-      setFilteredTasks(filtered);
+    if (tasks.length === 0) {
+      setFilteredTasks([]);
+      return;
     }
+
+    const filtered = tasks.filter(task => {
+      if (!task.datetime) return false;
+
+      const taskDateISO = task.datetime.split('T')[0];
+      const selectedDateISO = dateFilter.toISOString().split('T')[0];
+      
+      if (taskDateISO !== selectedDateISO) return false;
+      if (selectedTypes.length === 0) return true;
+    
+      const types = task.type?.split(',').map(t => t.trim()) || [];
+      return selectedTypes.some(cat => types.includes(cat));
+    });
+
+    setFilteredTasks(filtered);
+    console.log(`Filtro local: ${filtered.length} tasks para ${format(dateFilter, 'dd/MM/yyyy')}`);
   }, [tasks, dateFilter, selectedTypes]);
+
+  
 
   const combineDateAndTime = (date: Date, time: Date): Date => {
     const combined = new Date(date);
@@ -546,7 +389,7 @@ export default function AgendaScreen() {
     setSelectedCategories([]);
     setSelectedTask(null);
     setTaskContent('');
-    setDate(new Date());
+    setDate(dateFilter);
     setTime(new Date());
   };
 
@@ -579,7 +422,7 @@ export default function AgendaScreen() {
           onPress: async () => {
               await deleteTask(taskId);
               await fetchTasks(userId!);
-              await filterTasks(dateFilter);
+              await processAndRefreshTasks(dateFilter);
               setFilteredTasks(prev => prev.filter(task => task.id !== taskId));
           },
         },
@@ -588,17 +431,14 @@ export default function AgendaScreen() {
     );
   };
 
-  const handleRefresh = async () => {
-    if (userId) {
-      await filterTasks(dateFilter);
-      console.log(dateFilter)
-    }
-  };
+const handleRefresh = async () => {
+  if (userId) {
+    await processAndRefreshTasks(dateFilter);
+  }
+};
 
-  // Estado da semana alterado para centrar o hoje
   const [currentWeekStart, setCurrentWeekStart] = useState(() => {
     const today = new Date();
-    // Subtrai 3 dias para que hoje seja sempre o dia do meio (posição 3)
     const startOfWeek = new Date(today);
     startOfWeek.setDate(today.getDate() - 3);
     return startOfWeek;
@@ -649,9 +489,9 @@ export default function AgendaScreen() {
 
   const onDaySelect = async (date: Date) => {
     setDateFilter(date);
-    
+    setDate(date);    
     if (userId) {
-      await filterTasks(date);
+      await processAndRefreshTasks(date);
     }
   };
 

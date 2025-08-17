@@ -8,8 +8,8 @@ import type { RootStackParamList } from '../widgets/types';
 import { Easing } from 'react-native-reanimated';
 import { useAuth } from '../hooks/useAuth';
 import { useAcceptTerms } from '../hooks/useAcceptTerms';
-import { DataModal } from '../components/comps/dataModal';
-import { SubscriptionModal } from '../components/comps/subscriptionModal';
+import { DataModal } from '../components/comps/modals/dataModal';
+import { SubscriptionModal } from '../components/comps/modals/subscriptionModal';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function WelcomeScreen() {

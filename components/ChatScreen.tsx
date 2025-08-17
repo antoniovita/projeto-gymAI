@@ -15,7 +15,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../widgets/types';
 import { useEffect, useState, useRef } from 'react';
-import { SettingsModal } from './comps/configModal';
+import { SettingsModal } from './comps/modals/configModal';
 import { useChat } from '../hooks/useChat';
 import { StatsSection } from './comps/StatsSection';
 

@@ -19,7 +19,7 @@ import { useTimerHook } from 'hooks/useTimerHook';
 import { CustomTimer } from "hooks/useTimerHook";
 import { useNavigation } from '@react-navigation/native';
 import uuid from 'react-native-uuid';
-import TimerModal from './comps/TimerModal';
+import TimerModal from './comps/modals/TimerModal';
 
 interface TimerScreenProps {}
 
