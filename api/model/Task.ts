@@ -8,11 +8,11 @@ export interface Task {
   datetime: string; // ISO string: "2025-06-12T07:12:00.000Z"
   type?: string;
   completed: 0 | 1;
+  xp_awarded: 0 | 1;
   user_id: string;
 }
 
 export const TaskModel = {
-
   init: async (db: SQLite.SQLiteDatabase) => {
     await db.execAsync(`
       CREATE TABLE IF NOT EXISTS tasks (
@@ -22,6 +22,7 @@ export const TaskModel = {
         datetime TEXT NOT NULL,
         type TEXT,
         completed INTEGER DEFAULT 0,
+        xp_awarded INTEGER DEFAULT 0,
         user_id TEXT,
         FOREIGN KEY (user_id) REFERENCES user(id)
       );
@@ -37,19 +38,18 @@ export const TaskModel = {
     userId: string,
   ) => {
     const taskId = uuid.v4() as string;
-
     await db.runAsync(
-      `INSERT INTO tasks (id, title, content, datetime, type, completed, user_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO tasks (id, title, content, datetime, type, completed, xp_awarded, user_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       taskId,
       title,
       content,
       datetime,
       type ?? null,
       0,
+      0,
       userId,
     );
-
     return taskId;
   },
 
@@ -57,14 +57,6 @@ export const TaskModel = {
     return await db.getAllAsync(
       'SELECT * FROM tasks WHERE user_id = ?',
       userId
-    ) as Task[];
-  },
-
-  getTasksByType: async (db: SQLite.SQLiteDatabase, userId: string, type: string): Promise<Task[]> => {
-    return await db.getAllAsync(
-      'SELECT * FROM tasks WHERE user_id = ? AND type = ?',
-      userId,
-      type
     ) as Task[];
   },
 
@@ -79,15 +71,20 @@ export const TaskModel = {
     return tasks.length > 0 ? tasks[0] : null;
   },
 
-  updateTaskCompletion: async (db: SQLite.SQLiteDatabase, taskId: string, completed: 0 | 1): Promise<number> => {
+  updateTaskCompletion: async (
+    db: SQLite.SQLiteDatabase,
+    taskId: string,
+    completed: 0 | 1,
+    xp_awarded: 0 | 1
+  ): Promise<number> => {
     const result = await db.runAsync(
-      'UPDATE tasks SET completed = ? WHERE id = ?',
+      'UPDATE tasks SET completed = ?, xp_awarded = ? WHERE id = ?',
       completed,
+      xp_awarded,
       taskId
     );
     return result.changes;
   },
-
 
   updateTask: async (db: SQLite.SQLiteDatabase, taskId: string, updates: Partial<Task>): Promise<number> => {
     const fields = Object.keys(updates);
@@ -101,7 +98,6 @@ export const TaskModel = {
       ...values,
       taskId
     );
-
     return result.changes;
   },
 
@@ -131,5 +127,4 @@ export const TaskModel = {
       return [];
     }
   },
-
 };

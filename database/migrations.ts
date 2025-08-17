@@ -6,11 +6,15 @@ export const runMigrations = async (db: SQLiteDatabase) => {
   await db.execAsync(`
     CREATE TABLE IF NOT EXISTS user (
       id TEXT PRIMARY KEY,
-      name TEXT NOT NULL
+      name TEXT NOT NULL,
+      level INTEGER DEFAULT 1,
+      xp INTEGER DEFAULT 0,
+      achivements TEXT DEFAULT "[]",
+      badges TEXT DEFAULT "[]"
     );
   `);
 
-  // table tasks
+  // table taskspu
   await db.execAsync(`
     CREATE TABLE IF NOT EXISTS tasks (
       id TEXT PRIMARY KEY,
@@ -19,6 +23,7 @@ export const runMigrations = async (db: SQLiteDatabase) => {
       datetime TEXT, 
       type TEXT,
       completed INTEGER DEFAULT 0,
+      xp_awarded INTEGER DEFAULT 0,
       user_id TEXT,
       FOREIGN KEY (user_id) REFERENCES user(id)
     );

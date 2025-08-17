@@ -1,52 +1,88 @@
-import { View, Text, SafeAreaView, Pressable, Platform } from "react-native";
+import { View, Text, SafeAreaView, Pressable, Platform, ScrollView } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "widgets/types";
+import { StatsSection } from "./comps/StatsSection";
 
 const MoreScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   
-  const menuItems = [
+  const categories = [
     {
-      id: 1,
-      title: "Academia",
-      subtitle: "Gerenciar treinos e exercícios",
-      icon: "barbell-outline",
-      color: "#ff7a7f",
-      onPress: () => {
-        navigation.navigate("WorkoutScreen")
-      }
+      title: "Configurações",
+      items: [
+        {
+          id: 1,
+          title: "Configurações",
+          subtitle: "Gerenciar suas preferências da conta",
+          icon: "settings-outline",
+          color: "#ff7a7f",
+          onPress: () => {
+            navigation.navigate("SettingsScreen")
+          }
+        }
+      ]
     },
     {
-      id: 2,
-      title: "Notas",
-      subtitle: "Criar e organizar suas anotações",
-      icon: "document-text-outline",
-      color: "#ff7a7f",
-      onPress: () => {
-        navigation.navigate("NoteScreen")
-      }
+      title: "Produtividade",
+      items: [
+        {
+          id: 2,
+          title: "Rotina",
+          subtitle: "Criar tarefas que fazem parte da sua rotina",
+          icon: "calendar-outline",
+          color: "#ff7a7f",
+          onPress: () => {
+            navigation.navigate("RoutineScreen")
+          }
+        },
+        {
+          id: 3,
+          title: "Metas",
+          subtitle: "Definir e acompanhar objetivos",
+          icon: "trophy-outline",
+          color: "#ff7a7f",
+          onPress: () => {
+            navigation.navigate("GoalScreen")
+          }
+        },
+        {
+          id: 4,
+          title: "Temporizador",
+          subtitle: "Técnica de produtividade e foco",
+          icon: "timer-outline",
+          color: "#ff7a7f",
+          onPress: () => {
+            navigation.navigate("TimerScreen");
+          }
+        }
+      ]
     },
     {
-      id: 3,
-      title: "Metas",
-      subtitle: "Definir e acompanhar objetivos",
-      icon: "trophy-outline",
-      color: "#ff7a7f",
-      onPress: () => {
-        navigation.navigate("GoalScreen")
-      }
-    },
-    {
-      id: 4,
-      title: "Temporizador",
-      subtitle: "Técnica de produtividade e foco",
-      icon: "timer-outline",
-      color: "#ff7a7f",
-      onPress: () => {
-        navigation.navigate("TimerScreen");
-      }
+      title: "Recursos",
+      items: [
+        {
+          id: 5,
+          title: "Academia",
+          subtitle: "Gerenciar treinos e exercícios",
+          icon: "barbell-outline",
+          color: "#ff7a7f",
+          onPress: () => {
+            navigation.navigate("WorkoutScreen")
+          }
+        },
+        {
+          id: 6,
+          title: "Notas",
+          subtitle: "Criar e organizar suas anotações",
+          icon: "document-text-outline",
+          color: "#ff7a7f",
+          onPress: () => {
+            navigation.navigate("NoteScreen")
+          }
+        }
+      ]
     }
   ];
 
@@ -67,39 +103,56 @@ const MoreScreen = () => {
         </View>
       </View>
 
-      <View className="flex flex-col px-6">
-        <View className="flex flex-col gap-4">
-          {menuItems.map((item) => (
-            <Pressable
-              key={item.id}
-              onPress={item.onPress}
-              className="bg-[#35353a] rounded-2xl p-4"
-            >
-              <View className="flex flex-row items-center justify-between">
-                <View className="flex flex-row items-center gap-4">
-                  <View
-                    className="w-12 h-12 rounded-xl items-center justify-center"
-                    style={{ backgroundColor: 'rgba(255, 122, 127, 0.15)' }}
-                  >
-                    <Ionicons name={item.icon as any} size={24} color="#ff7a7f" />
+      <ScrollView 
+        className="flex-1" 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}
+      >
+
+        <StatsSection />
+
+        {categories.map((category) => (
+          <View key={category.title} className="mb-6">
+            <Text className="text-neutral-400 font-sans text-sm font-medium mb-3 px-2">
+              {category.title.toUpperCase()}
+            </Text>
+            <View className="flex flex-col gap-4">
+              {category.items.map((item) => (
+                <Pressable
+                  key={item.id}
+                  onPress={item.onPress}
+                  className="bg-[#35353a] rounded-2xl p-4"
+                >
+                  <View className="flex flex-row items-center justify-between">
+                    <View className="flex flex-row items-center gap-4">
+                      <View
+                        className="w-12 h-12 rounded-xl items-center justify-center"
+                        style={{ backgroundColor: 'rgba(255, 122, 127, 0.15)' }}
+                      >
+                        <Ionicons name={item.icon as any} size={24} color="#ff7a7f" />
+                      </View>
+                      <View className="flex flex-col">
+                        <Text className="text-white text-lg font-semibold font-sans">
+                          {item.title}
+                        </Text>
+                        <Text className="text-neutral-400 text-sm font-sans mt-0.5">
+                          {item.subtitle}
+                        </Text>
+                      </View>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color="#71717a" />
                   </View>
-                  <View className="flex flex-col">
-                    <Text className="text-white text-lg font-semibold font-sans">
-                      {item.title}
-                    </Text>
-                    <Text className="text-neutral-400 text-sm font-sans mt-0.5">
-                      {item.subtitle}
-                    </Text>
-                  </View>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color="#71717a" />
-              </View>
-            </Pressable>
-          ))}
-        </View>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        ))}
 
         {/* Premium Section */}
-        <View className="mt-8 pt-6 border-t border-zinc-700">
+        <View className="pt-3">
+          <Text className="text-neutral-400 font-sans text-sm font-medium mb-3 px-2">
+            PREMIUM
+          </Text>
           <View className="bg-gradient-to-r from-rose-500/10 to-pink-500/10 rounded-2xl p-4 border border-rose-500/20">
             <View className="flex-row items-center gap-3 mb-2">
               <View className="w-8 h-8 rounded-full bg-rose-500/20 items-center justify-center">
@@ -131,7 +184,7 @@ const MoreScreen = () => {
             Versão 1.0.0
           </Text>
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };

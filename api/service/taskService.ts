@@ -6,7 +6,7 @@ export const TaskService = {
   createTask: async (
     title: string,
     content: string,
-    datetime: string,  // string ISO: "2025-06-12T07:12:00.000Z"
+    datetime: string, // string ISO: "2025-06-12T07:12:00.000Z"
     type: string,
     userId: string,
   ): Promise<string> => {
@@ -25,8 +25,16 @@ export const TaskService = {
     return response.data!;
   },
 
-  updateTaskCompletion: async (taskId: string, completed: 0 | 1): Promise<number> => {
-    const response = await TaskController.updateCompletion(taskId, completed);
+  getTaskById: async (taskId: string): Promise<Task> => {
+    const response = await TaskController.getTaskById(taskId);
+    if (!response.success) {
+      throw new Error(response.error || 'Tarefa não encontrada.');
+    }
+    return response.data!;
+  },
+
+  updateTaskCompletion: async (taskId: string, completed: 0 | 1, xp_awarded: 0 | 1): Promise<number> => {
+    const response = await TaskController.updateTaskCompletion(taskId, completed, xp_awarded);
     if (!response.success) {
       throw new Error(response.error || 'Erro ao atualizar status da tarefa.');
     }
@@ -46,7 +54,7 @@ export const TaskService = {
     if (!response.success) {
       throw new Error(response.error || 'Erro ao deletar tarefa.');
     }
-    return true;
+    return response.deletedCount! > 0;
   },
 
   clearTasksByUser: async (userId: string): Promise<number> => {
@@ -57,16 +65,11 @@ export const TaskService = {
     return response.deletedCount!;
   },
 
-  debugAllTasks: async (): Promise<Task[]> => {
-    const response = await TaskController.getTasksDebug();
+  getAllTasksDebug: async (): Promise<Task[]> => {
+    const response = await TaskController.getAllTasksDebug();
     if (!response.success) {
       throw new Error(response.error || 'Erro ao buscar todas as tarefas para debug.');
     }
-    return response.data!;
-  },
-
-  getTaskById: async (taskId: string): Promise<Task> => {
-    const response = await TaskController.getTaskById(taskId);
     return response.data!;
   },
 };

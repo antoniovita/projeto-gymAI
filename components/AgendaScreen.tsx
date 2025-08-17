@@ -255,7 +255,7 @@ export default function AgendaScreen() {
     tasks,
     createTask,
     updateTask,
-    debugAllTasks,
+    getAllTasksDebug,
     fetchTasks,
     updateTaskCompletion,
     deleteTask,
@@ -359,7 +359,7 @@ export default function AgendaScreen() {
   };
 
   useEffect(() => {
-    debugAllTasks();
+    getAllTasksDebug();
   }, []);
 
   const processTasksForDate = async (targetDate: Date) => {
@@ -533,7 +533,7 @@ export default function AgendaScreen() {
 
   const toggleTaskCompletion = async (taskId: string, completed: 0 | 1) => {
     try {
-      await updateTaskCompletion(taskId, completed === 0 ? 1 : 0);
+      await updateTaskCompletion(userId!, taskId, completed === 0 ? 1 : 0);
       await fetchTasks(userId!);
     } catch (err) {
       Alert.alert('Erro', 'Não foi possível atualizar o status.');

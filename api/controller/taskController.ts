@@ -5,7 +5,7 @@ export const TaskController = {
   createTask: async (
     title: string,
     content: string,
-    datetime: string,  // ISO string, ex: "2025-06-12T07:12:00.000Z"
+    datetime: string, // ISO string, ex: "2025-06-12T07:12:00.000Z"
     type: string,
     userId: string,
   ) => {
@@ -24,7 +24,6 @@ export const TaskController = {
         type,
         userId,
       );
-
       return { success: true, taskId };
     } catch (error) {
       console.error('Erro ao criar tarefa no controller:', error);
@@ -43,22 +42,46 @@ export const TaskController = {
     }
   },
 
-  updateCompletion: async (taskId: string, completed: 0 | 1) => {
+  getTaskById: async (taskId: string) => {
     const db = getDb();
     try {
-      const changes = await TaskModel.updateTaskCompletion(db, taskId, completed);
-      return { success: true, updatedCount: changes };
+      const task = await TaskModel.getTaskById(db, taskId);
+      if (task) {
+        return { success: true, data: task };
+      } else {
+        return { success: false, error: 'Tarefa não encontrada.' };
+      }
+    } catch (error) {
+      console.error('Erro ao buscar tarefa por ID no controller:', error);
+      return { success: false, error: 'Erro ao buscar tarefa por ID.' };
+    }
+  },
+
+  updateTaskCompletion: async (taskId: string, completed: 0 | 1, xp_awarded: 0 | 1) => {
+    const db = getDb();
+    try {
+      const changes = await TaskModel.updateTaskCompletion(db, taskId, completed, xp_awarded);
+      return { success: changes > 0, updatedCount: changes };
     } catch (error) {
       console.error('Erro ao atualizar conclusão da tarefa no controller:', error);
-      return { success: false, error: 'Erro ao atualizar tarefa.' };
+      return { success: false, error: 'Erro ao atualizar conclusão da tarefa.' };
     }
   },
 
   updateTask: async (taskId: string, updates: Partial<Task>) => {
     const db = getDb();
     try {
+      // Validar datetime se presente
+      if (updates.datetime) {
+        const isoDate = new Date(updates.datetime);
+        if (isNaN(isoDate.getTime())) {
+          throw new RangeError('Datetime inválido');
+        }
+        updates.datetime = isoDate.toISOString();
+      }
+
       const changes = await TaskModel.updateTask(db, taskId, updates);
-      return { success: true, updatedCount: changes };
+      return { success: changes > 0, updatedCount: changes };
     } catch (error) {
       console.error('Erro ao atualizar tarefa no controller:', error);
       return { success: false, error: 'Erro ao atualizar tarefa.' };
@@ -69,7 +92,7 @@ export const TaskController = {
     const db = getDb();
     try {
       const changes = await TaskModel.deleteTask(db, taskId);
-      return { success: changes > 0 };
+      return { success: changes > 0, deletedCount: changes };
     } catch (error) {
       console.error('Erro ao deletar tarefa no controller:', error);
       return { success: false, error: 'Erro ao deletar tarefa.' };
@@ -87,7 +110,7 @@ export const TaskController = {
     }
   },
 
-  getTasksDebug: async () => {
+  getAllTasksDebug: async () => {
     const db = getDb();
     try {
       const tasks = await TaskModel.getAllTasksDebug(db);
@@ -97,21 +120,4 @@ export const TaskController = {
       return { success: false, error: 'Erro ao buscar todas as tarefas para debug.' };
     }
   },
-
-  getTaskById: async (taskId: string) => {
-    const db = getDb();
-    try {
-      const task = await TaskModel.getTaskById(db, taskId);
-      if (task) {
-        return { success: true, data: task };
-      } else {
-        return { success: false, error: 'Tarefa não encontrada.' };
-      }
-    } catch (error) {
-      console.error('Erro ao buscar tarefa por ID no controller:', error);
-      return { success: false, error: 'Erro ao buscar tarefa por ID.' };
-    }
-  },
-
-
 };

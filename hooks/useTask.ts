@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import * as Notifications from 'expo-notifications';
-import { parseISO, formatISO, subHours, isSameDay } from 'date-fns';
+import { parseISO, formatISO, subHours, isSameDay, format, startOfDay, subDays } from 'date-fns';
 import { TaskService } from '../api/service/taskService';
 import { Task } from '../api/model/Task';
 import { SchedulableTriggerInputTypes } from 'expo-notifications';
+import { useStats } from './useStats';
 
 export const useTask = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const { addExperience } = useStats();
 
   // Helper to cancel all scheduled notifications for a given task
   const cancelTaskNotifications = async (taskId: string) => {
@@ -63,12 +65,11 @@ export const useTask = () => {
   ) => {
     setLoading(true);
     setError(null);
-
     try {
       const date = parseISO(datetimeISO);
       const datetime = formatISO(date);
-
       console.log('[createTask] Criando task com datetime:', datetime);
+
       const taskId = await TaskService.createTask(
         title,
         content,
@@ -80,7 +81,6 @@ export const useTask = () => {
 
       // Schedule notifications
       await scheduleNotifications(taskId!, title, content ?? '', date);
-
       return taskId;
     } catch (err: any) {
       setError(err.message);
@@ -98,7 +98,6 @@ export const useTask = () => {
       console.log('[fetchTasks] Buscando todas as tarefas do usuário:', userId);
       const data = await TaskService.getTasks(userId);
       console.log('[fetchTasks] Tarefas retornadas:', data);
-
       setTasks(oldTasks => {
         if (JSON.stringify(oldTasks) === JSON.stringify(data)) {
           return oldTasks;
@@ -129,12 +128,10 @@ export const useTask = () => {
 
       if (newDate || updates.title || updates.content) {
         await cancelTaskNotifications(taskId);
-
         const original = tasks.find(t => t.id === taskId);
         const title = updates.title ?? original?.title ?? '';
         const body = updates.content ?? original?.content ?? '';
         const dateToUse = newDate ?? (original ? parseISO(original.datetime) : new Date());
-
         await scheduleNotifications(taskId, title, body, dateToUse);
       }
 
@@ -154,7 +151,6 @@ export const useTask = () => {
     try {
       console.log('[deleteTask] Cancelando notificações da tarefa ID:', taskId);
       await cancelTaskNotifications(taskId);
-
       console.log('[deleteTask] Deletando tarefa ID:', taskId);
       await TaskService.deleteTask(taskId);
       console.log('[deleteTask] Tarefa deletada com sucesso');
@@ -168,13 +164,19 @@ export const useTask = () => {
     }
   };
 
-  const updateTaskCompletion = async (taskId: string, completed: 0 | 1) => {
+  const updateTaskCompletion = async (userId: string, taskId: string, completed: 0 | 1, xp_awarded: 0 | 1 = 0) => {
     setLoading(true);
     setError(null);
     try {
-      console.log('[updateTaskCompletion] Atualizando status:', { taskId, completed });
-      const updatedCount = await TaskService.updateTaskCompletion(taskId, completed);
+      console.log('[updateTaskCompletion] Atualizando status:', { taskId, completed, xp_awarded });
+      const updatedCount = await TaskService.updateTaskCompletion(taskId, completed, xp_awarded);
       console.log('[updateTaskCompletion] Atualizações aplicadas:', updatedCount);
+
+      // Adiciona XP apenas quando a tarefa é completada e ainda não foi dado xp
+      if (completed === 1 && xp_awarded === 0) {
+        addExperience(userId, 50);
+      }
+
       return updatedCount;
     } catch (err: any) {
       setError(err.message);
@@ -192,7 +194,6 @@ export const useTask = () => {
       console.log('[clearTasksByUser] Limpando tarefas do usuário:', userId);
       const userTasks = await TaskService.getTasks(userId);
       await Promise.all(userTasks!.map(t => cancelTaskNotifications(t.id)));
-
       const deletedCount = await TaskService.clearTasksByUser(userId);
       console.log('[clearTasksByUser] Total deletado:', deletedCount);
       return deletedCount;
@@ -205,12 +206,12 @@ export const useTask = () => {
     }
   };
 
-  const debugAllTasks = async () => {
-    const all = await TaskService.debugAllTasks();
+  const getAllTasksDebug = async () => {
+    const all = await TaskService.getAllTasksDebug();
     console.log('[HOOK] Tarefas no banco:', all);
   };
 
-    const getTaskById = async (taskId: string): Promise<Task | null> => {
+  const getTaskById = async (taskId: string): Promise<Task | null> => {
     setLoading(true);
     setError(null);
     try {
@@ -224,20 +225,69 @@ export const useTask = () => {
       setLoading(false);
     }
   };
-  
+
+  const taskCompletedStats = async (userId: string) => {
+    try {
+      await fetchTasks(userId);
+      const completedTasksQuantity = tasks.filter(task => task.completed === 1).length;
+      let consecutiveDays = 0;
+
+      if (tasks.length > 0) {
+        const tasksByDay: { [key: string]: Task[] } = {};
+        tasks.forEach(task => {
+          const taskDate = parseISO(task.datetime);
+          const dayKey = format(startOfDay(taskDate), 'yyyy-MM-dd');
+          if (!tasksByDay[dayKey]) {
+            tasksByDay[dayKey] = [];
+          }
+          tasksByDay[dayKey].push(task);
+        });
+
+        const today = startOfDay(new Date());
+        for (let i = 0; i < 365; i++) {
+          const checkDay = subDays(today, i);
+          const dayKey = format(checkDay, 'yyyy-MM-dd');
+          const dayTasks = tasksByDay[dayKey];
+
+          if (dayTasks && dayTasks.length > 0) {
+            const allTasksCompleted = dayTasks.every(task => task.completed === 1);
+            if (allTasksCompleted) {
+              consecutiveDays++;
+            } else {
+              break;
+            }
+          } else {
+            break;
+          }
+        }
+      }
+
+      return {
+        completedTasksQuantity,
+        consecutiveDays
+      };
+    } catch (err: any) {
+      setError(err.message);
+      console.error('[taskCompletedStats] Erro:', err);
+      return {
+        completedTasksQuantity: 0,
+        consecutiveDays: 0
+      };
+    }
+  };
 
   return {
     loading,
     error,
     tasks,
-    debugAllTasks,
+    getAllTasksDebug,
     createTask,
     fetchTasks,
     updateTask,
     updateTaskCompletion,
+    taskCompletedStats,
     deleteTask,
     clearTasksByUser,
     getTaskById
   };
 };
- 
