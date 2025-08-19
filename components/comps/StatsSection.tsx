@@ -52,11 +52,11 @@ export const StatsSection = () => {
         <View className="flex-row items-center justify-between mb-2">
           <View className="flex-row items-center">
             <View className="w-8 h-8 bg-rose-500 rounded-full items-center justify-center mr-3">
-              <Text className="text-white font-bold text-sm">{currentLevel}</Text>
+              <Text className="text-white font-bold text-lg">{currentLevel}</Text>
             </View>
-            <Text className="text-white font-medium text-base">Nível {currentLevel}</Text>
+            <Text className="text-white font-sans text-base">Nível {currentLevel}</Text>
           </View>
-          <Text className="text-zinc-400 text-sm">
+          <Text className="text-zinc-400 font-sans text-sm">
             {currentXp}/{currentXp + xpToNextLevel} XP
           </Text>
         </View>
@@ -66,37 +66,34 @@ export const StatsSection = () => {
             style={{ width: `${xpPercentage}%` }}
           />
         </View>
-        <Text className="text-zinc-400 text-xs mt-1 text-center">
-          {xpToNextLevel > 0 ? `${xpToNextLevel} XP para o próximo nível` : 'Nível máximo atingido!'}
-        </Text>
       </View>
 
       <View className="flex-row justify-between mb-3">
         <View className="bg-[#35353a] rounded-xl p-3 flex-1 mr-2">
           <View className="flex-row items-center mb-1">
             <Ionicons name="flame" size={16} color="#F97316" />
-            <Text className="text-zinc-400 text-xs ml-1">Sequência</Text>
+            <Text className="text-zinc-400 font-sans text-xs ml-1">Sequência</Text>
           </View>
-          <Text className="text-white font-bold text-lg">{taskStats.consecutiveDays}</Text>
-          <Text className="text-zinc-400 text-xs">dias seguidos</Text>
+          <Text className="text-white font-sans text-lg">{taskStats.consecutiveDays}</Text>
+          <Text className="text-zinc-400 text-xs font-sans">dias seguidos</Text>
         </View>
 
         <View className="bg-[#35353a] rounded-xl p-3 flex-1 mr-2">
           <View className="flex-row items-center mb-1">
             <Ionicons name="checkmark-circle" size={16} color="#10B981" />
-            <Text className="text-zinc-400 text-xs ml-1">Tarefas</Text>
+            <Text className="text-zinc-400 font-sans text-xs ml-1">Tarefas</Text>
           </View>
-          <Text className="text-white font-bold text-lg">{taskStats.completedTasksQuantity}</Text>
-          <Text className="text-zinc-400 text-xs">concluídas</Text>
+          <Text className="text-white font-sans text-lg">{taskStats.completedTasksQuantity}</Text>
+          <Text className="text-zinc-400 font-sans text-xs">concluídas</Text>
         </View>
 
         <View className="bg-[#35353a] rounded-xl p-3 flex-1 mx-1">
           <View className="flex-row items-center mb-1">
             <Ionicons name="trophy" size={16} color="#FCD34D" />
-            <Text className="text-zinc-400 text-xs ml-1">Conquistas</Text>
+            <Text className="text-zinc-400 font-sans text-xs ml-1">Conquistas</Text>
           </View>
-          <Text className="text-white font-bold text-lg">{achievementCount}</Text>
-          <Text className="text-zinc-400 text-xs">desbloqueadas</Text>
+          <Text className="text-white font-sans text-lg">{achievementCount}</Text>
+          <Text className="text-zinc-400 text-xs font-sans">desbloqueadas</Text>
         </View>
       </View>
     </View>

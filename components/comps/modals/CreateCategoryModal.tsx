@@ -46,7 +46,7 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({
       visible={isVisible}
       onRequestClose={onClose}
     >
-      <View className="flex-1 justify-center items-center bg-black/90 px-8">
+      <View className="flex-1 justify-center items-center bg-black/50 px-8">
         <View className="bg-zinc-800 p-6 rounded-2xl w-full">
           <TextInput
             placeholder="Nome da categoria"

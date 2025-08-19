@@ -63,7 +63,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       onRequestClose={handleClose}
     >
       <TouchableWithoutFeedback onPress={handleClose}>
-        <View className="flex-1 bg-black/70 justify-end">
+        <View className="flex-1 bg-black/50 justify-end">
           <TouchableWithoutFeedback>
             <Animated.View
               style={{ transform: [{ translateY: slideAnim }] }}

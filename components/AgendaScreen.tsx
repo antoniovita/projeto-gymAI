@@ -9,6 +9,7 @@ import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { useTask } from '../hooks/useTask';
 import { useRecurrentTaskDrafts } from '../hooks/useRecurrentTaskDrafts';
+import { useStats } from '../hooks/useStats'; // Importar o hook useStats
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -20,6 +21,7 @@ import DeleteCategoryModal from './comps/modals/DeleteCategoryModal';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import LoadingSpinner from './comps/LoadingSpinner';
 import { EmptyState } from './comps/EmptyState';
+import LevelUpModal from './comps/modals/LevelUpModal';
 
 const SwipeableTaskItem = ({ 
   item, 
@@ -109,6 +111,21 @@ export default function AgendaScreen() {
 
   const { tasksFromDraftDay, loading: draftLoading, loadAll } = useRecurrentTaskDrafts();
 
+  const { 
+    userStats, 
+    loadUserStats, 
+    addExperience, 
+    currentLevel, 
+    currentXp 
+  } = useStats();
+  
+  const [isLevelUpVisible, setIsLevelUpVisible] = useState(false);
+  const [levelUpData, setLevelUpData] = useState({
+    previousLevel: 1,
+    newLevel: 1,
+    xpGained: 0
+  });
+
   const [isCreateVisible, setIsCreateVisible] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [selectedTask, setSelectedTask] = useState<any | null>(null);
@@ -135,6 +152,71 @@ export default function AgendaScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isProcessingDrafts, setIsProcessingDrafts] = useState(false);
+
+  useEffect(() => {
+    if (userId) {
+      loadUserStats(userId);
+    }
+  }, [userId, loadUserStats]);
+
+  useEffect(() => {
+    const saveCurrentLevel = async () => {
+      if (currentLevel > 1) {
+        await AsyncStorage.setItem(`userLevel_${userId}`, currentLevel.toString());
+      }
+    };
+
+    const checkLevelUp = async () => {
+      if (!userId || currentLevel <= 1) return;
+
+      try {
+        const savedLevel = await AsyncStorage.getItem(`userLevel_${userId}`);
+        const previousLevel = savedLevel ? parseInt(savedLevel) : 1;
+
+        if (currentLevel > previousLevel) {
+
+          setLevelUpData({
+            previousLevel,
+            newLevel: currentLevel,
+            xpGained: currentXp - (previousLevel * 100) 
+          });
+          setIsLevelUpVisible(true);
+          
+          await AsyncStorage.setItem(`userLevel_${userId}`, currentLevel.toString());
+        }
+      } catch (error) {
+        console.error('Erro ao verificar level up:', error);
+      }
+    };
+
+    if (userId && userStats) {
+      checkLevelUp();
+      saveCurrentLevel();
+    }
+  }, [currentLevel, userId, userStats, currentXp]);
+
+  const handleTaskCompletion = async (taskId: string, completed: 0 | 1, xpReward: number = 50) => {
+    try {
+      await updateTaskCompletion(userId!, taskId, completed === 0 ? 1 : 0);
+      
+      if (completed === 0 && userId) {
+        const result = await addExperience(userId, xpReward);
+        
+        if (result.data?.leveledUp) {
+          setLevelUpData({
+            previousLevel: result.data.previousLevel,
+            newLevel: result.data.newLevel,
+            xpGained: xpReward
+          });
+          setIsLevelUpVisible(true);
+        }
+      }
+      
+      await fetchTasks(userId!);
+    } catch (err) {
+      Alert.alert('Erro', 'Não foi possível atualizar o status.');
+    }
+  };
 
   const categories = Array.from(
     new Set([
@@ -266,6 +348,7 @@ export default function AgendaScreen() {
           console.log('=== CARREGAMENTO INICIAL DA AGENDA ===');
           await fetchTasks(userId);
           await processAndRefreshTasks(dateFilter); 
+          await loadUserStats(userId); // carregar stats
           console.log('=== CARREGAMENTO INICIAL CONCLUÍDO ===');
         } catch (error) {
           console.error('Erro no carregamento inicial:', error);
@@ -375,12 +458,7 @@ export default function AgendaScreen() {
   };
 
   const toggleTaskCompletion = async (taskId: string, completed: 0 | 1) => {
-    try {
-      await updateTaskCompletion(userId!, taskId, completed === 0 ? 1 : 0);
-      await fetchTasks(userId!);
-    } catch (err) {
-      Alert.alert('Erro', 'Não foi possível atualizar o status.');
-    }
+    await handleTaskCompletion(taskId, completed);
   };
 
   const resetModal = () => {
@@ -508,6 +586,14 @@ const handleRefresh = async () => {
 
   return (
     <SafeAreaView className={`flex-1 bg-zinc-800 ${Platform.OS === 'android' && 'py-[30px]'}`}>
+
+      <LevelUpModal
+        visible={isLevelUpVisible}
+        currentLevel={levelUpData.newLevel}
+        xpGained={levelUpData.xpGained}
+        onClose={() => setIsLevelUpVisible(false)}
+        title="Você subiu de nível!"
+      />
       <LoadingSpinner visible={isCurrentlyLoading} />
 
       <Pressable
@@ -527,7 +613,6 @@ const handleRefresh = async () => {
         <Feather name="plus" strokeWidth={3} size={32} color="black" />
       </Pressable>
 
-      {/* Header */}
       <View className="mt-5 px-4 mb-6 flex-row items-center justify-between">
         <View className="w-[80px]" />
         <View className="absolute left-0 right-0 items-center">
@@ -546,7 +631,7 @@ const handleRefresh = async () => {
         </View>
       </View>
 
-    {/* Calendar Section */}
+    
     <View className="px-4 mb-4">
       <View className="bg-[#35353a] rounded-xl overflow-hidden">
         <View className="flex-row items-center px-6 py-3 ">
@@ -554,11 +639,11 @@ const handleRefresh = async () => {
             {format(currentWeekStart, 'MMMM yyyy', { locale: ptBR }).replace(/^./, (c) => c.toUpperCase())}
           </Text>
         </View>
-        {/* Headers dos dias da semana */}
+
         <View className="flex-row justify-around py-2 bg-zinc-800/80">
           {getWeekDays().map((day, index) => {
-            // Pega a primeira letra do nome do dia da semana em português
-            const dayLetter = format(day, 'EEEEE', { locale: ptBR }).toUpperCase();
+
+        const dayLetter = format(day, 'EEEEE', { locale: ptBR }).toUpperCase();
             return (
               <Text key={index} className="text-neutral-400 text-xs font-sans text-center w-10">
                 {dayLetter}
@@ -566,13 +651,13 @@ const handleRefresh = async () => {
             );
           })}
         </View>
-        {/* Linha dos 7 dias com setas */}
+
         <View className="flex-row items-center py-3">
-          {/* Seta esquerda */}
+
           <Pressable onPress={goToPreviousWeek} className="px-3">
             <Ionicons name="chevron-back" size={20} color="#ff7a7f" />
           </Pressable>
-          {/* Os 7 dias */}
+
           <View className="flex-1 flex-row justify-around">
             {getWeekDays().map((day, index) => {
               const selected = isSelectedDay(day);
@@ -600,7 +685,7 @@ const handleRefresh = async () => {
               );
             })}
           </View>
-          {/* Seta direita */}
+
           <Pressable onPress={goToNextWeek} className="px-3">
             <Ionicons name="chevron-forward" size={20} color="#ff7a7f" />
           </Pressable>
@@ -608,7 +693,7 @@ const handleRefresh = async () => {
       </View>
     </View>
 
-      {/* Categories Filter */}
+
       <View className="flex flex-row flex-wrap gap-2 px-4 pb-4">
         {categories.map((cat) => {
           const isSelected = selectedTypes.includes(cat);

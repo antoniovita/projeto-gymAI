@@ -18,7 +18,7 @@ export const UserModel = {
         name TEXT NOT NULL,
         level INTEGER DEFAULT 1,
         xp INTEGER DEFAULT 0,
-        achivements TEXT DEFAULT '[]',
+        achievements TEXT DEFAULT '[]',
         badges TEXT DEFAULT '[]'
       );
     `);
@@ -27,7 +27,7 @@ export const UserModel = {
   createUser: async (db: SQLite.SQLiteDatabase, name: string) => {
     const userId = uuid.v4() as string;
     const result = await db.runAsync(
-      'INSERT INTO user (id, name, level, xp, achivements, badges) VALUES (?, ?, ?, ?, ?, ?)',
+      'INSERT INTO user (id, name, level, xp, achievements, badges) VALUES (?, ?, ?, ?, ?, ?)',
       userId,
       name,
       1, // level padrão
@@ -43,11 +43,11 @@ export const UserModel = {
       'SELECT * FROM user WHERE id = ?',
       id
     ) as any;
-    
+
     if (user) {
       return {
         ...user,
-        achievements: JSON.parse(user.achivements || '[]'),
+        achievements: JSON.parse(user.achievements || '[]'),
         badges: JSON.parse(user.badges || '[]')
       } as User;
     }
@@ -69,7 +69,7 @@ export const UserModel = {
     if (user) {
       const updatedAchievements = [...user.achievements, achievement];
       const result = await db.runAsync(
-        'UPDATE user SET achivements = ? WHERE id = ?',
+        'UPDATE user SET achievements = ? WHERE id = ?',
         JSON.stringify(updatedAchievements),
         id
       );
@@ -105,7 +105,7 @@ export const UserModel = {
       const users = await db.getAllAsync('SELECT * FROM user') as any[];
       return users.map(user => ({
         ...user,
-        achievements: JSON.parse(user.achivements || '[]'),
+        achievements: JSON.parse(user.achievements || '[]'),
         badges: JSON.parse(user.badges || '[]')
       })) as User[];
     } catch (err) {

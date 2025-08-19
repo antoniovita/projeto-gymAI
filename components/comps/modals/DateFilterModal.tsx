@@ -258,7 +258,7 @@ const DateFilterModal: React.FC<DateFilterModalProps> = ({
       onRequestClose={handleClose}
     >
       <TouchableWithoutFeedback onPress={handleClose}>
-        <View className="flex-1 bg-black/80 justify-end">
+        <View className="flex-1 bg-black/50 justify-end">
           <TouchableWithoutFeedback>
             <Animated.View
               className="rounded-t-3xl px-6 py-6"

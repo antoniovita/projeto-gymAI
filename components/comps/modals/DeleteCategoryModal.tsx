@@ -45,7 +45,7 @@ export default function DeleteCategoryModal({
       visible={isVisible}
       onRequestClose={onClose}
     >
-      <View className="flex-1 bg-black/80 justify-center items-center px-6">
+      <View className="flex-1 bg-black/50 justify-center items-center px-6">
         <View className="bg-zinc-800 rounded-2xl w-full max-h-[80%] p-4">
           <ScrollView className="mb-4">
             {categories.length === 0 ? (
