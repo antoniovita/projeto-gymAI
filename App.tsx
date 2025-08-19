@@ -1,14 +1,14 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useFonts } from 'expo-font';
-import { Platform, View } from 'react-native';
+import { View } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { useCallback, useEffect, useState } from 'react';
 import * as Notifications from 'expo-notifications';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import "./global.css";
 import { AuthService } from 'api/service/authService';
-import { initDatabase, getDb, deleteDatabase } from 'database';
+import { initDatabase, deleteDatabase, databaseExists, isDatabaseInitialized } from 'database';
 import WelcomeScreen from './components/WelcomeScreen';
 import MainTabs from './widgets/MainTabs';
 import SettingsScreen from 'components/SettingsScreen';
@@ -93,11 +93,25 @@ export default function App() {
   useEffect(() => {
     (async () => {
       try {
-        await initDatabase();
-        console.log('Banco de dados pronto:', getDb());
+        // verifica se o banco já está inicializado na memória
+        const isInitialized = isDatabaseInitialized();
+        console.log('Banco inicializado na memória:', isInitialized);
+
+        // se não está inicializado na memória, inicializa
+        if (!isInitialized) {
+          // verifica se o arquivo do banco existe no sistema
+          const dbFileExists = await databaseExists();
+          console.log('Arquivo do banco existe no sistema:', dbFileExists);
+
+          // Inicializa o banco (seja novo ou existente)
+          await initDatabase();
+          console.log('Banco de dados inicializado com sucesso');
+        }
+
         setIsDbReady(true);
       } catch (err) {
         console.error('Erro ao inicializar o DB:', err);
+        setIsDbReady(false);
       }
     })();
   }, []);
@@ -158,8 +172,6 @@ export default function App() {
             <Stack.Screen name="NoteScreen" component={NoteScreen} />
             <Stack.Screen name="GoalScreen" component={GoalScreen} />
             <Stack.Screen name="TimerScreen" component={TimerScreen} />
-
-
           </Stack.Navigator>
         </NavigationContainer>
       </View>

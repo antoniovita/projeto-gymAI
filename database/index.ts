@@ -19,10 +19,24 @@ export const getDb = (): SQLite.SQLiteDatabase => {
   return db;
 };
 
+export const databaseExists = async (): Promise<boolean> => {
+  try {
+    const dbPath = `${FileSystem.documentDirectory}SQLite/app.db`;
+    const info = await FileSystem.getInfoAsync(dbPath);
+    return info.exists;
+  } catch (error) {
+    console.log('Erro ao verificar existência do banco:', error);
+    return false;
+  }
+};
+
+export const isDatabaseInitialized = (): boolean => {
+  return !!db;
+};
+
 export const deleteDatabase = async () => {
   const dbPath = `${FileSystem.documentDirectory}SQLite/app.db`;
   const info = await FileSystem.getInfoAsync(dbPath);
-
   if (info.exists) {
     await FileSystem.deleteAsync(dbPath, { idempotent: true });
     console.log('Database deleted successfully.');

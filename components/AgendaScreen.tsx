@@ -592,7 +592,7 @@ const handleRefresh = async () => {
         currentLevel={levelUpData.newLevel}
         xpGained={levelUpData.xpGained}
         onClose={() => setIsLevelUpVisible(false)}
-        title="Você subiu de nível!"
+        title="Excelente!"
       />
       <LoadingSpinner visible={isCurrentlyLoading} />
 
