@@ -5,6 +5,8 @@ export interface Exercise {
   name: string;
   reps: number;
   series: number;
+  load: number;
+  completion: 0 | 1;
 }
 
 export interface Workout {

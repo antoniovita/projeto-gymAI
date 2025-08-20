@@ -9,11 +9,9 @@ import {
   FlatList,
   Pressable,
   Platform,
-  Animated,
-  Dimensions
 } from 'react-native';
-import { Feather, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { Feather, Ionicons } from '@expo/vector-icons';
+import { useState, useEffect, useCallback } from 'react';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { useWorkout } from '../hooks/useWorkout';
@@ -21,9 +19,7 @@ import { Exercise, Workout } from '../api/model/Workout';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from 'hooks/useAuth';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Picker } from '@react-native-picker/picker';
-
-const { height: screenHeight } = Dimensions.get('window');
+import CreateWorkoutModal from '../components/comps/CreateWorkoutModal';
 
 const EmptyState = ({ onCreateWorkout }: { onCreateWorkout: () => void }) => {
   return (
@@ -76,7 +72,6 @@ export default function WorkoutScreen() {
   const [selectedMusclesForWorkout, setSelectedMusclesForWorkout] = useState<string[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   
-  const [isVisibleExerciseModal, setIsVisibleExerciseModal] = useState(false)
   const [extraCatWorkout, setextraCatWorkout] = useState<{ name: string; color: string }[]>([]);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('#EF4444');
@@ -91,10 +86,6 @@ export default function WorkoutScreen() {
   const [newExerciseName, setNewExerciseName] = useState('');
   const [newExerciseReps, setNewExerciseReps] = useState('10');
   const [newExerciseSeries, setNewExerciseSeries] = useState('3');
-
-  // Animações para o modal de exercício
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(screenHeight)).current;
 
   const navigation = useNavigation();
 
@@ -234,12 +225,6 @@ export default function WorkoutScreen() {
     setCategoryToDelete(null);
   };
 
-  const toggleMuscleForWorkout = (muscle: string) => {
-    setSelectedMusclesForWorkout((prev) =>
-      prev.includes(muscle) ? prev.filter((m) => m !== muscle) : [...prev, muscle]
-    );
-  };
-
   const handleOpenCreate = () => {
     setSelectedWorkout(null);
     setNewWorkoutTitle('');
@@ -260,78 +245,6 @@ export default function WorkoutScreen() {
     setNewExerciseReps('');
     setNewExerciseSeries('');
     setIsCreateVisible(true);
-  };
-
-  // Funções de animação para o modal de exercício
-  const showExerciseModal = () => {
-    setIsVisibleExerciseModal(true);
-    
-    // Fade in do fundo
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-
-    // Slide up da gavetinha
-    Animated.timing(slideAnim, {
-      toValue: 0,
-      duration: 400,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const hideExerciseModal = () => {
-    // Slide down da gavetinha
-    Animated.timing(slideAnim, {
-      toValue: screenHeight,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-
-    // Fade out do fundo
-    Animated.timing(fadeAnim, {
-      toValue: 0,
-      duration: 200,
-      useNativeDriver: true,
-    }).start(() => {
-      setIsVisibleExerciseModal(false);
-    });
-  };
-
-  const handleAddExercise = () => {
-    if (!newExerciseName.trim()) {
-      Alert.alert('Erro', 'O nome do exercício não pode estar vazio.');
-      return;
-    }
-
-    if (!newExerciseReps.trim() || !newExerciseSeries.trim()) {
-      Alert.alert('Erro', 'Repetições e séries são obrigatórias.');
-      return;
-    }
-
-    const reps = parseInt(newExerciseReps);
-    const series = parseInt(newExerciseSeries);
-
-    if (isNaN(reps) || isNaN(series) || reps <= 0 || series <= 0) {
-      Alert.alert('Erro', 'Repetições e séries devem ser números positivos.');
-      return;
-    }
-
-    const newExercise: Exercise = {
-      name: newExerciseName.trim(),
-      reps,
-      series,
-    };
-
-    setExercises(prev => [...prev, newExercise]);
-    setNewExerciseName('');
-    setNewExerciseReps('');
-    setNewExerciseSeries('');
-  };
-
-  const handleRemoveExercise = (index: number) => {
-    setExercises(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSaveWorkout = async () => {
@@ -433,36 +346,6 @@ export default function WorkoutScreen() {
     </View>
     );
   };
-
-
-  const renderLeftActionsExercise = (index: number) => {
-  return (
-    <View style={{
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'flex-start',
-      paddingHorizontal: 20,
-      height: '100%',
-      marginBottom: 16,
-    }}>
-      <TouchableOpacity
-        style={{
-          backgroundColor: '#f43f5e',
-          width: 60,
-          height: 60,
-          borderRadius: 30,
-          alignItems: 'center',
-          justifyContent: 'center',
-          elevation: 5,
-        }}
-        onPress={() => handleRemoveExercise(index)}
-      >
-        <Ionicons name="trash" size={24} color="white" />
-      </TouchableOpacity>
-    </View>
-  );
-};
-
 
   const renderWorkoutItem = ({ item }: { item: Workout }) => {
     const muscles = item.type ? item.type.split(',') : [];
@@ -781,290 +664,26 @@ export default function WorkoutScreen() {
       )}
 
       {/* Modal de Criar/Editar Treino */}
-      <Modal
-        transparent
-        animationType="slide"
-        visible={isCreateVisible}
-        onRequestClose={() => setIsCreateVisible(false)}
-      >
-        <View className={`flex-1 ${Platform.OS === 'ios' ? 'pt-12 pb-8' : 'pt-8 pb-4'} bg-zinc-800`}>
-
-          {/* Header */}
-          <View className="flex-row justify-between items-center px-4 py-4">
-            <Pressable
-              className="items-center flex flex-row"
-              onPress={() => setIsCreateVisible(false)}
-            >
-              <Ionicons name="chevron-back" size={28} color="white" />
-              <Text className="text-white text-lg font-sans"> Voltar</Text>
-            </Pressable>
-
-            <Pressable onPress={handleSaveWorkout}>
-              <Text className="text-rose-400 font-sans text-lg font-semibold mr-4">Salvar</Text>
-            </Pressable>
-          </View>
-
-          <ScrollView className="flex-1 px-6" showsVerticalScrollIndicator={false}>
-
-            {/* Título do Treino */}
-            <View className="mt-6 mb-6">
-              <TextInput
-                placeholder="Nome do treino"
-                placeholderTextColor="#71717a"
-                value={newWorkoutTitle}
-                onChangeText={setNewWorkoutTitle}
-                className="text-white text-2xl font-sans py-3"
-                multiline
-                autoFocus
-              />
-            </View>
-
-            {/* Grupos Musculares */}
-            <View className="mb-8">
-              <Text className="text-zinc-400 text-sm font-medium mb-3 uppercase tracking-wide">
-                Grupos Musculares
-              </Text>
-              
-              <View className="flex flex-row flex-wrap gap-2">
-                {categories.map((muscle) => {
-                  const isSelected = selectedMusclesForWorkout.includes(muscle);
-                  const color = getCategoryColor(muscle);
-                  return (
-                    <Pressable
-                      key={muscle}
-                      onPress={() => toggleMuscleForWorkout(muscle)}
-                      className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${
-                      isSelected ? 'bg-rose-400' : 'bg-zinc-700'
-                      }`}
-                    >
-                      <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color, borderWidth: 0.5, borderColor: '#fff' }} />
-                      <Text className={`font-sans ${isSelected ? 'text-black' : 'text-white'}`}>
-                        {muscle}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-
-            {/* Exercícios */}
-            <View className="mb-8">
-              <View className='flex-row justify-between items-center'>
-                <Text className="text-zinc-400 text-sm font-medium mb-3 uppercase tracking-wide">
-                  Exercícios ({exercises.length})
-                </Text>
-
-                <Pressable onPress={showExerciseModal}>
-                  <Feather name='plus' size={18} color='#a1a1aa' />
-                </Pressable>
-
-                {/* Modal de Exercício com Animações Customizadas */}
-                <Modal
-                  visible={isVisibleExerciseModal}
-                  transparent
-                  animationType="none"
-                  onRequestClose={hideExerciseModal}
-                >
-                  <Animated.View 
-                    style={{
-                      flex: 1,
-                      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                      justifyContent: 'flex-end',
-                      opacity: fadeAnim,
-                    }}
-                  >
-                    <Pressable 
-                      style={{ flex: 1 }} 
-                      onPress={hideExerciseModal}
-                    />
-                    
-                    <Animated.View 
-                      style={{
-                        backgroundColor: '#27272a',
-                        borderTopLeftRadius: 24,
-                        borderTopRightRadius: 24,
-                        paddingBottom: Platform.OS === 'ios' ? 32 : 16,
-                        transform: [{ translateY: slideAnim }],
-                      }}
-                    >
-
-                      <ScrollView className="px-6 pt-5" showsVerticalScrollIndicator={false}>
-
-                        <View className="">
-                          <TextInput
-                            placeholder="Nome do exercício"
-                            placeholderTextColor="#71717a"
-                            value={newExerciseName}
-                            onChangeText={setNewExerciseName}
-                            className="text-white font-sans text-xl p-3"
-                          />
-                        </View>
-
-                        <View className="flex-row gap-4 mb-8">
-                          <View className="flex-1">
-                       
-                            <View className="overflow-hidden">
-                              <Picker
-                                selectedValue={newExerciseSeries}
-                                onValueChange={(itemValue) => setNewExerciseSeries(itemValue)}
-                                style={{
-                                  color: 'white',
-                                  backgroundColor: 'transparent',
-                                  height: Platform.OS === 'ios' ? 180 : 50,
-                                }}
-                                itemStyle={{
-                                  color: 'white',
-                                  fontSize: 16,
-                                  fontWeight: '500',
-                                }}
-                              >
-                                {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
-                                  <Picker.Item 
-                                    key={num} 
-                                    label={`${num} série${num > 1 ? 's' : ''}`} 
-                                    value={num.toString()} 
-                                  />
-                                ))}
-                              </Picker>
-                            </View>
-                          </View>
-
-                          <View className="flex-1">
-                            <View className="overflow-hidden">
-                              <Picker
-                                selectedValue={newExerciseReps}
-                                onValueChange={(itemValue) => setNewExerciseReps(itemValue)}
-                                style={{
-                                  color: 'white',
-                                  backgroundColor: 'transparent',
-                                  height: Platform.OS === 'ios' ? 180 : 50,
-                                }}
-                                itemStyle={{
-                                  color: 'white',
-                                  fontSize: 16,
-                                  fontWeight: '500',
-                                }}
-                              >
-                                {Array.from({ length: 50 }, (_, i) => i + 1).map((num) => (
-                                  <Picker.Item 
-                                    key={num} 
-                                    label={`${num} rep${num > 1 ? 's' : ''}`} 
-                                    value={num.toString()} 
-                                  />
-                                ))}
-                              </Picker>
-                            </View>
-                          </View>
-                        </View>
-
-                        <Pressable
-                          onPress={() => {
-                            handleAddExercise();
-                            hideExerciseModal();
-                          }}
-                          className="bg-rose-400 rounded-xl p-4 items-center mb-4"
-                        >
-                          <Text className="text-black font-sans font-semibold text-lg">
-                            Adicionar Exercício
-                          </Text>
-                        </Pressable>
-                        <Pressable
-                          onPress={hideExerciseModal}
-                          className="items-center py-2"
-                        >
-                          <Text className="text-zinc-400 font-sans">Cancelar</Text>
-                        </Pressable>
-                      </ScrollView>
-                    </Animated.View>
-                  </Animated.View>
-                </Modal>
-              </View>
-
-              {/* Lista de exercícios */}
-              <View className='mt-2'>
-                {exercises.map((exercise, index) => (
-                  <Swipeable
-                    key={index}
-                    renderLeftActions={() => renderLeftActionsExercise(index)}
-                    leftThreshold={40}
-                    rightThreshold={40}
-                    overshootLeft={false}
-                    overshootRight={false}
-                    dragOffsetFromLeftEdge={80}
-                    friction={1}
-                  >
-                    <View className="bg-[#2d2d32] rounded-3xl p-4 mb-4">
-                      <View className="flex-row items-center justify-between">
-                        {/* Lado esquerdo: Ícone e Nome do exercício */}
-                        <View className="flex-row items-center flex-1 pr-4">
-                          {/* Ícone do exercício */}
-                          <View className=" bg-[#533f44] w-12 h-12 rounded-2xl items-center justify-center mr-4">
-                            <MaterialCommunityIcons name="dumbbell" size={24} color="#fb7185" />
-                          </View>
-                          
-                          {/* Nome e detalhes */}
-                          <View className="flex-1">
-                            <Text className="text-white font-sans text-lg font-bold">
-                              {exercise.name}
-                            </Text>
-                            <Text className="text-zinc-400 text-sm font-medium">
-                              Exercício #{index + 1}
-                            </Text>
-                          </View>
-                        </View>
-
-                        {/* Lado direito: Séries e Reps */}
-                        <View className="flex-row gap-3">
-                          {/* Séries */}
-                          <View className="items-center">
-                            <View className="flex-row items-center mb-2">
-                              <Text className="text-zinc-400 text-xs font-semibold ml-1 uppercase tracking-wide">
-                                Séries
-                              </Text>
-                            </View>
-                            <View className="bg-zinc-800/80 h-12 w-12 rounded-xl items-center justify-center">
-                              <Text className="text-white font-bold text-base">
-                                {exercise.series || '-'}
-                              </Text>
-                            </View>
-                          </View>
-
-
-                          {/* Repetições */}
-                          <View className="items-center">
-                            <View className="flex-row items-center mb-2">
-                              <Text className="text-zinc-400 text-xs font-semibold ml-1 uppercase tracking-wide">
-                                Reps
-                              </Text>
-                            </View>
-                            <View className="bg-zinc-800/80 h-12 w-12 rounded-xl items-center justify-center">
-                              <Text className="text-white font-bold text-base">
-                                {exercise.reps || '-'}
-                              </Text>
-                            </View>
-                          </View>
-                        </View>
-                      </View>
-                    </View>
-                  </Swipeable>
-                ))}
-              </View>
-
-              {exercises.length === 0 && (
-                <View className="items-center justify-center py-32">
-                  <Ionicons name="barbell-outline" size={48} color="#71717a" />
-                  <Text className="text-zinc-400 font-sans text-center mt-2">
-                    Nenhum exercício adicionado
-                  </Text>
-                  <Text className="text-zinc-500 font-sans text-sm text-center mt-1">
-                    Adicione exercícios para compor seu treino
-                  </Text>
-                </View>
-              )}
-            </View>
-          </ScrollView>
-        </View>
-      </Modal>
+      <CreateWorkoutModal
+        isCreateVisible={isCreateVisible}
+        setIsCreateVisible={setIsCreateVisible}
+        selectedWorkout={selectedWorkout}
+        newWorkoutTitle={newWorkoutTitle}
+        setNewWorkoutTitle={setNewWorkoutTitle}
+        selectedMusclesForWorkout={selectedMusclesForWorkout}
+        setSelectedMusclesForWorkout={setSelectedMusclesForWorkout}
+        exercises={exercises}
+        setExercises={setExercises}
+        categories={categories}
+        getCategoryColor={getCategoryColor}
+        handleSaveWorkout={handleSaveWorkout}
+        newExerciseName={newExerciseName}
+        setNewExerciseName={setNewExerciseName}
+        newExerciseReps={newExerciseReps}
+        setNewExerciseReps={setNewExerciseReps}
+        newExerciseSeries={newExerciseSeries}
+        setNewExerciseSeries={setNewExerciseSeries}
+      />
     </SafeAreaView>
   );
 }
