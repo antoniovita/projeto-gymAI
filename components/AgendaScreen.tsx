@@ -51,7 +51,7 @@ const SwipeableTaskItem = ({
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: '#f43f5e',
-      width: 80,
+      width: 100,
       height: '100%',
       }}
     >

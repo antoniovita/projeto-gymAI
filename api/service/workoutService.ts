@@ -27,14 +27,15 @@ export const WorkoutService = {
     return response.data;
   },
 
-  // Retorna todos os workouts de um tipo específico
-  getWorkoutsByType: async (userId: string, type: string) => {
-    const response = await WorkoutController.getWorkoutsByType(userId, type);
+  // Retorna um workout específico pelo ID
+  getWorkoutById: async (userId: string, workoutId: string) => {
+    const response = await WorkoutController.getWorkoutById(userId, workoutId);
     if (!response.success) {
-      throw new Error(response.error || 'Erro ao buscar workouts por tipo.');
+      throw new Error(response.error || 'Erro ao buscar workout por ID.');
     }
     return response.data;
   },
+
 
   // Atualiza campos de um workout por ID
   updateWorkout: async (

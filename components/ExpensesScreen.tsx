@@ -335,8 +335,8 @@ export default function ExpensesScreen() {
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
-            width: 64,
-            height: 64,
+            width: 80,
+            height: "100%",
             borderRadius: 32,
           }}
         >

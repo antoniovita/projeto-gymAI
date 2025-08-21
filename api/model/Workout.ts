@@ -59,18 +59,14 @@ export const WorkoutModel = {
     })) as Workout[];
   },
 
-  // GET - pegar workouts por tipo
-  getWorkoutsByType: async (db: SQLite.SQLiteDatabase, userId: string, type: string) => {
-    const workouts = await db.getAllAsync(
-      'SELECT * FROM workouts WHERE user_id = ? AND type = ?',
+  // GET - pegar workout por ID
+  getWorkoutById: async (db: SQLite.SQLiteDatabase, userId: string, workoutId: string) => {
+    const workout = await db.getFirstAsync(
+      'SELECT * FROM workouts WHERE user_id = ? AND id = ?',
       userId,
-      type
-    );
-
-    return workouts.map((workout: any) => ({
-      ...workout,
-      exercises: JSON.parse(workout.exercises),
-    })) as Workout[];
+      workoutId
+    )
+    return workout
   },
 
   // PUT - atualizar workout

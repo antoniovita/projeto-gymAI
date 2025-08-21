@@ -118,6 +118,7 @@ export default function WorkoutScreen() {
     fetchWorkouts,
     updateWorkout,
     deleteWorkout,
+    duplicateWorkout,
   } = useWorkout();
 
   const workout = workouts ?? [];
@@ -312,6 +313,31 @@ export default function WorkoutScreen() {
     );
   };
 
+
+  const handleDuplicate = async (itemId: string) => {
+        Alert.alert(
+      'Duplicar treino',
+      'Tem certeza que deseja duplicar este treino?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Duplicar',
+          style: 'cancel',
+          onPress: async () => {
+            try {
+              await duplicateWorkout(userId!, itemId);
+              await fetchWorkouts(userId!);
+            } catch (err) {
+              console.error(err);
+              Alert.alert('Erro', 'Não foi possível excluir o treino.');
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  }
+
   const filteredWorkouts = selectedCategories.length === 0
     ? workouts
     : workouts.filter((workout) =>
@@ -324,10 +350,6 @@ export default function WorkoutScreen() {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'flex-start',
-      borderTopWidth: 1,
-      borderTopColor: '#f43f5e',
-      backgroundColor: '#f43f5e',
-      paddingHorizontal: 16,
       height: '100%',
     }}>
       <TouchableOpacity
@@ -335,9 +357,26 @@ export default function WorkoutScreen() {
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
-          width: 64,
-          height: 64,
-          borderRadius: 32,
+          width: 100,
+          height: "100%",
+          borderTopColor: '#FFAA1D',
+          backgroundColor: '#FFAA1D',
+        }}
+        onPress={() => handleDuplicate(item.id)}
+      >
+        <Ionicons name="copy" size={24} color="white" />
+      </TouchableOpacity>
+      
+      <TouchableOpacity
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          display: "flex",
+          justifyContent: 'center',
+          borderTopColor: '#f43f5e',
+          backgroundColor: '#f43f5e',
+          height: "100%",
+          width: 100
         }}
         onPress={() => handleDelete(item.id)}
       >

@@ -40,17 +40,21 @@ export const WorkoutController = {
     }
   },
 
-  // pega workouts por tipo
-  getWorkoutsByType: async (userId: string, type: string) => {
+  // pega workout por ID
+  getWorkoutById: async (userId: string, workoutId: string) => {
     const db = getDb();
     try {
-      const workouts = await WorkoutModel.getWorkoutsByType(db, userId, type);
-      return { success: true, data: workouts };
+      const workout = await WorkoutModel.getWorkoutById(db, userId, workoutId);
+      if (!workout) {
+        return { success: false, error: 'Workout não encontrado.' };
+      }
+      return { success: true, data: workout };
     } catch (error) {
-      console.error('Erro ao buscar workouts por tipo no controller:', error);
-      return { success: false, error: 'Erro ao buscar workouts por tipo.' };
+      console.error('Erro ao buscar workout por ID no controller:', error);
+      return { success: false, error: 'Erro ao buscar workout por ID.' };
     }
   },
+
 
   // atualiza um workout por id
   updateWorkout: async (

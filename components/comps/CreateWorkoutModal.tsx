@@ -45,7 +45,6 @@ interface CreateWorkoutModalProps {
 const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({
   isCreateVisible,
   setIsCreateVisible,
-  selectedWorkout,
   newWorkoutTitle,
   setNewWorkoutTitle,
   selectedMusclesForWorkout,

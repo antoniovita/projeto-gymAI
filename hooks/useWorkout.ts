@@ -40,19 +40,6 @@ export const useWorkout = () => {
     }
   };
 
-  const fetchWorkoutsByType = async (userId: string, type: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await WorkoutService.getWorkoutsByType(userId, type);
-      setWorkouts(data || []);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const updateWorkout = async (
     workoutId: string,
     updates: Partial<{
@@ -103,15 +90,74 @@ export const useWorkout = () => {
     }
   };
 
+  const getWorkoutById = async (userId: string, workoutId: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const workout = await WorkoutService.getWorkoutById(userId, workoutId);
+      return workout;
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const duplicateWorkout = async (userId: string, workoutId: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+
+      const originalWorkout = await WorkoutService.getWorkoutById(userId, workoutId) as Workout;
+      
+      if (!originalWorkout) {
+        throw new Error('Treino não encontrado');
+      }
+
+      let exercises: Exercise[] = [];
+      try {
+        if (typeof originalWorkout.exercises === 'string') {
+          exercises = JSON.parse(originalWorkout.exercises);
+        } else if (Array.isArray(originalWorkout.exercises)) {
+          exercises = originalWorkout.exercises;
+        }
+      } catch (parseError) {
+        console.error('Erro ao fazer parse dos exercises:', parseError);
+        exercises = [];
+      }
+
+      const duplicatedName = `Cópia de ${originalWorkout.name || 'Treino'}`;
+      
+      const currentDate = new Date().toISOString().split('T')[0];
+      
+      const newWorkoutId = await WorkoutService.createWorkout(
+        duplicatedName,
+        exercises,
+        currentDate,
+        userId,
+        originalWorkout.type
+      );
+      
+      return newWorkoutId;
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     loading,
     error,
     workouts,
     createWorkout,
     fetchWorkouts,
-    fetchWorkoutsByType,
     updateWorkout,
     deleteWorkout,
+    getWorkoutById,
+    duplicateWorkout,
     clearWorkoutsByUser
   };
 };

@@ -34,7 +34,6 @@ const TimerScreen: React.FC<TimerScreenProps> = () => {
     return (
       <View style={styles.emptyState}>
         <View style={styles.emptyStateContent}>
-          <Ionicons style={{ marginBottom: 12 }} name='timer-outline' size={50} color='#a1a1aa' />
           <Text style={styles.emptyStateTitle}>
             Nenhum timer personalizado
           </Text>
