@@ -88,7 +88,6 @@ export default function TaskModal({
               onChangeText={setNewTaskTitle}
               className="text-white text-2xl font-sans"
               multiline
-              autoFocus
             />
           </View>
 

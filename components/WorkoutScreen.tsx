@@ -232,8 +232,8 @@ export default function WorkoutScreen() {
     setSelectedMusclesForWorkout([]);
     setExercises([]);
     setNewExerciseName('');
-    setNewExerciseReps('');
-    setNewExerciseSeries('');
+    setNewExerciseReps('10');
+    setNewExerciseSeries('3');
     setIsCreateVisible(true);
   };
 
@@ -243,8 +243,8 @@ export default function WorkoutScreen() {
     setSelectedMusclesForWorkout(workout.type ? workout.type.split(',') : []);
     setExercises(workout.exercises || []);
     setNewExerciseName('');
-    setNewExerciseReps('');
-    setNewExerciseSeries('');
+    setNewExerciseReps('10');
+    setNewExerciseSeries('3');
     setIsCreateVisible(true);
   };
 
@@ -280,8 +280,8 @@ export default function WorkoutScreen() {
       setSelectedMusclesForWorkout([]);
       setExercises([]);
       setNewExerciseName('');
-      setNewExerciseReps('');
-      setNewExerciseSeries('');
+      setNewExerciseReps('10');
+      setNewExerciseSeries('3');
       await fetchWorkouts(userId!);
     } catch (err) {
       console.error(err);
@@ -359,7 +359,8 @@ export default function WorkoutScreen() {
           justifyContent: 'center',
           width: 100,
           height: "100%",
-          borderTopColor: '#FFAA1D',
+          borderTopWidth: 1,
+          borderTopColor: '#404040',
           backgroundColor: '#FFAA1D',
         }}
         onPress={() => handleDuplicate(item.id)}
@@ -373,8 +374,9 @@ export default function WorkoutScreen() {
           alignItems: 'center',
           display: "flex",
           justifyContent: 'center',
-          borderTopColor: '#f43f5e',
           backgroundColor: '#f43f5e',
+          borderTopWidth: 1,
+          borderTopColor: '#404040',
           height: "100%",
           width: 100
         }}

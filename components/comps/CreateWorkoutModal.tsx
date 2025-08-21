@@ -10,7 +10,8 @@ import {
   Platform,
   Animated,
   Dimensions,
-  KeyboardAvoidingView
+  KeyboardAvoidingView,
+  FlatList
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { TouchableOpacity } from 'react-native-gesture-handler';
@@ -41,6 +42,70 @@ interface CreateWorkoutModalProps {
   newExerciseSeries: string;
   setNewExerciseSeries: (series: string) => void;
 }
+
+// Componente Picker Horizontal de Carga
+const WeightSlider: React.FC<{
+  value: string;
+  onValueChange: (value: string) => void;
+}> = ({ value, onValueChange }) => {
+  // Gerar opções de peso de 2.5 em 2.5 até 250kg
+  const generateWeightOptions = () => {
+    const options = [];
+    // De 0 até 250kg com incremento de 2.5kg
+    for (let i = 0; i <= 250; i += 2.5) {
+      options.push(i.toString());
+    }
+    return options;
+  };
+
+  const weightOptions = generateWeightOptions();
+  const currentIndex = weightOptions.findIndex(w => w === value) || 0;
+
+  const renderWeightItem = ({ item, index }: { item: string, index: number }) => {
+    const isSelected = item === value;
+    
+    return (
+      <Pressable
+        onPress={() => onValueChange(item)}
+        className={`mx-1 px-3 py-2 rounded-lg min-w-[50px] items-center ${
+          isSelected ? 'bg-rose-400' : 'bg-zinc-700/20'
+        }`}
+      >
+        <Text className={`font-sans text-base ${
+          isSelected ? 'text-black font-semibold' : 'text-white'
+        }`}>
+          {item}
+        </Text>
+        <Text className={`font-sans text-xs mt-0.5 ${
+          isSelected ? 'text-black/70' : 'text-zinc-400'
+        }`}>
+          kg
+        </Text>
+      </Pressable>
+    );
+  };
+
+  return (
+    <View>
+      <FlatList
+        data={weightOptions}
+        renderItem={renderWeightItem}
+        keyExtractor={(item) => item}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 16 }}
+        initialScrollIndex={currentIndex > 0 ? Math.max(0, currentIndex - 2) : 0}
+        getItemLayout={(data, index) => ({
+          length: 58,
+          offset: 58 * index,
+          index,
+        })}
+        onScrollToIndexFailed={() => {}}
+        style={{ flexGrow: 0 }}
+      />
+    </View>
+  );
+};
 
 const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({
   isCreateVisible,
@@ -110,8 +175,8 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({
       setIsVisibleExerciseModal(false);
       // Reset form
       setNewExerciseName('');
-      setNewExerciseReps('');
-      setNewExerciseSeries('');
+      setNewExerciseReps('10');
+      setNewExerciseSeries('3');
       setNewExerciseLoad('');
     });
   };
@@ -221,7 +286,6 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({
               onChangeText={setNewWorkoutTitle}
               className="text-white text-2xl px-6 font-sans py-3"
               multiline
-              autoFocus
             />
           </View>
 
@@ -284,8 +348,7 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({
                     onPress={hideExerciseModal}
                   />
                   
-                  <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                  <View
                   >
                     <Animated.View 
                       style={{
@@ -298,7 +361,7 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({
                     >
                       {/* Handle do modal */}
 
-                      <ScrollView className="px-6 pt-9" showsVerticalScrollIndicator={false}>
+                      <View className="px-6 pt-9">
 
                         {/* Nome do exercício */}
                         <View className="mb-6">
@@ -316,19 +379,15 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({
                           </View>
                         </View>
 
-                        {/* Carga */}
+                        {/* Carga com Slider Horizontal */}
                         <View className="mb-6">
                           <Text className="text-zinc-400 font-sans text-sm font-medium mb-2 uppercase tracking-wide">
-                            Carga
+                            Carga - {newExerciseLoad || '0'} kg
                           </Text>
-                          <View className="bg-zinc-700/15 rounded-xl">
-                            <TextInput
-                              placeholder="90 kg"
-                              placeholderTextColor="#71717a"
+                          <View className="bg-zinc-700/10 rounded-xl py-3">
+                            <WeightSlider
                               value={newExerciseLoad}
-                              onChangeText={setNewExerciseLoad}
-                              keyboardType="numeric"
-                              className="text-white font-sans text-lg px-4 py-4"
+                              onValueChange={setNewExerciseLoad}
                             />
                           </View>
                         </View>
@@ -407,9 +466,9 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({
                         >
                           <Text className="text-zinc-400 font-sans">Cancelar</Text>
                         </Pressable>
-                      </ScrollView>
+                      </View>
                     </Animated.View>
-                  </KeyboardAvoidingView>
+                  </View>
                 </Animated.View>
               </Modal>
             </View>

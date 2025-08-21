@@ -89,7 +89,6 @@ const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
               onChangeText={setNewTaskTitle}
               className="text-white text-2xl font-sans"
               multiline
-              autoFocus
             />
           </View>
 
