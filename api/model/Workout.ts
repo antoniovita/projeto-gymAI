@@ -7,6 +7,7 @@ export interface Exercise {
   series: number;
   load: number;
   completion: 0 | 1;
+  xp_granted: 0 | 1;
 }
 
 export interface Workout {

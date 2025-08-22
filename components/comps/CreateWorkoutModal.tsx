@@ -19,6 +19,7 @@ import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Picker } from '@react-native-picker/picker';
 import { Exercise, Workout } from '../../api/model/Workout';
+import { useStats } from 'hooks/useStats';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -41,17 +42,17 @@ interface CreateWorkoutModalProps {
   setNewExerciseReps: (reps: string) => void;
   newExerciseSeries: string;
   setNewExerciseSeries: (series: string) => void;
+  userId: string,
 }
 
-// Componente Picker Horizontal de Carga
 const WeightSlider: React.FC<{
   value: string;
   onValueChange: (value: string) => void;
 }> = ({ value, onValueChange }) => {
-  // Gerar opções de peso de 2.5 em 2.5 até 250kg
+
   const generateWeightOptions = () => {
     const options = [];
-    // De 0 até 250kg com incremento de 2.5kg
+
     for (let i = 0; i <= 250; i += 2.5) {
       options.push(i.toString());
     }
@@ -125,11 +126,14 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({
   setNewExerciseReps,
   newExerciseSeries,
   setNewExerciseSeries,
+  userId
 }) => {
   const [isVisibleExerciseModal, setIsVisibleExerciseModal] = React.useState(false);
   const [newExerciseLoad, setNewExerciseLoad] = React.useState('');
+
+  const {addExperience} = useStats()
   
-  // Animações para o modal de exercício
+
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(screenHeight)).current;
 
@@ -207,6 +211,7 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({
       series,
       load,
       completion: 0,
+      xp_granted: 0,
     };
 
     setExercises(prev => [...prev, newExercise]);
@@ -217,12 +222,53 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({
     setExercises(prev => prev.filter((_, i) => i !== index));
   };
 
-  const toggleExerciseCompletion = (index: number) => {
-    setExercises(prev => prev.map((exercise, i) => 
-      i === index 
-        ? { ...exercise, completion: exercise.completion === 0 ? 1 : 0 }
-        : exercise
-    ));
+  const toggleExerciseCompletion = async (index: number) => {
+    const exercise = exercises[index];
+    const wasCompleted = exercise.completion === 1;
+    const wasXpGranted = exercise.xp_granted === 1;
+
+    try {
+      if (!wasCompleted) {
+        if (!wasXpGranted) {
+          await addExperience(userId, 10);
+          
+          setExercises(prev => prev.map((ex, i) => 
+            i === index 
+              ? { ...ex, completion: 1, xp_granted: 1 }
+              : ex
+          ));
+        } else {
+          setExercises(prev => prev.map((ex, i) => 
+            i === index 
+              ? { ...ex, completion: 1 }
+              : ex
+          ));
+        }
+      } else {
+        if (wasXpGranted) {
+          await addExperience(userId, -10);
+          
+          setExercises(prev => prev.map((ex, i) => 
+            i === index 
+              ? { ...ex, completion: 0, xp_granted: 0 }
+              : ex
+          ));
+        } else {
+          setExercises(prev => prev.map((ex, i) => 
+            i === index 
+              ? { ...ex, completion: 0 }
+              : ex
+          ));
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao processar XP do exercício:', error);
+      setExercises(prev => prev.map((ex, i) => 
+        i === index 
+          ? { ...ex, completion: ex.completion === 0 ? 1 : 0 }
+          : ex
+      ));
+    }
   };
 
   const renderLeftActionsExercise = (index: number) => {

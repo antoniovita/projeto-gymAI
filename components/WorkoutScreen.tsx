@@ -724,6 +724,7 @@ export default function WorkoutScreen() {
         setNewExerciseReps={setNewExerciseReps}
         newExerciseSeries={newExerciseSeries}
         setNewExerciseSeries={setNewExerciseSeries}
+        userId={userId!}
       />
     </SafeAreaView>
   );

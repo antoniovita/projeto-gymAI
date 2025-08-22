@@ -124,6 +124,13 @@ export default function ExpensesScreen() {
         return;
       }
 
+
+      //trocar por um modal de erro para criar ainda
+      if (!selectedCategory) {
+        alert("É gasto ou não?")
+        return;
+      }
+
       if (!userId) {
         alert("User not logged in.");
         return;
@@ -440,7 +447,14 @@ export default function ExpensesScreen() {
   }, []);
 
   const currencyFormat = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+    const hasDecimals = value % 1 !== 0;
+    
+    return new Intl.NumberFormat('pt-BR', { 
+      style: 'currency', 
+      currency: 'BRL',
+      minimumFractionDigits: hasDecimals ? 2 : 0,
+      maximumFractionDigits: 2
+    }).format(value);
   };
 
   return (
