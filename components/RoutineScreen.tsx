@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -7,280 +7,309 @@ import {
   SafeAreaView, 
   Modal, 
   TextInput, 
-  Alert, 
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
   Platform,
   Keyboard,
   FlatList,
+  Alert,
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { TouchableOpacity } from 'react-native-gesture-handler';
-import { useRecurrentTaskDrafts } from '../hooks/useRecurrentTaskDrafts';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import { RoutineTask } from '../api/model/RoutineTasks';
+import { useRoutineTasks } from 'hooks/useRoutineTasks';
 import { useAuth } from 'hooks/useAuth';
 import { useNavigation } from '@react-navigation/native';
-import { RootStackParamList } from 'widgets/types';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import { useTask } from 'hooks/useTask';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function RoutineScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const {userId} = useAuth()
+type WeekDay = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+type CategoryType = 'Trabalho' | 'Exercícios' | 'Saúde' | 'Estudos' | 'Casa' | 'Social' | 'Hobbie' | 'Outros';
 
-  const {tasks} = useTask();
+const days: string[] = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
 
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [extraCategories, setExtraCategories] = useState<{ name: string; color: string }[]>([]);
+const categories: CategoryType[] = [
+  'Trabalho', 'Exercícios', 'Saúde', 'Estudos', 'Casa', 'Social', 'Hobbie', 'Outros'
+];
 
-  const days = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'] as const;
-  type DayKey = typeof days[number];
-  const [selectedDay, setSelectedDay] = useState<DayKey>(days[0]);
-  
-  const [showModal, setShowModal] = useState(false);
-  const [modalType, setModalType] = useState<'create' | 'edit'>('create');
-  const [editingDraft, setEditingDraft] = useState<any>(null);
+const getDayName = (dayNumber: number): string => {
+  const dayNames: string[] = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  return dayNames[dayNumber] || 'Dom';
+};
 
-  const [showTimePicker, setShowTimePicker] = useState(false);
-
-  const categories = Array.from(
-    new Set([
-      ...tasks
-        .flatMap((task) => task.type?.split(',').map((s: string) => s.trim()) ?? [])
-        .filter((t) => t.length > 0),
-      ...extraCategories.map(cat => cat.name),
-    ])
-  );
-
-  const getCategoryColor = (catName: string) => {
-    const extraCat = extraCategories.find(c => c.name === catName);
-    return extraCat ? extraCat.color : '#999999';
+const getCategoryColor = (category: string): string => {
+  const colors: Record<CategoryType, string> = {
+    'Trabalho': '#3b82f6',
+    'Exercícios': '#ef4444',
+    'Saúde': '#10b981',
+    'Estudos': '#8b5cf6',
+    'Casa': '#f59e0b',
+    'Social': '#ec4899',
+    'Hobbie': '#06b6d4',
+    'Outros': '#6b7280',
   };
+  return colors[category as CategoryType] || '#6b7280';
+};
 
+const getWeekDayFromDayName = (dayName: string): WeekDay => {
+  const mapping: Record<string, WeekDay> = {
+    'Segunda': 'monday',
+    'Terça': 'tuesday', 
+    'Quarta': 'wednesday',
+    'Quinta': 'thursday',
+    'Sexta': 'friday',
+    'Sábado': 'saturday',
+    'Domingo': 'sunday',
+  };
+  return mapping[dayName] || 'monday';
+};
+
+const RoutineScreen: React.FC = () => {
+  const navigation = useNavigation();
+  const { userId } = useAuth();
+
+  const {
+    routineTasks,
+    loading,
+    error,
+    createRoutineTask,
+    deleteRoutineTask,
+    updateRoutineTask,
+    refreshRoutineTasks,
+    getCompletionCount,
+    getTotalXpFromRoutine,
+  } = useRoutineTasks();
+
+  const [selectedDay, setSelectedDay] = useState<string>(days[0]);
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [showTimePicker, setShowTimePicker] = useState<boolean>(false);
+  const [time, setTime] = useState<Date>(new Date());
+  const [selectedCategories, setSelectedCategories] = useState<CategoryType[]>([]);
+  const [editingTask, setEditingTask] = useState<RoutineTask | null>(null);
+  
+  const [title, setTitle] = useState<string>('');
+  const [content, setContent] = useState<string>('');
+  const [selectedTime, setSelectedTime] = useState<string>('');
+  const [selectedDaysOfWeek, setSelectedDaysOfWeek] = useState<number[]>([]);
+
+  // Carrega as routine tasks ao montar o componente
   useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        const stored = await AsyncStorage.getItem('extraCategories');
-        if (stored) {
-          setExtraCategories(JSON.parse(stored));
-          console.log('Categorias extras carregadas:', JSON.parse(stored));
-        }
-      } catch (err) {
-        console.error('Erro ao carregar categorias extras:', err);
-      }
-    };
-
-    loadCategories();
-  }, []);
-
-  const [time, setTime] = useState(new Date());
-  
-  const [formData, setFormData] = useState({
-    title: '',
-    content: '',
-    time: '',
-    daysOfWeek: [] as number[],
-    userId,
-    type: ''
-  });
-
-  const { 
-    drafts, 
-    loading, 
-    addDraft, 
-    updateDraft, 
-    deleteDraft, 
-  } = useRecurrentTaskDrafts();
-
-  const dayToNumber = {
-    'Segunda': 1,
-    'Terça': 2,
-    'Quarta': 3,
-    'Quinta': 4,
-    'Sexta': 5,
-    'Sábado': 6,
-    'Domingo': 0
-  };
-
-  const draftsForSelectedDay = drafts.filter(draft => 
-    draft.daysOfWeek.includes(dayToNumber[selectedDay])
-  );
-
-  const parseTimeString = (timeString: string) => {
-    const [hours, minutes] = timeString.split(':').map(num => parseInt(num, 10));
-    const date = new Date();
-    date.setHours(hours, minutes, 0, 0);
-    return date;
-  };
-
-  const resetForm = () => {
-    setFormData({
-      title: '',
-      content: '',
-      time: '',
-      daysOfWeek: [],
-      userId,
-      type: '', 
-    });
-    setSelectedCategories([]);
-    setTime(new Date());
-    setEditingDraft(null);
-  };
-
-  const openCreateModal = () => {
-    resetForm();
-    setModalType('create');
-    setShowModal(true);
-  };
-
-  const openEditModal = (draft: any) => {
-    setFormData({
-      title: draft.title,
-      content: draft.content || '',
-      time: draft.time,
-      daysOfWeek: draft.daysOfWeek,
-      userId: draft.userId,
-      type: draft.type || ''
-    });
-    
-    // Definir categorias selecionadas baseado no type do draft
-    const draftCategories = draft.type ? draft.type.split(',').map((s: string) => s.trim()) : [];
-    setSelectedCategories(draftCategories);
-    
-    if (draft.time) {
-      setTime(parseTimeString(draft.time));
+    if (userId) {
+      refreshRoutineTasks(userId!);
     }
-    
-    setEditingDraft(draft);
-    setModalType('edit');
+  }, [userId, refreshRoutineTasks]);
+
+  const filteredTasks = useMemo(() => {
+    const selectedWeekDay: WeekDay = getWeekDayFromDayName(selectedDay);
+    return routineTasks.filter((task: RoutineTask) => {
+      try {
+        const weekDays: WeekDay[] = JSON.parse(task.week_days || "[]");
+        return weekDays.includes(selectedWeekDay);
+      } catch (error) {
+        console.error('Erro ao fazer parse de week_days:', error);
+        return false;
+      }
+    });
+  }, [routineTasks, selectedDay]);
+
+  const resetForm = (): void => {
+    setTitle('');
+    setContent('');
+    setSelectedTime('');
+    setSelectedDaysOfWeek([]);
+    setSelectedCategories([]);
+    setEditingTask(null);
+  };
+
+  const openModal = (task?: RoutineTask): void => {
+    if (task) {
+      setEditingTask(task);
+      setTitle(task.title || '');
+      setContent(task.content || '');
+      
+      // Parse do horário do created_at
+      setSelectedTime(task.created_at ? new Date(task.created_at).toLocaleTimeString('pt-BR', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      }) : '');
+      
+      // Parse dos dias da semana
+      try {
+        const weekDays: WeekDay[] = JSON.parse(task.week_days || "[]");
+        const dayNumbers: number[] = weekDays.map((day: WeekDay) => {
+          const dayMapping: Record<WeekDay, number> = {
+            'monday': 1, 
+            'tuesday': 2, 
+            'wednesday': 3, 
+            'thursday': 4,
+            'friday': 5, 
+            'saturday': 6, 
+            'sunday': 0
+          };
+          return dayMapping[day] || 0;
+        });
+        setSelectedDaysOfWeek(dayNumbers);
+      } catch (error) {
+        console.error('Erro ao fazer parse dos dias da semana:', error);
+        setSelectedDaysOfWeek([]);
+      }
+      
+      setSelectedCategories([task.type as CategoryType || 'Outros']);
+    } else {
+      resetForm();
+    }
     setShowModal(true);
   };
 
-  const handleSave = async () => {
-    if (!userId) {
-      Alert.alert('Erro', 'Usuário não autenticado');
+  const handleSave = async (): Promise<void> => {
+    if (!title.trim()) {
+      Alert.alert('Erro', 'Por favor, insira um nome para a tarefa.');
       return;
     }
 
-    const dataToSave = {
-      ...formData,
-      type: selectedCategories.join(', '),
-      userId
-    };
+    if (selectedDaysOfWeek.length === 0) {
+      Alert.alert('Erro', 'Por favor, selecione pelo menos um dia da semana.');
+      return;
+    }
+
+    if (!userId) {
+      Alert.alert('Erro', 'Usuário não encontrado.');
+      return;
+    }
 
     try {
-      if (modalType === 'create') {
-        await addDraft(dataToSave);
+      // Converte números dos dias para strings em inglês
+      const weekDays: WeekDay[] = selectedDaysOfWeek.map((dayNumber: number) => {
+        const dayMapping: Record<number, WeekDay> = {
+          0: 'sunday', 
+          1: 'monday', 
+          2: 'tuesday', 
+          3: 'wednesday',
+          4: 'thursday', 
+          5: 'friday', 
+          6: 'saturday'
+        };
+        return dayMapping[dayNumber] || 'monday';
+      });
+
+      let result;
+      if (editingTask) {
+        result = await updateRoutineTask(
+          editingTask.id,
+          title.trim(),
+          content.trim(),
+          weekDays,
+          selectedCategories[0] || 'Outros'
+        );
       } else {
-        await updateDraft({ ...editingDraft, ...dataToSave });
+        result = await createRoutineTask(
+          title.trim(),
+          content.trim(),
+          weekDays,
+          selectedCategories[0] || 'Outros',
+          userId
+        );
       }
-      setShowModal(false);
-      resetForm();
+
+      if (result.success) {
+        setShowModal(false);
+        resetForm();
+      } else {
+        Alert.alert('Erro', result.error || 'Erro ao salvar tarefa.');
+      }
     } catch (err) {
-      Alert.alert('Erro', 'Não foi possível salvar a tarefa');
+      console.error('Erro ao salvar tarefa:', err);
+      Alert.alert('Erro', 'Ocorreu um erro inesperado ao salvar a tarefa.');
     }
   };
 
-  const handleDelete = async (draft: any) => {
-    const currentDayNumber = dayToNumber[selectedDay];
-    const isMultipleDays = draft.daysOfWeek.length > 1;
+  const toggleDayOfWeek = (dayNumber: number): void => {
+    setSelectedDaysOfWeek((prev: number[]) => 
+      prev.includes(dayNumber)
+        ? prev.filter((d: number) => d !== dayNumber)
+        : [...prev, dayNumber]
+    );
+  };
+
+  const handleDelete = async (taskId: string): Promise<void> => {
+    const selectedWeekDay: WeekDay = getWeekDayFromDayName(selectedDay);
+    const task = routineTasks.find(t => t.id === taskId);
     
-    if (isMultipleDays) {
-      Alert.alert(
-        'Confirmar exclusão',
-        `Esta tarefa está configurada para múltiplos dias. O que você deseja fazer?`,
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          { 
-            text: `Remover apenas de ${selectedDay}`, 
-            onPress: async () => {
-              try {
-                const updatedDaysOfWeek = draft.daysOfWeek.filter((day: number) => day !== currentDayNumber);
-                await updateDraft({ 
-                  ...draft, 
-                  daysOfWeek: updatedDaysOfWeek 
-                });
-              } catch (err) {
-                Alert.alert('Erro', 'Não foi possível remover a tarefa deste dia');
+    if (!task) return;
+    
+    try {
+      const currentWeekDays: WeekDay[] = JSON.parse(task.week_days || "[]");
+      const hasMultipleDays = currentWeekDays.length > 1;
+      
+      if (hasMultipleDays) {
+        // Se tem múltiplos dias, oferece as duas opções
+        Alert.alert(
+          'Remover tarefa',
+          'Como deseja remover esta tarefa?',
+          [
+            { text: 'Cancelar', style: 'cancel' },
+            { 
+              text: `Apenas de ${selectedDay}`, 
+              style: 'default',
+              onPress: async () => {
+                const updatedWeekDays: WeekDay[] = currentWeekDays.filter(day => day !== selectedWeekDay);
+                const result = await updateRoutineTask(
+                  taskId,
+                  task.title,
+                  task.content,
+                  updatedWeekDays,
+                  task.type
+                );
+                
+                if (!result.success) {
+                  Alert.alert('Erro', result.error || 'Não foi possível remover a tarefa deste dia.');
+                }
+              }
+            },
+            { 
+              text: 'Excluir completamente', 
+              style: 'destructive',
+              onPress: async () => {
+                const result = await deleteRoutineTask(taskId, true);
+                if (!result.success) {
+                  Alert.alert('Erro', result.error || 'Não foi possível excluir a tarefa.');
+                }
               }
             }
-          },
-          { 
-            text: 'Excluir completamente', 
-            style: 'destructive',
-            onPress: async () => {
-              try {
-                await deleteDraft(draft.id);
-              } catch (err) {
-                Alert.alert('Erro', 'Não foi possível excluir a tarefa');
+          ]
+        );
+      } else {
+        // Se tem apenas 1 dia, só oferece exclusão completa
+        Alert.alert(
+          'Confirmar exclusão',
+          'Tem certeza que deseja excluir esta tarefa?',
+          [
+            { text: 'Cancelar', style: 'cancel' },
+            { 
+              text: 'Excluir', 
+              style: 'destructive',
+              onPress: async () => {
+                const result = await deleteRoutineTask(taskId, true);
+                if (!result.success) {
+                  Alert.alert('Erro', result.error || 'Não foi possível excluir a tarefa.');
+                }
               }
             }
-          }
-        ]
-      );
-    } else {
-      Alert.alert(
-        'Confirmar exclusão',
-        'Tem certeza que deseja excluir esta tarefa?',
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          { 
-            text: 'Excluir', 
-            style: 'destructive',
-            onPress: async () => {
-              try {
-                await deleteDraft(draft.id);
-              } catch (err) {
-                Alert.alert('Erro', 'Não foi possível excluir a tarefa');
-              }
-            }
-          }
-        ]
-      );
+          ]
+        );
+      }
+    } catch (error) {
+      console.error('Erro ao processar exclusão:', error);
+      Alert.alert('Erro', 'Erro inesperado ao processar a exclusão.');
     }
   };
 
-  const toggleDaySelection = (dayNumber: number) => {
-    setFormData(prev => ({
-      ...prev,
-      daysOfWeek: prev.daysOfWeek.includes(dayNumber)
-        ? prev.daysOfWeek.filter(d => d !== dayNumber)
-        : [...prev.daysOfWeek, dayNumber]
-    }));
-  };
-
-  const getDayName = (dayNumber: number) => {
-    const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-    return dayNames[dayNumber];
-  };
-
-  const handleTimeConfirm = (selectedTime: Date) => {
-    setShowTimePicker(false);
-    setTime(selectedTime);
-    
-    const formattedTime = selectedTime.toLocaleTimeString('pt-BR', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
-    
-    setFormData(prev => ({
-      ...prev,
-      time: formattedTime
-    }));
-  };
-
-  const handleTimeCancel = () => {
-    setShowTimePicker(false);
-  };
-
-  const renderLeftActions = (item: any) => {
+  const renderLeftActions = (item: RoutineTask): React.ReactElement => {
     return (
       <View className="flex-row items-center justify-start border-t bg-rose-500 px-4 h-full" style={{ width: 80 }}>
         <TouchableOpacity
           className="flex-row items-center justify-center w-16 h-16 rounded-full"
-          onPress={() => handleDelete(item)}
+          onPress={() => handleDelete(item.id)}
         >
           <Ionicons className='ml-4' name="trash" size={24} color="white" />
         </TouchableOpacity>
@@ -288,43 +317,122 @@ export default function RoutineScreen() {
     );
   };
 
-  const renderItem = ({ item }: { item: any }) => {
-    return (
-      <Swipeable
-        renderLeftActions={() => renderLeftActions(item)}
-        leftThreshold={80}
-        rightThreshold={40}
-        overshootLeft={false}
-        overshootRight={false}
-        friction={1}
-        containerStyle={{ backgroundColor: '#27272a' }}
-        childrenContainerStyle={{ backgroundColor: '#27272a' }}
-        enableTrackpadTwoFingerGesture={false}
-      >
-        <View className="w-full flex flex-col justify-center px-6 h-[90px] pb-4 border-b border-neutral-700 pt-4 bg-zinc-800">
-          <View className="flex flex-row justify-between">
-            <Pressable className="flex flex-col gap-1" onPress={() => openEditModal(item)}>
-              <Text className="text-xl font-sans font-medium text-gray-300">
-                {item.title}
-              </Text>
-              <Text className="text-neutral-400 text-sm font-sans">
-                {item.time}
-              </Text>
-              <Text className="text-neutral-500 font-sans text-xs">
-                Recorrente em {item.daysOfWeek.length} dias
-              </Text>
-            </Pressable>
+  const renderItem = ({ item }: { item: RoutineTask }): React.ReactElement => {
+    // Usando as funções helper do hook
+    const completionCount = getCompletionCount(item);
+    const totalXp = getTotalXpFromRoutine(item);
+    
+    try {
+      const weekDays: WeekDay[] = JSON.parse(item.week_days || "[]");
+      
+      return (
+        <Swipeable
+          renderLeftActions={() => renderLeftActions(item)}
+          leftThreshold={80}
+          rightThreshold={40}
+          overshootLeft={false}
+          overshootRight={false}
+          friction={1}
+          containerStyle={{ backgroundColor: '#27272a' }}
+          childrenContainerStyle={{ backgroundColor: '#27272a' }}
+          enableTrackpadTwoFingerGesture={false}
+        >
+          <View className="w-full flex flex-col justify-center px-6 h-[90px] pb-4 border-b border-neutral-700 pt-4 bg-zinc-800">
+            <View className="flex flex-row justify-between">
+              <Pressable className="flex flex-col gap-1 flex-1" onPress={() => openModal(item)}>
+                <View className="flex flex-row items-center gap-2">
+                  <Text className="text-xl font-sans font-medium text-gray-300 flex-1">
+                    {item.title}
+                  </Text>
+                  {item.type && (
+                    <View className="flex-row items-center gap-1">
+                      <View 
+                        style={{ 
+                          width: 8, 
+                          height: 8, 
+                          borderRadius: 4, 
+                          backgroundColor: getCategoryColor(item.type) 
+                        }} 
+                      />
+                      <Text className="text-neutral-400 text-xs font-sans">
+                        {item.type}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+                
+                <View className="flex flex-row items-center justify-between">
+                  <Text className="text-neutral-400 text-sm font-sans">
+                    {item.created_at ? new Date(item.created_at).toLocaleTimeString('pt-BR', { 
+                      hour: '2-digit', 
+                      minute: '2-digit' 
+                    }) : 'Sem horário'}
+                  </Text>
+                  
+                  <View className="flex flex-row items-center gap-3">
+                    {completionCount > 0 && (
+                      <Text className="text-green-400 text-xs font-sans">
+                        {completionCount} completadas
+                      </Text>
+                    )}
+                    {totalXp > 0 && (
+                      <Text className="text-yellow-400 text-xs font-sans">
+                        {totalXp} XP
+                      </Text>
+                    )}
+                  </View>
+                </View>
+                
+                <Text className="text-neutral-500 font-sans text-xs">
+                  Recorrente em {weekDays.length} dias
+                </Text>
+              </Pressable>
+            </View>
           </View>
+        </Swipeable>
+      );
+    } catch (error) {
+      console.error('Erro ao renderizar item:', error);
+      return (
+        <View className="w-full flex flex-col justify-center px-6 h-[90px] pb-4 border-b border-neutral-700 pt-4 bg-zinc-800">
+          <Text className="text-red-400 font-sans text-sm">Erro ao carregar tarefa</Text>
         </View>
-      </Swipeable>
-    );
+      );
+    }
   };
 
-  return (
-      <SafeAreaView className={`flex-1 ${Platform.OS == 'android' && "py-[30px]" }  bg-zinc-800`}>
+  if (loading) {
+    return (
+      <SafeAreaView className={`flex-1 ${Platform.OS == 'android' && "py-[30px]"} bg-zinc-800`}>
+        <View className="flex-1 items-center justify-center">
+          <Text className="text-white font-sans text-lg">Carregando rotinas...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
+  if (error) {
+    return (
+      <SafeAreaView className={`flex-1 ${Platform.OS == 'android' && "py-[30px]"} bg-zinc-800`}>
+        <View className="flex-1 items-center justify-center px-4">
+          <Ionicons name="alert-circle-outline" size={48} color="#ef4444" />
+          <Text className="text-red-400 font-sans text-lg text-center mt-4">{error}</Text>
+          <Pressable 
+            onPress={() => refreshRoutineTasks(userId!)}
+            className="mt-4 bg-rose-400 px-6 py-3 rounded-xl"
+          >
+            <Text className="text-black font-sans">Tentar novamente</Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView className={`flex-1 ${Platform.OS == 'android' && "py-[30px]"} bg-zinc-800`}>
+      
       <Pressable
-        onPress={openCreateModal}
+        onPress={() => openModal()}
         className="w-[50px] h-[50px] absolute bottom-[6%] right-6 z-20 rounded-full bg-rose-400 items-center justify-center shadow-lg"
         style={{
           shadowColor: "#000",
@@ -343,7 +451,7 @@ export default function RoutineScreen() {
           <Text className="ml-1 text-white font-sans text-[16px]">Voltar</Text>
         </Pressable>
         <View className="absolute left-0 right-0 items-center">
-          <Text className="text-white font-sans text-[17px]"> Minha Rotina</Text>
+          <Text className="text-white font-sans text-[17px]">Minha Rotina</Text>
         </View>
       </View>
 
@@ -354,7 +462,7 @@ export default function RoutineScreen() {
         className="py-2 mt-[30px]"
         style={{ flexGrow: 0 }}
       >
-        {days.map(day => (
+        {days.map((day: string) => (
           <Pressable
             key={day}
             onPress={() => setSelectedDay(day)}
@@ -366,10 +474,10 @@ export default function RoutineScreen() {
       </ScrollView>
 
       <View className="flex-1 mt-4">
-        {draftsForSelectedDay.length > 0 ? (
+        {filteredTasks.length > 0 ? (
           <FlatList
-            data={draftsForSelectedDay}
-            keyExtractor={(item) => item.id.toString()}
+            data={filteredTasks}
+            keyExtractor={(item: RoutineTask) => item.id}
             renderItem={renderItem}
             showsVerticalScrollIndicator={false}
             style={{ flex: 1 }}
@@ -414,8 +522,8 @@ export default function RoutineScreen() {
               >
                 <View>
                   <TextInput
-                    value={formData.title}
-                    onChangeText={text => setFormData(prev => ({ ...prev, title: text }))}
+                    value={title}
+                    onChangeText={setTitle}
                     placeholder="Nome da tarefa"
                     placeholderTextColor="#6b7280"
                     className="px-1 py-3 text-white text-2xl font-bold"
@@ -424,8 +532,8 @@ export default function RoutineScreen() {
 
                 <View className="mb-2">
                   <TextInput
-                    value={formData.content}
-                    onChangeText={text => setFormData(prev => ({ ...prev, content: text }))}
+                    value={content}
+                    onChangeText={setContent}
                     placeholder="Detalhes da tarefa"
                     placeholderTextColor="#6b7280"
                     multiline
@@ -439,26 +547,26 @@ export default function RoutineScreen() {
                     onPress={() => setShowTimePicker(true)}
                     className="px-2 py-3 flex-row items-center justify-between"
                   >
-                    <Text className={`font-bold text-2xl ${formData.time ? 'text-white' : 'text-gray-400'}`}>
-                      {formData.time || new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                    <Text className={`font-bold text-2xl ${selectedTime ? 'text-white' : 'text-gray-400'}`}>
+                      {selectedTime || 'Definir horário'}
                     </Text>
                   </Pressable>
                 </View>
 
                 <View className="mb-6 mt-2">
                   <View className="flex-row flex-wrap">
-                    {[1, 2, 3, 4, 5, 6, 0].map(dayNumber => (
+                    {[1, 2, 3, 4, 5, 6, 0].map((dayNumber: number) => (
                       <Pressable
                         key={dayNumber}
-                        onPress={() => toggleDaySelection(dayNumber)}
+                        onPress={() => toggleDayOfWeek(dayNumber)}
                         className={`px-4 py-2 rounded-full mr-2 mb-2 ${
-                          formData.daysOfWeek.includes(dayNumber)
+                          selectedDaysOfWeek.includes(dayNumber)
                             ? 'bg-[#ff7a7f]'
                             : 'bg-zinc-800'
                         }`}
                       >
                         <Text className={`font-sans ${
-                          formData.daysOfWeek.includes(dayNumber)
+                          selectedDaysOfWeek.includes(dayNumber)
                             ? 'text-black'
                             : 'text-white'
                         }`}>
@@ -469,23 +577,16 @@ export default function RoutineScreen() {
                   </View>
                 </View>
 
-                {/* Seção de Categorias */}
                 <View className="mb-4">
                   <View className="flex flex-row flex-wrap gap-2 mb-2">
-                    {categories.map((cat) => {
-                      const isSelected = selectedCategories.includes(cat);
-                      const color = getCategoryColor(cat);
+                    {categories.map((cat: CategoryType) => {
+                      const isSelected: boolean = selectedCategories.includes(cat);
+                      const color: string = getCategoryColor(cat);
 
                       return (
                         <Pressable
                           key={cat}
-                          onPress={() =>
-                            setSelectedCategories((prev) =>
-                              prev.includes(cat) 
-                                ? prev.filter((c) => c !== cat) 
-                                : [...prev, cat]
-                            )
-                          }
+                          onPress={() => setSelectedCategories([cat])}
                           className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${
                             isSelected ? 'bg-rose-400' : 'bg-zinc-700/50'
                           }`}
@@ -517,7 +618,10 @@ export default function RoutineScreen() {
 
               <View className={`${Platform.OS == 'ios' ? 'absolute bottom-[10%] self-center flex-row flex gap-3' : 'self-center flex-row flex gap-3'}`}>
                 <Pressable
-                  onPress={() => setShowModal(false)}
+                  onPress={() => {
+                    setShowModal(false);
+                    resetForm();
+                  }}
                   className="flex-1 bg-zinc-800 rounded-xl py-4"
                 >
                   <Text className="text-white font-sans text-center">Cancelar</Text>
@@ -525,10 +629,9 @@ export default function RoutineScreen() {
                 <Pressable
                   onPress={handleSave}
                   className="flex-1 bg-[#ff7a7f] rounded-xl py-4"
-                  disabled={loading}
                 >
                   <Text className="text-black font-sans text-center">
-                    {loading ? 'Salvando...' : 'Salvar'}
+                    {editingTask ? 'Atualizar' : 'Salvar'}
                   </Text>
                 </Pressable>
               </View>
@@ -540,8 +643,18 @@ export default function RoutineScreen() {
           isVisible={showTimePicker}
           mode="time"
           date={time}
-          onConfirm={handleTimeConfirm}
-          onCancel={handleTimeCancel}
+          onConfirm={(selectedTimeDate: Date) => {
+            setShowTimePicker(false);
+            setTime(selectedTimeDate);
+            
+            const formattedTime: string = selectedTimeDate.toLocaleTimeString('pt-BR', { 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            });
+            
+            setSelectedTime(formattedTime);
+          }}
+          onCancel={() => setShowTimePicker(false)}
           textColor="#000000"
           accentColor="#ff7a7f"
           buttonTextColorIOS="#ff7a7f"
@@ -552,4 +665,6 @@ export default function RoutineScreen() {
       </Modal>
     </SafeAreaView>
   );
-}
+};
+
+export default RoutineScreen;

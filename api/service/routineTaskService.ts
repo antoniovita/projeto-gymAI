@@ -1,9 +1,7 @@
 import { RoutineTaskController } from 'api/controller/routineTasksController';
 
 export const RoutineTaskService = {
-
-
-    createRoutineTask: async (
+  createRoutineTask: async (
     title: string,
     content: string,
     weekDays: string[],
@@ -13,11 +11,9 @@ export const RoutineTaskService = {
     if (!title?.trim()) {
       return { success: false, error: 'Título é obrigatório' };
     }
-    
     if (!userId?.trim()) {
       return { success: false, error: 'ID do usuário é obrigatório' };
     }
-
     return await RoutineTaskController.createRoutineTask(
       title.trim(),
       content?.trim() || '',
@@ -27,38 +23,51 @@ export const RoutineTaskService = {
     );
   },
 
-
   getRoutineTasks: async (userId: string) => {
     if (!userId?.trim()) {
       return { success: false, error: 'ID do usuário é obrigatório' };
     }
-
     return await RoutineTaskController.getRoutineTasks(userId);
   },
-
 
   getRoutineTaskById: async (routineId: string) => {
     if (!routineId?.trim()) {
       return { success: false, error: 'ID da routine task é obrigatório' };
     }
-
     return await RoutineTaskController.getRoutineTaskById(routineId);
   },
 
-  completeRoutineTask: async (routineId: string, xpGranted: number = 0) => {
+  // completa routine task para uma data específica
+  completeRoutineTaskForDate: async (routineId: string, date: string, xpGranted: number = 0) => {
     if (!routineId?.trim()) {
       return { success: false, error: 'ID da routine task é obrigatório' };
     }
+    if (!date?.trim()) {
+      return { success: false, error: 'Data é obrigatória' };
+    }
+    
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(date.trim())) {
+      return { success: false, error: 'Formato de data inválido. Use YYYY-MM-DD' };
+    }
 
-    return await RoutineTaskController.completeRoutineTask(routineId, xpGranted);
+    return await RoutineTaskController.completeRoutineTaskForDate(routineId, date.trim(), xpGranted);
   },
 
-  uncompleteRoutineTask: async (routineId: string) => {
+  uncompleteRoutineTaskForDate: async (routineId: string, date: string) => {
     if (!routineId?.trim()) {
       return { success: false, error: 'ID da routine task é obrigatório' };
     }
+    if (!date?.trim()) {
+      return { success: false, error: 'Data é obrigatória' };
+    }
+    
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(date.trim())) {
+      return { success: false, error: 'Formato de data inválido. Use YYYY-MM-DD' };
+    }
 
-    return await RoutineTaskController.uncompleteRoutineTask(routineId);
+    return await RoutineTaskController.uncompleteRoutineTaskForDate(routineId, date.trim());
   },
 
   updateRoutineTask: async (
@@ -74,7 +83,7 @@ export const RoutineTaskService = {
     }
 
     const updates: any = {};
-    
+
     if (title !== undefined) {
       const trimmedTitle = title?.trim() || '';
       if (!trimmedTitle) {
@@ -82,19 +91,19 @@ export const RoutineTaskService = {
       }
       updates.title = trimmedTitle;
     }
-    
+
     if (content !== undefined) {
       updates.content = content?.trim() || '';
     }
-    
+
     if (weekDays !== undefined) {
       updates.weekDays = weekDays;
     }
-    
+
     if (type !== undefined) {
       updates.type = type?.trim() || '';
     }
-    
+
     if (created_at !== undefined) {
       updates.created_at = created_at;
     }
@@ -106,21 +115,17 @@ export const RoutineTaskService = {
     return await RoutineTaskController.updateRoutineTask(routineId, updates);
   },
 
-
   deleteRoutineTask: async (routineId: string, permanent: boolean = false) => {
     if (!routineId?.trim()) {
       return { success: false, error: 'ID da routine task é obrigatório' };
     }
-
     return await RoutineTaskController.deleteRoutineTask(routineId, permanent);
   },
-
 
   clearRoutineTasksByUser: async (userId: string) => {
     if (!userId?.trim()) {
       return { success: false, error: 'ID do usuário é obrigatório' };
     }
-
     return await RoutineTaskController.clearRoutineTasksByUser(userId);
   },
 

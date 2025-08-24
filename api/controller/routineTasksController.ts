@@ -2,7 +2,7 @@ import { getDb } from '../../database';
 import { RoutineTask, RoutineTaskModel } from '../model/RoutineTasks';
 
 export const RoutineTaskController = {
-    
+
   createRoutineTask: async (
     title: string,
     content: string,
@@ -12,14 +12,12 @@ export const RoutineTaskController = {
   ) => {
     const db = getDb();
     try {
-
-        if (!Array.isArray(weekDays) || weekDays.length === 0) {
+      if (!Array.isArray(weekDays) || weekDays.length === 0) {
         throw new Error('Pelo menos um dia da semana deve ser selecionado');
       }
 
       const validDays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
       const invalidDays = weekDays.filter(day => !validDays.includes(day.toLowerCase()));
-      
       if (invalidDays.length > 0) {
         throw new Error(`Dias inválidos: ${invalidDays.join(', ')}`);
       }
@@ -55,7 +53,6 @@ export const RoutineTaskController = {
     const db = getDb();
     try {
       const routine = await RoutineTaskModel.getRoutineTaskById(db, routineId);
-      
       if (routine) {
         return { success: true, data: routine };
       } else {
@@ -67,61 +64,80 @@ export const RoutineTaskController = {
     }
   },
 
-  completeRoutineTask: async (routineId: string, xpGranted: number = 0) => {
+  // completa routine task para uma data específica
+  completeRoutineTaskForDate: async (routineId: string, date: string, xpGranted: number = 0) => {
     const db = getDb();
     try {
-
-        if (xpGranted < 0) {
+      if (xpGranted < 0) {
         throw new Error('XP deve ser um valor positivo');
       }
 
-      const changes = await RoutineTaskModel.completeRoutineTask(db, routineId, xpGranted);
-      
-      if (changes === 0) {
-        return { success: false, error: 'Routine task não encontrada ou já foi completada hoje.' };
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(date)) {
+        throw new Error('Formato de data inválido. Use YYYY-MM-DD');
       }
 
-      return { success: true, updatedCount: changes };
+      // impede competar uma tarefa de uma data futura ao dia de hoje
+      const targetDate = new Date(date);
+      const today = new Date();
+      today.setHours(23, 59, 59, 999);
+      
+      if (targetDate > today) {
+        throw new Error('Não é possível completar routine tasks para datas futuras');
+      }
+
+      const changes = await RoutineTaskModel.completeRoutineTaskForDate(db, routineId, date, xpGranted);
+      
+      if (changes === 0) {
+        return { success: false, error: 'Routine task não encontrada ou já foi completada nesta data.' };
+      }
+
+      return { success: true, updatedCount: changes, date, xpGranted };
     } catch (error) {
-      console.error('Erro ao completar routine task no controller:', error);
+      console.error('Erro ao completar routine task para data específica no controller:', error);
       return { success: false, error: error instanceof Error ? error.message : 'Erro ao completar routine task.' };
     }
   },
 
-  uncompleteRoutineTask: async (routineId: string) => {
+  // remove completion de uma data específica
+  uncompleteRoutineTaskForDate: async (routineId: string, date: string) => {
     const db = getDb();
     try {
-      const changes = await RoutineTaskModel.uncompleteRoutineTask(db, routineId);
-      
-      if (changes === 0) {
-        return { success: false, error: 'Routine task não encontrada ou não foi completada hoje.' };
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(date)) {
+        throw new Error('Formato de data inválido. Use YYYY-MM-DD');
       }
 
-      return { success: true, updatedCount: changes };
+      const changes = await RoutineTaskModel.uncompleteRoutineTaskForDate(db, routineId, date);
+      
+      if (changes === 0) {
+        return { success: false, error: 'Routine task não encontrada ou não foi completada nesta data.' };
+      }
+
+      return { success: true, updatedCount: changes, date };
     } catch (error) {
-      console.error('Erro ao descompletar routine task no controller:', error);
-      return { success: false, error: 'Erro ao descompletar routine task.' };
+      console.error('Erro ao descompletar routine task para data específica no controller:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Erro ao descompletar routine task.' };
     }
   },
 
   updateRoutineTask: async (routineId: string, updates: Partial<RoutineTask & { weekDays?: string[] }>) => {
     const db = getDb();
     try {
-
-        if (updates.weekDays && Array.isArray(updates.weekDays)) {
+      if (updates.weekDays && Array.isArray(updates.weekDays)) {
         const validDays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
         const invalidDays = updates.weekDays.filter(day => !validDays.includes(day.toLowerCase()));
         
         if (invalidDays.length > 0) {
           throw new Error(`Dias inválidos: ${invalidDays.join(', ')}`);
         }
-
+        
         if (updates.weekDays.length === 0) {
           throw new Error('Pelo menos um dia da semana deve ser selecionado');
         }
 
         updates.week_days = JSON.stringify(updates.weekDays.map(day => day.toLowerCase()));
-        delete updates.weekDays; 
+        delete updates.weekDays;
       }
 
       if (updates.created_at) {
@@ -144,13 +160,11 @@ export const RoutineTaskController = {
     const db = getDb();
     try {
       let changes;
-      
       if (permanent) {
         changes = await RoutineTaskModel.permanentDeleteRoutineTask(db, routineId);
       } else {
         changes = await RoutineTaskModel.deleteRoutineTask(db, routineId);
       }
-
       return { success: changes > 0, deletedCount: changes };
     } catch (error) {
       console.error('Erro ao deletar routine task no controller:', error);
@@ -179,5 +193,4 @@ export const RoutineTaskController = {
       return { success: false, error: 'Erro ao buscar todas as routine tasks para debug.' };
     }
   },
-
 };

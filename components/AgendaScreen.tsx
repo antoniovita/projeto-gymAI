@@ -8,13 +8,13 @@ import { Feather, Ionicons } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { useTask } from '../hooks/useTask';
-import { useRecurrentTaskDrafts } from '../hooks/useRecurrentTaskDrafts';
-import { useStats } from '../hooks/useStats'; // Importar o hook useStats
+import { useRoutineTasks } from '../hooks/useRoutineTasks';
+import { useStats } from '../hooks/useStats';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAuth } from 'hooks/useAuth';
-import { Task } from 'api/model/Task';
+import { RoutineTask } from 'api/model/RoutineTasks';
 import TaskModal from './comps/modals/TaskModal';
 import CategoryModal from './comps/modals/CategoryModal';
 import DeleteCategoryModal from './comps/modals/DeleteCategoryModal';
@@ -23,16 +23,29 @@ import LoadingSpinner from './comps/LoadingSpinner';
 import { EmptyState } from './comps/EmptyState';
 import LevelUpModal from './comps/modals/LevelUpModal';
 
+interface UnifiedTask {
+  id: string;
+  title: string;
+  content?: string;
+  datetime: string;
+  completed: 0 | 1;
+  type?: string;
+  isRoutine: boolean;
+  routineId?: string;
+  originalWeekDays?: string[];
+  targetDate?: string; 
+}
+
 const SwipeableTaskItem = ({ 
   item, 
   onEdit, 
   onToggleCompletion, 
   onDelete 
 }: { 
-  item: Task, 
-  onEdit: (task: Task) => void, 
-  onToggleCompletion: (taskId: string, completed: 0 | 1) => void,
-  onDelete: (taskId: string) => void
+  item: UnifiedTask, 
+  onEdit: (task: UnifiedTask) => void, 
+  onToggleCompletion: (taskId: string, completed: 0 | 1, isRoutine?: boolean, routineId?: string, targetDate?: string) => void,
+  onDelete: (taskId: string, isRoutine?: boolean, routineId?: string) => void
 }) => {
   let swipeableRow: any;
 
@@ -43,16 +56,16 @@ const SwipeableTaskItem = ({
   const renderLeftActions = () => (
     <TouchableOpacity
       onPress={() => {
-      closeSwipeable();
-      onDelete(item.id);
+        closeSwipeable();
+        onDelete(item.id, item.isRoutine, item.routineId);
       }}
       style={{
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: '#f43f5e',
-      width: 100,
-      height: '100%',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#f43f5e',
+        width: 100,
+        height: '100%',
       }}
     >
       <Ionicons name="trash" size={24} color="white" />
@@ -72,18 +85,23 @@ const SwipeableTaskItem = ({
           <View className="flex flex-row justify-between">
             <Pressable className="flex flex-col gap-1 mt-1" onPress={() => onEdit(item)}>
               <View className="flex flex-row items-center gap-2">
-                <Text className={`text-xl font-sans font-medium max-w-[300px] line-clamp-1 ${item.completed ? 'line-through text-neutral-500' : 'text-gray-300'}`}>
+                <Text className={`text-xl font-sans font-medium max-w-[260px] line-clamp-1 ${item.completed ? 'line-through text-neutral-500' : 'text-gray-300'}`}>
                   {item.title}
                 </Text>
+                {item.isRoutine && (
+                  <View className="bg-blue-500 px-2 py-1 rounded-full">
+                    <Text className="text-white text-xs font-sans">ROTINA</Text>
+                  </View>
+                )}
               </View>
               <Text className="text-neutral-400 text-sm mt-1 font-sans">
-                {format(new Date(item.datetime), 'dd/MM/yyyy')}  - {format(new Date(item.datetime), 'HH:mm')}
+                {format(new Date(item.datetime), 'dd/MM/yyyy')} - {format(new Date(item.datetime), 'HH:mm')}
               </Text>
             </Pressable>
 
             <Pressable
-              onPress={() => onToggleCompletion(item.id, item.completed)}
-              className={`w-[25px] h-[25px] mt-4 border rounded-lg ${item.completed ? 'bg-rose-500' : 'border-2 border-neutral-600'}`}
+              onPress={() => onToggleCompletion(item.id, item.completed, item.isRoutine, item.routineId, item.targetDate)}
+              className={`w-[25px] h-[25px] mt-4 rounded-lg ${item.completed ? 'bg-rose-500' : 'border-2 border-neutral-600'}`}
               style={{ alignItems: 'center', justifyContent: 'center' }}
             >
               {item.completed ? <Ionicons name="checkmark" size={20} color="white" /> : null}
@@ -97,19 +115,28 @@ const SwipeableTaskItem = ({
 
 export default function AgendaScreen() {
 
-  const { userId } = useAuth()
+  const { userId } = useAuth();
   
   const {
     tasks,
     createTask,
     updateTask,
-    getAllTasksDebug,
     fetchTasks,
     updateTaskCompletion,
     deleteTask,
   } = useTask();
 
-  const { tasksFromDraftDay, loading: draftLoading, loadAll } = useRecurrentTaskDrafts();
+  const {
+    routineTasks,
+    loading: routineLoading,
+    error: routineError,
+    refreshRoutineTasks,
+    completeRoutineTaskForDate,
+    uncompleteRoutineTaskForDate,
+    deleteRoutineTask,
+    updateRoutineTask,
+    isCompletedOnDate,
+  } = useRoutineTasks();
 
   const { 
     userStats, 
@@ -128,7 +155,7 @@ export default function AgendaScreen() {
 
   const [isCreateVisible, setIsCreateVisible] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [selectedTask, setSelectedTask] = useState<any | null>(null);
+  const [selectedTask, setSelectedTask] = useState<UnifiedTask | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [taskContent, setTaskContent] = useState('');
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
@@ -147,11 +174,122 @@ export default function AgendaScreen() {
 
   const [dateFilter, setDateFilter] = useState(new Date());
 
-  const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
+  const [filteredTasks, setFilteredTasks] = useState<UnifiedTask[]>([]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isProcessingDrafts, setIsProcessingDrafts] = useState(false);
+
+  const isRoutineCompletedOnDate = useCallback((routine: RoutineTask, targetDate: Date): boolean => {
+    const targetDateString = format(targetDate, 'yyyy-MM-dd');
+    return isCompletedOnDate(routine, targetDateString);
+  }, [isCompletedOnDate]);
+
+  const convertRoutineToUnifiedTask = useCallback((routine: RoutineTask, targetDate: Date): UnifiedTask => {
+    const routineDateTime = new Date(targetDate);
+    if (routine.created_at) {
+      const originalTime = new Date(routine.created_at);
+      routineDateTime.setHours(originalTime.getHours());
+      routineDateTime.setMinutes(originalTime.getMinutes());
+    } else {
+      routineDateTime.setHours(9, 0, 0, 0);
+    }
+
+    const isCompleted = isRoutineCompletedOnDate(routine, targetDate);
+
+    let weekDays: string[] = [];
+    try {
+      weekDays = JSON.parse(routine.week_days || '[]');
+    } catch (error) {
+      console.error('Erro ao parse week_days:', error);
+    }
+
+    return {
+      id: `routine_${routine.id}_${format(targetDate, 'yyyy-MM-dd')}`,
+      title: routine.title,
+      content: routine.content,
+      datetime: routineDateTime.toISOString(),
+      completed: isCompleted ? 1 : 0,
+      type: routine.type,
+      isRoutine: true,
+      routineId: routine.id,
+      originalWeekDays: weekDays,
+      targetDate: format(targetDate, 'yyyy-MM-dd')
+    };
+  }, [isRoutineCompletedOnDate]);
+
+  const dayNameToNumber: { [key: string]: number } = {
+    'sunday': 0,
+    'monday': 1,
+    'tuesday': 2,
+    'wednesday': 3,
+    'thursday': 4,
+    'friday': 5,
+    'saturday': 6,
+    'domingo': 0,
+    'segunda': 1,
+    'terca': 2,
+    'quarta': 3,
+    'quinta': 4,
+    'sexta': 5,
+    'sabado': 6
+  };
+
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => {
+    const today = new Date();
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - 3);
+    return startOfWeek;
+  });
+
+  const getUnifiedTasks = useCallback((): UnifiedTask[] => {
+    const normalTasks: UnifiedTask[] = tasks.map(task => ({
+      ...task,
+      isRoutine: false
+    }));
+
+    const routineUnifiedTasks: UnifiedTask[] = [];
+
+    routineTasks.forEach((routine: RoutineTask) => {
+      if (!routine.week_days || routine.is_active === 0) return;
+
+      let weekDays: string[] = [];
+      try {
+        weekDays = JSON.parse(routine.week_days);
+      } catch (error) {
+        console.error('Erro ao parse week_days:', error);
+        return;
+      }
+
+      if (weekDays.length === 0) return;
+
+      const startDate = new Date(currentWeekStart);
+      startDate.setDate(startDate.getDate() - 7); 
+      const endDate = new Date(currentWeekStart);
+      endDate.setDate(endDate.getDate() + 14); 
+
+      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+        const dayOfWeek = d.getDay(); // 0 = domingo, 1 = segunda, etc.
+        
+        const shouldShowOnThisDay = weekDays.some(dayName => {
+          const dayNumber = dayNameToNumber[dayName.toLowerCase()];
+          return dayNumber === dayOfWeek;
+        });
+        
+        if (shouldShowOnThisDay) {
+          const unifiedTask = convertRoutineToUnifiedTask(routine, new Date(d));
+          routineUnifiedTasks.push(unifiedTask);
+        }
+      }
+    });
+
+    return [...normalTasks, ...routineUnifiedTasks];
+  }, [tasks, routineTasks, currentWeekStart, convertRoutineToUnifiedTask]);
+
+  useEffect(() => {
+    if (routineError) {
+      Alert.alert('Erro', routineError);
+    }
+  }, [routineError]);
 
   useEffect(() => {
     if (userId) {
@@ -174,7 +312,6 @@ export default function AgendaScreen() {
         const previousLevel = savedLevel ? parseInt(savedLevel) : 1;
 
         if (currentLevel > previousLevel) {
-
           setLevelUpData({
             previousLevel,
             newLevel: currentLevel,
@@ -195,32 +332,68 @@ export default function AgendaScreen() {
     }
   }, [currentLevel, userId, userStats, currentXp]);
 
-  const handleTaskCompletion = async (taskId: string, completed: 0 | 1, xpReward: number = 50) => {
+  const handleTaskCompletion = async (taskId: string, completed: 0 | 1, isRoutine: boolean = false, routineId?: string, targetDate?: string, xpReward: number = 50) => {
     try {
-      await updateTaskCompletion(userId!, taskId, completed === 0 ? 1 : 0);
-      
-      if (completed === 0 && userId) {
-        const result = await addExperience(userId, xpReward);
-        
-        if (result.data?.leveledUp) {
-          setLevelUpData({
-            previousLevel: result.data.previousLevel,
-            newLevel: result.data.newLevel,
-            xpGained: xpReward
-          });
-          setIsLevelUpVisible(true);
+      if (isRoutine && routineId && targetDate) {
+        if (completed === 0) {
+
+          const result = await completeRoutineTaskForDate(routineId, targetDate, xpReward);
+          
+          if (!result.success) {
+            Alert.alert('Erro', result.error || 'Não foi possível completar a rotina.');
+            return;
+          }
+          
+          if (userId) {
+            const expResult = await addExperience(userId, xpReward);
+            
+            if (expResult.data?.leveledUp) {
+              setLevelUpData({
+                previousLevel: expResult.data.previousLevel,
+                newLevel: expResult.data.newLevel,
+                xpGained: xpReward
+              });
+              setIsLevelUpVisible(true);
+            }
+          }
+        } else {
+          // Descompletar routine task para data específica
+          const result = await uncompleteRoutineTaskForDate(routineId, targetDate);
+          
+          if (!result.success) {
+            Alert.alert('Erro', result.error || 'Não foi possível descompletar a rotina.');
+            return;
+          }
         }
+      } else {
+        // Task normal
+        await updateTaskCompletion(userId!, taskId, completed === 0 ? 1 : 0);
+        
+        if (completed === 0 && userId) {
+          const result = await addExperience(userId, xpReward);
+          
+          if (result.data?.leveledUp) {
+            setLevelUpData({
+              previousLevel: result.data.previousLevel,
+              newLevel: result.data.newLevel,
+              xpGained: xpReward
+            });
+            setIsLevelUpVisible(true);
+          }
+        }
+        await fetchTasks(userId!);
       }
-      
-      await fetchTasks(userId!);
     } catch (err) {
+      console.error('Erro ao atualizar status da tarefa:', err);
       Alert.alert('Erro', 'Não foi possível atualizar o status.');
     }
   };
 
+  const allUnifiedTasks = getUnifiedTasks();
+
   const categories = Array.from(
     new Set([
-      ...tasks
+      ...allUnifiedTasks
         .flatMap((task) => task.type?.split(',').map((s: string) => s.trim()) ?? [])
         .filter((t) => t.length > 0),
       ...extraCategories.map(cat => cat.name),
@@ -272,7 +445,7 @@ export default function AgendaScreen() {
   }, [extraCategories]);
 
   const handleDeleteCategory = (categoryName: string) => {
-    const isCategoryInUse = tasks.some(task =>
+    const isCategoryInUse = allUnifiedTasks.some(task =>
       task.type?.split(',').map((t: string) => t.trim()).includes(categoryName)
     );
 
@@ -286,59 +459,6 @@ export default function AgendaScreen() {
     );
   };
 
-  useEffect(() => {
-    if (userId) {
-      getAllTasksDebug();
-    }
-  }, [userId]); 
-
-  const processTasksForDate = async (targetDate: Date) => {
-    if (!userId) {
-      console.log('UserId não disponível, pulando processamento de drafts');
-      return;
-    }
-
-    try {
-      setIsProcessingDrafts(true);
-      console.log('=== INICIANDO PROCESSAMENTO DE DRAFTS ===');
-      console.log('Data alvo:', format(targetDate, 'yyyy-MM-dd'));
-      console.log('UserId:', userId);
-
-      await loadAll();
-      await tasksFromDraftDay(userId, targetDate);
-      
-      console.log('Drafts processados, atualizando tasks...');
-      
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      await fetchTasks(userId);
-      
-      console.log('=== PROCESSAMENTO DE DRAFTS CONCLUÍDO ===');
-    } catch (error) {
-      console.error('Erro ao processar drafts:', error);
-      Alert.alert('Erro', 'Falha ao processar tarefas recorrentes');
-    } finally {
-      setIsProcessingDrafts(false);
-    }
-  };
-
-  const processAndRefreshTasks = async (filterDate: Date) => {
-    try {
-      setIsLoading(true);
-      console.log(`=== PROCESSANDO DRAFTS PARA ${format(filterDate, 'dd/MM/yyyy')} ===`);
-      
-      await processTasksForDate(filterDate);
-      await fetchTasks(userId!);
-      
-      console.log('=== PROCESSAMENTO CONCLUÍDO ===');
-    } catch (error) {
-      console.error('Erro ao processar tasks:', error);
-      Alert.alert('Erro', 'Falha ao processar tarefas');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
   useFocusEffect(
     useCallback(() => {
       const loadInitialData = async () => {
@@ -346,9 +466,11 @@ export default function AgendaScreen() {
         try {
           setIsLoading(true);
           console.log('=== CARREGAMENTO INICIAL DA AGENDA ===');
-          await fetchTasks(userId);
-          await processAndRefreshTasks(dateFilter); 
-          await loadUserStats(userId); // carregar stats
+          await Promise.all([
+            fetchTasks(userId),
+            refreshRoutineTasks(userId),
+            loadUserStats(userId)
+          ]);
           console.log('=== CARREGAMENTO INICIAL CONCLUÍDO ===');
         } catch (error) {
           console.error('Erro no carregamento inicial:', error);
@@ -358,17 +480,18 @@ export default function AgendaScreen() {
         }
       };
       loadInitialData();
-    }, [userId, dateFilter])
+    }, [userId, refreshRoutineTasks])
   );
 
   useEffect(() => {
-
-    if (tasks.length === 0) {
+    const unified = getUnifiedTasks();
+    
+    if (unified.length === 0) {
       setFilteredTasks([]);
       return;
     }
 
-    const filtered = tasks.filter(task => {
+    const filtered = unified.filter(task => {
       if (!task.datetime) return false;
 
       const taskDateISO = task.datetime.split('T')[0];
@@ -383,9 +506,7 @@ export default function AgendaScreen() {
 
     setFilteredTasks(filtered);
     console.log(`Filtro local: ${filtered.length} tasks para ${format(dateFilter, 'dd/MM/yyyy')}`);
-  }, [tasks, dateFilter, selectedTypes]);
-
-  
+  }, [getUnifiedTasks, dateFilter, selectedTypes]);
 
   const combineDateAndTime = (date: Date, time: Date): Date => {
     const combined = new Date(date);
@@ -405,18 +526,37 @@ export default function AgendaScreen() {
     try {
       setIsSaving(true);
       const categoriesString = selectedCategories.join(', ');
-
       const combinedDateTime = combineDateAndTime(date, time);
       const datetimeISO = combinedDateTime.toISOString();
 
       if (selectedTask) {
-        await updateTask(selectedTask.id, {
-          title: newTaskTitle,
-          content: taskContent,
-          type: categoriesString,
-          datetime: datetimeISO,
-        });
+        if (selectedTask.isRoutine && selectedTask.routineId) {
+          // Atualizar routine task
+          const result = await updateRoutineTask(
+            selectedTask.routineId,
+            newTaskTitle,
+            taskContent,
+            selectedTask.originalWeekDays,
+            categoriesString,
+            datetimeISO
+          );
+          
+          if (!result.success) {
+            Alert.alert('Erro', result.error || 'Falha ao atualizar rotina.');
+            return;
+          }
+        } else {
+          // Atualizar task normal
+          await updateTask(selectedTask.id, {
+            title: newTaskTitle,
+            content: taskContent,
+            type: categoriesString,
+            datetime: datetimeISO,
+          });
+          await fetchTasks(userId!);
+        }
       } else {
+        // Criar nova task normal (por enquanto, não criamos routine tasks aqui)
         await createTask(
           newTaskTitle,
           taskContent,
@@ -424,9 +564,9 @@ export default function AgendaScreen() {
           userId!,
           categoriesString
         );
+        await fetchTasks(userId!);
       }
 
-      await fetchTasks(userId!);
       resetModal();
     } catch (err) {
       console.error('[handleSaveTask] Erro:', err);
@@ -436,7 +576,7 @@ export default function AgendaScreen() {
     }
   };
 
-  const handleOpenEdit = (task: any) => {
+  const handleOpenEdit = (task: UnifiedTask) => {
     setSelectedTask(task);
     setNewTaskTitle(task.title);
     setTaskContent(task.content || '');
@@ -457,8 +597,8 @@ export default function AgendaScreen() {
     setIsCreateVisible(true);
   };
 
-  const toggleTaskCompletion = async (taskId: string, completed: 0 | 1) => {
-    await handleTaskCompletion(taskId, completed);
+  const toggleTaskCompletion = async (taskId: string, completed: 0 | 1, isRoutine?: boolean, routineId?: string, targetDate?: string) => {
+    await handleTaskCompletion(taskId, completed, isRoutine, routineId, targetDate);
   };
 
   const resetModal = () => {
@@ -478,17 +618,22 @@ export default function AgendaScreen() {
     setIsCreateVisible(true);
   };
 
-  const handleDeleteTask = (taskId: string) => {
-    const taskToDelete = tasks.find(task => task.id === taskId);
+  const handleDeleteTask = (taskId: string, isRoutine?: boolean, routineId?: string) => {
+    const taskToDelete = allUnifiedTasks.find(task => task.id === taskId);
     
     if (!taskToDelete) {
       Alert.alert('Erro', 'Tarefa não encontrada.');
       return;
     }
 
+    const alertTitle = isRoutine ? 'Confirmar exclusão da rotina' : 'Confirmar exclusão';
+    const alertMessage = isRoutine 
+      ? 'Tem certeza que deseja deletar essa rotina? Ela será removida de todos os dias.'
+      : 'Tem certeza que deseja deletar essa tarefa?';
+
     Alert.alert(
-      'Confirmar exclusão',
-      'Tem certeza que deseja deletar essa tarefa?',
+      alertTitle,
+      alertMessage,
       [
         {
           text: 'Cancelar',
@@ -498,10 +643,17 @@ export default function AgendaScreen() {
           text: 'Deletar',
           style: 'destructive',
           onPress: async () => {
+            if (isRoutine && routineId) {
+              const result = await deleteRoutineTask(routineId);
+              if (!result.success) {
+                Alert.alert('Erro', result.error || 'Não foi possível deletar a rotina.');
+                return;
+              }
+            } else {
               await deleteTask(taskId);
               await fetchTasks(userId!);
-              await processAndRefreshTasks(dateFilter);
-              setFilteredTasks(prev => prev.filter(task => task.id !== taskId));
+            }
+            setFilteredTasks(prev => prev.filter(task => task.id !== taskId));
           },
         },
       ],
@@ -509,18 +661,16 @@ export default function AgendaScreen() {
     );
   };
 
-const handleRefresh = async () => {
-  if (userId) {
-    await processAndRefreshTasks(dateFilter);
-  }
-};
-
-  const [currentWeekStart, setCurrentWeekStart] = useState(() => {
-    const today = new Date();
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - 3);
-    return startOfWeek;
-  });
+  const handleRefresh = async () => {
+    if (userId) {
+      setIsLoading(true);
+      setTimeout(() => setIsLoading(false), 150);
+      await Promise.all([
+        fetchTasks(userId),
+        refreshRoutineTasks(userId)
+      ]);
+    }
+  };
 
   const getWeekDays = () => {
     const days = [];
@@ -553,7 +703,7 @@ const handleRefresh = async () => {
 
   const dayHasTasks = (date: Date) => {
     const dateString = date.toISOString().split('T')[0];
-    return tasks.some(task => task.datetime && task.datetime.split('T')[0] === dateString);
+    return allUnifiedTasks.some(task => task.datetime && task.datetime.split('T')[0] === dateString);
   };
 
   const isSelectedDay = (date: Date) => {
@@ -569,13 +719,16 @@ const handleRefresh = async () => {
     setDateFilter(date);
     setDate(date);    
     if (userId) {
-      await processAndRefreshTasks(date);
+      await Promise.all([
+        fetchTasks(userId),
+        refreshRoutineTasks(userId)
+      ]);
     }
   };
 
-  const isCurrentlyLoading = isLoading || isSaving || isProcessingDrafts || draftLoading;
+  const isCurrentlyLoading = isLoading || isSaving || routineLoading;
 
-  const renderTaskItem = ({ item }: { item: Task }) => (
+  const renderTaskItem = ({ item }: { item: UnifiedTask }) => (
     <SwipeableTaskItem
       item={item}
       onEdit={handleOpenEdit}
@@ -631,68 +784,64 @@ const handleRefresh = async () => {
         </View>
       </View>
 
-    
-    <View className="px-4 mb-4">
-      <View className="bg-[#35353a] rounded-xl overflow-hidden">
-        <View className="flex-row items-center px-6 py-3 ">
-          <Text className="text-white text-base font-sans">
-            {format(currentWeekStart, 'MMMM yyyy', { locale: ptBR }).replace(/^./, (c) => c.toUpperCase())}
-          </Text>
-        </View>
+      <View className="px-4 mb-4">
+        <View className="bg-[#35353a] rounded-xl overflow-hidden">
+          <View className="flex-row items-center px-6 py-3 ">
+            <Text className="text-white text-base font-sans">
+              {format(currentWeekStart, 'MMMM yyyy', { locale: ptBR }).replace(/^./, (c) => c.toUpperCase())}
+            </Text>
+          </View>
 
-        <View className="flex-row justify-around py-2 bg-zinc-800/80">
-          {getWeekDays().map((day, index) => {
-
-        const dayLetter = format(day, 'EEEEE', { locale: ptBR }).toUpperCase();
-            return (
-              <Text key={index} className="text-neutral-400 text-xs font-sans text-center w-10">
-                {dayLetter}
-              </Text>
-            );
-          })}
-        </View>
-
-        <View className="flex-row items-center py-3">
-
-          <Pressable onPress={goToPreviousWeek} className="px-3">
-            <Ionicons name="chevron-back" size={20} color="#ff7a7f" />
-          </Pressable>
-
-          <View className="flex-1 flex-row justify-around">
+          <View className="flex-row justify-around py-2 bg-zinc-800/80">
             {getWeekDays().map((day, index) => {
-              const selected = isSelectedDay(day);
-              const today = isToday(day);
-              const hasTasks = dayHasTasks(day);
+              const dayLetter = format(day, 'EEEEE', { locale: ptBR }).toUpperCase();
               return (
-                <Pressable
-                  key={index}
-                  onPress={() => onDaySelect(day)}
-                  className={`w-8 h-8 rounded-full items-center justify-center ${
-                    selected ? 'bg-[#ff7a7f]' : 'bg-transparent'
-                  }`}
-                >
-                  <Text className={`text-sm font-sans ${
-                    selected ? 'text-black font-bold' :
-                    today ? 'text-[#ff7a7f] font-medium' :
-                    'text-white'
-                  }`}>
-                    {day.getDate()}
-                  </Text>
-                  {hasTasks && !selected && (
-                    <View className="w-1 h-1 bg-[#ff7a7f] rounded-full absolute bottom-0" />
-                  )}
-                </Pressable>
+                <Text key={index} className="text-neutral-400 text-xs font-sans text-center w-10">
+                  {dayLetter}
+                </Text>
               );
             })}
           </View>
 
-          <Pressable onPress={goToNextWeek} className="px-3">
-            <Ionicons name="chevron-forward" size={20} color="#ff7a7f" />
-          </Pressable>
+          <View className="flex-row items-center py-3">
+            <Pressable onPress={goToPreviousWeek} className="px-3">
+              <Ionicons name="chevron-back" size={20} color="#ff7a7f" />
+            </Pressable>
+
+            <View className="flex-1 flex-row justify-around">
+              {getWeekDays().map((day, index) => {
+                const selected = isSelectedDay(day);
+                const today = isToday(day);
+                const hasTasks = dayHasTasks(day);
+                return (
+                  <Pressable
+                    key={index}
+                    onPress={() => onDaySelect(day)}
+                    className={`w-8 h-8 rounded-full items-center justify-center ${
+                      selected ? 'bg-[#ff7a7f]' : 'bg-transparent'
+                    }`}
+                  >
+                    <Text className={`text-sm font-sans ${
+                      selected ? 'text-black font-bold' :
+                      today ? 'text-[#ff7a7f] font-medium' :
+                      'text-white'
+                    }`}>
+                      {day.getDate()}
+                    </Text>
+                    {hasTasks && !selected && (
+                      <View className="w-1 h-1 bg-[#ff7a7f] rounded-full absolute bottom-0" />
+                    )}
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            <Pressable onPress={goToNextWeek} className="px-3">
+              <Ionicons name="chevron-forward" size={20} color="#ff7a7f" />
+            </Pressable>
+          </View>
         </View>
       </View>
-    </View>
-
 
       <View className="flex flex-row flex-wrap gap-2 px-4 pb-4">
         {categories.map((cat) => {

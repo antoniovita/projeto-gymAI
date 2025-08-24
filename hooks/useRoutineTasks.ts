@@ -1,74 +1,149 @@
-import { useEffect, useState, useCallback } from 'react';
-import { RoutineTask } from '../api/model/RoutineTasks';
+import { useState, useEffect, useCallback } from 'react';
+import { DayCompletion, RoutineTask } from '../api/model/RoutineTasks';
 import { RoutineTaskService } from 'api/service/routineTaskService';
 
-export function useRoutineTask(userId: string) {
-  const [routineTasks, setRoutineTasks] = useState<RoutineTask[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+// interfaces para tipagem das respostas do serviço
+interface ServiceSuccessResponse<T = any> {
+  success: true;
+  data?: T;
+  routineId?: string;
+}
 
-  const fetchRoutineTasks = useCallback(async () => {
+interface ServiceErrorResponse {
+  success: false;
+  error: string;
+}
+
+type ServiceResponse<T = any> = ServiceSuccessResponse<T> | ServiceErrorResponse;
+
+interface UseRoutineTasksState {
+  routineTasks: RoutineTask[];
+  loading: boolean;
+  error: string | null;
+}
+
+interface UseRoutineTasksReturn extends UseRoutineTasksState {
+  // CRUD operations
+  createRoutineTask: (
+    title: string,
+    content: string,
+    weekDays: string[],
+    type: string,
+    userId: string
+  ) => Promise<{ success: boolean; error?: string; routineId?: string }>;
+  
+  updateRoutineTask: (
+    routineId: string,
+    title?: string,
+    content?: string,
+    weekDays?: string[],
+    type?: string,
+    created_at?: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  
+  deleteRoutineTask: (
+    routineId: string,
+    permanent?: boolean
+  ) => Promise<{ success: boolean; error?: string }>;
+
+  // completion Operations
+  completeRoutineTaskForDate: (
+    routineId: string,
+    date: string,
+    xpGranted?: number
+  ) => Promise<{ success: boolean; error?: string }>;
+  
+  uncompleteRoutineTaskForDate: (
+    routineId: string,
+    date: string
+  ) => Promise<{ success: boolean; error?: string }>;
+
+  // utility Functions
+  refreshRoutineTasks: (userId: string) => Promise<void>;
+  clearRoutineTasksByUser: (userId: string) => Promise<{ success: boolean; error?: string }>;
+  getRoutineTaskById: (routineId: string) => Promise<RoutineTask | null>;
+  
+  // helper Functions
+  isCompletedOnDate: (routine: RoutineTask, date: string) => boolean;
+  isCompletedToday: (routine: RoutineTask) => boolean;
+  shouldBeCompletedToday: (routine: RoutineTask) => boolean;
+  shouldBeCompletedOnDate: (routine: RoutineTask, date: string) => boolean;
+  getCompletionForDate: (routine: RoutineTask, date: string) => DayCompletion | null;
+  getTotalXpFromRoutine: (routine: RoutineTask) => number;
+  getCompletedDates: (routine: RoutineTask) => string[];
+  getCompletionCount: (routine: RoutineTask) => number;
+  getCompletionsInPeriod: (routine: RoutineTask, startDate: string, endDate: string) => DayCompletion[];
+}
+
+export const useRoutineTasks = (): UseRoutineTasksReturn => {
+  const [state, setState] = useState<UseRoutineTasksState>({
+    routineTasks: [],
+    loading: false,
+    error: null,
+  });
+
+  // helper function to update state
+  const updateState = useCallback((updates: Partial<UseRoutineTasksState>) => {
+    setState(prev => ({ ...prev, ...updates }));
+  }, []);
+
+  // refresh routine tasks from service
+  const refreshRoutineTasks = useCallback(async (userId: string) => {
+    if (!userId?.trim()) {
+      updateState({ error: 'ID do usuário é obrigatório' });
+      return;
+    }
+
+    updateState({ loading: true, error: null });
+    
     try {
-      setLoading(true);
-      const result = await RoutineTaskService.getRoutineTasks(userId);
+      const response = await RoutineTaskService.getRoutineTasks(userId) as ServiceResponse<RoutineTask[]>;
       
-      if (result.success) {
-        setRoutineTasks((result as any).data || []);
-        setError(null);
+      if (response.success) {
+        updateState({ 
+          routineTasks: response.data || [], 
+          loading: false 
+        });
       } else {
-        setError(result.error || 'Erro ao carregar routine tasks.');
-        setRoutineTasks([]);
+        updateState({ 
+          error: response.error || 'Erro ao carregar routine tasks',
+          loading: false 
+        });
       }
-    } catch (err: any) {
-      setError(err.message || 'Erro ao carregar routine tasks.');
-      setRoutineTasks([]);
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      updateState({ 
+        error: 'Erro inesperado ao carregar routine tasks',
+        loading: false 
+      });
+      console.error('Erro no useRoutineTasks.refreshRoutineTasks:', error);
     }
-  }, [userId]);
+  }, [updateState]);
 
-  const createRoutineTask = useCallback(async (routineTask: {
-    title: string;
-    content: string;
-    weekDays: string[];
-    type: string;
-  }) => {
+  // create routine task
+  const createRoutineTask = useCallback(async (
+    title: string,
+    content: string,
+    weekDays: string[],
+    type: string,
+    userId: string
+  ) => {
     try {
-      const result = await RoutineTaskService.createRoutineTask(
-        routineTask.title,
-        routineTask.content,
-        routineTask.weekDays,
-        routineTask.type,
-        userId
-      );
-
-      if (result.success) {
-        await fetchRoutineTasks();
-        return (result as any).routineId;
-      } else {
-        setError(result.error || 'Erro ao criar routine task.');
-        throw new Error(result.error);
-      }
-    } catch (err: any) {
-      setError(err.message);
-      throw err;
-    }
-  }, [userId, fetchRoutineTasks]);
-
-  const deleteRoutineTask = useCallback(async (routineId: string, permanent: boolean = false) => {
-    try {
-      const result = await RoutineTaskService.deleteRoutineTask(routineId, permanent);
+      const response = await RoutineTaskService.createRoutineTask(title, content, weekDays, type, userId) as ServiceResponse<string>;
       
-      if (result.success) {
-        await fetchRoutineTasks();
+      if (response.success) {
+        // refresh the list after successful creation
+        await refreshRoutineTasks(userId);
+        return { success: true, routineId: response.routineId };
       } else {
-        setError(result.error || 'Erro ao deletar routine task.');
+        return { success: false, error: response.error };
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (error) {
+      console.error('Erro no useRoutineTasks.createRoutineTask:', error);
+      return { success: false, error: 'Erro inesperado ao criar routine task' };
     }
-  }, [fetchRoutineTasks]);
+  }, [refreshRoutineTasks]);
 
+  // update routine task
   const updateRoutineTask = useCallback(async (
     routineId: string,
     title?: string,
@@ -78,81 +153,272 @@ export function useRoutineTask(userId: string) {
     created_at?: string
   ) => {
     try {
-      const result = await RoutineTaskService.updateRoutineTask(
-        routineId,
-        title,
-        content,
-        weekDays,
-        type,
-        created_at
+      const response = await RoutineTaskService.updateRoutineTask(
+        routineId, title, content, weekDays, type, created_at
       );
       
-      if (result.success) {
-        await fetchRoutineTasks();
+      if (response.success) {
+        // update the local state
+        setState(prev => ({
+          ...prev,
+          routineTasks: prev.routineTasks.map(routine => 
+            routine.id === routineId 
+              ? { 
+                  ...routine, 
+                  ...(title !== undefined && { title }),
+                  ...(content !== undefined && { content }),
+                  ...(weekDays !== undefined && { week_days: JSON.stringify(weekDays) }),
+                  ...(type !== undefined && { type }),
+                  ...(created_at !== undefined && { created_at })
+                }
+              : routine
+          )
+        }));
+        return { success: true };
       } else {
-        setError(result.error || 'Erro ao atualizar routine task.');
+        return { success: false, error: response.error };
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (error) {
+      console.error('Erro no useRoutineTasks.updateRoutineTask:', error);
+      return { success: false, error: 'Erro inesperado ao atualizar routine task' };
     }
-  }, [fetchRoutineTasks]);
+  }, []);
 
-  const completeRoutineTask = useCallback(async (routineId: string, xpGranted: number = 0) => {
+  // delete routine task
+  const deleteRoutineTask = useCallback(async (routineId: string, permanent: boolean = false) => {
     try {
-      const result = await RoutineTaskService.completeRoutineTask(routineId, xpGranted);
+      const response = await RoutineTaskService.deleteRoutineTask(routineId, permanent);
       
-      if (result.success) {
-        await fetchRoutineTasks();
+      if (response.success) {
+        if (permanent) {
+          // Remove from local state if permanent delete
+          setState(prev => ({
+            ...prev,
+            routineTasks: prev.routineTasks.filter(routine => routine.id !== routineId)
+          }));
+        } else {
+          // Mark as inactive in local state if soft delete
+          setState(prev => ({
+            ...prev,
+            routineTasks: prev.routineTasks.map(routine => 
+              routine.id === routineId 
+                ? { ...routine, is_active: 0 as const }
+                : routine
+            )
+          }));
+        }
+        return { success: true };
       } else {
-        setError(result.error || 'Erro ao completar routine task.');
+        return { success: false, error: response.error };
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (error) {
+      console.error('Erro no useRoutineTasks.deleteRoutineTask:', error);
+      return { success: false, error: 'Erro inesperado ao deletar routine task' };
     }
-  }, [fetchRoutineTasks]);
+  }, []);
 
-  const uncompleteRoutineTask = useCallback(async (routineId: string) => {
+  // Complete routine task for date
+  const completeRoutineTaskForDate = useCallback(async (
+    routineId: string,
+    date: string,
+    xpGranted: number = 0
+  ) => {
     try {
-      const result = await RoutineTaskService.uncompleteRoutineTask(routineId);
+      const response = await RoutineTaskService.completeRoutineTaskForDate(routineId, date, xpGranted);
       
-      if (result.success) {
-        await fetchRoutineTasks();
+      if (response.success) {
+        // Update local state with the completion
+        setState(prev => ({
+          ...prev,
+          routineTasks: prev.routineTasks.map(routine => {
+            if (routine.id === routineId) {
+              const completions: DayCompletion[] = JSON.parse(routine.days_completed || "[]");
+              const alreadyCompleted = completions.some(c => c.date === date);
+              
+              if (!alreadyCompleted) {
+                const newCompletion: DayCompletion = {
+                  date,
+                  xp_granted: xpGranted,
+                  completed_at: new Date().toISOString()
+                };
+                completions.push(newCompletion);
+                
+                return {
+                  ...routine,
+                  days_completed: JSON.stringify(completions)
+                };
+              }
+            }
+            return routine;
+          })
+        }));
+        return { success: true };
       } else {
-        setError(result.error || 'Erro ao descompletar routine task.');
+        return { success: false, error: response.error };
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (error) {
+      console.error('Erro no useRoutineTasks.completeRoutineTaskForDate:', error);
+      return { success: false, error: 'Erro inesperado ao completar routine task' };
     }
-  }, [fetchRoutineTasks]);
+  }, []);
 
-  const clearRoutineTasksByUser = useCallback(async () => {
+  // Uncomplete routine task for date
+  const uncompleteRoutineTaskForDate = useCallback(async (routineId: string, date: string) => {
     try {
-      const result = await RoutineTaskService.clearRoutineTasksByUser(userId);
+      const response = await RoutineTaskService.uncompleteRoutineTaskForDate(routineId, date);
       
-      if (result.success) {
-        await fetchRoutineTasks();
+      if (response.success) {
+        // Update local state removing the completion
+        setState(prev => ({
+          ...prev,
+          routineTasks: prev.routineTasks.map(routine => {
+            if (routine.id === routineId) {
+              const completions: DayCompletion[] = JSON.parse(routine.days_completed || "[]");
+              const updatedCompletions = completions.filter(c => c.date !== date);
+              
+              return {
+                ...routine,
+                days_completed: JSON.stringify(updatedCompletions)
+              };
+            }
+            return routine;
+          })
+        }));
+        return { success: true };
       } else {
-        setError(result.error || 'Erro ao limpar routine tasks.');
+        return { success: false, error: response.error };
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (error) {
+      console.error('Erro no useRoutineTasks.uncompleteRoutineTaskForDate:', error);
+      return { success: false, error: 'Erro inesperado ao descompletar routine task' };
     }
-  }, [userId, fetchRoutineTasks]);
+  }, []);
 
-  useEffect(() => {
-    fetchRoutineTasks();
-  }, [fetchRoutineTasks]);
+  // Clear routine tasks by user
+  const clearRoutineTasksByUser = useCallback(async (userId: string) => {
+    try {
+      const response = await RoutineTaskService.clearRoutineTasksByUser(userId);
+      
+      if (response.success) {
+        // Mark all tasks as inactive in local state
+        setState(prev => ({
+          ...prev,
+          routineTasks: prev.routineTasks.map(routine => ({ ...routine, is_active: 0 as const }))
+        }));
+        return { success: true };
+      } else {
+        return { success: false, error: response.error };
+      }
+    } catch (error) {
+      console.error('Erro no useRoutineTasks.clearRoutineTasksByUser:', error);
+      return { success: false, error: 'Erro inesperado ao limpar routine tasks' };
+    }
+  }, []);
+
+  // Get routine task by ID
+  const getRoutineTaskById = useCallback(async (routineId: string): Promise<RoutineTask | null> => {
+    try {
+      const response = await RoutineTaskService.getRoutineTaskById(routineId) as ServiceResponse<RoutineTask>;
+      
+      if (response.success) {
+        return response.data || null;
+      } else {
+        console.error('Erro ao buscar routine task:', response.error);
+        return null;
+      }
+    } catch (error) {
+      console.error('Erro no useRoutineTasks.getRoutineTaskById:', error);
+      return null;
+    }
+  }, []);
+
+  // Helper functions based on RoutineTaskModel utilities
+  const isCompletedOnDate = useCallback((routine: RoutineTask, date: string): boolean => {
+    const completions: DayCompletion[] = JSON.parse(routine.days_completed || "[]");
+    return completions.some(c => c.date === date);
+  }, []);
+
+  const isCompletedToday = useCallback((routine: RoutineTask): boolean => {
+    const today = new Date().toISOString().split('T')[0];
+    return isCompletedOnDate(routine, today);
+  }, [isCompletedOnDate]);
+
+  const shouldBeCompletedToday = useCallback((routine: RoutineTask): boolean => {
+    const weekDays: string[] = JSON.parse(routine.week_days || "[]");
+    const today = new Date();
+    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const todayName = dayNames[today.getDay()];
+    
+    return weekDays.includes(todayName);
+  }, []);
+
+  const shouldBeCompletedOnDate = useCallback((routine: RoutineTask, date: string): boolean => {
+    const weekDays: string[] = JSON.parse(routine.week_days || "[]");
+    const targetDate = new Date(date);
+    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const dayName = dayNames[targetDate.getDay()];
+    
+    return weekDays.includes(dayName);
+  }, []);
+
+  const getCompletionForDate = useCallback((routine: RoutineTask, date: string): DayCompletion | null => {
+    const completions: DayCompletion[] = JSON.parse(routine.days_completed || "[]");
+    return completions.find(c => c.date === date) || null;
+  }, []);
+
+  const getTotalXpFromRoutine = useCallback((routine: RoutineTask): number => {
+    const completions: DayCompletion[] = JSON.parse(routine.days_completed || "[]");
+    return completions.reduce((total, completion) => total + completion.xp_granted, 0);
+  }, []);
+
+  const getCompletedDates = useCallback((routine: RoutineTask): string[] => {
+    const completions: DayCompletion[] = JSON.parse(routine.days_completed || "[]");
+    return completions.map(c => c.date).sort();
+  }, []);
+
+  const getCompletionCount = useCallback((routine: RoutineTask): number => {
+    const completions: DayCompletion[] = JSON.parse(routine.days_completed || "[]");
+    return completions.length;
+  }, []);
+
+  const getCompletionsInPeriod = useCallback((
+    routine: RoutineTask, 
+    startDate: string, 
+    endDate: string
+  ): DayCompletion[] => {
+    const completions: DayCompletion[] = JSON.parse(routine.days_completed || "[]");
+    return completions.filter(c => c.date >= startDate && c.date <= endDate);
+  }, []);
 
   return {
-    routineTasks,
-    loading,
-    error,
-    fetchRoutineTasks,
+    // State
+    routineTasks: state.routineTasks,
+    loading: state.loading,
+    error: state.error,
+    
+    // CRUD Operations
     createRoutineTask,
-    deleteRoutineTask,
     updateRoutineTask,
-    completeRoutineTask,
-    uncompleteRoutineTask,
+    deleteRoutineTask,
+    
+    // Completion Operations
+    completeRoutineTaskForDate,
+    uncompleteRoutineTaskForDate,
+    
+    // Utility Functions
+    refreshRoutineTasks,
     clearRoutineTasksByUser,
+    getRoutineTaskById,
+    
+    // Helper Functions
+    isCompletedOnDate,
+    isCompletedToday,
+    shouldBeCompletedToday,
+    shouldBeCompletedOnDate,
+    getCompletionForDate,
+    getTotalXpFromRoutine,
+    getCompletedDates,
+    getCompletionCount,
+    getCompletionsInPeriod,
   };
-}
+};
