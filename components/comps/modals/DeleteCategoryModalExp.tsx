@@ -13,124 +13,103 @@ interface Category {
   color: string;
 }
 
-interface DeleteCategoryModalProps {
+interface DeleteCategoryModalExpProps {
   isVisible: boolean;
   onClose: () => void;
   categories: Category[];
   onDeleteCategory: (category: Category) => void;
-  showConfirmDeleteModal: boolean;
-  setShowConfirmDeleteModal: (show: boolean) => void;
-  categoryToDelete: Category | null;
-  onConfirmDelete: () => void;
 }
 
-const DeleteCategoryModal: React.FC<DeleteCategoryModalProps> = ({
+const DeleteCategoryModalExp: React.FC<DeleteCategoryModalExpProps> = ({
   isVisible,
   onClose,
   categories,
   onDeleteCategory,
-  showConfirmDeleteModal,
-  setShowConfirmDeleteModal,
-  categoryToDelete,
-  onConfirmDelete,
 }) => {
+  const handleDeletePress = (category: Category) => {
+    // Chama diretamente a função onDeleteCategory, que já tem toda a lógica de confirmação
+    onDeleteCategory(category);
+  };
+
+  // Filtra apenas as categorias customizadas (exclui Ganhos e Gastos das opções de exclusão)
+  const customCategories = categories.filter(cat => 
+    cat.name !== 'Ganhos' && cat.name !== 'Gastos'
+  );
+
   return (
-    <>
-      <Modal
-        transparent
-        animationType="fade"
-        visible={isVisible}
-        onRequestClose={onClose}
-      >
-        <View className="flex-1 bg-black/50 justify-center items-center px-6">
-          <View className="bg-zinc-800 rounded-2xl w-full max-h-[80%] p-4">
-            <ScrollView className="mb-4">
-              {categories.map((cat) => (
-                <View
-                  key={cat.name}
-                  className="flex-row justify-between items-center py-2 border-b border-neutral-700"
-                >
-                  <View className="flex-row items-center gap-3">
-                    <View
-                      style={{
-                        width: 15,
-                        height: 15,
-                        borderRadius: 7.5,
-                        backgroundColor: cat.color,
-                        borderWidth: 0.5,
-                        borderColor: '#fff',
-                      }}
-                    />
-                    <Text className="text-white font-sans text-lg">{cat.name}</Text>
-                  </View>
-                  <Pressable
-                    onPress={() => {
-                      if (cat.name !== 'Ganhos' && cat.name !== 'Gastos') {
-                        onDeleteCategory(cat);
-                      }
+    <Modal
+      transparent
+      animationType="fade"
+      visible={isVisible}
+      onRequestClose={onClose}
+    >
+      <View className="flex-1 bg-black/50 justify-center items-center px-6">
+        <View className="bg-[#26262a] rounded-2xl w-full max-h-[80%] p-6">
+
+          {/* Lista de categorias */}
+          <ScrollView className="mb-6" showsVerticalScrollIndicator={false}>
+            <Text className="text-neutral-400 font-sans text-sm mb-3 px-2">
+              Categorias
+            </Text>
+            
+            {categories.map((cat) => (
+              <View
+                key={cat.name}
+                className="flex-row justify-between items-center py-4 px-2 border-b border-neutral-700/50"
+              >
+                <View className="flex-row items-center gap-3">
+                  <View
+                    style={{
+                      width: 15,
+                      height: 15,
+                      borderRadius: 7.5,
+                      backgroundColor: cat.color,
+                      borderWidth: 0.5,
+                      borderColor: '#fff',
                     }}
-                    className="p-2 bg-neutral-700 rounded-xl"
-                  >
-                    {cat.name === 'Ganhos' || cat.name === 'Gastos' ? (
-                      <Ionicons name="ban" size={20} color="#fa4d5c" />
-                    ) : (
-                      <Ionicons name="trash" size={20} color="#fa4d5c" />
-                    )}
-                  </Pressable>
+                  />
+                  <Text className="text-white font-sans text-base">{cat.name}</Text>
                 </View>
-              ))}
-            </ScrollView>
+                
+                {cat.name === 'Ganhos' || cat.name === 'Gastos' ? (
+                  <View className="p-2 bg-[#3d3d43] rounded-xl opacity-50">
+                    <Ionicons name="lock-closed" size={16} color="#9ca3af" />
+                  </View>
+                ) : (
+                  <Pressable
+                    onPress={() => handleDeletePress(cat)}
+                    className="p-2 bg-rose-500/20 rounded-xl"
+                  >
+                    <Ionicons name="trash" size={16} color="#ff7a7f" />
+                  </Pressable>
+                )}
+              </View>
+            ))}
 
-            <Pressable
-              onPress={onClose}
-              className="bg-neutral-700 rounded-xl p-3 items-center"
-            >
-              <Text className="text-white text-lg font-sans font-semibold">Fechar</Text>
-            </Pressable>
-          </View>
+            {customCategories.length === 0 && (
+              <View className="py-8 items-center">
+                <Ionicons name="folder-outline" size={48} color="#6b7280" className="mb-3" />
+                <Text className="text-neutral-400 font-sans text-center">
+                  Nenhuma categoria personalizada
+                </Text>
+                <Text className="text-neutral-500 font-sans text-sm text-center mt-1">
+                  Crie categorias personalizadas na tela principal
+                </Text>
+              </View>
+            )}
+          </ScrollView>
+
+          {/* Botão de fechar */}
+          <Pressable
+            onPress={onClose}
+            className="bg-[#35353a] rounded-xl p-4 items-center"
+          >
+            <Text className="text-white text-base font-sans font-semibold">Fechar</Text>
+          </Pressable>
         </View>
-      </Modal>
-
-      <Modal
-        transparent
-        animationType="fade"
-        visible={showConfirmDeleteModal}
-        onRequestClose={() => setShowConfirmDeleteModal(false)}
-      >
-        <View className="flex-1 bg-black/80 justify-center items-center px-8">
-          <View className="bg-zinc-800 w-full rounded-2xl p-6 items-center shadow-lg">
-            <Ionicons name="alert-circle" size={48} color="#F25C5C" className="mb-4" />
-
-            <Text className="text-white text-xl font-semibold mb-2 font-sans text-center">
-              Apagar Categoria
-            </Text>
-
-            <Text className="text-neutral-400 font-sans text-center mb-6">
-              {categoryToDelete
-                ? `Tem certeza que deseja apagar a categoria "${categoryToDelete.name}"? Esta ação não pode ser desfeita.`
-                : 'Tem certeza que deseja apagar esta categoria? Esta ação não pode ser desfeita.'}
-            </Text>
-
-            <View className="flex-row w-full justify-between gap-3">
-              <Pressable
-                onPress={() => setShowConfirmDeleteModal(false)}
-                className="flex-1 bg-neutral-700 py-3 rounded-xl items-center"
-              >
-                <Text className="text-white font-semibold font-sans">Cancelar</Text>
-              </Pressable>
-
-              <Pressable
-                onPress={onConfirmDelete}
-                className="flex-1 bg-rose-500 py-3 rounded-xl items-center"
-              >
-                <Text className="text-black font-sans font-semibold">Apagar</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
-    </>
+      </View>
+    </Modal>
   );
 };
 
-export default DeleteCategoryModal;
+export default DeleteCategoryModalExp;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Modal } from 'react-native';
+import { View, Text, Pressable, ScrollView, Modal, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface DeleteCategoryModalProps {
@@ -17,25 +17,23 @@ export default function DeleteCategoryModal({
   getCategoryColor,
   onDeleteCategory,
 }: DeleteCategoryModalProps) {
-  const [showConfirmDeleteModal, setShowConfirmDeleteModal] = React.useState(false);
-  const [categoryToDelete, setCategoryToDelete] = React.useState<string | null>(null);
 
   const handleDeletePress = (categoryName: string) => {
-    setCategoryToDelete(categoryName);
-    setShowConfirmDeleteModal(true);
-  };
-
-  const handleConfirmDelete = () => {
-    if (categoryToDelete) {
-      onDeleteCategory(categoryToDelete);
-      setShowConfirmDeleteModal(false);
-      setCategoryToDelete(null);
-    }
-  };
-
-  const handleCancelDelete = () => {
-    setShowConfirmDeleteModal(false);
-    setCategoryToDelete(null);
+    Alert.alert(
+      'Apagar Categoria',
+      `Tem certeza que deseja apagar a categoria "${categoryName}"? Esta ação não pode ser desfeita.`,
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Apagar',
+          style: 'destructive',
+          onPress: () => onDeleteCategory(categoryName),
+        },
+      ]
+    );
   };
 
   return (
@@ -46,13 +44,20 @@ export default function DeleteCategoryModal({
       onRequestClose={onClose}
     >
       <View className="flex-1 bg-black/50 justify-center items-center px-6">
-        <View className="bg-zinc-800 rounded-2xl w-full max-h-[80%] p-4">
-          <ScrollView className="mb-4">
+        <View className="bg-[#26262a] rounded-2xl w-full max-h-[80%] p-6">
+          {/* Lista de categorias */}
+          <ScrollView className="mb-6" showsVerticalScrollIndicator={false}>
+            <Text className="text-neutral-400 font-sans text-sm mb-3 px-2">
+              Categorias
+            </Text>
             {categories.length === 0 ? (
-              <View className="items-center py-10">
-                <Ionicons name="folder-open-outline" size={64} color="#aaa" className="mb-4" />
-                <Text className="text-neutral-400 text-center font-sans text-lg">
+              <View className="py-8 items-center">
+                <Ionicons name="folder-outline" size={48} color="#6b7280" className="mb-3" />
+                <Text className="text-neutral-400 font-sans text-center">
                   Você ainda não criou categorias.
+                </Text>
+                <Text className="text-neutral-500 font-sans text-sm text-center mt-1">
+                  Crie categorias personalizadas na tela principal
                 </Text>
               </View>
             ) : (
@@ -62,7 +67,7 @@ export default function DeleteCategoryModal({
                 return (
                   <View
                     key={cat}
-                    className="flex-row justify-between items-center py-2 pb-3 border-b border-neutral-700"
+                    className="flex-row justify-between items-center py-4 px-2 border-b border-neutral-700/50"
                   >
                     <View className="flex-row items-center gap-3">
                       <View
@@ -71,70 +76,32 @@ export default function DeleteCategoryModal({
                           height: 15,
                           borderRadius: 7.5,
                           backgroundColor: color,
-                          borderWidth: 0.5, 
-                          borderColor: '#fff'
+                          borderWidth: 0.5,
+                          borderColor: '#fff',
                         }}
                       />
-                      <Text className="text-white font-sans text-lg">{cat}</Text>
+                      <Text className="text-white font-sans text-base">{cat}</Text>
                     </View>
-                    <TouchableOpacity
+                    <Pressable
                       onPress={() => handleDeletePress(cat)}
-                      className="p-2 bg-neutral-700 rounded-xl"
+                      className="p-2 bg-rose-500/20 rounded-xl"
                     >
-                      <Ionicons name="trash" size={20} color="#fa4d5c" />
-                    </TouchableOpacity>
+                      <Ionicons name="trash" size={16} color="#ff7a7f" />
+                    </Pressable>
                   </View>
                 );
               })
             )}
           </ScrollView>
 
-          <TouchableOpacity
+          {/* Botão de fechar */}
+          <Pressable
             onPress={onClose}
-            className="bg-neutral-700 rounded-xl p-3 items-center"
+            className="bg-[#35353a] rounded-xl p-4 items-center"
           >
-            <Text className="text-white text-lg font-sans font-semibold">Fechar</Text>
-          </TouchableOpacity>
+            <Text className="text-white text-base font-sans font-semibold">Fechar</Text>
+          </Pressable>
         </View>
-
-        <Modal
-          transparent
-          animationType="fade"
-          visible={showConfirmDeleteModal}
-          onRequestClose={handleCancelDelete}
-        >
-          <View className="flex-1 bg-black/80 justify-center items-center px-8">
-            <View className="bg-zinc-800 w-full rounded-2xl p-6 items-center shadow-lg">
-              <Ionicons name="alert-circle" size={48} color="#ff7a7f" className="mb-4" />
-
-              <Text className="text-white text-xl font-semibold mb-2 font-sans text-center">
-                Apagar Categoria
-              </Text>
-
-              <Text className="text-neutral-400 font-sans text-center mb-6">
-                {categoryToDelete
-                  ? `Tem certeza que deseja apagar a categoria "${categoryToDelete}"? Esta ação não pode ser desfeita.`
-                  : 'Tem certeza que deseja apagar esta categoria? Esta ação não pode ser desfeita.'}
-              </Text>
-
-              <View className="flex-row w-full justify-between gap-3">
-                <TouchableOpacity
-                  onPress={handleCancelDelete}
-                  className="flex-1 bg-neutral-700 py-3 rounded-xl items-center"
-                >
-                  <Text className="text-white font-semibold font-sans">Cancelar</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={handleConfirmDelete}
-                  className="flex-1 bg-rose-500 py-3 rounded-xl items-center"
-                >
-                  <Text className="text-black font-sans font-semibold">Apagar</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
       </View>
     </Modal>
   );

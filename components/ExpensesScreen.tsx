@@ -18,8 +18,8 @@ import { useAuth } from '../hooks/useAuth';
 import { useFocusEffect } from '@react-navigation/native';
 import CreateExpenseModal from './comps/modals/CreateExpenseModal';
 import CreateCategoryModal from './comps/modals/CreateCategoryModal';
-import DeleteCategoryModal from './comps/modals/DeleteCategoryModalExp';
 import DateFilterModal from './comps/modals/DateFilterModal';
+import DeleteCategoryModalExp from './comps/modals/DeleteCategoryModalExp';
 
 export interface DateFilter {
   type: 'all' | 'month' | 'year' | 'custom' | 'date';
@@ -27,6 +27,11 @@ export interface DateFilter {
   year?: number;
   customStart?: string;
   customEnd?: string;
+}
+
+interface Category {
+  name: string;
+  color: string;
 }
 
 const EmptyState = ({ selectedCategory, onCreateExpense }: { selectedCategory: string, onCreateExpense: () => void }) => {
@@ -152,22 +157,51 @@ export default function ExpensesScreen() {
     }
   };
 
-  const handleDeleteCategory = () => {
-    if (!categoryToDelete) return;
+  const handleDeleteCategory = (category: Category) => {
 
-    const updatedCategories = selectedCategories.filter(
-      cat => cat.name !== categoryToDelete.name
-    );
-
-    setSelectedCategories(updatedCategories);
-    saveCategoriesToStorage(updatedCategories);
-
-    if (selectedCategory === categoryToDelete.name) {
-      setSelectedCategory('');
+    const isCategoryInUse = expenses.some(expense => expense.type === category.name);
+    
+    if (isCategoryInUse) {
+      Alert.alert('Erro', 'Esta categoria está associada a uma ou mais despesas e não pode ser excluída.');
+      return;
     }
 
-    setCategoryToDelete(null);
-    setShowConfirmDeleteModal(false);
+    if (category.name === 'Ganhos' || category.name === 'Gastos') {
+      Alert.alert('Erro', 'Não é possível excluir as categorias padrão (Ganhos e Gastos).');
+      return;
+    }
+
+    Alert.alert(
+      'Excluir categoria',
+      `Tem certeza que deseja excluir a categoria "${category.name}"?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+
+              const updatedCategories = selectedCategories.filter(
+                cat => cat.name !== category.name
+              );
+              
+              setSelectedCategories(updatedCategories);
+              await saveCategoriesToStorage(updatedCategories);
+              
+              if (selectedCategory === category.name) {
+                setSelectedCategory('');
+              }
+              
+            } catch (error) {
+              console.error('Erro ao excluir categoria:', error);
+              Alert.alert('Erro', 'Não foi possível excluir a categoria.');
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   const handleUpdateExpense = async () => {
@@ -275,11 +309,6 @@ export default function ExpensesScreen() {
       ],
       { cancelable: true }
     );
-  };
-
-  const handleDeleteCategoryPress = (category: { name: string, color: string }) => {
-    setCategoryToDelete(category);
-    setShowConfirmDeleteModal(true);
   };
 
   const handleDateFilterApply = (filter: DateFilter) => {
@@ -487,9 +516,9 @@ export default function ExpensesScreen() {
       </View>
 
       {/* Seção de Filtro de Data e Saldo */}
-      <View className="px-4 mb-4 flex-row gap-3">
+      <View className="px-4 mb-4 justify-center flex-row gap-3">
         {/* Filtro de Data */}
-        <View className="flex h-18 bg-[#35353a] rounded-xl overflow-hidden">
+        <View className="flex h-18 bg-[#35353a] w-[49%] rounded-xl overflow-hidden">
           <Pressable
             onPress={handleDateFilterModalOpen}
             className="flex-row items-center justify-between px-4 py-4"
@@ -505,7 +534,7 @@ export default function ExpensesScreen() {
               </View>
               <View className="flex-col">
                 <Text className="text-zinc-400 font-sans text-xs mb-1">Período</Text>
-                <Text className="text-white font-sans text-[12px] font-medium">
+                <Text className="text-white font-sans text-[10.5px] font-medium">
                   {getDateFilterDisplayText()}
                 </Text>
               </View>
@@ -514,7 +543,7 @@ export default function ExpensesScreen() {
         </View>
 
         {/* Saldo */}
-        <View className="bg-[#35353a] flex-row gap-3 flex-1 rounded-xl px-4 py-3.5">
+        <View className="bg-[#35353a] flex-row gap-3 w-[49%] rounded-xl px-4 py-3.5">
           <View
             className="h-10 w-10 rounded-xl items-center justify-center"
             style={{
@@ -636,15 +665,11 @@ export default function ExpensesScreen() {
         setNewCategoryColor={setNewCategoryColor}
       />
 
-      <DeleteCategoryModal
+      <DeleteCategoryModalExp
         isVisible={showDeleteCategoryModal}
         onClose={() => setShowDeleteCategoryModal(false)}
         categories={categories}
-        onDeleteCategory={handleDeleteCategoryPress}
-        showConfirmDeleteModal={showConfirmDeleteModal}
-        setShowConfirmDeleteModal={setShowConfirmDeleteModal}
-        categoryToDelete={categoryToDelete}
-        onConfirmDelete={handleDeleteCategory}
+        onDeleteCategory={handleDeleteCategory}
       />
 
       <DateFilterModal
