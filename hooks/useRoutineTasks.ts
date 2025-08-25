@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { DayCompletion, RoutineTask } from '../api/model/RoutineTasks';
 import { RoutineTaskService } from 'api/service/routineTaskService';
+import { useStats } from './useStats';
 
 // interfaces para tipagem das respostas do serviço
 interface ServiceSuccessResponse<T = any> {
@@ -50,12 +51,14 @@ interface UseRoutineTasksReturn extends UseRoutineTasksState {
   completeRoutineTaskForDate: (
     routineId: string,
     date: string,
+    userId: string,
     xpGranted?: number
   ) => Promise<{ success: boolean; error?: string }>;
   
   uncompleteRoutineTaskForDate: (
     routineId: string,
-    date: string
+    date: string,
+    userId: string
   ) => Promise<{ success: boolean; error?: string }>;
 
   // cancellation Operations
@@ -98,6 +101,11 @@ interface UseRoutineTasksReturn extends UseRoutineTasksState {
 }
 
 export const useRoutineTasks = (): UseRoutineTasksReturn => {
+
+  const { addExperience } = useStats();
+  
+
+
   const [state, setState] = useState<UseRoutineTasksState>({
     routineTasks: [],
     loading: false,
@@ -289,7 +297,8 @@ export const useRoutineTasks = (): UseRoutineTasksReturn => {
   const completeRoutineTaskForDate = useCallback(async (
     routineId: string,
     date: string,
-    xpGranted: number = 0
+    userId: string,
+    xpGranted: number = 0,
   ) => {
     try {
       const response = await RoutineTaskService.completeRoutineTaskForDate(routineId, date, xpGranted);
@@ -308,6 +317,7 @@ export const useRoutineTasks = (): UseRoutineTasksReturn => {
                   completed_at: new Date().toISOString()
                 };
                 completions.push(newCompletion);
+                addExperience(userId, 50);
                 return {
                   ...routine,
                   days_completed: JSON.stringify(completions)
@@ -328,11 +338,11 @@ export const useRoutineTasks = (): UseRoutineTasksReturn => {
   }, []);
 
   // Uncomplete routine task for date
-  const uncompleteRoutineTaskForDate = useCallback(async (routineId: string, date: string) => {
+  const uncompleteRoutineTaskForDate = useCallback(async (routineId: string, date: string, userId: string) => {
     try {
       const response = await RoutineTaskService.uncompleteRoutineTaskForDate(routineId, date);
       if (response.success) {
-        // Update local state removing the completion
+
         setState(prev => ({
           ...prev,
           routineTasks: prev.routineTasks.map(routine => {
@@ -344,6 +354,7 @@ export const useRoutineTasks = (): UseRoutineTasksReturn => {
                 days_completed: JSON.stringify(updatedCompletions)
               };
             }
+            addExperience(userId, -50);
             return routine;
           })
         }));

@@ -348,7 +348,7 @@ export default function AgendaScreen() {
     try {
       if (isRoutine && routineId && targetDate) {
         if (completed === 0) {
-          const result = await completeRoutineTaskForDate(routineId, targetDate, xpReward);
+          const result = await completeRoutineTaskForDate(routineId, targetDate, userId!, xpReward);
           
           if (!result.success) {
             Alert.alert('Erro', result.error || 'Não foi possível completar a rotina.');
@@ -369,7 +369,7 @@ export default function AgendaScreen() {
           }
         } else {
 
-          const result = await uncompleteRoutineTaskForDate(routineId, targetDate);
+          const result = await uncompleteRoutineTaskForDate(routineId, targetDate, userId!);
           
           if (!result.success) {
             Alert.alert('Erro', result.error || 'Não foi possível descompletar a rotina.');
