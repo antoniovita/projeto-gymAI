@@ -30,7 +30,7 @@ const MoreScreen = () => {
         {
           id: 2,
           title: "Rotina",
-          subtitle: "Criar tarefas que fazem parte da sua rotina",
+          subtitle: "Gerencie a sua rotina",
           icon: "calendar-outline",
           color: "#ff7a7f",
           onPress: () => {

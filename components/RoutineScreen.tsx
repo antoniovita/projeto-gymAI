@@ -24,6 +24,7 @@ import { useRoutineTasks } from 'hooks/useRoutineTasks';
 import { useAuth } from 'hooks/useAuth';
 import { useNavigation } from '@react-navigation/native';
 import {getSwitchState, removeSwitchState, setSwitchState} from "../helpers/switchHelper"
+import { format } from 'date-fns';
 
 type WeekDay = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
 type CategoryType = 'Trabalho' | 'Exercícios' | 'Saúde' | 'Estudos' | 'Casa' | 'Social' | 'Hobbie' | 'Outros';
@@ -95,7 +96,6 @@ const RoutineScreen: React.FC = () => {
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [selectedDaysOfWeek, setSelectedDaysOfWeek] = useState<number[]>([]);
 
-  // Estado para armazenar os estados dos switches de todas as tarefas
   const [switchStates, setSwitchStates] = useState<Record<string, boolean>>({});
 
   // carrega as routine tasks ao montar o componente
@@ -427,6 +427,9 @@ const RoutineScreen: React.FC = () => {
 
               <View className='flex items-center justify-center'>
                 <Switch
+                 trackColor={{ true: "#ff7a7f" }}
+                  thumbColor={ "#ffff"}
+                  ios_backgroundColor="#3e3e3e"
                   value={switchStates[item.id] || false}
                   onValueChange={() => handleActivate(item.id)}
                 />
@@ -593,7 +596,7 @@ const RoutineScreen: React.FC = () => {
                     className="px-2 py-3 flex-row items-center justify-between"
                   >
                     <Text className={`font-bold text-2xl ${selectedTime ? 'text-white' : 'text-gray-400'}`}>
-                      {selectedTime || 'Definir horário'}
+                      {selectedTime ||format( new Date().toISOString(), "HH:mm")}
                     </Text>
                   </Pressable>
                 </View>

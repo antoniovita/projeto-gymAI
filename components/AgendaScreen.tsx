@@ -89,8 +89,8 @@ const SwipeableTaskItem = ({
                   {item.title}
                 </Text>
                 {item.isRoutine && (
-                  <View className="bg-blue-500 px-2 py-1 rounded-full">
-                    <Text className="text-white text-xs font-sans">ROTINA</Text>
+                  <View className="bg-rose-500 px-2 py-0.5 rounded-full">
+                    <Text className="text-white text-[10px] font-sans">rotina</Text>
                   </View>
                 )}
               </View>
