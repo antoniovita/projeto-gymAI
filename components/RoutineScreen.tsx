@@ -23,6 +23,7 @@ import { RoutineTask } from '../api/model/RoutineTasks';
 import { useRoutineTasks } from 'hooks/useRoutineTasks';
 import { useAuth } from 'hooks/useAuth';
 import { useNavigation } from '@react-navigation/native';
+import {getSwitchState, removeSwitchState, setSwitchState} from "../helpers/switchHelper"
 
 type WeekDay = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
 type CategoryType = 'Trabalho' | 'Exercícios' | 'Saúde' | 'Estudos' | 'Casa' | 'Social' | 'Hobbie' | 'Outros';
@@ -94,7 +95,8 @@ const RoutineScreen: React.FC = () => {
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [selectedDaysOfWeek, setSelectedDaysOfWeek] = useState<number[]>([]);
 
-  const [isActive, setIsActive] = useState(false)
+  // Estado para armazenar os estados dos switches de todas as tarefas
+  const [switchStates, setSwitchStates] = useState<Record<string, boolean>>({});
 
   // carrega as routine tasks ao montar o componente
   useEffect(() => {
@@ -102,6 +104,22 @@ const RoutineScreen: React.FC = () => {
       getAllRoutineTasksByUserId(userId!);
     }
   }, [userId, getAllRoutineTasksByUserId]);
+
+  // Carrega os estados dos switches quando as tarefas são carregadas
+  useEffect(() => {
+    const loadSwitchStates = async () => {
+      const states: Record<string, boolean> = {};
+      for (const task of routineTasks) {
+        const switchState = await getSwitchState(task.id);
+        states[task.id] = switchState?.state || false;
+      }
+      setSwitchStates(states);
+    };
+
+    if (routineTasks.length > 0) {
+      loadSwitchStates();
+    }
+  }, [routineTasks]);
 
   const filteredTasks = useMemo(() => {
     const selectedWeekDay: WeekDay = getWeekDayFromDayName(selectedDay);
@@ -246,7 +264,7 @@ const RoutineScreen: React.FC = () => {
       const hasMultipleDays = currentWeekDays.length > 1;
       
       if (hasMultipleDays) {
-        // Se tem múltiplos dias, oferece as duas opções
+
         Alert.alert(
           'Remover tarefa',
           'Como deseja remover esta tarefa?',
@@ -275,7 +293,15 @@ const RoutineScreen: React.FC = () => {
               style: 'destructive',
               onPress: async () => {
                 const result = await deleteRoutineTask(taskId, true);
-                if (!result.success) {
+                if (result.success) {
+
+                  await removeSwitchState(taskId);
+                  setSwitchStates(prev => {
+                    const newStates = { ...prev };
+                    delete newStates[taskId];
+                    return newStates;
+                  });
+                } else {
                   Alert.alert('Erro', result.error || 'Não foi possível excluir a tarefa.');
                 }
               }
@@ -283,7 +309,7 @@ const RoutineScreen: React.FC = () => {
           ]
         );
       } else {
-        // Se tem apenas 1 dia, só oferece exclusão completa
+
         Alert.alert(
           'Confirmar exclusão',
           'Tem certeza que deseja excluir esta tarefa?',
@@ -294,7 +320,15 @@ const RoutineScreen: React.FC = () => {
               style: 'destructive',
               onPress: async () => {
                 const result = await deleteRoutineTask(taskId, true);
-                if (!result.success) {
+                if (result.success) {
+
+                  await removeSwitchState(taskId);
+                  setSwitchStates(prev => {
+                    const newStates = { ...prev };
+                    delete newStates[taskId];
+                    return newStates;
+                  });
+                } else {
                   Alert.alert('Erro', result.error || 'Não foi possível excluir a tarefa.');
                 }
               }
@@ -308,15 +342,31 @@ const RoutineScreen: React.FC = () => {
     }
   };
 
-  const handleActivate = (routineId: string) => {
-    if(isActive) {
-      deleteRoutineTask(routineId)
-      setIsActive(false)
-    } else {
-      activateRoutineTask(routineId)
-      setIsActive(true)
+  const handleActivate = async (routineId: string) => {
+    try {
+      const currentState = switchStates[routineId] || false;
+      const newState = !currentState;
+
+      if (newState) {
+
+        await setSwitchState(true, routineId);
+        await activateRoutineTask(routineId);
+      } else {
+
+        await removeSwitchState(routineId);
+        await deleteRoutineTask(routineId);
+      }
+
+      setSwitchStates(prev => ({
+        ...prev,
+        [routineId]: newState
+      }));
+
+    } catch (error) {
+      console.error('Erro ao alterar estado da tarefa:', error);
+      Alert.alert('Erro', 'Não foi possível alterar o estado da tarefa.');
     }
-  }
+  };
 
   const renderLeftActions = (item: RoutineTask): React.ReactElement => {
     return (
@@ -377,8 +427,8 @@ const RoutineScreen: React.FC = () => {
 
               <View className='flex items-center justify-center'>
                 <Switch
-                 value={isActive}
-                  onValueChange={() => handleActivate(item.id)} 
+                  value={switchStates[item.id] || false}
+                  onValueChange={() => handleActivate(item.id)}
                 />
               </View>
 
