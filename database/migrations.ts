@@ -38,6 +38,7 @@ export const runMigrations = async (db: SQLiteDatabase) => {
         type TEXT,
         week_days TEXT NOT NULL, -- JSON string: ["monday","tuesday","friday"]
         days_completed TEXT DEFAULT "[]", -- JSON string: [{"date":"2024-01-15","xp_granted":50,"completed_at":"2024-01-15T10:30:00Z"}]
+        cancelled_days TEXT DEFAULT "[]", -- JSON string: [datetime, datetime...]
 
         created_at TEXT NOT NULL,
         is_active INTEGER DEFAULT 1, -- 0 = inativo, 1 = ativo

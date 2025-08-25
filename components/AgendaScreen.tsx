@@ -45,7 +45,7 @@ const SwipeableTaskItem = ({
   item: UnifiedTask, 
   onEdit: (task: UnifiedTask) => void, 
   onToggleCompletion: (taskId: string, completed: 0 | 1, isRoutine?: boolean, routineId?: string, targetDate?: string) => void,
-  onDelete: (taskId: string, isRoutine?: boolean, routineId?: string) => void
+  onDelete: (taskId: string, date: string, isRoutine?: boolean, routineId?: string) => void
 }) => {
   let swipeableRow: any;
 
@@ -57,7 +57,7 @@ const SwipeableTaskItem = ({
     <TouchableOpacity
       onPress={() => {
         closeSwipeable();
-        onDelete(item.id, item.isRoutine, item.routineId);
+        onDelete(item.id, item.datetime.split("T")[0], item.isRoutine, item.routineId);
       }}
       style={{
         flexDirection: 'row',
@@ -133,9 +133,10 @@ export default function AgendaScreen() {
     refreshRoutineTasks,
     completeRoutineTaskForDate,
     uncompleteRoutineTaskForDate,
-    deleteRoutineTask,
+    cancelRoutineTaskForDate,
     updateRoutineTask,
     isCompletedOnDate,
+    isCancelledOnDate, 
   } = useRoutineTasks();
 
   const { 
@@ -184,7 +185,14 @@ export default function AgendaScreen() {
     return isCompletedOnDate(routine, targetDateString);
   }, [isCompletedOnDate]);
 
-  const convertRoutineToUnifiedTask = useCallback((routine: RoutineTask, targetDate: Date): UnifiedTask => {
+  const convertRoutineToUnifiedTask = useCallback((routine: RoutineTask, targetDate: Date): UnifiedTask | null => {
+    const targetDateString = format(targetDate, 'yyyy-MM-dd');
+    
+    if (isCancelledOnDate(routine, targetDateString)) {
+      console.log(`Data ${targetDateString} cancelada para routine ${routine.id} - pulando`);
+      return null;
+    }
+
     const routineDateTime = new Date(targetDate);
     if (routine.created_at) {
       const originalTime = new Date(routine.created_at);
@@ -204,7 +212,7 @@ export default function AgendaScreen() {
     }
 
     return {
-      id: `routine_${routine.id}_${format(targetDate, 'yyyy-MM-dd')}`,
+      id: `routine_${routine.id}_${targetDateString}`,
       title: routine.title,
       content: routine.content,
       datetime: routineDateTime.toISOString(),
@@ -213,9 +221,9 @@ export default function AgendaScreen() {
       isRoutine: true,
       routineId: routine.id,
       originalWeekDays: weekDays,
-      targetDate: format(targetDate, 'yyyy-MM-dd')
+      targetDate: targetDateString
     };
-  }, [isRoutineCompletedOnDate]);
+  }, [isRoutineCompletedOnDate, isCancelledOnDate]);
 
   const dayNameToNumber: { [key: string]: number } = {
     'sunday': 0,
@@ -277,11 +285,15 @@ export default function AgendaScreen() {
         
         if (shouldShowOnThisDay) {
           const unifiedTask = convertRoutineToUnifiedTask(routine, new Date(d));
-          routineUnifiedTasks.push(unifiedTask);
+          
+          if (unifiedTask) {
+            routineUnifiedTasks.push(unifiedTask);
+          }
         }
       }
     });
 
+    console.log(`Total unified tasks (após filtro de cancelados): ${normalTasks.length + routineUnifiedTasks.length}`);
     return [...normalTasks, ...routineUnifiedTasks];
   }, [tasks, routineTasks, currentWeekStart, convertRoutineToUnifiedTask]);
 
@@ -336,7 +348,6 @@ export default function AgendaScreen() {
     try {
       if (isRoutine && routineId && targetDate) {
         if (completed === 0) {
-
           const result = await completeRoutineTaskForDate(routineId, targetDate, xpReward);
           
           if (!result.success) {
@@ -357,7 +368,7 @@ export default function AgendaScreen() {
             }
           }
         } else {
-          // Descompletar routine task para data específica
+
           const result = await uncompleteRoutineTaskForDate(routineId, targetDate);
           
           if (!result.success) {
@@ -505,7 +516,7 @@ export default function AgendaScreen() {
     });
 
     setFilteredTasks(filtered);
-    console.log(`Filtro local: ${filtered.length} tasks para ${format(dateFilter, 'dd/MM/yyyy')}`);
+    console.log(`Filtro local: ${filtered.length} tasks para ${format(dateFilter, 'dd/MM/yyyy')} (sem cancelados)`);
   }, [getUnifiedTasks, dateFilter, selectedTypes]);
 
   const combineDateAndTime = (date: Date, time: Date): Date => {
@@ -531,7 +542,7 @@ export default function AgendaScreen() {
 
       if (selectedTask) {
         if (selectedTask.isRoutine && selectedTask.routineId) {
-          // Atualizar routine task
+
           const result = await updateRoutineTask(
             selectedTask.routineId,
             newTaskTitle,
@@ -546,7 +557,7 @@ export default function AgendaScreen() {
             return;
           }
         } else {
-          // Atualizar task normal
+
           await updateTask(selectedTask.id, {
             title: newTaskTitle,
             content: taskContent,
@@ -556,7 +567,7 @@ export default function AgendaScreen() {
           await fetchTasks(userId!);
         }
       } else {
-        // Criar nova task normal (por enquanto, não criamos routine tasks aqui)
+
         await createTask(
           newTaskTitle,
           taskContent,
@@ -618,7 +629,7 @@ export default function AgendaScreen() {
     setIsCreateVisible(true);
   };
 
-  const handleDeleteTask = (taskId: string, isRoutine?: boolean, routineId?: string) => {
+  const handleDeleteTask = (taskId: string, date: string, isRoutine?: boolean, routineId?: string) => {
     const taskToDelete = allUnifiedTasks.find(task => task.id === taskId);
     
     if (!taskToDelete) {
@@ -627,9 +638,7 @@ export default function AgendaScreen() {
     }
 
     const alertTitle = isRoutine ? 'Confirmar exclusão da rotina' : 'Confirmar exclusão';
-    const alertMessage = isRoutine 
-      ? 'Tem certeza que deseja deletar essa rotina? Ela será removida de todos os dias.'
-      : 'Tem certeza que deseja deletar essa tarefa?';
+    const alertMessage = 'Tem certeza que deseja deletar essa tarefa?';
 
     Alert.alert(
       alertTitle,
@@ -644,7 +653,7 @@ export default function AgendaScreen() {
           style: 'destructive',
           onPress: async () => {
             if (isRoutine && routineId) {
-              const result = await deleteRoutineTask(routineId);
+              const result = await cancelRoutineTaskForDate(routineId, date);
               if (!result.success) {
                 Alert.alert('Erro', result.error || 'Não foi possível deletar a rotina.');
                 return;

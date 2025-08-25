@@ -14,6 +14,10 @@ export const RoutineTaskService = {
     if (!userId?.trim()) {
       return { success: false, error: 'ID do usuário é obrigatório' };
     }
+    if (!Array.isArray(weekDays) || weekDays.length === 0) {
+      return { success: false, error: 'Pelo menos um dia da semana deve ser selecionado' };
+    }
+    
     return await RoutineTaskController.createRoutineTask(
       title.trim(),
       content?.trim() || '',
@@ -30,6 +34,22 @@ export const RoutineTaskService = {
     return await RoutineTaskController.getRoutineTasks(userId);
   },
 
+  getRoutineTasksForDate: async (userId: string, date: string) => {
+    if (!userId?.trim()) {
+      return { success: false, error: 'ID do usuário é obrigatório' };
+    }
+    if (!date?.trim()) {
+      return { success: false, error: 'Data é obrigatória' };
+    }
+
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(date.trim())) {
+      return { success: false, error: 'Formato de data inválido. Use YYYY-MM-DD' };
+    }
+
+    return await RoutineTaskController.getRoutineTasksForDate(userId, date.trim());
+  },
+
   getRoutineTaskById: async (routineId: string) => {
     if (!routineId?.trim()) {
       return { success: false, error: 'ID da routine task é obrigatório' };
@@ -37,7 +57,6 @@ export const RoutineTaskService = {
     return await RoutineTaskController.getRoutineTaskById(routineId);
   },
 
-  // completa routine task para uma data específica
   completeRoutineTaskForDate: async (routineId: string, date: string, xpGranted: number = 0) => {
     if (!routineId?.trim()) {
       return { success: false, error: 'ID da routine task é obrigatório' };
@@ -49,6 +68,10 @@ export const RoutineTaskService = {
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateRegex.test(date.trim())) {
       return { success: false, error: 'Formato de data inválido. Use YYYY-MM-DD' };
+    }
+
+    if (typeof xpGranted !== 'number' || xpGranted < 0) {
+      return { success: false, error: 'XP deve ser um número positivo' };
     }
 
     return await RoutineTaskController.completeRoutineTaskForDate(routineId, date.trim(), xpGranted);
@@ -68,6 +91,39 @@ export const RoutineTaskService = {
     }
 
     return await RoutineTaskController.uncompleteRoutineTaskForDate(routineId, date.trim());
+  },
+
+  // funcoes de cancelamento de task
+  cancelRoutineTaskForDate: async (routineId: string, date: string) => {
+    if (!routineId?.trim()) {
+      return { success: false, error: 'ID da routine task é obrigatório' };
+    }
+    if (!date?.trim()) {
+      return { success: false, error: 'Data é obrigatória' };
+    }
+    
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(date.trim())) {
+      return { success: false, error: 'Formato de data inválido. Use YYYY-MM-DD' };
+    }
+
+    return await RoutineTaskController.cancelRoutineTaskForDate(routineId, date.trim());
+  },
+
+  removeCancelledRoutineTaskForDate: async (routineId: string, date: string) => {
+    if (!routineId?.trim()) {
+      return { success: false, error: 'ID da routine task é obrigatório' };
+    }
+    if (!date?.trim()) {
+      return { success: false, error: 'Data é obrigatória' };
+    }
+    
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(date.trim())) {
+      return { success: false, error: 'Formato de data inválido. Use YYYY-MM-DD' };
+    }
+
+    return await RoutineTaskController.removeCancelledRoutineTaskForDate(routineId, date.trim());
   },
 
   updateRoutineTask: async (
@@ -97,6 +153,9 @@ export const RoutineTaskService = {
     }
 
     if (weekDays !== undefined) {
+      if (!Array.isArray(weekDays) || weekDays.length === 0) {
+        return { success: false, error: 'Pelo menos um dia da semana deve ser selecionado' };
+      }
       updates.weekDays = weekDays;
     }
 
@@ -105,7 +164,15 @@ export const RoutineTaskService = {
     }
 
     if (created_at !== undefined) {
-      updates.created_at = created_at;
+      if (created_at && created_at.trim()) {
+        const isoDate = new Date(created_at.trim());
+        if (isNaN(isoDate.getTime())) {
+          return { success: false, error: 'Data de criação inválida' };
+        }
+        updates.created_at = created_at.trim();
+      } else {
+        updates.created_at = created_at;
+      }
     }
 
     if (Object.keys(updates).length === 0) {

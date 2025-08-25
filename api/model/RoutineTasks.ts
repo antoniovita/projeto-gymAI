@@ -14,6 +14,7 @@ export interface RoutineTask {
   type?: string;
   week_days: string; // JSON string: ["monday","tuesday","friday"]
   days_completed: string; // JSON string: DayCompletion[]
+  cancelled_days: string; // JSON string: [ "2025-08-26", "2025-09-02" ]
   created_at: string; // ISO string
   is_active: 0 | 1;
   user_id: string;
@@ -29,15 +30,15 @@ export const RoutineTaskModel = {
         type TEXT,
         week_days TEXT NOT NULL,
         days_completed TEXT DEFAULT "[]",
+        cancelled_days TEXT DEFAULT "[]",
         created_at TEXT NOT NULL,
         is_active INTEGER DEFAULT 1,
         user_id TEXT,
         FOREIGN KEY (user_id) REFERENCES user(id)
       );
     `);
-
     await db.execAsync(`
-      CREATE INDEX IF NOT EXISTS idx_routine_tasks_user 
+      CREATE INDEX IF NOT EXISTS idx_routine_tasks_user
       ON routine_tasks(user_id);
     `);
   },
@@ -46,30 +47,30 @@ export const RoutineTaskModel = {
     db: SQLite.SQLiteDatabase,
     title: string,
     content: string,
-    weekDays: string[], // ["monday", "friday"] por exemplo
+    weekDays: string[],
     type: string,
     userId: string,
   ) => {
     const routineId = uuid.v4() as string;
     const now = new Date().toISOString();
-    
     await db.runAsync(
-      `INSERT INTO routine_tasks (id, title, content, type, week_days, days_completed, created_at, is_active, user_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO routine_tasks (id, title, content, type, week_days, days_completed, cancelled_days, created_at, is_active, user_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       routineId,
       title,
       content,
       type ?? null,
       JSON.stringify(weekDays),
       JSON.stringify([]),
+      JSON.stringify([]),
       now,
       1,
       userId,
     );
-    
     return routineId;
   },
 
+  // retorna todas as tasks ativas do usuário (inclui as que têm dias cancelados)
   getRoutineTasksByUserId: async (db: SQLite.SQLiteDatabase, userId: string): Promise<RoutineTask[]> => {
     return await db.getAllAsync(
       'SELECT * FROM routine_tasks WHERE user_id = ? AND is_active = 1',
@@ -77,6 +78,19 @@ export const RoutineTaskModel = {
     ) as RoutineTask[];
   },
 
+  // retorna apenas as tasks ativas que DEVEM ser executadas em uma data específica (exclui as canceladas)
+  getRoutineTasksForDate: async (
+    db: SQLite.SQLiteDatabase,
+    userId: string,
+    date: string
+  ): Promise<RoutineTask[]> => {
+    const routines = await RoutineTaskModel.getRoutineTasksByUserId(db, userId);
+    return routines.filter(routine =>
+      RoutineTaskModel.shouldBeCompletedOnDate(routine, date)
+    );
+  },
+
+  // busca uma task específica por id (independente de cancelamentos)
   getRoutineTaskById: async (
     db: SQLite.SQLiteDatabase,
     routineId: string
@@ -88,8 +102,36 @@ export const RoutineTaskModel = {
     return routines.length > 0 ? routines[0] : null;
   },
 
+  // retorna tasks ativas que NÃO estão canceladas para o usuário
+  getActiveRoutineTasksByUserId: async (
+    db: SQLite.SQLiteDatabase, 
+    userId: string
+  ): Promise<RoutineTask[]> => {
+    const allRoutines = await RoutineTaskModel.getRoutineTasksByUserId(db, userId);
+    
+    return allRoutines.filter(routine => {
+      const cancelledDays = RoutineTaskModel.getCancelledDays(routine);
+      
+      if (cancelledDays.length === 0) {
+        return true;
+      }
+      
+      const today = new Date();
+      const next30Days = [];
+      
+      for (let i = 0; i < 30; i++) {
+        const checkDate = new Date(today);
+        checkDate.setDate(today.getDate() + i);
+        const dateStr = checkDate.toISOString().split('T')[0];
+        next30Days.push(dateStr);
+      }
+      
+      return next30Days.some(dateStr => 
+        RoutineTaskModel.shouldBeCompletedOnDate(routine, dateStr)
+      );
+    });
+  },
 
- // vai criar uma nova day completion se nao tiver, se tiver vai somente conferir se ja está
   completeRoutineTaskForDate: async (
     db: SQLite.SQLiteDatabase,
     routineId: string,
@@ -100,53 +142,46 @@ export const RoutineTaskModel = {
     if (!routine) return 0;
 
     const completions: DayCompletion[] = JSON.parse(routine.days_completed || "[]");
-    
-    const alreadyCompletedOnDate = completions.some(c => c.date === date);
-    if (alreadyCompletedOnDate) return 0;
+    if (completions.some(c => c.date === date)) return 0;
 
-    const newCompletion: DayCompletion = {
-      date: date,
+    completions.push({
+      date,
       xp_granted: xpGranted,
       completed_at: new Date().toISOString()
-    };
-    
-    completions.push(newCompletion);
+    });
 
     const result = await db.runAsync(
       'UPDATE routine_tasks SET days_completed = ? WHERE id = ?',
       JSON.stringify(completions),
       routineId
     );
-    
+
     return result.changes;
   },
 
-
-// mesma coisa mas para descompletar 
   uncompleteRoutineTaskForDate: async (
     db: SQLite.SQLiteDatabase,
     routineId: string,
-    date: string // YYYY-MM-DD
+    date: string
   ): Promise<number> => {
     const routine = await RoutineTaskModel.getRoutineTaskById(db, routineId);
     if (!routine) return 0;
 
     const completions: DayCompletion[] = JSON.parse(routine.days_completed || "[]");
-    
-    const updatedCompletions = completions.filter(c => c.date !== date);
+    const updated = completions.filter(c => c.date !== date);
 
     const result = await db.runAsync(
       'UPDATE routine_tasks SET days_completed = ? WHERE id = ?',
-      JSON.stringify(updatedCompletions),
+      JSON.stringify(updated),
       routineId
     );
-    
+
     return result.changes;
   },
 
   updateRoutineTask: async (
-    db: SQLite.SQLiteDatabase, 
-    routineId: string, 
+    db: SQLite.SQLiteDatabase,
+    routineId: string,
     updates: Partial<RoutineTask>
   ): Promise<number> => {
     const fields = Object.keys(updates).filter(key => key !== 'id');
@@ -155,7 +190,6 @@ export const RoutineTaskModel = {
     const setClause = fields.map(field => `${field} = ?`).join(', ');
     const values = fields.map(field => {
       const value = (updates as any)[field];
-
       return Array.isArray(value) ? JSON.stringify(value) : value;
     });
 
@@ -164,98 +198,185 @@ export const RoutineTaskModel = {
       ...values,
       routineId
     );
-    
+
     return result.changes;
   },
 
-  // apenas desativa a routinetask nao de fato deleta
   deleteRoutineTask: async (db: SQLite.SQLiteDatabase, routineId: string): Promise<number> => {
-    const result = await db.runAsync(
-      'UPDATE routine_tasks SET is_active = 0 WHERE id = ?', 
+    return (await db.runAsync(
+      'UPDATE routine_tasks SET is_active = 0 WHERE id = ?',
       routineId
-    );
-    return result.changes;
+    )).changes;
   },
 
-  // apaga permanentemente de fato um DELETE
   permanentDeleteRoutineTask: async (db: SQLite.SQLiteDatabase, routineId: string): Promise<number> => {
-    const result = await db.runAsync(
+    return (await db.runAsync(
       'DELETE FROM routine_tasks WHERE id = ?',
       routineId
-    );
-    return result.changes;
+    )).changes;
   },
 
-  // desativa todas 
   clearRoutineTasksByUser: async (db: SQLite.SQLiteDatabase, userId: string): Promise<number> => {
-    const result = await db.runAsync(
-      'UPDATE routine_tasks SET is_active = 0 WHERE user_id = ?', // Soft delete
+    return (await db.runAsync(
+      'UPDATE routine_tasks SET is_active = 0 WHERE user_id = ?',
       userId
-    );
-    return result.changes;
+    )).changes;
   },
 
-  // UTILITÁRIOS PARA TRABALHAR COM COMPLETIONS
-  
-  getWeekDays: (routine: RoutineTask): string[] => {
-    return JSON.parse(routine.week_days || "[]");
+// cancelar task
+  addCancelledDay: async (
+    db: SQLite.SQLiteDatabase,
+    routineId: string,
+    date: string
+  ): Promise<number> => {
+    const routine = await RoutineTaskModel.getRoutineTaskById(db, routineId);
+    if (!routine) return 0;
+
+    const cancelled: string[] = JSON.parse(routine.cancelled_days || "[]");
+    if (cancelled.includes(date)) return 0;
+
+    cancelled.push(date);
+
+    return (await db.runAsync(
+      'UPDATE routine_tasks SET cancelled_days = ? WHERE id = ?',
+      JSON.stringify(cancelled),
+      routineId
+    )).changes;
   },
 
-  getCompletions: (routine: RoutineTask): DayCompletion[] => {
-    return JSON.parse(routine.days_completed || "[]");
+  removeCancelledDay: async (
+    db: SQLite.SQLiteDatabase,
+    routineId: string,
+    date: string
+  ): Promise<number> => {
+    const routine = await RoutineTaskModel.getRoutineTaskById(db, routineId);
+    if (!routine) return 0;
+
+    const cancelled: string[] = JSON.parse(routine.cancelled_days || "[]");
+    const updated = cancelled.filter(d => d !== date);
+
+    return (await db.runAsync(
+      'UPDATE routine_tasks SET cancelled_days = ? WHERE id = ?',
+      JSON.stringify(updated),
+      routineId
+    )).changes;
   },
 
-  isCompletedOnDate: (routine: RoutineTask, date: string): boolean => {
-    const completions = RoutineTaskModel.getCompletions(routine);
-    return completions.some(c => c.date === date);
-  },
+  // functions uteis
+  getWeekDays: (routine: RoutineTask): string[] =>
+    JSON.parse(routine.week_days || "[]"),
+
+  getCompletions: (routine: RoutineTask): DayCompletion[] =>
+    JSON.parse(routine.days_completed || "[]"),
+
+  getCancelledDays: (routine: RoutineTask): string[] =>
+    JSON.parse(routine.cancelled_days || "[]"),
+
+  isCompletedOnDate: (routine: RoutineTask, date: string): boolean =>
+    RoutineTaskModel.getCompletions(routine).some(c => c.date === date),
 
   isCompletedToday: (routine: RoutineTask): boolean => {
     const today = new Date().toISOString().split('T')[0];
     return RoutineTaskModel.isCompletedOnDate(routine, today);
   },
 
-  getCompletionForDate: (routine: RoutineTask, date: string): DayCompletion | null => {
-    const completions = RoutineTaskModel.getCompletions(routine);
-    return completions.find(c => c.date === date) || null;
-  },
+  getCompletionForDate: (routine: RoutineTask, date: string): DayCompletion | null =>
+    RoutineTaskModel.getCompletions(routine).find(c => c.date === date) || null,
 
-  getTotalXpFromRoutine: (routine: RoutineTask): number => {
-    const completions = RoutineTaskModel.getCompletions(routine);
-    return completions.reduce((total, completion) => total + completion.xp_granted, 0);
-  },
+  getTotalXpFromRoutine: (routine: RoutineTask): number =>
+    RoutineTaskModel.getCompletions(routine).reduce((t, c) => t + c.xp_granted, 0),
 
-  getCompletedDates: (routine: RoutineTask): string[] => {
-    const completions = RoutineTaskModel.getCompletions(routine);
-    return completions.map(c => c.date).sort();
-  },
+  getCompletedDates: (routine: RoutineTask): string[] =>
+    RoutineTaskModel.getCompletions(routine).map(c => c.date).sort(),
 
-  getCompletionCount: (routine: RoutineTask): number => {
-    const completions = RoutineTaskModel.getCompletions(routine);
-    return completions.length;
-  },
+  getCompletionCount: (routine: RoutineTask): number =>
+    RoutineTaskModel.getCompletions(routine).length,
 
-  getCompletionsInPeriod: (routine: RoutineTask, startDate: string, endDate: string): DayCompletion[] => {
-    const completions = RoutineTaskModel.getCompletions(routine);
-    return completions.filter(c => c.date >= startDate && c.date <= endDate);
-  },
+  getCompletionsInPeriod: (routine: RoutineTask, start: string, end: string): DayCompletion[] =>
+    RoutineTaskModel.getCompletions(routine).filter(c => c.date >= start && c.date <= end),
 
   shouldBeCompletedToday: (routine: RoutineTask): boolean => {
-    const weekDays = RoutineTaskModel.getWeekDays(routine);
-    const today = new Date();
-    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-    const todayName = dayNames[today.getDay()];
-    
-    return weekDays.includes(todayName);
+    const today = new Date().toISOString().split('T')[0];
+    return RoutineTaskModel.shouldBeCompletedOnDate(routine, today);
   },
 
+  // verifica se uma routine deve ser completada em uma data específica
   shouldBeCompletedOnDate: (routine: RoutineTask, date: string): boolean => {
     const weekDays = RoutineTaskModel.getWeekDays(routine);
+    const cancelled = RoutineTaskModel.getCancelledDays(routine);
+
+    if (cancelled.includes(date)) return false;
+
     const targetDate = new Date(date);
-    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
     const dayName = dayNames[targetDate.getDay()];
-    
+
     return weekDays.includes(dayName);
+  },
+
+  isCancelledOnDate: (routine: RoutineTask, date: string): boolean => {
+    const cancelled = RoutineTaskModel.getCancelledDays(routine);
+    return cancelled.includes(date);
+  },
+
+  getCancelledDatesForRoutine: (routine: RoutineTask): string[] => {
+    return RoutineTaskModel.getCancelledDays(routine).sort();
+  },
+
+  hasAnyCancelledDays: (routine: RoutineTask): boolean => {
+    const cancelled = RoutineTaskModel.getCancelledDays(routine);
+    return cancelled.length > 0;
+  },
+
+  getNextValidDates: (routine: RoutineTask, fromDate: string, limit: number = 7): string[] => {
+    const weekDays = RoutineTaskModel.getWeekDays(routine);
+    const cancelled = RoutineTaskModel.getCancelledDays(routine);
+    const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+    
+    const validDates: string[] = [];
+    const startDate = new Date(fromDate);
+    let currentDate = new Date(startDate);
+    
+    let daysChecked = 0;
+    const maxDaysToCheck = 30;
+    
+    while (validDates.length < limit && daysChecked < maxDaysToCheck) {
+      const dateStr = currentDate.toISOString().split('T')[0];
+      const dayName = dayNames[currentDate.getDay()];
+      
+      if (weekDays.includes(dayName) && !cancelled.includes(dateStr)) {
+        validDates.push(dateStr);
+      }
+      
+      currentDate.setDate(currentDate.getDate() + 1);
+      daysChecked++;
+    }
+    
+    return validDates;
+  },
+
+  // conta quantos dias válidos (não cancelados) uma routine tem em um período
+  getValidDaysInPeriod: (routine: RoutineTask, startDate: string, endDate: string): number => {
+    const weekDays = RoutineTaskModel.getWeekDays(routine);
+    const cancelled = RoutineTaskModel.getCancelledDays(routine);
+    const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+    
+    let validDays = 0;
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const currentDate = new Date(start);
+    
+    while (currentDate <= end) {
+      const dateStr = currentDate.toISOString().split('T')[0];
+      const dayName = dayNames[currentDate.getDay()];
+      
+      if (weekDays.includes(dayName) && !cancelled.includes(dateStr)) {
+        validDays++;
+      }
+      
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    return validDays;
   },
 
   getAllRoutineTasksDebug: async (db: SQLite.SQLiteDatabase): Promise<RoutineTask[]> => {
