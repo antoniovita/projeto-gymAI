@@ -78,6 +78,16 @@ export const RoutineTaskModel = {
     ) as RoutineTask[];
   },
 
+  getAllRoutineTasksByUserId: async (
+    db: SQLite.SQLiteDatabase, 
+    userId: string
+  ): Promise<RoutineTask[]> => {
+    return await db.getAllAsync(
+      'SELECT * FROM routine_tasks WHERE user_id = ?',
+      userId
+    ) as RoutineTask[];
+  },
+
   // retorna apenas as tasks ativas que DEVEM ser executadas em uma data específica (exclui as canceladas)
   getRoutineTasksForDate: async (
     db: SQLite.SQLiteDatabase,
@@ -389,4 +399,21 @@ export const RoutineTaskModel = {
       return [];
     }
   },
+
+    activateRoutineTask: async (
+    db: SQLite.SQLiteDatabase,
+    routineId: string,
+  ): Promise<number> => {
+    const routine = await RoutineTaskModel.getRoutineTaskById(db, routineId);
+    if (!routine) return 0;
+    const result = await db.runAsync(
+      'UPDATE routine_tasks SET is_active = ? WHERE id = ?',
+      1,
+      routineId
+    );
+
+    return result.changes;
+  },
+
+
 };

@@ -13,6 +13,7 @@ import {
   Keyboard,
   FlatList,
   Alert,
+  Switch,
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
@@ -75,9 +76,10 @@ const RoutineScreen: React.FC = () => {
     createRoutineTask,
     deleteRoutineTask,
     updateRoutineTask,
-    refreshRoutineTasks,
+    getAllRoutineTasksByUserId,
     getCompletionCount,
     getTotalXpFromRoutine,
+    activateRoutineTask,
   } = useRoutineTasks();
 
   const [selectedDay, setSelectedDay] = useState<string>(days[0]);
@@ -92,12 +94,14 @@ const RoutineScreen: React.FC = () => {
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [selectedDaysOfWeek, setSelectedDaysOfWeek] = useState<number[]>([]);
 
-  // Carrega as routine tasks ao montar o componente
+  const [isActive, setIsActive] = useState(false)
+
+  // carrega as routine tasks ao montar o componente
   useEffect(() => {
     if (userId) {
-      refreshRoutineTasks(userId!);
+      getAllRoutineTasksByUserId(userId!);
     }
-  }, [userId, refreshRoutineTasks]);
+  }, [userId, getAllRoutineTasksByUserId]);
 
   const filteredTasks = useMemo(() => {
     const selectedWeekDay: WeekDay = getWeekDayFromDayName(selectedDay);
@@ -304,6 +308,16 @@ const RoutineScreen: React.FC = () => {
     }
   };
 
+  const handleActivate = (routineId: string) => {
+    if(isActive) {
+      deleteRoutineTask(routineId)
+      setIsActive(false)
+    } else {
+      activateRoutineTask(routineId)
+      setIsActive(true)
+    }
+  }
+
   const renderLeftActions = (item: RoutineTask): React.ReactElement => {
     return (
       <View className="flex-row items-center justify-start border-t bg-rose-500 px-4 h-full" style={{ width: 80 }}>
@@ -344,21 +358,6 @@ const RoutineScreen: React.FC = () => {
                   <Text className="text-xl font-sans font-medium text-gray-300 flex-1">
                     {item.title}
                   </Text>
-                  {item.type && (
-                    <View className="flex-row items-center gap-1">
-                      <View 
-                        style={{ 
-                          width: 8, 
-                          height: 8, 
-                          borderRadius: 4, 
-                          backgroundColor: getCategoryColor(item.type) 
-                        }} 
-                      />
-                      <Text className="text-neutral-400 text-xs font-sans">
-                        {item.type}
-                      </Text>
-                    </View>
-                  )}
                 </View>
                 
                 <View className="flex flex-row items-center justify-between">
@@ -369,24 +368,20 @@ const RoutineScreen: React.FC = () => {
                     }) : 'Sem horário'}
                   </Text>
                   
-                  <View className="flex flex-row items-center gap-3">
-                    {completionCount > 0 && (
-                      <Text className="text-green-400 text-xs font-sans">
-                        {completionCount} completadas
-                      </Text>
-                    )}
-                    {totalXp > 0 && (
-                      <Text className="text-yellow-400 text-xs font-sans">
-                        {totalXp} XP
-                      </Text>
-                    )}
-                  </View>
                 </View>
                 
                 <Text className="text-neutral-500 font-sans text-xs">
                   Recorrente em {weekDays.length} dias
                 </Text>
               </Pressable>
+
+              <View className='flex items-center justify-center'>
+                <Switch
+                 value={isActive}
+                  onValueChange={() => handleActivate(item.id)} 
+                />
+              </View>
+
             </View>
           </View>
         </Swipeable>
@@ -418,7 +413,7 @@ const RoutineScreen: React.FC = () => {
           <Ionicons name="alert-circle-outline" size={48} color="#ef4444" />
           <Text className="text-red-400 font-sans text-lg text-center mt-4">{error}</Text>
           <Pressable 
-            onPress={() => refreshRoutineTasks(userId!)}
+            onPress={() => getAllRoutineTasksByUserId(userId!)}
             className="mt-4 bg-rose-400 px-6 py-3 rounded-xl"
           >
             <Text className="text-black font-sans">Tentar novamente</Text>

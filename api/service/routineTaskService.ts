@@ -199,4 +199,19 @@ export const RoutineTaskService = {
   getAllRoutineTasksDebug: async () => {
     return await RoutineTaskController.getAllRoutineTasksDebug();
   },
+  
+
+  activateRoutineTask: async (routineId: string) => {
+    if (!routineId?.trim()) {
+      return { success: false, error: 'ID da rotina é obrigatório' };
+    }
+    return await RoutineTaskController.activateRoutineTask(routineId);
+  },
+
+  getAllRoutineTasksByUserId: async (userId: string) => {
+  if (!userId?.trim()) {
+    return { success: false, error: 'ID do usuário é obrigatório' };
+  }
+  return await RoutineTaskController.getAllRoutineTasksByUserId(userId);
+},
 };

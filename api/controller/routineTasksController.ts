@@ -211,4 +211,30 @@ export const RoutineTaskController = {
       return { success: false, error: 'Erro ao buscar todas as routine tasks para debug.' };
     }
   },
+
+    activateRoutineTask: async (routineId: string) => {
+    const db = getDb();
+    try {
+      const result = await RoutineTaskModel.activateRoutineTask(db, routineId);
+      if (result > 0) {
+        return { success: true };
+      } else {
+        return { success: false, error: 'Nenhuma rotina foi ativada.' };
+      }
+    } catch (error) {
+      console.error('Erro ao ativar routine task no controller:', error);
+      return { success: false, error: 'Erro ao ativar routine task.' };
+    }
+  },
+
+  getAllRoutineTasksByUserId: async (userId: string) => {
+  const db = getDb();
+  try {
+    const routines = await RoutineTaskModel.getAllRoutineTasksByUserId(db, userId);
+    return { success: true, data: routines };
+  } catch (error) {
+    console.error('Erro ao buscar todas as routine tasks no controller:', error);
+    return { success: false, error: 'Erro ao buscar routine tasks.' };
+  }
+},
 };

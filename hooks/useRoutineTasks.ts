@@ -31,6 +31,7 @@ interface UseRoutineTasksReturn extends UseRoutineTasksState {
     type: string,
     userId: string
   ) => Promise<{ success: boolean; error?: string; routineId?: string }>;
+  
   updateRoutineTask: (
     routineId: string,
     title?: string,
@@ -39,38 +40,46 @@ interface UseRoutineTasksReturn extends UseRoutineTasksState {
     type?: string,
     created_at?: string
   ) => Promise<{ success: boolean; error?: string }>;
+  
   deleteRoutineTask: (
     routineId: string,
     permanent?: boolean
   ) => Promise<{ success: boolean; error?: string }>;
-  
+
   // completion Operations
   completeRoutineTaskForDate: (
     routineId: string,
     date: string,
     xpGranted?: number
   ) => Promise<{ success: boolean; error?: string }>;
+  
   uncompleteRoutineTaskForDate: (
     routineId: string,
     date: string
   ) => Promise<{ success: boolean; error?: string }>;
-  
+
   // cancellation Operations
   cancelRoutineTaskForDate: (
     routineId: string,
     date: string
   ) => Promise<{ success: boolean; error?: string }>;
+  
   removeCancelledRoutineTaskForDate: (
     routineId: string,
     date: string
   ) => Promise<{ success: boolean; error?: string }>;
   
+  activateRoutineTask: (
+    routineId: string,
+  ) => Promise<{ success: boolean; error?: string }>;
+
   // utility Functions
   refreshRoutineTasks: (userId: string) => Promise<void>;
+  getAllRoutineTasksByUserId: (userId: string) => Promise<{ success: boolean; data?: RoutineTask[]; error?: string }>;
   getRoutineTasksForDate: (userId: string, date: string) => Promise<{ success: boolean; data?: RoutineTask[]; error?: string }>;
   clearRoutineTasksByUser: (userId: string) => Promise<{ success: boolean; error?: string }>;
   getRoutineTaskById: (routineId: string) => Promise<RoutineTask | null>;
-  
+
   // helper Functions
   isCompletedOnDate: (routine: RoutineTask, date: string) => boolean;
   isCompletedToday: (routine: RoutineTask) => boolean;
@@ -108,6 +117,7 @@ export const useRoutineTasks = (): UseRoutineTasksReturn => {
     }
 
     updateState({ loading: true, error: null });
+
     try {
       const response = await RoutineTaskService.getRoutineTasks(userId) as ServiceResponse<RoutineTask[]>;
       if (response.success) {
@@ -127,6 +137,40 @@ export const useRoutineTasks = (): UseRoutineTasksReturn => {
         loading: false
       });
       console.error('Erro no useRoutineTasks.refreshRoutineTasks:', error);
+    }
+  }, [updateState]);
+
+  // get ALL routine tasks (including inactive ones) and update state
+  const getAllRoutineTasksByUserId = useCallback(async (userId: string) => {
+    if (!userId?.trim()) {
+      updateState({ error: 'ID do usuário é obrigatório' });
+      return { success: false, error: 'ID do usuário é obrigatório' };
+    }
+
+    updateState({ loading: true, error: null });
+
+    try {
+      const response = await RoutineTaskService.getAllRoutineTasksByUserId(userId) as ServiceResponse<RoutineTask[]>;
+      if (response.success) {
+        updateState({
+          routineTasks: response.data || [],
+          loading: false
+        });
+        return { success: true, data: response.data };
+      } else {
+        updateState({
+          error: response.error || 'Erro ao carregar todas as routine tasks',
+          loading: false
+        });
+        return { success: false, error: response.error };
+      }
+    } catch (error) {
+      updateState({
+        error: 'Erro inesperado ao carregar todas as routine tasks',
+        loading: false
+      });
+      console.error('Erro no useRoutineTasks.getAllRoutineTasksByUserId:', error);
+      return { success: false, error: 'Erro inesperado ao buscar todas as routine tasks' };
     }
   }, [updateState]);
 
@@ -181,6 +225,7 @@ export const useRoutineTasks = (): UseRoutineTasksReturn => {
       const response = await RoutineTaskService.updateRoutineTask(
         routineId, title, content, weekDays, type, created_at
       );
+
       if (response.success) {
         // update the local state
         setState(prev => ({
@@ -313,7 +358,6 @@ export const useRoutineTasks = (): UseRoutineTasksReturn => {
   }, []);
 
   // === CANCELLATION OPERATIONS ===
-  
   // Cancel routine task for date
   const cancelRoutineTaskForDate = useCallback(async (routineId: string, date: string) => {
     try {
@@ -413,7 +457,6 @@ export const useRoutineTasks = (): UseRoutineTasksReturn => {
   }, []);
 
   // === HELPER FUNCTIONS - ATUALIZADAS PARA CONSIDERAR CANCELAMENTOS ===
-  
   const isCompletedOnDate = useCallback((routine: RoutineTask, date: string): boolean => {
     const completions: DayCompletion[] = JSON.parse(routine.days_completed || "[]");
     return completions.some(c => c.date === date);
@@ -444,15 +487,15 @@ export const useRoutineTasks = (): UseRoutineTasksReturn => {
   const shouldBeCompletedOnDate = useCallback((routine: RoutineTask, date: string): boolean => {
     const weekDays: string[] = JSON.parse(routine.week_days || "[]");
     const cancelledDays: string[] = JSON.parse(routine.cancelled_days || "[]");
-    
+
     // Se a data está cancelada, não deve ser completada
     if (cancelledDays.includes(date)) return false;
-    
+
     // Verifica se o dia da semana está na lista de dias da routine
     const targetDate = new Date(date);
     const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     const dayName = dayNames[targetDate.getDay()];
-    
+
     return weekDays.includes(dayName);
   }, []);
 
@@ -490,6 +533,33 @@ export const useRoutineTasks = (): UseRoutineTasksReturn => {
     return completions.filter(c => c.date >= startDate && c.date <= endDate);
   }, []);
 
+  const activateRoutineTask = useCallback(async (routineId: string): Promise<{ success: boolean; error?: string }> => {
+    if (!routineId?.trim()) {
+      return { success: false, error: 'ID da rotina é obrigatório' };
+    }
+
+    try {
+      const response = await RoutineTaskService.activateRoutineTask(routineId);
+      if (response.success) {
+        // Update local state to mark task as active
+        setState(prev => ({
+          ...prev,
+          routineTasks: prev.routineTasks.map(routine =>
+            routine.id === routineId
+              ? { ...routine, is_active: 1 as const }
+              : routine
+          )
+        }));
+        return { success: true };
+      } else {
+        return { success: false, error: response.error || 'Erro ao ativar routine task' };
+      }
+    } catch (error) {
+      console.error('Erro no hook ao ativar routine task:', error);
+      return { success: false, error: 'Erro inesperado ao ativar routine task' };
+    }
+  }, []);
+
   // NOVA: Conta quantos dias válidos (não cancelados) uma routine tem em um período
   const getValidDaysInPeriod = useCallback((
     routine: RoutineTask,
@@ -499,23 +569,22 @@ export const useRoutineTasks = (): UseRoutineTasksReturn => {
     const weekDays: string[] = JSON.parse(routine.week_days || "[]");
     const cancelledDays: string[] = JSON.parse(routine.cancelled_days || "[]");
     const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-    
+
     let validDays = 0;
     const start = new Date(startDate);
     const end = new Date(endDate);
     const currentDate = new Date(start);
-    
+
     while (currentDate <= end) {
       const dateStr = currentDate.toISOString().split('T')[0];
       const dayName = dayNames[currentDate.getDay()];
-      
+
       if (weekDays.includes(dayName) && !cancelledDays.includes(dateStr)) {
         validDays++;
       }
-      
+
       currentDate.setDate(currentDate.getDate() + 1);
     }
-    
     return validDays;
   }, []);
 
@@ -528,28 +597,28 @@ export const useRoutineTasks = (): UseRoutineTasksReturn => {
     const weekDays: string[] = JSON.parse(routine.week_days || "[]");
     const cancelledDays: string[] = JSON.parse(routine.cancelled_days || "[]");
     const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-    
+
     const validDates: string[] = [];
     const startDate = new Date(fromDate);
     let currentDate = new Date(startDate);
-    
+
     // Procura até encontrar o número limite de datas válidas ou até 30 dias no futuro
     let daysChecked = 0;
     const maxDaysToCheck = 30;
-    
+
     while (validDates.length < limit && daysChecked < maxDaysToCheck) {
       const dateStr = currentDate.toISOString().split('T')[0];
       const dayName = dayNames[currentDate.getDay()];
-      
+
       // Se é um dia da semana da routine e não está cancelado
       if (weekDays.includes(dayName) && !cancelledDays.includes(dateStr)) {
         validDates.push(dateStr);
       }
-      
+
       currentDate.setDate(currentDate.getDate() + 1);
       daysChecked++;
     }
-    
+
     return validDates;
   }, []);
 
@@ -558,26 +627,30 @@ export const useRoutineTasks = (): UseRoutineTasksReturn => {
     routineTasks: state.routineTasks,
     loading: state.loading,
     error: state.error,
-    
+
     // CRUD Operations
     createRoutineTask,
     updateRoutineTask,
     deleteRoutineTask,
-    
+
     // Completion Operations
     completeRoutineTaskForDate,
     uncompleteRoutineTaskForDate,
-    
+
     // Cancellation Operations
     cancelRoutineTaskForDate,
     removeCancelledRoutineTaskForDate,
-    
+
+    // Activate
+    activateRoutineTask,
+
     // Utility Functions
     refreshRoutineTasks,
+    getAllRoutineTasksByUserId,
     getRoutineTasksForDate,
     clearRoutineTasksByUser,
     getRoutineTaskById,
-    
+
     // Helper Functions - Atualizadas para considerar cancelamentos
     isCompletedOnDate,
     isCompletedToday,
