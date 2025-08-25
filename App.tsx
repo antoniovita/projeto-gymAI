@@ -85,32 +85,27 @@ export default function App() {
 
   useEffect(() => {
     (async () => {
-      const userId = await AuthService.getUserId();
-      setIsAuthenticated(!!userId);
+      try {
+        const userId = await AuthService.getUserId();
+        setIsAuthenticated(!!userId);
+      } catch (error) {
+        console.error('Erro ao verificar autenticação:', error);
+        setIsAuthenticated(false);
+      }
     })();
   }, []);
 
   useEffect(() => {
     (async () => {
       try {
-        // verifica se o banco já está inicializado na memória
-        const isInitialized = isDatabaseInitialized();
-        console.log('Banco inicializado na memória:', isInitialized);
-
-        // se não está inicializado na memória, inicializa
-        if (!isInitialized) {
-          // verifica se o arquivo do banco existe no sistema
-          const dbFileExists = await databaseExists();
-          console.log('Arquivo do banco existe no sistema:', dbFileExists);
-
-          // Inicializa o banco (seja novo ou existente)
-          await initDatabase();
-          console.log('Banco de dados inicializado com sucesso');
-        }
-
+        console.log('Iniciando configuração do banco de dados...');
+        
+        await initDatabase();
+        console.log('Banco de dados configurado com sucesso');
+        
         setIsDbReady(true);
       } catch (err) {
-        console.error('Erro ao inicializar o DB:', err);
+        console.error('Erro ao configurar o banco de dados:', err);
         setIsDbReady(false);
       }
     })();
@@ -118,13 +113,18 @@ export default function App() {
 
   useEffect(() => {
     (async () => {
-      const storedPin = await AuthService.getUserPin();
-      console.log('PIN armazenado no AsyncStorage:', storedPin);
+      try {
+        const storedPin = await AuthService.getUserPin();
+        console.log('PIN verificado');
 
-      const pinExists = !!storedPin && storedPin.length > 0;
-      console.log('Existe PIN?', pinExists);
+        const pinExists = !!storedPin && storedPin.length > 0;
+        console.log('Existe PIN?', pinExists);
 
-      setHasPin(pinExists);
+        setHasPin(pinExists);
+      } catch (error) {
+        console.error('Erro ao verificar PIN:', error);
+        setHasPin(false);
+      }
     })();
   }, []);
 
