@@ -9,6 +9,7 @@ import {
   TouchableWithoutFeedback,
   SafeAreaView,
   ScrollView,
+  Image
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -17,16 +18,19 @@ import type { RootStackParamList } from '../widgets/types';
 import { useEffect, useState, useRef } from 'react';
 import { SettingsModal } from './comps/modals/configModal';
 import { useChat } from '../hooks/useChat';
-import { StatsSection } from './comps/StatsSection';
+
+const fuocoCHAT = require("../assets/icons/fuocoCHAT.png")
 
 const EmptyState = () => {
   return (
     <View className="flex-1 justify-center items-center mt-[70px] px-8 pb-20">
       <View className="items-center">
-        <View className="w-20 h-20 rounded-full items-center justify-center mb-3">
-          <Ionicons name="chatbubble-ellipses-outline" size={60} color="gray" />
+        <View className="ml-10">
+
+          <Image style={{width: 140, height: 130}} source={fuocoCHAT}></Image>
+
         </View>
-        <Text className="text-neutral-400 text-xl font-medium font-sans mb-2 text-center">
+        <Text className="text-neutral-400 text-xl mt-3 font-medium font-sans mb-2 text-center">
           Nenhuma conversa ainda
         </Text>
         <Text className="text-neutral-400 text-sm font-sans mb-4 text-center" style={{ maxWidth: 230 }}>
@@ -105,10 +109,10 @@ export default function ChatScreen() {
             <View key={index} className={`mb-6 ${item.role === 'user' ? 'items-end' : 'items-start'}`}>
               <View
                 className={`rounded-3xl px-4 py-3 ${
-                  item.role === 'user' ? 'bg-rose-500' : 'bg-zinc-700'
+                  item.role === 'user' ? 'bg-[#1e1e1e]' : 'bg-zinc-700'
                 }`}
               >
-                <Text className="text-white text-[15px] font-sans max-w-[280px]">{item.text}</Text>
+                <Text className="text-white text-[15px] font-sans max-w-[280px]">{item.text.trim()}</Text>
               </View>
             </View>
           ))}
@@ -147,7 +151,7 @@ export default function ChatScreen() {
                 blurOnSubmit={false}
               />
               <TouchableOpacity
-                className="w-[30px] h-[30px] rounded-full mr-4 pl-1 mt-2 bg-rose-400 justify-center items-center"
+                className="w-[30px] h-[30px] rounded-full mr-4 pl-1 mt-2 bg-[#ffa41f] justify-center items-center"
                 onPress={onSubmit}
               >
                 <Ionicons name="send" size={16} color="black" />

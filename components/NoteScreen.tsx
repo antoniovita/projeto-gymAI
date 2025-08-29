@@ -18,6 +18,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from 'hooks/useAuth';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useNotes } from 'hooks/useNotes';
+import { LinearGradient } from 'expo-linear-gradient';
+import GradientIcon from './GradientIcon';
 
 const EmptyState = ({ onCreateNote }: { onCreateNote: () => void }) => {
   return (
@@ -428,9 +430,16 @@ export default function NoteScreen() {
 
       <Pressable
         onPress={handleOpenCreate}
-        className="w-[50px] h-[50px] absolute bottom-[6%] right-6 z-20 rounded-full bg-rose-400 items-center justify-center shadow-lg"
+        className="absolute bottom-6 right-6 z-20 rounded-full items-center justify-center"
       >
-        <Feather name="plus" strokeWidth={3} size={32} color="black" />
+        <LinearGradient
+            colors={['#FFD45A', '#FFA928', '#FF7A00']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{ width: 50, height: 50, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "100%"}}
+            >
+          <Feather name="plus" strokeWidth={3} size={32} color="black" />
+        </LinearGradient>
       </Pressable>
 
       {/* Header */}
@@ -446,7 +455,7 @@ export default function NoteScreen() {
           <Pressable 
             onPress={() => setShowDeleteCategoryModal(true)}
           >
-            <Ionicons name="folder" size={22} color="#ff7a7f" />
+            <GradientIcon name="folder" size={22} />
           </Pressable>
         </View>
       </View>
@@ -559,7 +568,7 @@ export default function NoteScreen() {
                   )
                 }
                 className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${
-                  isSelected ? 'bg-rose-400' : 'bg-zinc-700'
+                  isSelected ? 'bg-[#ffa41f]' : 'bg-zinc-700'
                 }`}
               >
                 <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color, borderWidth: 0.5, borderColor: '#fff' }} />
@@ -613,7 +622,7 @@ export default function NoteScreen() {
 
                 <Pressable
                   onPress={handleAddCategory}
-                  className="bg-rose-400 p-3 mt-3 rounded-xl items-center"
+                  className="bg-[#ffa41f] p-3 mt-3 rounded-xl items-center"
                 >
                   <Text className="text-black font-semibold font-sans">Adicionar Categoria</Text>
                 </Pressable>
@@ -689,7 +698,7 @@ export default function NoteScreen() {
                 key={category}
                 onPress={() => toggleCategoryForNote(category)}
                 className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${
-                  isSelected ? 'bg-rose-400' : 'bg-zinc-700'
+                  isSelected ? 'bg-[#ffa41f]' : 'bg-zinc-700'
                 }`}
               >
                 <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color, borderWidth: 0.5, borderColor: '#fff' }} />

@@ -49,6 +49,11 @@ export const useChat = () => {
 
     const userMessage: ChatMessage = { role: 'user', text: input };
     const updatedMessages = [...messages, userMessage];
+
+    if (isTyping) {
+      return;
+    }
+
     await saveMessages(updatedMessages);
     setInput('');
     setIsTyping(true);

@@ -13,6 +13,7 @@ import {
   Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -20,35 +21,33 @@ import { useAuth } from 'hooks/useAuth';
 import { useTask } from 'hooks/useTask';
 import { useWorkout } from 'hooks/useWorkout';
 import { RootStackParamList } from 'widgets/types';
+import GradientIcon from './GradientIcon';
+import { useChat } from 'hooks/useChat';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 type SettingsItemProps = {
   icon: keyof typeof Ionicons.glyphMap;
-  color?: string;
   label: string;
   onPress: () => void;
   rightIcon?: keyof typeof Ionicons.glyphMap;
-  destructive?: boolean;
 };
 
 const SettingsItem: React.FC<SettingsItemProps> = ({
   icon,
-  color = 'white',
   label,
   onPress,
   rightIcon = 'chevron-forward',
-  destructive = false,
 }) => (
   <Pressable
     className="flex flex-row items-center justify-between px-6 h-[70px] border-b border-neutral-700 bg-zinc-800"
     onPress={onPress}
   >
     <View className="flex flex-row items-center gap-3">
-      <View className={`w-8 h-8 rounded-lg items-center justify-center ${destructive ? 'bg-rose-500/20' : 'bg-zinc-700'}`}>
-        <Ionicons name={icon} size={18} color={color} />
+      <View className={`w-8 h-8 rounded-lg items-center justify-center bg-orange-500/20`}>
+        <GradientIcon name={icon} size={18}/>
       </View>
-      <Text className={`text-[16px] font-sans ${destructive ? 'text-rose-400' : 'text-gray-300'}`}>
+      <Text className="text-[16px] font-sans text-gray-300">
         {label}
       </Text>
     </View>
@@ -78,7 +77,6 @@ type BottomSheetModalProps = {
   cancelText: string;
   icon: keyof typeof Ionicons.glyphMap;
   iconColor?: string;
-  destructive?: boolean;
 };
 
 const BottomSheetModal = React.forwardRef<{ handleClose: () => void }, BottomSheetModalProps>(
@@ -92,7 +90,6 @@ const BottomSheetModal = React.forwardRef<{ handleClose: () => void }, BottomShe
     cancelText,
     icon,
     iconColor = '#ff7a7f',
-    destructive = false,
   }, ref) => {
     const slideAnim = React.useRef(new Animated.Value(SCREEN_HEIGHT)).current;
     const opacityAnim = React.useRef(new Animated.Value(0)).current;
@@ -186,7 +183,7 @@ const BottomSheetModal = React.forwardRef<{ handleClose: () => void }, BottomShe
             >
               <View className="w-12 h-1 bg-zinc-600 rounded-full self-center mb-8" />
               
-              <View className={`w-16 h-16 rounded-full items-center justify-center self-center mb-6 ${destructive ? 'bg-rose-500/20' : 'bg-zinc-700'}`}>
+              <View className="w-16 h-16 rounded-full items-center justify-center self-center mb-6 bg-rose-500/20">
                 <Ionicons name={icon} size={32} color={iconColor} />
               </View>
 
@@ -200,10 +197,10 @@ const BottomSheetModal = React.forwardRef<{ handleClose: () => void }, BottomShe
 
               <View className="gap-3">
                 <Pressable
-                  className={`py-4 rounded-xl ${destructive ? 'bg-rose-500/20' : 'bg-rose-400'}`}
+                  className="py-4 rounded-xl bg-rose-500/20"
                   onPress={onConfirm}
                 >
-                  <Text className={`text-center text-base font-sans font-semibold ${destructive ? 'text-rose-400' : 'text-black'}`}>
+                  <Text className="text-center text-base font-sans font-semibold text-rose-400">
                     {confirmText}
                   </Text>
                 </Pressable>
@@ -226,6 +223,8 @@ const BottomSheetModal = React.forwardRef<{ handleClose: () => void }, BottomShe
 );
 
 export default function SettingsScreen() {
+
+  const { clearMessages } = useChat()
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { logout, userId, userName } = useAuth();
   const { clearTasksByUser } = useTask();
@@ -238,9 +237,8 @@ export default function SettingsScreen() {
     description: '',
     confirmText: '',
     cancelText: 'Cancelar',
-    icon: 'warning-outline' as keyof typeof Ionicons.glyphMap,
+    icon: 'warning' as keyof typeof Ionicons.glyphMap,
     iconColor: '#ff7a7f',
-    destructive: false,
     onConfirm: () => {},
   });
 
@@ -254,9 +252,8 @@ export default function SettingsScreen() {
       title: 'Remover Treinos',
       description: 'Tem certeza que deseja remover todos os dados de treinos? Esta ação não pode ser desfeita.',
       confirmText: 'Remover Treinos',
-      icon: 'barbell-outline',
+      icon: 'barbell',
       iconColor: '#ff7a7f',
-      destructive: true,
       onConfirm: () => {
         Alert.alert(
           'Você tem certeza?',
@@ -289,9 +286,8 @@ export default function SettingsScreen() {
       title: 'Remover Tarefas',
       description: 'Tem certeza que deseja remover todos os dados de tarefas? Esta ação não pode ser desfeita.',
       confirmText: 'Remover Tarefas',
-      icon: 'checkmark-done-outline',
+      icon: 'checkmark-done',
       iconColor: '#ff7a7f',
-      destructive: true,
       onConfirm: () => {
         Alert.alert(
           'Você tem certeza?',
@@ -324,9 +320,8 @@ export default function SettingsScreen() {
       title: 'Restaurar Conta',
       description: 'Ao restaurar sua conta, todos os dados locais serão perdidos e você será desconectado.',
       confirmText: 'Restaurar Conta',
-      icon: 'refresh-outline',
+      icon: 'refresh',
       iconColor: '#ff7a7f',
-      destructive: true,
       onConfirm: () => {
         Alert.alert(
           'Você tem certeza?',
@@ -380,16 +375,19 @@ export default function SettingsScreen() {
       <View className="px-4 pb-5">
         <View className="flex-row items-center justify-between px-4 py-4 rounded-2xl bg-[#35353a]">
           <View className="flex-row items-center gap-4">
-            <View className="w-12 h-12 flex items-center justify-center rounded-full bg-rose-400">
-              <Text className="text-lg font-sans text-black font-semibold">{initials}</Text>
-            </View>
+            <LinearGradient
+              colors={['#FFD45A', '#FFA928', '#FF7A00']}
+              style={{ width: 48, height: 48, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "100%"}}
+            >
+              <Text className="text-xl font-sans text-black font-semibold">{initials}</Text>
+            </LinearGradient>
             <View className="flex-col">
               <Text className="text-zinc-400 font-sans text-xs mb-1">Usuário ativo</Text>
               <Text className="text-white text-lg font-sans font-medium">{userName}</Text>
             </View>
           </View>
           <View className="p-2 rounded-xl bg-zinc-700">
-            <Ionicons name="person-outline" size={18} color="#a1a1aa" />
+            <Ionicons name="person" size={18} color="#a1a1aa" />
           </View>
         </View>
       </View>
@@ -397,56 +395,63 @@ export default function SettingsScreen() {
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 40 }}>
         <SectionHeader title="Conta" />
         <SettingsItem
-          icon="person-outline"
+          icon="person"
           label="Informações Pessoais"
           onPress={() => navigation.navigate('InfoScreen')}
         />
         <SettingsItem
-          icon="card-outline"
+          icon="card"
           label="Plano & Assinatura"
           onPress={() => Alert.alert('Configurações', 'Gerencie sua assinatura')}
         />
 
         <SectionHeader title="Dados" />
         <SettingsItem
-          icon="barbell-outline"
-          color="#ff7a7f"
-          label="Remover dados de Treinos"
+          icon="barbell"
+          label="Remover dados de Academia"
           onPress={confirmClearTrainings}
-          destructive={true}
         />
+
         <SettingsItem
-          icon="checkmark-done-outline"
-          color="#ff7a7f"
+          icon="calendar"
           label="Remover dados de Tarefas"
           onPress={confirmClearTasks}
-          destructive={true}
+        />
+
+        <SettingsItem
+          icon="wallet"
+          label="Remover dados das Despesas"
+          onPress={() => console.log("oi")}
+        />
+
+        <SettingsItem
+          icon="chatbubble-ellipses"
+          label="Remover dados de Conversas"
+          onPress={clearMessages}
         />
 
         <SectionHeader title="Suporte" />
         <SettingsItem
-          icon="help-circle-outline"
+          icon="help-circle"
           label="Ajuda & Suporte"
           onPress={() => navigation.navigate('HelpScreen')}
         />
         <SettingsItem
-          icon="document-text-outline"
+          icon="document-text"
           label="Termos de Uso"
           onPress={() => Alert.alert('Termos', 'Visualizar termos de uso')}
         />
         <SettingsItem
-          icon="shield-checkmark-outline"
+          icon="shield-checkmark"
           label="Política de Privacidade"
           onPress={() => Alert.alert('Privacidade', 'Visualizar política de privacidade')}
         />
 
         <SectionHeader title="Conta" />
         <SettingsItem
-          icon="refresh-outline"
-          color="#ff7a7f"
+          icon="refresh"
           label="Restaurar Conta"
           onPress={confirmLogout}
-          destructive={true}
         />
       </ScrollView>
 
@@ -461,7 +466,6 @@ export default function SettingsScreen() {
         cancelText={modalConfig.cancelText}
         icon={modalConfig.icon}
         iconColor={modalConfig.iconColor}
-        destructive={modalConfig.destructive}
       />
     </SafeAreaView>
   );

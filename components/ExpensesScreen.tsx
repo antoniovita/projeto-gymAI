@@ -5,6 +5,7 @@ import {
   SafeAreaView,
   Alert,
   FlatList,
+  Image,
   Animated,
   Pressable,
   Platform,
@@ -20,6 +21,10 @@ import CreateExpenseModal from './comps/modals/CreateExpenseModal';
 import CreateCategoryModal from './comps/modals/CreateCategoryModal';
 import DateFilterModal from './comps/modals/DateFilterModal';
 import DeleteCategoryModalExp from './comps/modals/DeleteCategoryModalExp';
+import { LinearGradient } from 'expo-linear-gradient';
+import GradientIcon from './GradientIcon';
+
+const fuocoMONEY = require("../assets/icons/fuocoMONEY.png")
 
 export interface DateFilter {
   type: 'all' | 'month' | 'year' | 'custom' | 'date';
@@ -45,11 +50,13 @@ const EmptyState = ({ selectedCategory, onCreateExpense }: { selectedCategory: s
   return (
     <View className="flex-1 justify-center items-center px-8 pb-[90px]">
       <View className="items-center">
-        <View className="w-20 h-20 rounded-full items-center justify-center mb-3">
-          <Ionicons name="wallet-outline" size={60} color="gray" />
+        <View className="ml-10">
+
+          <Image style={{width: 150, height: 150}} source={fuocoMONEY}></Image>
+
         </View>
 
-        <Text className="text-neutral-400 text-xl font-medium font-sans mb-2 text-center">
+        <Text className="text-neutral-400 text-xl mt-3 font-medium font-sans mb-2 text-center">
           Nenhuma despesa
         </Text>
 
@@ -489,17 +496,17 @@ export default function ExpensesScreen() {
   return (
     <SafeAreaView className={`flex-1 bg-zinc-800 ${Platform.OS === 'android' && 'py-[30px]'}`}>
       <Pressable
+        className="absolute bottom-6 right-6 z-20 rounded-full items-center justify-center"
         onPress={openCreateModal}
-        className="w-[50px] h-[50px] absolute bottom-6 right-6 z-20 rounded-full bg-rose-400 items-center justify-center shadow-lg"
-        style={{
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.25,
-          shadowRadius: 3.84,
-          elevation: 5,
-        }}
       >
+       <LinearGradient
+          colors={['#FFD45A', '#FFA928', '#FF7A00']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{ width: 50, height: 50, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "100%"}}
+          >
         <Feather name="plus" strokeWidth={3} size={32} color="black" />
+      </LinearGradient>
       </Pressable>
 
       {/* Header no estilo da Agenda */}
@@ -510,7 +517,7 @@ export default function ExpensesScreen() {
         </View>
         <View className="flex-row items-center gap-4 mr-1">
           <Pressable onPress={() => setShowDeleteCategoryModal(true)}>
-            <Ionicons name="folder" size={22} color="#ff7a7f" />
+            <GradientIcon name="folder" size={22} />
           </Pressable>
         </View>
       </View>
@@ -525,15 +532,12 @@ export default function ExpensesScreen() {
           >
             <View className="flex-row items-center gap-3">
               <View 
-                className="h-10 w-10 rounded-xl items-center justify-center"
-                style={{
-                  backgroundColor: 'rgba(239, 68, 68, 0.15)'
-                }}
+              className="h-10 w-10 rounded-xl items-center justify-center bg-orange-400/35"
               >
-                <Ionicons name="calendar-number-outline" size={16} color="#ff7a7f" />
+                <GradientIcon name="calendar-number" size={16} />
               </View>
               <View className="flex-col">
-                <Text className="text-zinc-400 font-sans text-xs mb-1">Período</Text>
+                <Text className="text-zinc-400 font-sans text-xs">Período</Text>
                 <Text className="text-white font-sans text-[10.5px] font-medium">
                   {getDateFilterDisplayText()}
                 </Text>
@@ -545,12 +549,9 @@ export default function ExpensesScreen() {
         {/* Saldo */}
         <View className="bg-[#35353a] flex-row gap-3 w-[49%] rounded-xl px-4 py-3.5">
           <View
-            className="h-10 w-10 rounded-xl items-center justify-center"
-            style={{
-              backgroundColor: 'rgba(239, 68, 68, 0.15)'
-            }}
+            className="h-10 w-10 rounded-xl items-center justify-center bg-orange-400/35"
           >
-            <Feather name='dollar-sign' size={16} color="#ff7a7f" />
+              <GradientIcon name='card' size={18} />
           </View>
           <View className="flex-col justify-center flex-1">
             <Text className="text-zinc-400 font-sans text-xs">Saldo</Text>

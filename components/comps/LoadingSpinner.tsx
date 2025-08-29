@@ -160,7 +160,7 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
               marginBottom: 12,
             }}
           >
-            <Feather name="loader" size={32} color="#ff7a7f" />
+            <Feather name="loader" size={32} color="#ffa41f" />
           </Animated.View>
           <Text
             style={{

@@ -22,6 +22,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import LoadingSpinner from './comps/LoadingSpinner';
 import { EmptyState } from './comps/EmptyState';
 import LevelUpModal from './comps/modals/LevelUpModal';
+import GradientIcon from './GradientIcon';
+import { LinearGradient } from 'expo-linear-gradient';
 
 interface UnifiedTask {
   id: string;
@@ -63,12 +65,12 @@ const SwipeableTaskItem = ({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#f43f5e',
+        backgroundColor: "#fa4343",
         width: 100,
         height: '100%',
       }}
     >
-      <Ionicons name="trash" size={24} color="white" />
+      <Ionicons name="trash" size={25} color="white" />
     </TouchableOpacity>
   );
 
@@ -89,8 +91,8 @@ const SwipeableTaskItem = ({
                   {item.title}
                 </Text>
                 {item.isRoutine && (
-                  <View className="bg-rose-500 px-2 py-0.5 rounded-full">
-                    <Text className="text-white text-[10px] font-sans">rotina</Text>
+                  <View className="bg-[#ffa41f] px-2 py-0.5 rounded-full">
+                    <Text className="text-black text-[10px] font-sans">rotina</Text>
                   </View>
                 )}
               </View>
@@ -101,10 +103,10 @@ const SwipeableTaskItem = ({
 
             <Pressable
               onPress={() => onToggleCompletion(item.id, item.completed, item.isRoutine, item.routineId, item.targetDate)}
-              className={`w-[25px] h-[25px] mt-4 rounded-lg ${item.completed ? 'bg-rose-500' : 'border-2 border-neutral-600'}`}
+              className={`w-[25px] h-[25px] mt-4 rounded-lg ${item.completed ? 'bg-[#ffa41f]' : 'border-2 border-neutral-600'}`}
               style={{ alignItems: 'center', justifyContent: 'center' }}
             >
-              {item.completed ? <Ionicons name="checkmark" size={20} color="white" /> : null}
+              {item.completed ? <Ionicons name="checkmark" size={20} color="black" /> : null}
             </Pressable>
           </View>
         </View>
@@ -759,20 +761,20 @@ export default function AgendaScreen() {
       <LoadingSpinner visible={isCurrentlyLoading} />
 
       <Pressable
+        className="absolute bottom-6 right-6 z-20 rounded-full items-center justify-center"
         onPress={() => {
           resetModal();
           setIsCreateVisible(true);
         }}
-        className="w-[50px] h-[50px] absolute bottom-6 right-6 z-20 rounded-full bg-rose-400 items-center justify-center shadow-lg"
-        style={{
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.25,
-          shadowRadius: 3.84,
-          elevation: 5,
-        }}
       >
+       <LinearGradient
+          colors={['#FFD45A', '#FFA928', '#FF7A00']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{ width: 50, height: 50, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "100%"}}
+          >
         <Feather name="plus" strokeWidth={3} size={32} color="black" />
+      </LinearGradient>
       </Pressable>
 
       <View className="mt-5 px-4 mb-6 flex-row items-center justify-between">
@@ -782,13 +784,13 @@ export default function AgendaScreen() {
         </View>
         <View className="flex-row items-center gap-4 mr-1">
           <Pressable onPress={goToCurrentWeek}>
-            <Ionicons name="today" size={22} color="#ff7a7f" />
+            <GradientIcon name="today" size={22} />
           </Pressable>
           <Pressable onPress={handleRefresh}>
-            <Ionicons name="refresh-circle" size={26} color="#ff7a7f" />
+            <GradientIcon name="refresh-circle" size={26} />
           </Pressable>
           <Pressable onPress={() => setShowDeleteCategoryModal(true)}>
-            <Ionicons name="folder" size={22} color="#ff7a7f" />
+            <GradientIcon name="folder" size={22} />
           </Pressable>
         </View>
       </View>
@@ -814,7 +816,7 @@ export default function AgendaScreen() {
 
           <View className="flex-row items-center py-3">
             <Pressable onPress={goToPreviousWeek} className="px-3">
-              <Ionicons name="chevron-back" size={20} color="#ff7a7f" />
+              <Ionicons name="chevron-back" size={20} color="#ffa41f" />
             </Pressable>
 
             <View className="flex-1 flex-row justify-around">
@@ -827,18 +829,18 @@ export default function AgendaScreen() {
                     key={index}
                     onPress={() => onDaySelect(day)}
                     className={`w-8 h-8 rounded-full items-center justify-center ${
-                      selected ? 'bg-[#ff7a7f]' : 'bg-transparent'
+                      selected ? 'bg-[#ffa41f]' : 'bg-transparent'
                     }`}
                   >
                     <Text className={`text-sm font-sans ${
                       selected ? 'text-black font-bold' :
-                      today ? 'text-[#ff7a7f] font-medium' :
+                      today ? 'text-[#ffa41f] font-medium' :
                       'text-white'
                     }`}>
                       {day.getDate()}
                     </Text>
                     {hasTasks && !selected && (
-                      <View className="w-1 h-1 bg-[#ff7a7f] rounded-full absolute bottom-0" />
+                      <View className="w-1 h-1 bg-[#ffa41f] rounded-full absolute bottom-0" />
                     )}
                   </Pressable>
                 );
@@ -846,7 +848,7 @@ export default function AgendaScreen() {
             </View>
 
             <Pressable onPress={goToNextWeek} className="px-3">
-              <Ionicons name="chevron-forward" size={20} color="#ff7a7f" />
+              <Ionicons name="chevron-forward" size={20} color="#ffa41f" />
             </Pressable>
           </View>
         </View>
@@ -865,7 +867,7 @@ export default function AgendaScreen() {
                   prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
                 )
               }
-              className={`flex-row items-center gap-2 px-2 py-1 rounded-xl ${isSelected ? 'bg-rose-400' : 'bg-zinc-700'}`}
+              className={`flex-row items-center gap-2 px-2 py-1 rounded-xl ${isSelected ? 'bg-[#ffa41f]' : 'bg-zinc-700'}`}
             >
               <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color, borderWidth: 0.5, borderColor: '#fff',}} />
               <Text className={`font-sans text-sm ${isSelected ? 'text-black' : 'text-white'}`}>{cat}</Text>
