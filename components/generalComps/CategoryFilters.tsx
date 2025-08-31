@@ -55,10 +55,8 @@ const CategoryFilters: React.FC<CategoryFiltersProps> = ({
   selectedTypes,
   onToggleCategory,
   onAddNewCategory,
-  showAddButton = true,
   addButtonText = "Nova Categoria",
   containerClassName = "flex flex-row flex-wrap gap-2 px-4 pb-4",
-  selectedColor = "bg-[#ffa41f]",
   unselectedColor = "bg-zinc-700"
 }) => {
   return (
@@ -72,12 +70,14 @@ const CategoryFilters: React.FC<CategoryFiltersProps> = ({
             key={category.id}
             onPress={() => onToggleCategory(category.name)}
             className={`flex-row items-center gap-2 px-2 py-1 rounded-xl ${
-              isSelected ? selectedColor : unselectedColor
+              isSelected ? '' : unselectedColor
             }`}
-            style={{backgroundColor: category.color}}
+            style={isSelected ? { backgroundColor: category.color } : undefined}
           >
             <Text className={`font-sans text-sm ${
-              textColor === 'white' ? 'text-white' : 'text-black'
+              isSelected 
+                ? (textColor === 'white' ? 'text-white' : 'text-black')
+                : 'text-white'
             }`}>
               {category.name}
             </Text>
@@ -85,21 +85,25 @@ const CategoryFilters: React.FC<CategoryFiltersProps> = ({
         );
       })}
       
-      {showAddButton && onAddNewCategory && (
+      {categories.length == 0 ? (
         <Pressable
           onPress={onAddNewCategory}
-          className={`flex-row items-center gap-2 px-1 py-1 rounded-xl ${unselectedColor}`}
+          className={`flex-row items-center gap-2 px-2.5 py-1 rounded-xl ${unselectedColor}`}
         >
           <Ionicons name="add" size={16} color="white" />
-
-      {
-        categories.length == 0 && ( 
-          <Text className="text-white text-sm font-sans">{addButtonText}</Text>
-        )
-      }
-
+          {categories.length == 0 && (
+            <Text className="text-white text-sm font-sans">{addButtonText}</Text>
+          )}
+        </Pressable>
+      ) : (
+        <Pressable
+          onPress={onAddNewCategory}
+          className={`flex-row items-center gap-2 px-1 py-1 rounded-full ${unselectedColor}`}
+        >
+          <Ionicons name="add" size={16} color="white" />
         </Pressable>
       )}
+
     </View>
   );
 };

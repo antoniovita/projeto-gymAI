@@ -39,13 +39,19 @@ export default function ExpensesScreen() {
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [taskContent, setTaskContent] = useState('');
   const [expenseValue, setExpenseValue] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  
+  // MUDANÇA: Usar array para múltiplas categorias na criação
+  const [selectedExpenseCategories, setSelectedExpenseCategories] = useState<string[]>([]);
+  
   const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('#ff7a7f');
   const [gains, setGains] = useState(0);
   const [losses, setLosses] = useState(0);
   const [filteredExpenses, setFilteredExpenses] = useState<any[]>([]);
+
+  // Array para filtros de visualização (mantém a funcionalidade existente)
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   const [showDeleteCategoryModal, setShowDeleteCategoryModal] = useState(false);
   const [currentExpense, setCurrentExpense] = useState<any>(null);
@@ -93,8 +99,9 @@ export default function ExpensesScreen() {
         return;
       }
 
-      if (!selectedCategory) {
-        alert("É gasto ou não?")
+      // MUDANÇA: Verificar se pelo menos uma categoria foi selecionada
+      if (selectedExpenseCategories.length === 0) {
+        alert("Selecione pelo menos uma categoria.")
         return;
       }
 
@@ -103,13 +110,16 @@ export default function ExpensesScreen() {
         return;
       }
       
+      // MUDANÇA: Usar as categorias selecionadas (join com vírgula como no AgendaScreen)
+      const categoriesString = selectedExpenseCategories.join(', ');
+      
       const expenseId = await createExpense(
         newTaskTitle,
         amount,
         userId,
         new Date().toISOString().split('T')[0],
         new Date().toISOString(),
-        selectedCategory,
+        categoriesString, // Passa string com categorias separadas por vírgula
       );
       await fetchExpenses(userId!);
 
@@ -120,16 +130,23 @@ export default function ExpensesScreen() {
     }
   };
 
-    const handleDeleteCategory = async (categoryName: string) => {
-
-      const category = categories.find(cat => cat.name === categoryName);
-    
+  const handleDeleteCategory = async (categoryName: string) => {
+    const category = categories.find(cat => cat.name === categoryName);
+  
     if (!category) {
       Alert.alert('Erro', 'Categoria não encontrada.');
       return;
     }
 
-    const isCategoryInUse = expenses.some(expense => expense.type === category.name);
+    // MUDANÇA: Verificar se categoria está em uso considerando múltiplas categorias
+    const isCategoryInUse = expenses.some(expense => {
+      if (expense.type && expense.type.includes(',')) {
+        // Se a despesa tem múltiplas categorias
+        const expenseCategories = expense.type.split(',').map((cat: string) => cat.trim());
+        return expenseCategories.includes(category.name);
+      }
+      return expense.type === category.name;
+    });
     
     if (isCategoryInUse) {
       Alert.alert('Erro', 'Esta categoria está associada a uma ou mais despesas e não pode ser excluída.');
@@ -144,8 +161,14 @@ export default function ExpensesScreen() {
     try {
       await deleteCategoryFromDB(category.id);
       
-      if (selectedCategory === category.name) {
-        setSelectedCategory('');
+      // Remove a categoria do array de selecionadas se estiver presente
+      if (selectedCategories.includes(category.name)) {
+        setSelectedCategories(prev => prev.filter(cat => cat !== category.name));
+      }
+      
+      // MUDANÇA: Remover também das categorias de criação
+      if (selectedExpenseCategories.includes(category.name)) {
+        setSelectedExpenseCategories(prev => prev.filter(cat => cat !== category.name));
       }
       
     } catch (error) {
@@ -166,11 +189,20 @@ export default function ExpensesScreen() {
         return;
       }
 
+      // MUDANÇA: Verificar se pelo menos uma categoria foi selecionada
+      if (selectedExpenseCategories.length === 0) {
+        alert('Selecione pelo menos uma categoria.');
+        return;
+      }
+
+      // MUDANÇA: Usar as categorias selecionadas
+      const categoriesString = selectedExpenseCategories.join(', ');
+
       const updatedExpense = {
         ...currentExpense,
         name: newTaskTitle,
         amount,
-        type: selectedCategory,
+        type: categoriesString,
       };
 
       await updateExpense(currentExpense.id, updatedExpense);
@@ -188,7 +220,8 @@ export default function ExpensesScreen() {
     setNewTaskTitle('');
     setExpenseValue('');
     setTaskContent('');
-    setSelectedCategory('');
+    // MUDANÇA: Resetar array de categorias
+    setSelectedExpenseCategories([]);
   };
 
   const openCreateModal = () => {
@@ -201,13 +234,28 @@ export default function ExpensesScreen() {
     setNewTaskTitle(expense.name);
     setExpenseValue(String(expense.amount));
     setTaskContent('');
-    setSelectedCategory(expense.type);
+    
+    // MUDANÇA: Parse das categorias da despesa para array
+    if (expense.type && expense.type.includes(',')) {
+      const parsedCategories = expense.type.split(',').map((cat: string) => cat.trim());
+      setSelectedExpenseCategories(parsedCategories);
+    } else {
+      setSelectedExpenseCategories(expense.type ? [expense.type] : []);
+    }
+    
     setCurrentExpense(expense);
     setIsEditVisible(true);
   };
 
+  // Função para lidar com seleção múltipla de filtros (mantém funcionalidade existente)
   const handleCategorySelection = (categoryName: string) => {
-    setSelectedCategory((prev) => (prev === categoryName ? '' : categoryName));
+    setSelectedCategories(prev => {
+      if (prev.includes(categoryName)) {
+        return prev.filter(cat => cat !== categoryName);
+      } else {
+        return [...prev, categoryName];
+      }
+    });
   };
 
   const handleAddCategory = async () => {
@@ -373,7 +421,7 @@ export default function ExpensesScreen() {
                 {new Date(item.date ?? '').toLocaleDateString('pt-BR')} - {new Date(item.time ?? '').toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
               </Text>
             </Pressable>
-            <Text className={`font-sans ${item.type == "Ganhos" ? "text-emerald-400" : "text-[#ff7a7f]"} text-2xl mt-6`}>
+            <Text className={`font-sans ${item.type && item.type.includes("Ganhos") ? "text-emerald-400" : "text-[#ff7a7f]"} text-2xl mt-6`}>
                   {isLargeNumber(Number(item.amount)) 
                     ? `R$ ${formatLargeNumber(Number(item.amount))}`
                     : currencyFormat(Number(item.amount))
@@ -385,20 +433,45 @@ export default function ExpensesScreen() {
     );
   };
 
+  // MUDANÇA: Atualizar cálculo considerando múltiplas categorias
   useEffect(() => {
-    const dateFilteredExpenses = filterExpensesByDate(expenses, dateFilter);
+    let dateFilteredExpenses = filterExpensesByDate(expenses, dateFilter);
+    
+    // Se há categorias selecionadas, filtra por elas
+    if (selectedCategories.length > 0) {
+      dateFilteredExpenses = dateFilteredExpenses.filter(exp => {
+        if (exp.type && exp.type.includes(',')) {
+          // Despesa com múltiplas categorias
+          const expenseCategories = exp.type.split(',').map((cat: string) => cat.trim());
+          return selectedCategories.some(selectedCat => expenseCategories.includes(selectedCat));
+        }
+        return selectedCategories.includes(exp.type);
+      });
+    }
     
     const totalGains = dateFilteredExpenses
-      .filter(exp => exp.type === 'Ganhos')
+      .filter(exp => {
+        if (exp.type && exp.type.includes(',')) {
+          const expenseCategories = exp.type.split(',').map((cat: string) => cat.trim());
+          return expenseCategories.includes('Ganhos');
+        }
+        return exp.type === 'Ganhos';
+      })
       .reduce((sum, exp) => sum + Number(exp.amount), 0);
 
     const totalLosses = dateFilteredExpenses
-      .filter(exp => exp.type === 'Gastos')
+      .filter(exp => {
+        if (exp.type && exp.type.includes(',')) {
+          const expenseCategories = exp.type.split(',').map((cat: string) => cat.trim());
+          return !expenseCategories.includes('Ganhos');
+        }
+        return exp.type !== 'Ganhos';
+      })
       .reduce((sum, exp) => sum + Number(exp.amount), 0);
 
     setGains(totalGains);
     setLosses(totalLosses);
-  }, [expenses, dateFilter]);
+  }, [expenses, dateFilter, selectedCategories]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -409,15 +482,24 @@ export default function ExpensesScreen() {
     }, [loading, userId])
   );
 
+  // MUDANÇA: Filtrar despesas considerando múltiplas categorias
   useEffect(() => {
     let filtered = filterExpensesByDate(expenses, dateFilter);
     
-    if (selectedCategory) {
-      filtered = filtered.filter((exp) => exp.type === selectedCategory);
+    // Se há categorias selecionadas, filtra para mostrar apenas essas categorias
+    if (selectedCategories.length > 0) {
+      filtered = filtered.filter((exp) => {
+        if (exp.type && exp.type.includes(',')) {
+          // Despesa com múltiplas categorias
+          const expenseCategories = exp.type.split(',').map((cat: string) => cat.trim());
+          return selectedCategories.some(selectedCat => expenseCategories.includes(selectedCat));
+        }
+        return selectedCategories.includes(exp.type);
+      });
     }
     
     setFilteredExpenses(filtered);
-  }, [selectedCategory, expenses, dateFilter]);
+  }, [selectedCategories, expenses, dateFilter]);
 
   useEffect(() => {
     debugAllExpenses();
@@ -540,7 +622,7 @@ export default function ExpensesScreen() {
 
       <CategoryFilters
         categories={categories}
-        selectedTypes={selectedCategory ? [selectedCategory] : []}
+        selectedTypes={selectedCategories}
         onToggleCategory={handleCategorySelection}
         onAddNewCategory={() => setIsCategoryModalVisible(true)}
         addButtonText="Nova Categoria"
@@ -572,8 +654,8 @@ export default function ExpensesScreen() {
         setExpenseValue={setExpenseValue}
         taskContent={taskContent}
         setTaskContent={setTaskContent}
-        selectedCategory={selectedCategory}
-        setSelectedCategory={setSelectedCategory}
+        selectedCategories={selectedExpenseCategories} // MUDANÇA: Passar array
+        setSelectedCategories={setSelectedExpenseCategories} // MUDANÇA: Passar setter do array
         categories={categories}
       />
 
@@ -587,8 +669,8 @@ export default function ExpensesScreen() {
         setExpenseValue={setExpenseValue}
         taskContent={taskContent}
         setTaskContent={setTaskContent}
-        selectedCategory={selectedCategory}
-        setSelectedCategory={setSelectedCategory}
+        selectedCategories={selectedExpenseCategories} // MUDANÇA: Passar array
+        setSelectedCategories={setSelectedExpenseCategories} // MUDANÇA: Passar setter do array
         categories={categories}
         isEditMode={true}
       />
