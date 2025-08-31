@@ -93,6 +93,11 @@ export default function ChatScreen() {
         </View>
         <View className="w-[80px]" />
       </View>
+
+          <View className="mx-4 mb-4 mt-4 rounded-2xl bg-[#35353a] h-[120px] flex-row gap-3">
+      
+              
+          </View>
       {messages.length === 0 && !isTyping ? (
         <EmptyState />
       ) : (

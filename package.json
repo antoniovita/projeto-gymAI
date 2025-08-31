@@ -46,6 +46,7 @@
     "react-native-calendars": "^1.1313.0",
     "react-native-confirmation-code-field": "^7.6.1",
     "react-native-gesture-handler": "~2.24.0",
+    "react-native-gifted-charts": "^1.4.64",
     "react-native-linear-gradient": "^2.8.3",
     "react-native-modal": "^13.0.1",
     "react-native-modal-datetime-picker": "^18.0.0",

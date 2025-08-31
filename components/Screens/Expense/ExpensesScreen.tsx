@@ -26,6 +26,7 @@ import { OUTLINE } from '../../../imageConstants'
 import CreateExpenseModal from './comps/CreateExpenseModal';
 import DateFilterModal from './comps/DateFilterModal';
 import CategoryFilters from 'components/generalComps/CategoryFilters';
+import ExpenseStatsSection from './comps/ExpenseStatsSection';
 
 export interface DateFilter {
   type: 'all' | 'month' | 'year' | 'custom' | 'date';
@@ -562,63 +563,16 @@ export default function ExpensesScreen() {
         </View>
       </View>
 
-      {/* Seção de Filtro de Data e Saldo */}
-      <View className="px-4 mb-4 justify-center flex-row gap-3">
-        {/* Filtro de Data */}
-        <View className="flex h-18 bg-[#35353a] w-[49%] rounded-xl overflow-hidden">
-          <Pressable
-            onPress={handleDateFilterModalOpen}
-            className="flex-row items-center justify-between px-4 py-4"
-          >
-            <View className="flex-row items-center gap-3">
-              <View 
-              className="h-10 w-10 rounded-xl items-center justify-center bg-orange-400/35"
-              >
-                <GradientIcon name="calendar-number" size={16} />
-              </View>
-              <View className="flex-col">
-                <Text className="text-zinc-400 font-sans text-xs">Período</Text>
-                <Text className="text-white font-sans text-[10.5px] font-medium">
-                  {getDateFilterDisplayText()}
-                </Text>
-              </View>
-            </View>
-          </Pressable>
-        </View>
+      <ExpenseStatsSection
+        onDateFilterPress={handleDateFilterModalOpen}
+        dateFilterDisplayText={getDateFilterDisplayText()}
+        gains={gains}
+        losses={losses}
+        formatLargeNumber={formatLargeNumber}
+        currencyFormat={currencyFormat}
+        isLargeNumber={isLargeNumber}
+      />
 
-        {/* Saldo */}
-        <View className="bg-[#35353a] flex-row gap-3 w-[49%] rounded-xl px-4 py-3.5">
-          <View
-            className="h-10 w-10 rounded-xl items-center justify-center bg-orange-400/35"
-          >
-              <GradientIcon name='card' size={18} />
-          </View>
-          <View className="flex-col justify-center flex-1">
-            <Text className="text-zinc-400 font-sans text-xs">Saldo</Text>
-            <Text 
-              className={`font-sans font-medium ${
-                gains - losses > 0
-                  ? 'text-emerald-400'
-                  : gains - losses < 0
-                  ? 'text-[#ff7a7f]'
-                  : 'text-white'
-              }`}
-              style={{
-                fontSize: 17,
-                flexShrink: 1
-              }}
-              numberOfLines={1}
-              adjustsFontSizeToFit={true}
-              minimumFontScale={0.6}
-            >
-              {isLargeNumber(gains - losses) 
-                ? `R$ ${formatLargeNumber(Math.abs(gains - losses))}`
-                : currencyFormat(Math.abs(gains - losses))
-              }
-            </Text>
-          </View>
-        </View>
-      </View>
 
       <CategoryFilters
         categories={categories}
