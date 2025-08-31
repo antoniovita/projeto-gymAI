@@ -352,13 +352,13 @@ export default function ExpensesScreen() {
 
     switch (dateFilter.type) {
       case 'all':
-        return 'Todas as despesas';
+        return 'Todas';
       case 'month':
         return `${months[dateFilter.month!]} ${dateFilter.year}`;
       case 'year':
         return `${dateFilter.year}`;
       default:
-        return 'Todas as despesas';
+        return 'Todas';
     }
   };
 
