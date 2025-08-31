@@ -21,7 +21,7 @@ import { useAuth } from 'hooks/useAuth';
 import { useTask } from 'hooks/useTask';
 import { useWorkout } from 'hooks/useWorkout';
 import { RootStackParamList } from 'widgets/types';
-import GradientIcon from './GradientIcon';
+import GradientIcon from './generalComps/GradientIcon';
 import { useChat } from 'hooks/useChat';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');

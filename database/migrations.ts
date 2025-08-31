@@ -3,6 +3,17 @@ import { SQLiteDatabase } from 'expo-sqlite';
 export const runMigrations = async (db: SQLiteDatabase): Promise<void> => {
   try {
     console.log('Executando migrações...');
+
+    // table category
+    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS category (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        color TEXT NOT NULL,
+        type TEXT NOT NULL
+      );
+    `);
+    console.log('Tabela user criada/verificada');
     
     // table user
     await db.execAsync(`
