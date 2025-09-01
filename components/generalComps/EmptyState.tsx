@@ -24,14 +24,13 @@ export const EmptyState = ({
     >
       <View className="items-center mt-[200px]">
         <View className="items-center">
-          <Image style={{width: 160, height: 160}} source={image} />
+          <Image style={{width: 130, height: 130}} source={image} />
         </View>
-        <Text className="text-neutral-400 text-xl mt-3 font-medium font-sans mb-2 text-center">
+        <Text className="text-neutral-400 text-md font-medium mb-1 font-sans text-center">
           {title}
         </Text>
         <Text
-          className="text-neutral-400 text-sm font-sans text-center"
-          style={{ maxWidth: 230 }}
+          className="text-neutral-500 text-[11px] max-w-[180px] font-sans text-center"
         >
           {subtitle || 'Crie novas tarefas para organizar sua rotina'}
         </Text>
