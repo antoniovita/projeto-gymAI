@@ -6,10 +6,12 @@ import {
   ScrollView,
   Modal,
   TextInput,
-  Platform
+  Platform,
+  Pressable
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import CategorySectionCreateModal from '../../../generalComps/CategorySectionCreateModal';
+import { ExpenseType } from '../../../../api/model/Expenses';
 
 interface Category {
   id?: string;
@@ -30,6 +32,8 @@ export interface CreateExpenseModalProps {
   setTaskContent: (content: string) => void;
   selectedCategories: string[]; 
   setSelectedCategories: (categories: string[] | ((prev: string[]) => string[])) => void;
+  selectedExpenseType: ExpenseType | null;
+  setSelectedExpenseType: (type: ExpenseType | null) => void;
   categories: Category[];
   isEditMode?: boolean;
 }
@@ -45,7 +49,9 @@ const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
   taskContent,
   setTaskContent,
   selectedCategories, 
-  setSelectedCategories, 
+  setSelectedCategories,
+  selectedExpenseType,
+  setSelectedExpenseType,
   categories,
   isEditMode = false,
 }) => {
@@ -58,6 +64,10 @@ const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
         return [...prev, categoryName];
       }
     });
+  };
+
+  const handleExpenseTypeSelect = (type: ExpenseType): void => {
+    setSelectedExpenseType(type);
   };
 
   return (
@@ -81,9 +91,15 @@ const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
           <TouchableOpacity 
             onPress={onSave}
             className="px-4 py-2"
-            disabled={!newTaskTitle.trim()}
+            disabled={!newTaskTitle.trim() || !selectedExpenseType}
           >
-            <Text className="text-[#ffa41f] text-lg font-semibold font-sans">
+            <Text 
+              className={`text-lg font-semibold font-sans ${
+                (!newTaskTitle.trim() || !selectedExpenseType) 
+                  ? 'text-zinc-500' 
+                  : 'text-[#ffa41f]'
+              }`}
+            >
               Salvar
             </Text>
           </TouchableOpacity>
@@ -100,6 +116,66 @@ const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
               className="text-white text-2xl font-sans"
               multiline
             />
+          </View>
+
+          {/* NOVA SEÇÃO: Seleção de Tipo de Despesa */}
+          <View className="mb-8">
+            <Text className="text-zinc-400 text-sm font-medium mb-3 uppercase tracking-wide">
+              Tipo
+            </Text>
+            <View className="flex-row gap-3">
+              <Pressable
+                onPress={() => handleExpenseTypeSelect(ExpenseType.GAIN)}
+                className={`flex-1 px-4 py-3 rounded-xl border ${
+                  selectedExpenseType === ExpenseType.GAIN
+                    ? 'border-emerald-400 bg-emerald-400/10'
+                    : 'border-zinc-600 bg-zinc-700/30'
+                }`}
+              >
+                <View className="flex-row items-center justify-center gap-2">
+                  <Ionicons 
+                    name="trending-up" 
+                    size={20} 
+                    color={selectedExpenseType === ExpenseType.GAIN ? "#34D399" : "#71717a"} 
+                  />
+                  <Text 
+                    className={`font-sans font-medium ${
+                      selectedExpenseType === ExpenseType.GAIN
+                        ? 'text-emerald-400'
+                        : 'text-zinc-400'
+                    }`}
+                  >
+                    Ganho
+                  </Text>
+                </View>
+              </Pressable>
+
+              <Pressable
+                onPress={() => handleExpenseTypeSelect(ExpenseType.LOSS)}
+                className={`flex-1 px-4 py-3 rounded-xl border ${
+                  selectedExpenseType === ExpenseType.LOSS
+                    ? 'border-red-400 bg-red-400/10'
+                    : 'border-zinc-600 bg-zinc-700/30'
+                }`}
+              >
+                <View className="flex-row items-center justify-center gap-2">
+                  <Ionicons 
+                    name="trending-down" 
+                    size={20} 
+                    color={selectedExpenseType === ExpenseType.LOSS ? "#ff7a7f" : "#71717a"} 
+                  />
+                  <Text 
+                    className={`font-sans font-medium ${
+                      selectedExpenseType === ExpenseType.LOSS
+                        ? 'text-red-400'
+                        : 'text-zinc-400'
+                    }`}
+                  >
+                    Gasto
+                  </Text>
+                </View>
+              </Pressable>
+            </View>
           </View>
 
           <View className="mb-8">
@@ -125,15 +201,17 @@ const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
             </View>
           </View>
 
-          <CategorySectionCreateModal
-            categories={categories}
-            selectedCategory={selectedCategories} 
-            onCategorySelect={handleCategorySelect}
-          />
+          <View className="mb-6">
+            <CategorySectionCreateModal
+              categories={categories}
+              selectedCategory={selectedCategories} 
+              onCategorySelect={handleCategorySelect}
+            />
+          </View>
 
           <View className="mb-6">
             <Text className="text-zinc-400 text-sm font-medium mb-3 uppercase tracking-wide">
-              Descrição
+              Descrição (Opcional)
             </Text>
             <TextInput
               placeholder="Adicione uma descrição para sua despesa..."

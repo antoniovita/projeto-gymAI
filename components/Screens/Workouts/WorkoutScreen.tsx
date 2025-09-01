@@ -22,6 +22,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import CreateWorkoutModal from './comps/CreateWorkoutModal';
 import { LinearGradient } from 'expo-linear-gradient';
 import GradientIcon from 'components/generalComps/GradientIcon';
+import WorkoutStatsSection from './comps/WorkoutStatsSection';
 
 const EmptyState = ({ onCreateWorkout }: { onCreateWorkout: () => void }) => {
   return (
@@ -484,11 +485,7 @@ export default function WorkoutScreen() {
       </Pressable>
 
       {/* Header */}
-      <View className="mt-5 px-4 mb-6 flex-row items-center justify-between">
-        <Pressable onPress={() => navigation.goBack()} className="flex-row items-center">
-          <Ionicons name="chevron-back" size={24} color="white" />
-          <Text className="ml-1 text-white font-sans text-[16px]">Voltar</Text>
-        </Pressable>
+      <View className="mt-5 px-4 mb-6 flex-row items-center justify-end">
         <View className="absolute left-0 right-0 items-center">
           <Text className="text-white font-sans text-[18px] font-medium">Academia</Text>
         </View>
@@ -500,6 +497,8 @@ export default function WorkoutScreen() {
           </Pressable>
         </View>
       </View>
+
+      <WorkoutStatsSection />
 
       {/* Modal de Gerenciar Categorias */}
       <Modal

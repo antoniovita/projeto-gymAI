@@ -1,11 +1,11 @@
 import { getDb } from '../../database';
-import { Expense, ExpenseModel } from '../model/Expenses';
+import { Expense, ExpenseModel, ExpenseType } from '../model/Expenses';
 
 export const ExpenseController = {
-
   createExpense: async (
     name: string,
-    amount: number,  // em centavos
+    amount: number, // em centavos
+    expenseType: ExpenseType,
     userId: string,
     date?: string,
     time?: string,
@@ -17,6 +17,7 @@ export const ExpenseController = {
         db,
         name,
         amount,
+        expenseType,
         userId,
         date,
         time,
@@ -48,6 +49,72 @@ export const ExpenseController = {
     } catch (error) {
       console.error('Erro ao buscar despesas por tipo no controller:', error);
       return { success: false, error: 'Erro ao buscar despesas por tipo.' };
+    }
+  },
+
+  getExpensesByExpenseType: async (userId: string, expenseType: ExpenseType) => {
+    const db = getDb();
+    try {
+      const expenses = await ExpenseModel.getExpensesByExpenseType(db, userId, expenseType);
+      return { success: true, data: expenses };
+    } catch (error) {
+      console.error('Erro ao buscar por expense_type no controller:', error);
+      return { success: false, error: 'Erro ao buscar por tipo de transação.' };
+    }
+  },
+
+  getGains: async (userId: string) => {
+    const db = getDb();
+    try {
+      const gains = await ExpenseModel.getExpensesByExpenseType(db, userId, ExpenseType.GAIN);
+      return { success: true, data: gains };
+    } catch (error) {
+      console.error('Erro ao buscar ganhos no controller:', error);
+      return { success: false, error: 'Erro ao buscar ganhos.' };
+    }
+  },
+
+  getLosses: async (userId: string) => {
+    const db = getDb();
+    try {
+      const losses = await ExpenseModel.getExpensesByExpenseType(db, userId, ExpenseType.LOSS);
+      return { success: true, data: losses };
+    } catch (error) {
+      console.error('Erro ao buscar perdas no controller:', error);
+      return { success: false, error: 'Erro ao buscar perdas.' };
+    }
+  },
+
+  getTotalGains: async (userId: string) => {
+    const db = getDb();
+    try {
+      const total = await ExpenseModel.getTotalByExpenseType(db, userId, ExpenseType.GAIN);
+      return { success: true, total };
+    } catch (error) {
+      console.error('Erro ao calcular total de ganhos no controller:', error);
+      return { success: false, error: 'Erro ao calcular total de ganhos.' };
+    }
+  },
+
+  getTotalLosses: async (userId: string) => {
+    const db = getDb();
+    try {
+      const total = await ExpenseModel.getTotalByExpenseType(db, userId, ExpenseType.LOSS);
+      return { success: true, total };
+    } catch (error) {
+      console.error('Erro ao calcular total de perdas no controller:', error);
+      return { success: false, error: 'Erro ao calcular total de perdas.' };
+    }
+  },
+
+  getBalance: async (userId: string) => {
+    const db = getDb();
+    try {
+      const balance = await ExpenseModel.getBalance(db, userId);
+      return { success: true, balance };
+    } catch (error) {
+      console.error('Erro ao calcular saldo no controller:', error);
+      return { success: false, error: 'Erro ao calcular saldo.' };
     }
   },
 

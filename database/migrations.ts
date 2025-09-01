@@ -71,6 +71,7 @@ export const runMigrations = async (db: SQLiteDatabase): Promise<void> => {
         date TEXT,
         time TEXT,
         amount INTEGER NOT NULL,
+        expense_type TEXT,
         type TEXT,
         user_id TEXT,
         FOREIGN KEY (user_id) REFERENCES user(id)

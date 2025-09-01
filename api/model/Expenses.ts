@@ -1,13 +1,20 @@
 import uuid from 'react-native-uuid';
 import * as SQLite from 'expo-sqlite';
 
+// Enum para tipos de transação
+export enum ExpenseType {
+  GAIN = 'GAIN',
+  LOSS = 'LOSS'
+}
+
 export interface Expense {
   id: string;
   name: string;
   date?: string;
   time?: string;
   amount: number; // em centavos
-  type?: string;
+  expense_type: ExpenseType; // GAIN ou LOSS
+  type?: string; // categoria da despesa/receita
   user_id: string;
 }
 
@@ -16,25 +23,25 @@ export const ExpenseModel = {
     db: SQLite.SQLiteDatabase,
     name: string,
     amount: number, // em centavos
+    expenseType: ExpenseType,
     userId: string,
     date?: string,
     time?: string,
     type?: string
   ): Promise<string> => {
     const expenseId = uuid.v4() as string;
-
     await db.runAsync(
-      `INSERT INTO expenses (id, name, date, time, amount, type, user_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO expenses (id, name, date, time, amount, expense_type, type, user_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       expenseId,
       name,
       date ?? null,
       time ?? null,
       amount,
+      expenseType,
       type ?? null,
       userId
     );
-
     return expenseId;
   },
 
@@ -62,6 +69,19 @@ export const ExpenseModel = {
     return expenses as Expense[];
   },
 
+  getExpensesByExpenseType: async (
+    db: SQLite.SQLiteDatabase,
+    userId: string,
+    expenseType: ExpenseType
+  ): Promise<Expense[]> => {
+    const expenses = await db.getAllAsync(
+      'SELECT * FROM expenses WHERE user_id = ? AND expense_type = ?',
+      userId,
+      expenseType
+    );
+    return expenses as Expense[];
+  },
+
   updateExpense: async (
     db: SQLite.SQLiteDatabase,
     expenseId: string,
@@ -71,13 +91,11 @@ export const ExpenseModel = {
       .map((key) => `${key} = ?`)
       .join(', ');
     const values = Object.values(updates);
-
     const result = await db.runAsync(
       `UPDATE expenses SET ${fields} WHERE id = ?`,
       ...values,
       expenseId
     );
-
     return result.changes;
   },
 
@@ -102,4 +120,27 @@ export const ExpenseModel = {
     );
     return result.changes;
   },
+
+  // Métodos utilitários para cálculos
+  getTotalByExpenseType: async (
+    db: SQLite.SQLiteDatabase,
+    userId: string,
+    expenseType: ExpenseType
+  ): Promise<number> => {
+    const result = await db.getFirstAsync(
+      'SELECT SUM(amount) as total FROM expenses WHERE user_id = ? AND expense_type = ?',
+      userId,
+      expenseType
+    ) as { total: number | null };
+    return result?.total || 0;
+  },
+
+  getBalance: async (
+    db: SQLite.SQLiteDatabase,
+    userId: string
+  ): Promise<number> => {
+    const gains = await ExpenseModel.getTotalByExpenseType(db, userId, ExpenseType.GAIN);
+    const losses = await ExpenseModel.getTotalByExpenseType(db, userId, ExpenseType.LOSS);
+    return gains - losses;
+  }
 };
