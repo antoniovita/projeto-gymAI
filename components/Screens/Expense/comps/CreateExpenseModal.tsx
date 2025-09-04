@@ -12,13 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import CategorySectionCreateModal from '../../../generalComps/CategorySectionCreateModal';
 import { ExpenseType } from '../../../../api/model/Expenses';
-
-interface Category {
-  id?: string;
-  name: string;
-  color: string;
-  type?: string;
-}
+import { Category } from 'api/model/Category';
 
 export interface CreateExpenseModalProps {
   isVisible: boolean;

@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, Pressable, ScrollView, Modal, Alert } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, Pressable, ScrollView, Modal, Alert, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Category } from '../../api/model/Category';
 
@@ -16,6 +16,30 @@ export default function DeleteCategoryModal({
   categories,
   onDeleteCategory,
 }: DeleteCategoryModalProps) {
+  const scaleValue = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (isVisible) {
+      scaleValue.setValue(0);
+      Animated.spring(scaleValue, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 50,
+        friction: 8,
+      }).start();
+    }
+  }, [isVisible]);
+
+  const handleClose = () => {
+    Animated.timing(scaleValue, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => {
+      onClose();
+    });
+  };
+
   const handleDeletePress = (categoryName: string) => {
     Alert.alert(
       'Apagar Categoria',
@@ -28,7 +52,15 @@ export default function DeleteCategoryModal({
         {
           text: 'Apagar',
           style: 'destructive',
-          onPress: () => onDeleteCategory(categoryName),
+          onPress: () => {
+            Animated.timing(scaleValue, {
+              toValue: 0,
+              duration: 200,
+              useNativeDriver: true,
+            }).start(() => {
+              onDeleteCategory(categoryName);
+            });
+          },
         },
       ]
     );
@@ -39,15 +71,15 @@ export default function DeleteCategoryModal({
       transparent
       animationType="fade"
       visible={isVisible}
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
     >
-      <View className="flex-1 bg-black/50 justify-center items-center px-6">
-        <View className="bg-[#26262a] rounded-2xl w-full max-h-[80%] p-6">
-
+      <View className="flex-1 bg-black/50 justify-center items-center px-8">
+        <Animated.View
+          style={{ transform: [{ scale: scaleValue }] }}
+          className="bg-zinc-800 rounded-2xl w-full max-h-[80%] p-6"
+        >
+          
           <ScrollView className="mb-6" showsVerticalScrollIndicator={false}>
-            <Text className="text-neutral-400 font-sans text-sm mb-3 px-2">
-              Categorias
-            </Text>
             {categories.length === 0 ? (
               <View className="py-8 items-center">
                 <Ionicons name="folder-outline" size={48} color="#6b7280" className="mb-3" />
@@ -71,8 +103,6 @@ export default function DeleteCategoryModal({
                         height: 15,
                         borderRadius: 7.5,
                         backgroundColor: category.color,
-                        borderWidth: 0.5,
-                        borderColor: '#fff',
                       }}
                     />
                     <Text className="text-white font-sans text-base">{category.name}</Text>
@@ -80,21 +110,21 @@ export default function DeleteCategoryModal({
                   <Pressable
                     onPress={() => handleDeletePress(category.name)}
                     className="p-2 bg-rose-500/20 rounded-xl"
-                  >
+                  > 
                     <Ionicons name="trash" size={16} color="#ff7a7f" />
                   </Pressable>
                 </View>
               ))
             )}
           </ScrollView>
-          
+
           <Pressable
-            onPress={onClose}
-            className="bg-[#35353a] rounded-xl p-4 items-center"
+            onPress={handleClose}
+            className="mt-4 p-2 bg-[#ffa41f] py-3 rounded-xl"
           >
-            <Text className="text-white text-base font-sans font-semibold">Fechar</Text>
+            <Text className="text-black text-center font-sans">Fechar</Text>
           </Pressable>
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );

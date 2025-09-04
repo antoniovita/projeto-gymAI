@@ -3,6 +3,7 @@ import { parseDate } from '../lib/nlp/dateParser';
 import { parseExpense } from '../lib/nlp/expenseParser';
 import { useTask } from './useTask';
 import { useExpenses } from './useExpenses';
+import { ExpenseType } from 'api/model/Expenses';
 
 export function useMessageParser(userId: string | null) {
   const { createTask } = useTask();
@@ -24,10 +25,10 @@ export function useMessageParser(userId: string | null) {
           await createExpense(
             expense.title,
             expense.price,
+            expense.type as ExpenseType,
             userId,
             date,
             time,
-            expense.type 
           );
 
           console.log('[NLP] Despesa criada:', expense, 'Tipo:', expense.type);

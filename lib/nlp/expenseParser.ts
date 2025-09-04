@@ -4,7 +4,7 @@ import { translateKeywordLocally, detectExpenseType } from './translator';
 export type ParsedExpense = {
   title: string;
   price: number;
-  type: 'Ganhos' | 'Gastos';
+  type: 'GAIN' | 'LOSS';
 };
 
 function hasFinancialContext(text: string): boolean {
@@ -52,7 +52,7 @@ function extractPrice(text: string): number | null {
   return isNaN(price) ? null : price;
 }
 
-function determineExpenseType(text: string): 'Ganhos' | 'Gastos' {
+function determineExpenseType(text: string): 'GAIN' | 'LOSS' {
 
   const expensePatterns = [
     /\b(gastei|paguei|comprei|perdi|custou)\b/i,
@@ -71,13 +71,13 @@ function determineExpenseType(text: string): 'Ganhos' | 'Gastos' {
   const hasExpensePattern = expensePatterns.some(pattern => pattern.test(text));
   const hasIncomePattern = incomePatterns.some(pattern => pattern.test(text));
   
-  if (hasExpensePattern && !hasIncomePattern) return 'Gastos';
-  if (hasIncomePattern && !hasExpensePattern) return 'Ganhos';
+  if (hasExpensePattern && !hasIncomePattern) return 'LOSS';
+  if (hasIncomePattern && !hasExpensePattern) return 'GAIN';
   
-  if (/\b(comprei|gastei|paguei)\b/i.test(text)) return 'Gastos';
-  if (/\b(recebi|ganhei|vendi)\b/i.test(text)) return 'Ganhos';
+  if (/\b(comprei|gastei|paguei)\b/i.test(text)) return 'LOSS';
+  if (/\b(recebi|ganhei|vendi)\b/i.test(text)) return 'GAIN';
   
-  return 'Gastos';
+  return 'LOSS';
 }
 
 export async function parseExpense(text: string): Promise<ParsedExpense | null> {

@@ -5,6 +5,7 @@ export const OUTLINE = {
   fuocoCALENDAR: require("./assets/icons/fuocoCALENDAR.png") as ImageSourcePropType,
   fuocoMONEY: require("./assets/icons/fuocoMONEY.png") as ImageSourcePropType,
   fuocoCHAT: require("./assets/icons/fuocoCHAT.png") as ImageSourcePropType,
+  fuocoACADEMIA: require("./assets/icons/fuocoACADEMIA.png") as ImageSourcePropType,
 };
 
 //MAIN FRAMES

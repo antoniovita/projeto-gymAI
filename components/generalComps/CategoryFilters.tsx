@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 interface Category {
   id: string;
   name: string;
-  color: string; // mantido por compatibilidade, mas não é usado
+  color: string;
 }
 
 interface CategoryFiltersProps {
@@ -16,7 +16,7 @@ interface CategoryFiltersProps {
   showAddButton?: boolean;
   addButtonText?: string;
   containerClassName?: string;
-  selectedColor?: string; // ignorado; sempre laranja
+  selectedColor?: string;
   unselectedColor?: string;
 }
 
@@ -38,15 +38,14 @@ const CategoryFilters: React.FC<CategoryFiltersProps> = ({
           <Pressable
             key={category.id}
             onPress={() => onToggleCategory(category.name)}
-            className={`flex-row items-center gap-2 px-2 py-1 rounded-xl ${
-              isSelected ? 'bg-[#1e1e1e]' : unselectedColor
-            }`}
+            className='flex-row items-center gap-2 px-2 py-1 rounded-xl'
+            style={isSelected? {backgroundColor: category.color} : {backgroundColor: "#3f3f46"} }
           >
-            <View style={{backgroundColor: category.color, width: 10, height: 10, borderRadius: '100%'}}></View>
+            <View style={ isSelected ? {backgroundColor: "#000000", width: 10, height: 10, borderRadius: '100%' } : {backgroundColor: category.color, width: 10, height: 10, borderRadius: '100%' } }></View>
 
             <Text
               className={`font-sans text-sm ${
-                isSelected ? 'text-white' : 'text-white'
+                isSelected ? 'text-black' : 'text-white'
               }`}
             >
               {category.name}

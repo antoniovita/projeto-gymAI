@@ -12,51 +12,20 @@ import {
   Image
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '../../../widgets/types';
 import { useEffect, useState, useRef } from 'react';
 import { useChat } from '../../../hooks/useChat';
-import { OUTLINE } from '../../../imageConstants'
-
-const EmptyState = () => {
-  return (
-    <View className="flex-1 justify-center items-center mt-[70px] px-8 pb-20">
-      <View className="items-center">
-        <View className="ml-10">
-
-          <Image style={{width: 140, height: 130}} source={OUTLINE.fuocoCHAT}></Image>
-
-        </View>
-        <Text className="text-neutral-400 text-xl mt-3 font-medium font-sans mb-2 text-center">
-          Nenhuma conversa ainda
-        </Text>
-        <Text className="text-neutral-400 text-sm font-sans mb-4 text-center" style={{ maxWidth: 230 }}>
-          Comece uma conversa para registrar suas tarefas e despesas
-        </Text>
-      </View>
-    </View>
-  );
-};
-
+import ChatStatsSection from './comps/ChatStatsSection';
 
 export default function ChatScreen() {
   const [input, setInput] = useState('');
-  const [settingsVisible, setSettingsVisible] = useState(false);
-  const [darkMode, setDarkMode] = useState(true);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [fontSize, setFontSize] = useState<'small' | 'medium' | 'large'>('medium');
   
   const scrollViewRef = useRef<ScrollView>(null);
   
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const {
     messages,
     isTyping,
     typingText,
-    flatListRef,
     handleInputSubmit,
-    clearMessages,
     loadMessages
   } = useChat();
 
@@ -77,10 +46,12 @@ export default function ChatScreen() {
   };
 
   const onSubmit = () => {
-    handleInputSubmit(input, setInput);
-    setTimeout(() => {
-      scrollToBottom();
-    }, 50);
+    if (input.trim()) { // Só envia se tiver conteúdo
+      handleInputSubmit(input, setInput);
+      setTimeout(() => {
+        scrollToBottom();
+      }, 50);
+    }
   };
 
   return (
@@ -94,47 +65,44 @@ export default function ChatScreen() {
         <View className="w-[80px]" />
       </View>
 
-          <View className="mx-4 mb-4 mt-4 rounded-2xl bg-[#35353a] h-[120px] flex-row gap-3">
-      
-              
-          </View>
-      {messages.length === 0 && !isTyping ? (
-        <EmptyState />
-      ) : (
-        <ScrollView 
-          ref={scrollViewRef}
-          style={{ flex: 1 }}
-          contentContainerStyle={{ padding: 16, paddingBottom: 20 }}
-          showsVerticalScrollIndicator={false}
-          onContentSizeChange={() => scrollToBottom()}
-        >
-          {messages.map((item, index) => (
-            <View key={index} className={`mb-6 ${item.role === 'user' ? 'items-end' : 'items-start'}`}>
-              <View
-                className={`rounded-3xl px-4 py-3 ${
-                  item.role === 'user' ? 'bg-[#1e1e1e]' : 'bg-zinc-700'
-                }`}
-              >
-                <Text className="text-white text-[15px] font-sans max-w-[280px]">{item.text.trim()}</Text>
+      <ChatStatsSection  />
+
+
+      <View className="flex-1 relative">
+          <ScrollView 
+            ref={scrollViewRef}
+            style={{ flex: 1 }}
+            contentContainerStyle={{ padding: 16, paddingBottom: 20 }}
+            showsVerticalScrollIndicator={false}
+            onContentSizeChange={() => scrollToBottom()}
+          >
+            {messages.map((item, index) => (
+              <View key={index} className={`mb-6 ${item.role === 'user' ? 'items-end' : 'items-start'}`}>
+                <View
+                  className={`rounded-3xl px-4 py-3 max-w-[280px] ${
+                    item.role === 'user' ? 'bg-[#1e1e1e]' : 'bg-zinc-700'
+                  }`}
+                >
+                  <Text className="text-white text-[15px] font-sans">{item.text.trim()}</Text>
+                </View>
               </View>
-            </View>
-          ))}
-          
-          {isTyping && (
-            <View className="mb-6 items-start">
-              <View className="rounded-3xl px-4 py-3 bg-zinc-700">
-                <Text className="text-white text-[15px] font-sans">
+            ))}
+            
+            {isTyping && (
+              <View className="mb-6 items-start">
+                <View className="rounded-3xl px-4 py-3 bg-zinc-700 max-w-[280px]">
                   {typingText ? (
                     <Text className="text-white text-[15px] font-sans">{typingText}</Text>
                   ) : (
-                    <Ionicons name="ellipsis-horizontal" size={20} color="#white" />
+                    <View className="flex-row items-center">
+                      <Ionicons name="ellipsis-horizontal" size={20} color="white" />
+                    </View>
                   )}
-                </Text>
+                </View>
               </View>
-            </View>
-          )}
-        </ScrollView>
-      )}
+            )}
+          </ScrollView>
+      </View>
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -154,10 +122,13 @@ export default function ChatScreen() {
                 blurOnSubmit={false}
               />
               <TouchableOpacity
-                className="w-[30px] h-[30px] rounded-full mr-4 pl-1 mt-2 bg-[#ffa41f] justify-center items-center"
+                className={`w-[30px] h-[30px] rounded-full mr-4 pl-1 mt-2 justify-center items-center ${
+                  input.trim() ? 'bg-[#ffa41f]' : 'bg-zinc-600'
+                }`}
                 onPress={onSubmit}
+                disabled={!input.trim()}
               >
-                <Ionicons name="send" size={16} color="black" />
+                <Ionicons name="send" size={16} color={input.trim() ? "black" : "#A1A1AA"} />
               </TouchableOpacity>
             </View>
           </View>

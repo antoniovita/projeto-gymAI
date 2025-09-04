@@ -15,34 +15,19 @@ import { useState, useEffect, useCallback } from 'react';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { useWorkout } from '../../../hooks/useWorkout';
+import { useCategory } from '../../../hooks/useCategory';
 import { Exercise, Workout } from '../../../api/model/Workout';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from 'hooks/useAuth';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import CreateWorkoutModal from './comps/CreateWorkoutModal';
+import CategoryFilters from '../../generalComps/CategoryFilters';
+import CategoryModal from '../../generalComps/CategoryModal';
+import DeleteCategoryModal from '../../generalComps/DeleteCategoryModal'; 
 import { LinearGradient } from 'expo-linear-gradient';
 import GradientIcon from 'components/generalComps/GradientIcon';
 import WorkoutStatsSection from './comps/WorkoutStatsSection';
-
-const EmptyState = ({ onCreateWorkout }: { onCreateWorkout: () => void }) => {
-  return (
-    <View className="flex-1 justify-center items-center mb-[60px] px-8 pb-20">
-      <View className="items-center">
-        <View className="w-20 h-20 rounded-full items-center justify-center mb-3">
-          <Ionicons name="barbell-outline" size={60} color="gray" />
-        </View>
-        
-        <Text className="text-neutral-400 text-xl font-medium font-sans mb-2 text-center">
-          Nenhum treino criado
-        </Text>
-        
-        <Text className="text-neutral-400 text-sm font-sans mb-4 text-center" style={{ maxWidth: 230 }}>
-          Crie seus primeiros treinos para organizar sua rotina na academia
-        </Text>
-      </View>
-    </View>
-  );
-};
+import { EmptyState } from 'components/generalComps/EmptyState';
+import { OUTLINE } from 'imageConstants';
 
 const colorOptions = [
   '#EF4444', // Vermelho
@@ -55,17 +40,9 @@ const colorOptions = [
   '#EC4899', // Rosa
   '#F43F5E', // Rosa escuro
   '#6B7280', // Cinza
+  '#FF6B6B', // Coral
+  '#4ECDC4', // Turquesa
 ];
-
-const muscleColors: Record<string, string> = {
-  Peito: '#f87171',
-  Costas: '#60a5fa',
-  Pernas: '#34d399',
-  Bíceps: '#facc15',
-  Tríceps: '#c084fc',
-  Abdômen: '#f97316',
-  Ombros: '#38bdf8',
-};
 
 export default function WorkoutScreen() {
   const [isCreateVisible, setIsCreateVisible] = useState(false);
@@ -75,15 +52,10 @@ export default function WorkoutScreen() {
   const [selectedMusclesForWorkout, setSelectedMusclesForWorkout] = useState<string[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   
-  const [extraCatWorkout, setextraCatWorkout] = useState<{ name: string; color: string }[]>([]);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('#EF4444');
   const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
-  const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
-  const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false);
-  const [showDeleteCategoryModal, setShowDeleteCategoryModal] = useState(false);
-
-  const [customMuscleGroups, setCustomMuscleGroups] = useState<{ name: string; color: string }[]>([]);
+  const [showDeleteCategoryModal, setShowDeleteCategoryModal] = useState(false); 
 
   // Estados para controle dos exercícios
   const [newExerciseName, setNewExerciseName] = useState('');
@@ -91,29 +63,21 @@ export default function WorkoutScreen() {
   const [newExerciseSeries, setNewExerciseSeries] = useState('3');
 
   const navigation = useNavigation();
-
-  useEffect(() => {
-    const loadMuscleGroups = async () => {
-      try {
-        const stored = await AsyncStorage.getItem('customMuscleGroups');
-        if (stored) {
-          setCustomMuscleGroups(JSON.parse(stored));
-        } else {
-          const initial = Object.entries(muscleColors).map(([name, color]) => ({ name, color }));
-          setCustomMuscleGroups(initial);
-          await AsyncStorage.setItem('customMuscleGroups', JSON.stringify(initial));
-        }
-      } catch (err) {
-        console.error('Erro ao carregar grupos musculares:', err);
-      }
-    };
-
-    loadMuscleGroups();
-  }, []);
-
   const { userId } = useAuth();
 
-  const muscleGroups = customMuscleGroups.map((g) => g.name);
+  // Hook de categorias
+  const {
+    categories: allCategories,
+    loading: categoriesLoading,
+    error: categoriesError,
+    createCategory,
+    deleteCategory,
+    getCategoriesByType,
+    refreshCategories
+  } = useCategory();
+
+  // Filtrar categorias por tipo 'workout'
+  const workoutCategories = getCategoriesByType('workout');
 
   const {
     workouts,
@@ -126,107 +90,75 @@ export default function WorkoutScreen() {
 
   const workout = workouts ?? [];
 
-  useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        const stored = await AsyncStorage.getItem('extraCatWorkout');
-        if (stored) {
-          setextraCatWorkout(JSON.parse(stored));
-        }
-      } catch (err) {
-        console.error('Erro ao carregar categorias extras:', err);
-      }
-    };
-
-    loadCategories();
-  }, []);
-
-  useEffect(() => {
-    const saveCategories = async () => {
-      try {
-        await AsyncStorage.setItem('extraCatWorkout', JSON.stringify(extraCatWorkout));
-      } catch (err) {
-        console.error('Erro ao salvar categorias extras:', err);
-      }
-    };
-
-    saveCategories();
-  }, [extraCatWorkout]);
-
   useFocusEffect(
     useCallback(() => {
       fetchWorkouts(userId!);
+      refreshCategories();
     }, [userId])
   );
 
-  const categories = Array.from(
-    new Set([
-      ...muscleGroups,
-      ...workout
+  // Criar categorias dos grupos musculares existentes nas tarefas
+  const taskMuscles = Array.from(
+    new Set(
+      workout
         .flatMap((task) => task.type?.split(',').map((s: string) => s.trim()) ?? [])
-        .filter((t) => t.length > 0),
-      ...extraCatWorkout.map(cat => cat.name),
-    ])
+        .filter((t) => t.length > 0)
+    )
   );
 
+  const categories = [
+    ...workoutCategories.map(cat => cat.name),
+    ...taskMuscles.filter(muscle => !workoutCategories.some(cat => cat.name === muscle))
+  ];
+
   const getCategoryColor = (catName: string) => {
-    const custom = customMuscleGroups.find(c => c.name === catName);
-    if (custom) return custom.color;
-
-    const extraCat = extraCatWorkout.find(c => c.name === catName);
-    if (extraCat) return extraCat.color;
-
-    return '#999999';
+    const category = workoutCategories.find(c => c.name === catName);
+    return category ? category.color : '#999999';
   };
 
-  const handleAddCategory = () => {
+  const handleAddCategory = async () => {
     if (!newCategoryName.trim()) {
       Alert.alert('Erro', 'O nome da categoria não pode ser vazio.');
       return;
     }
 
-    if (
-      extraCatWorkout.find(
-        cat => cat.name.toLowerCase() === newCategoryName.trim().toLowerCase()
-      )
-    ) {
+    if (workoutCategories.find(cat => cat.name.toLowerCase() === newCategoryName.trim().toLowerCase())) {
       Alert.alert('Erro', 'Essa categoria já existe.');
       return;
     }
 
-    const newCat = { name: newCategoryName.trim(), color: newCategoryColor };
-    setextraCatWorkout(prev => [...prev, newCat]);
-
-    setNewCategoryName('');
-    setNewCategoryColor('#EF4444');
-    setIsCategoryModalVisible(false);
+    try {
+      await createCategory(newCategoryName.trim(), newCategoryColor, 'workout');
+      setNewCategoryName('');
+      setNewCategoryColor('#EF4444');
+      setIsCategoryModalVisible(false);
+    } catch (err) {
+      console.error('Erro ao criar categoria:', err);
+      Alert.alert('Erro', 'Não foi possível criar a categoria.');
+    }
   };
 
-  const handleDeleteCategory = async () => {
+  // Nova função simplificada para deletar categoria
+  const handleDeleteCategory = async (categoryName: string) => {
+    const categoryToDelete = workoutCategories.find(cat => cat.name === categoryName);
     if (!categoryToDelete) return;
 
     const isCategoryInUse = workout.some(task =>
-      task.type?.split(',').map((t: string) => t.trim()).includes(categoryToDelete)
+      task.type?.split(',').map((t: string) => t.trim()).includes(categoryName)
     );
 
     if (isCategoryInUse) {
       Alert.alert('Erro', 'Esta categoria está associada a uma ou mais tarefas e não pode ser excluída.');
-      setShowConfirmDeleteModal(false);
-      setCategoryToDelete(null);
       return;
     }
 
-    const newMuscles = customMuscleGroups.filter(c => c.name !== categoryToDelete);
-    const newExtras = extraCatWorkout.filter(c => c.name !== categoryToDelete);
-
-    setCustomMuscleGroups(newMuscles);
-    setextraCatWorkout(newExtras);
-
-    await AsyncStorage.setItem('customMuscleGroups', JSON.stringify(newMuscles));
-    await AsyncStorage.setItem('extraCatWorkout', JSON.stringify(newExtras));
-
-    setShowConfirmDeleteModal(false);
-    setCategoryToDelete(null);
+    try {
+      await deleteCategory(categoryToDelete.id);
+      // O modal será fechado automaticamente após a exclusão bem-sucedida
+    } catch (err) {
+      console.error('Erro ao deletar categoria:', err);
+      Alert.alert('Erro', 'Não foi possível excluir a categoria.');
+    }
   };
 
   const handleOpenCreate = () => {
@@ -316,9 +248,8 @@ export default function WorkoutScreen() {
     );
   };
 
-
   const handleDuplicate = async (itemId: string) => {
-        Alert.alert(
+    Alert.alert(
       'Duplicar treino',
       'Tem certeza que deseja duplicar este treino?',
       [
@@ -332,7 +263,7 @@ export default function WorkoutScreen() {
               await fetchWorkouts(userId!);
             } catch (err) {
               console.error(err);
-              Alert.alert('Erro', 'Não foi possível excluir o treino.');
+              Alert.alert('Erro', 'Não foi possível duplicar o treino.');
             }
           },
         },
@@ -349,45 +280,45 @@ export default function WorkoutScreen() {
 
   const renderLeftActions = (item: Workout) => {
     return (
-    <View style={{
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'flex-start',
-      height: '100%',
-    }}>
-      <TouchableOpacity
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: 100,
-          height: "100%",
-          borderTopWidth: 1,
-          borderTopColor: '#404040',
-          backgroundColor: '#FFAA1D',
-        }}
-        onPress={() => handleDuplicate(item.id)}
-      >
-        <Ionicons name="copy" size={24} color="white" />
-      </TouchableOpacity>
-      
-      <TouchableOpacity
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          display: "flex",
-          justifyContent: 'center',
-          backgroundColor: '#f43f5e',
-          borderTopWidth: 1,
-          borderTopColor: '#404040',
-          height: "100%",
-          width: 100
-        }}
-        onPress={() => handleDelete(item.id)}
-      >
-        <Ionicons name="trash" size={24} color="white" />
-      </TouchableOpacity>
-    </View>
+      <View style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        height: '100%',
+      }}>
+        <TouchableOpacity
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 100,
+            height: "100%",
+            borderTopWidth: 1,
+            borderTopColor: '#404040',
+            backgroundColor: '#FFAA1D',
+          }}
+          onPress={() => handleDuplicate(item.id)}
+        >
+          <Ionicons name="copy" size={24} color="white" />
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            display: "flex",
+            justifyContent: 'center',
+            backgroundColor: '#f43f5e',
+            borderTopWidth: 1,
+            borderTopColor: '#404040',
+            height: "100%",
+            width: 100
+          }}
+          onPress={() => handleDelete(item.id)}
+        >
+          <Ionicons name="trash" size={24} color="white" />
+        </TouchableOpacity>
+      </View>
     );
   };
 
@@ -500,215 +431,46 @@ export default function WorkoutScreen() {
 
       <WorkoutStatsSection />
 
-      {/* Modal de Gerenciar Categorias */}
-      <Modal
-        transparent
-        animationType="fade"
-        visible={showDeleteCategoryModal}
-        onRequestClose={() => setShowDeleteCategoryModal(false)}
-      >
-        <View className="flex-1 bg-black/80 justify-center items-center px-6">
-          <View className="bg-zinc-800 rounded-2xl w-full max-h-[80%] p-4">
-            <Text className="text-white text-xl font-sans font-semibold mb-4 text-center">
-              Gerenciar Categorias
-            </Text>
-            <ScrollView className="mb-4" showsVerticalScrollIndicator={false}>
-              {categories.length === 0 ? (
-                <View className="items-center justify-center py-12">
-                  <Ionicons name="folder-open-outline" size={64} color="#aaa" />
-                  <Text className="text-neutral-400 text-lg font-sans text-center mt-4">
-                    Você ainda não criou categorias.
-                  </Text>
-                </View>
-              ) : (
-                categories.map((cat) => {
-                  const color = getCategoryColor(cat);
-                  return (
-                    <View
-                      key={cat}
-                      className="flex-row justify-between items-center py-3 border-b border-neutral-700"
-                    >
-                      <View className="flex-row items-center gap-3">
-                        <View
-                          style={{ 
-                            width: 15, 
-                            height: 15, 
-                            borderRadius: 7.5, 
-                            backgroundColor: color, 
-                            borderWidth: 0.5, 
-                            borderColor: '#fff'
-                          }}
-                        />
-                        <Text className="text-white font-sans text-lg">{cat}</Text>
-                      </View>
-                      <Pressable
-                        onPress={() => {
-                          setCategoryToDelete(cat);
-                          setShowConfirmDeleteModal(true);
-                        }}
-                        className="p-2 bg-neutral-700 rounded-xl"
-                      >
-                        <Ionicons name="trash" size={20} color="#fa4d5c" />
-                      </Pressable>
-                    </View>
-                  );
-                })
-              )}
-            </ScrollView>
-
-            <Pressable
-              onPress={() => setShowDeleteCategoryModal(false)}
-              className="bg-neutral-700 rounded-xl p-3 items-center"
-            >
-              <Text className="text-white text-lg font-sans font-semibold">Fechar</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Modal de Confirmação de Exclusão */}
-      <Modal
-        transparent
-        animationType="fade"
-        visible={showConfirmDeleteModal}
-        onRequestClose={() => setShowConfirmDeleteModal(false)}
-      >
-        <View className="flex-1 bg-black/80 justify-center items-center px-8">
-          <View className="bg-zinc-800 w-full rounded-2xl p-6 items-center">
-            <Ionicons name="alert-circle" size={48} color="#ff7a7f" className="mb-4" />
-            <Text className="text-white text-xl font-semibold mb-2 font-sans text-center">
-              Apagar Categoria
-            </Text>
-            <Text className="text-neutral-400 font-sans text-center mb-6">
-              {categoryToDelete
-                ? `Tem certeza que deseja apagar a categoria "${categoryToDelete}"? Esta ação não pode ser desfeita.`
-                : 'Tem certeza que deseja apagar esta categoria? Esta ação não pode ser desfeita.'}
-            </Text>
-
-            <View className="flex-row w-full justify-between gap-3">
-              <Pressable
-                onPress={() => setShowConfirmDeleteModal(false)}
-                className="flex-1 bg-neutral-700 py-3 rounded-xl items-center"
-              >
-                <Text className="text-white font-semibold font-sans">Cancelar</Text>
-              </Pressable>
-
-              <Pressable
-                onPress={handleDeleteCategory}
-                className="flex-1 bg-rose-500 py-3 rounded-xl items-center"
-              >
-                <Text className="text-black font-sans font-semibold">Apagar</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      {/* Novo Modal de Gerenciar Categorias */}
+      <DeleteCategoryModal
+        isVisible={showDeleteCategoryModal}
+        onClose={() => setShowDeleteCategoryModal(false)}
+        categories={workoutCategories}
+        onDeleteCategory={handleDeleteCategory}
+      />
 
       {/* Filtros de Categoria */}
-      <View className="flex flex-col px-6 mb-5">
-        <View className="flex flex-row flex-wrap gap-2">
-          {categories.map((cat) => {
-            const isSelected = selectedCategories.includes(cat);
-            const color = getCategoryColor(cat);
-
-            return (
-              <Pressable
-                key={cat}
-                onPress={() =>
-                  setSelectedCategories((prev) =>
-                    prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
-                  )
-                }
-                className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${
-                  isSelected ? 'bg-rose-400' : 'bg-zinc-700'
-                }`}
-              >
-                <View style={{ 
-                  width: 10, 
-                  height: 10, 
-                  borderRadius: 5, 
-                  backgroundColor: color, 
-                  borderWidth: 0.5, 
-                  borderColor: '#fff' 
-                }} />
-                <Text className={`font-sans text-sm ${isSelected ? 'text-black' : 'text-white'}`}>
-                  {cat}
-                </Text>
-              </Pressable>
-            );
-          })}
-
-          <Pressable
-            onPress={() => setIsCategoryModalVisible(true)}
-            className="flex-row items-center gap-2 px-3 py-1 rounded-xl bg-zinc-700"
-          >
-            <Ionicons name="add" size={16} color="white" />
-            <Text className="text-white text-sm font-sans">Nova Categoria</Text>
-          </Pressable>
-        </View>
-      </View>
+      <CategoryFilters
+        categories={workoutCategories}
+        selectedTypes={selectedCategories}
+        onToggleCategory={(categoryName) =>
+          setSelectedCategories((prev) =>
+            prev.includes(categoryName) ? prev.filter((c) => c !== categoryName) : [...prev, categoryName]
+          )
+        }
+        onAddNewCategory={() => setIsCategoryModalVisible(true)}
+        addButtonText="Nova Categoria"
+      />
 
       {/* Modal de Nova Categoria */}
-      <Modal
-        transparent
-        animationType="fade"
-        visible={isCategoryModalVisible}
-        onRequestClose={() => setIsCategoryModalVisible(false)}
-      >
-        <View className="flex-1 justify-center items-center bg-black/90 px-8">
-          <View className="bg-zinc-800 p-6 rounded-2xl w-full">
-            <Text className="text-white text-xl font-sans font-semibold mb-4 text-center">
-              Nova Categoria
-            </Text>
-
-            <TextInput
-              placeholder="Nome da categoria"
-              placeholderTextColor="#a1a1aa"
-              value={newCategoryName}
-              onChangeText={setNewCategoryName}
-              className="text-white font-sans text-lg p-3 bg-zinc-700/30 rounded-xl mb-4"
-            />
-
-            <Text className="text-zinc-400 text-sm font-medium mb-3 uppercase tracking-wide">
-              Cor da Categoria
-            </Text>
-            <View className="flex flex-row flex-wrap gap-2 mb-6">
-              {colorOptions.map((color) => (
-                <Pressable
-                  key={color}
-                  onPress={() => setNewCategoryColor(color)}
-                  style={{
-                    backgroundColor: color,
-                    width: 40,
-                    height: 40,
-                    borderRadius: 20,
-                    borderWidth: newCategoryColor === color ? 3 : 1,
-                    borderColor: newCategoryColor === color ? '#fff' : '#333',
-                  }}
-                />
-              ))}
-            </View>
-
-            <Pressable
-              onPress={handleAddCategory}
-              className="bg-rose-400 p-3 rounded-xl items-center"
-            >
-              <Text className="text-black font-semibold font-sans text-lg">Adicionar Categoria</Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => setIsCategoryModalVisible(false)}
-              className="mt-4 p-2"
-            >
-              <Text className="text-neutral-400 text-center font-sans">Cancelar</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
+      <CategoryModal
+        isVisible={isCategoryModalVisible}
+        onClose={() => setIsCategoryModalVisible(false)}
+        newCategoryName={newCategoryName}
+        setNewCategoryName={setNewCategoryName}
+        newCategoryColor={newCategoryColor}
+        setNewCategoryColor={setNewCategoryColor}
+        onAddCategory={handleAddCategory}
+        categories={workoutCategories}
+      />
       
       {/* Lista de Treinos ou Estado Vazio */}
       {filteredWorkouts.length === 0 ? (
-        <EmptyState onCreateWorkout={handleOpenCreate} />
+        <EmptyState
+          image={OUTLINE.fuocoACADEMIA}
+          title="Nenhum treino registrado"
+          subtitle="Adicione treinos para analisar seu progresso"
+        />
       ) : (
         <FlatList
           data={filteredWorkouts}
@@ -719,7 +481,6 @@ export default function WorkoutScreen() {
         />
       )}
 
-      {/* Modal de Criar/Editar Treino */}
       <CreateWorkoutModal
         isCreateVisible={isCreateVisible}
         setIsCreateVisible={setIsCreateVisible}
