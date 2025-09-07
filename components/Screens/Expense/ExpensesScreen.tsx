@@ -20,47 +20,65 @@ import GradientIcon from '../../generalComps/GradientIcon';
 import CategoryModal from 'components/generalComps/CategoryModal';
 import DeleteCategoryModal from '../../generalComps/DeleteCategoryModal';
 import { EmptyState } from '../../generalComps/EmptyState';
-import { OUTLINE } from '../../../imageConstants'
+import { OUTLINE } from '../../../imageConstants';
 import CreateExpenseModal from './comps/CreateExpenseModal';
 import DateFilterModal from './comps/DateFilterModal';
 import CategoryFilters from 'components/generalComps/CategoryFilters';
 import ExpenseStatsSection from './comps/ExpenseStatsSection';
 import { ExpenseType } from '../../../api/model/Expenses';
+import {
+  DateFilter,
+  Expense,
+  Category,
+  formatLargeNumber,
+  isLargeNumber,
+  currencyFormat,
+  getDateFilterDisplayText,
+  calculateTotals,
+  filterExpensesByCategories,
+  validateExpenseForm,
+  sanitizeExpenseValue,
+  checkCategoryInUse,
+  truncateExpenseName,
+} from './expenseHelpers';
 
-export interface DateFilter {
-  type: 'all' | 'month' | 'year' | 'custom' | 'date';
-  month?: number;
-  year?: number;
-  customStart?: string;
-  customEnd?: string;
-}
+interface ExpensesScreenProps {}
 
-export default function ExpensesScreen() {
-  const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [taskContent, setTaskContent] = useState('');
-  const [expenseValue, setExpenseValue] = useState('');
+const ExpensesScreen: React.FC<ExpensesScreenProps> = () => {
+
+  // Form states
+  const [newTaskTitle, setNewTaskTitle] = useState<string>('');
+  const [taskContent, setTaskContent] = useState<string>('');
+  const [expenseValue, setExpenseValue] = useState<string>('');
   
-  // Estados para criação/edição de despesas
+  // Expense creation/editing states
   const [selectedExpenseType, setSelectedExpenseType] = useState<ExpenseType | null>(null);
   const [selectedExpenseCategories, setSelectedExpenseCategories] = useState<string[]>([]);
   
-  const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState('');
-  const [newCategoryColor, setNewCategoryColor] = useState('#ff7a7f');
-  const [gains, setGains] = useState(0);
-  const [losses, setLosses] = useState(0);
-  const [filteredExpenses, setFilteredExpenses] = useState<any[]>([]);
+  // Category modal states
+  const [isCategoryModalVisible, setIsCategoryModalVisible] = useState<boolean>(false);
+  const [newCategoryName, setNewCategoryName] = useState<string>('');
+  const [newCategoryColor, setNewCategoryColor] = useState<string>('#ff7a7f');
+  
+  // Financial totals
+  const [gains, setGains] = useState<number>(0);
+  const [losses, setLosses] = useState<number>(0);
+  const [filteredExpenses, setFilteredExpenses] = useState<Expense[]>([]);
 
+  // Filter states
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-  const [showDeleteCategoryModal, setShowDeleteCategoryModal] = useState(false);
-  const [currentExpense, setCurrentExpense] = useState<any>(null);
-  const [isCreateVisible, setIsCreateVisible] = useState(false);
-  const [isEditVisible, setIsEditVisible] = useState(false);
+  // Modal states
+  const [showDeleteCategoryModal, setShowDeleteCategoryModal] = useState<boolean>(false);
+  const [currentExpense, setCurrentExpense] = useState<Expense | null>(null);
+  const [isCreateVisible, setIsCreateVisible] = useState<boolean>(false);
+  const [isEditVisible, setIsEditVisible] = useState<boolean>(false);
 
-  const [showDateFilterModal, setShowDateFilterModal] = useState(false);
+  // Date filter states
+  const [showDateFilterModal, setShowDateFilterModal] = useState<boolean>(false);
   const [dateFilter, setDateFilter] = useState<DateFilter>({ type: 'all' });
 
+  // Hooks
   const { 
     createExpense, 
     fetchExpenses, 
@@ -78,36 +96,29 @@ export default function ExpensesScreen() {
     refreshCategories
   } = useCategory();
 
-  const expenseCategories = getCategoriesByType('expense');
+  const expenseCategories: Category[] = getCategoriesByType('expense');
 
-  const handleCreateExpense = async () => {
+  // Handler functions
+  const handleCreateExpense = async (): Promise<void> => {
     try {
-      const sanitizedValue = expenseValue.replace(',', '.').replace(/[^0-9.]/g, '');
-      const amount = parseFloat(sanitizedValue);
-      if (isNaN(amount)) {
-        alert("Valor inválido para despesa.");
+      const validation = validateExpenseForm(newTaskTitle, expenseValue, selectedExpenseType, userId);
+      
+      if (!validation.isValid) {
+        alert(validation.errorMessage);
         return;
       }
 
-      if (!selectedExpenseType) {
-        alert("Selecione se é um ganho ou gasto.");
-        return;
-      }
-
-      if (!userId) {
-        alert("User not logged in.");
-        return;
-      }
+      const amount = sanitizeExpenseValue(expenseValue);
       
       const categoriesString = selectedExpenseCategories.length > 0 
         ? selectedExpenseCategories.join(', ') 
         : undefined;
       
-      const expenseId = await createExpense(
+      await createExpense(
         newTaskTitle,
         amount,
-        selectedExpenseType,
-        userId,
+        selectedExpenseType!,
+        userId!,
         new Date().toISOString().split('T')[0],
         new Date().toISOString(),
         categoriesString,
@@ -118,10 +129,11 @@ export default function ExpensesScreen() {
       resetForm();
     } catch (err) {
       console.error(err);
+      alert('Erro ao criar despesa: ' + (err instanceof Error ? err.message : String(err)));
     }
   };
 
-  const handleDeleteCategory = async (categoryName: string) => {
+  const handleDeleteCategory = async (categoryName: string): Promise<void> => {
     const category = expenseCategories.find(cat => cat.name === categoryName);
   
     if (!category) {
@@ -130,13 +142,7 @@ export default function ExpensesScreen() {
     }
 
     // Verificar se categoria está em uso
-    const isCategoryInUse = expenses.some(expense => {
-      if (expense.type && expense.type.includes(',')) {
-        const expenseCategories = expense.type.split(',').map((cat: string) => cat.trim());
-        return expenseCategories.includes(category.name);
-      }
-      return expense.type === category.name;
-    });
+    const isCategoryInUse = checkCategoryInUse(category.name, expenses);
     
     if (isCategoryInUse) {
       Alert.alert('Erro', 'Esta categoria está associada a uma ou mais despesas e não pode ser excluída.');
@@ -161,22 +167,18 @@ export default function ExpensesScreen() {
     }
   };
 
-  const handleUpdateExpense = async () => {
+  const handleUpdateExpense = async (): Promise<void> => {
     try {
       if (!currentExpense) return;
 
-      const sanitizedValue = expenseValue.replace(',', '.').replace(/[^0-9.]/g, '');
-      const amount = parseFloat(sanitizedValue);
-
-      if (isNaN(amount)) {
-        alert('Valor inválido para despesa.');
+      const validation = validateExpenseForm(newTaskTitle, expenseValue, selectedExpenseType, userId);
+      
+      if (!validation.isValid) {
+        alert(validation.errorMessage);
         return;
       }
 
-      if (!selectedExpenseType) {
-        alert('Selecione se é um ganho ou gasto.');
-        return;
-      }
+      const amount = sanitizeExpenseValue(expenseValue);
 
       const categoriesString = selectedExpenseCategories.length > 0 
         ? selectedExpenseCategories.join(', ') 
@@ -185,7 +187,7 @@ export default function ExpensesScreen() {
       const updatedExpense = {
         name: newTaskTitle,
         amount,
-        expense_type: selectedExpenseType,
+        expense_type: selectedExpenseType!,
         type: categoriesString,
       };
 
@@ -200,7 +202,7 @@ export default function ExpensesScreen() {
     }
   };
 
-  const resetForm = () => {
+  const resetForm = (): void => {
     setNewTaskTitle('');
     setExpenseValue('');
     setTaskContent('');
@@ -208,13 +210,13 @@ export default function ExpensesScreen() {
     setSelectedExpenseCategories([]);
   };
 
-  const openCreateModal = () => {
+  const openCreateModal = (): void => {
     resetForm();
     setCurrentExpense(null);
     setIsCreateVisible(true);
   };
 
-  const openEditModal = (expense: any) => {
+  const openEditModal = (expense: Expense): void => {
     setNewTaskTitle(expense.name);
     setExpenseValue(String(expense.amount));
     setTaskContent('');
@@ -232,8 +234,7 @@ export default function ExpensesScreen() {
     setIsEditVisible(true);
   };
 
-  // Função para toggle de categorias (apenas categorias, não tipos)
-  const handleCategoryToggle = (categoryName: string) => {
+  const handleCategoryToggle = (categoryName: string): void => {
     setSelectedCategories(prev => {
       if (prev.includes(categoryName)) {
         return prev.filter(cat => cat !== categoryName);
@@ -243,7 +244,7 @@ export default function ExpensesScreen() {
     });
   };
 
-  const handleAddCategory = async () => {
+  const handleAddCategory = async (): Promise<void> => {
     const trimmedName = newCategoryName.trim();
 
     if (!trimmedName) {
@@ -271,7 +272,7 @@ export default function ExpensesScreen() {
     }
   };
 
-  const handleDeleteExpense = async (expenseId: string) => {
+  const handleDeleteExpense = async (expenseId: string): Promise<void> => {
     Alert.alert(
       'Excluir despesa',
       'Tem certeza que deseja excluir esta despesa?',
@@ -295,60 +296,22 @@ export default function ExpensesScreen() {
     );
   };
 
-  const handleDateFilterApply = (filter: DateFilter) => {
+  const handleDateFilterApply = (filter: DateFilter): void => {
     setDateFilter(filter);
   };
 
-  const handleDateFilterModalOpen = () => {
+  const handleDateFilterModalOpen = (): void => {
     setShowDateFilterModal(true);
   };
 
-  const handleDateFilterModalClose = () => {
+  const handleDateFilterModalClose = (): void => {
     setShowDateFilterModal(false);
   };
 
-  const filterExpensesByDate = (expenses: any[], filter: DateFilter) => {
-    if (filter.type === 'all') {
-      return expenses;
-    }
-
-    return expenses.filter(expense => {
-      const expenseDate = new Date(expense.date);
-      const expenseYear = expenseDate.getFullYear();
-      const expenseMonth = expenseDate.getMonth();
-
-      switch (filter.type) {
-        case 'month':
-          return expenseYear === filter.year && expenseMonth === filter.month;
-        case 'year':
-          return expenseYear === filter.year;
-        default:
-          return true;
-      }
-    });
-  };
-
-  const getDateFilterDisplayText = () => {
-    const months = [
-      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
-    ];
-
-    switch (dateFilter.type) {
-      case 'all':
-        return 'Todas';
-      case 'month':
-        return `${months[dateFilter.month!]} ${dateFilter.year}`;
-      case 'year':
-        return `${dateFilter.year}`;
-      default:
-        return 'Todas';
-    }
-  };
-
-  const renderLeftActions = (item: any) => {
+  // Render functions
+  const renderLeftActions = (item: Expense) => {
     return (
-    <View className="flex-row items-center justify-start border-t bg-rose-500 px-4 h-full">
+      <View className="flex-row items-center justify-start border-t bg-rose-500 px-4 h-full">
         <TouchableOpacity
           onPress={() => handleDeleteExpense(item.id)}
           style={{
@@ -366,26 +329,7 @@ export default function ExpensesScreen() {
     );
   };
 
-  const formatLargeNumber = (value: number) => {
-    const absValue = Math.abs(value);
-    
-    if (absValue >= 1000000000) {
-      return `${(value / 1000000000).toFixed(1).replace('.0', '')}B`;
-    } else if (absValue >= 1000000) {
-      return `${(value / 1000000).toFixed(1).replace('.0', '')}M`;
-    } else if (absValue >= 1000) {
-      return `${(value / 1000).toFixed(1).replace('.0', '')}K`;
-    }
-    
-    return currencyFormat(value);
-  };
-
-  const isLargeNumber = (value: number) => {
-    return Math.abs(value) >= 1000000;
-  };
-
-  const renderExpenseItem = ({ item }: { item: any }) => {
-
+  const renderExpenseItem = ({ item }: { item: Expense }) => {
     const isGain = item.expense_type === ExpenseType.GAIN;
     const textColor = isGain ? "text-emerald-400" : "text-[#ff7a7f]";
 
@@ -403,8 +347,7 @@ export default function ExpensesScreen() {
           <View className="flex flex-row justify-between">
             <Pressable className="flex flex-col gap-1 mt-1" onPress={() => openEditModal(item)}>
               <Text className="text-xl font-sans font-medium text-gray-300 max-w-[250px]">
-                {item.name.split(' ').slice(0, 6).join(' ')}
-                {item.name.split(' ').length > 6 ? '...' : ''}
+                {truncateExpenseName(item.name)}
               </Text>
               <Text className="text-neutral-400 text-sm mt-1 font-sans">
                 {new Date(item.date ?? '').toLocaleDateString('pt-BR')} - {new Date(item.time ?? '').toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
@@ -422,37 +365,13 @@ export default function ExpensesScreen() {
     );
   };
 
-  // Cálculo de totais usando expense_type
+  // Effects
   useEffect(() => {
-    const calculateTotals = async () => {
+    const updateTotals = async (): Promise<void> => {
       if (!userId) return;
 
       try {
-        let dateFilteredExpenses = filterExpensesByDate(expenses, dateFilter);
-        
-        // Aplicar filtros de categoria se existirem
-        if (selectedCategories.length > 0) {
-          dateFilteredExpenses = dateFilteredExpenses.filter(exp => {
-            if (!exp.type) return false;
-            
-            if (exp.type.includes(',')) {
-              const expenseCategories = exp.type.split(',').map((cat: string) => cat.trim());
-              return selectedCategories.some(selectedCat => expenseCategories.includes(selectedCat));
-            } else {
-              return selectedCategories.includes(exp.type);
-            }
-          });
-        }
-
-        // Calcular totais baseados no expense_type
-        const totalGains = dateFilteredExpenses
-          .filter(exp => exp.expense_type === ExpenseType.GAIN)
-          .reduce((sum, exp) => sum + Number(exp.amount), 0);
-
-        const totalLosses = dateFilteredExpenses
-          .filter(exp => exp.expense_type === ExpenseType.LOSS)
-          .reduce((sum, exp) => sum + Number(exp.amount), 0);
-
+        const { totalGains, totalLosses } = calculateTotals(expenses, dateFilter, selectedCategories);
         setGains(totalGains);
         setLosses(totalLosses);
       } catch (error) {
@@ -460,7 +379,7 @@ export default function ExpensesScreen() {
       }
     };
 
-    calculateTotals();
+    updateTotals();
   }, [expenses, dateFilter, selectedCategories, userId]);
 
   useFocusEffect(
@@ -472,54 +391,14 @@ export default function ExpensesScreen() {
     }, [loading, userId])
   );
 
-  // Filtrar despesas por categorias (não por tipos)
   useEffect(() => {
-    let filtered = filterExpensesByDate(expenses, dateFilter);
-    
-    // Aplicar filtros de categoria se existirem
-    if (selectedCategories.length > 0) {
-      filtered = filtered.filter((exp) => {
-        if (!exp.type) return false;
-        
-        if (exp.type.includes(',')) {
-          const expenseCategories = exp.type.split(',').map((cat: string) => cat.trim());
-          return selectedCategories.some(selectedCat => expenseCategories.includes(selectedCat));
-        } else {
-          return selectedCategories.includes(exp.type);
-        }
-      });
-    }
-    
+    const filtered = filterExpensesByCategories(expenses, dateFilter, selectedCategories);
     setFilteredExpenses(filtered);
   }, [selectedCategories, expenses, dateFilter]);
 
   useEffect(() => {
     debugAllExpenses();
   }, []);
-
-  const currencyFormat = (value: number) => {
-    const hasDecimals = value % 1 !== 0;
-    
-    return new Intl.NumberFormat('pt-BR', { 
-      style: 'currency', 
-      currency: 'BRL',
-      minimumFractionDigits: hasDecimals ? 2 : 0,
-      maximumFractionDigits: 2
-    }).format(value);
-  };
-
-  const getFilterDate = (): Date => {
-    const today = new Date();
-    
-    switch (dateFilter.type) {
-      case 'month':
-        return new Date(dateFilter.year!, dateFilter.month!, 1);
-      case 'year':
-        return new Date(dateFilter.year!, 0, 1);
-      default:
-        return today;
-    }
-  };
 
   return (
     <SafeAreaView className={`flex-1 bg-zinc-800 ${Platform.OS === 'android' && 'py-[30px]'}`}>
@@ -552,7 +431,7 @@ export default function ExpensesScreen() {
 
       <ExpenseStatsSection
         onDateFilterPress={handleDateFilterModalOpen}
-        dateFilterDisplayText={getDateFilterDisplayText()}
+        dateFilterDisplayText={getDateFilterDisplayText(dateFilter)}
         gains={gains}
         losses={losses}
         formatLargeNumber={formatLargeNumber}
@@ -560,7 +439,6 @@ export default function ExpensesScreen() {
         isLargeNumber={isLargeNumber}
       />
 
-      {/* CATEGORIA FILTERS - Apenas categorias, não tipos de despesa */}
       <CategoryFilters
         categories={expenseCategories}
         selectedTypes={selectedCategories}
@@ -649,4 +527,6 @@ export default function ExpensesScreen() {
       />
     </SafeAreaView>
   );
-}
+};
+
+export default ExpensesScreen;
