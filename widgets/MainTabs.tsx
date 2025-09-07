@@ -8,6 +8,7 @@ import AgendaScreen from 'components/Screens/Agenda/AgendaScreen';
 import ExpensesScreen from 'components/Screens/Expense/ExpensesScreen';
 import MoreScreen from 'components/Screens/More/MoreScreen';
 import WorkoutScreen from 'components/Screens/Workouts/WorkoutScreen';
+import TestScreen from 'components/TestScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -93,6 +94,11 @@ export default function MainTabs(): JSX.Element {
       <Tab.Screen 
         name="More" 
         component={MoreScreen} 
+        options={{ tabBarLabel: 'Mais' }} 
+      />
+            <Tab.Screen 
+        name="Teste" 
+        component={TestScreen} 
         options={{ tabBarLabel: 'Mais' }} 
       />
     </Tab.Navigator>
