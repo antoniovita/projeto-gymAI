@@ -26,7 +26,6 @@ import TimerScreen from 'components/Screens/Timer/TimerScreen';
 // ===== Integração LLM =====
 import { bootstrapLlama } from './llm.config';
 import type { LlamaCtx } from './llm.config';
-import TestScreen from 'components/TestScreen';
 // ==========================
 
 // import Purchases, { LOG_LEVEL } from 'react-native-purchases';
@@ -289,7 +288,6 @@ export default function App() {
                 <Stack.Screen name="NoteScreen" component={NoteScreen} />
                 <Stack.Screen name="GoalScreen" component={GoalScreen} />
                 <Stack.Screen name="TimerScreen" component={TimerScreen} />
-                <Stack.Screen name="TestScreen" component={TestScreen} />
               </Stack.Navigator>
             </NavigationContainer>
           )}

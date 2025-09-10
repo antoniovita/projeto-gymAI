@@ -1,620 +1,347 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  Keyboard,
-  TouchableWithoutFeedback,
   SafeAreaView,
-  ScrollView,
+  FlatList,
+  TouchableOpacity,
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import Markdown from 'react-native-markdown-display';
 import ChatStatsSection from './comps/ChatStatsSection';
-import { useRAGChat } from '../../../hooks/useRAGChat';
-
-type Message = {
-  id: string;
-  text: string;
-  isUser: boolean;
-  timestamp: Date;
-};
-
-type MarkdownElement = {
-  type: 'h1' | 'h2' | 'h3' | 'bold' | 'italic' | 'code' | 'codeblock' | 'quote' | 'list' | 'table' | 'text' | 'checkbox';
-  content: string;
-  key: string;
-  language?: string;
-  items?: string[];
-  headers?: string[];
-  rows?: string[][];
-  checked?: boolean;
-};
+import { useChat, Message } from '../../../hooks/useChat';
 
 export default function ChatScreen() {
-  const [inputText, setInputText] = useState('');
-  const [messages, setMessages] = useState<Message[]>([]);
-  const scrollViewRef = useRef<ScrollView>(null);
+  const [input, setInput] = useState('');
   
-  const { 
-    run, 
-    reset, 
-    loading, 
-    error, 
-    answer, 
-    modelReady, 
+  const {
+    // Estados do chat
+    messages,
+    isTyping,
+    typingText,
+    flatListRef,
+    
+    // Estados do Llama
+    isInitializing,
+    isDownloading,
     downloadProgress,
-  } = useRAGChat({
-    skin: 'fuoco',
-    includeDefault: true,
-    nPredict: 128,
-    temperature: 0.7,
-    top_p: 0.9,
-    streaming: true,
-  });
-
-  // Função para limpar "Resposta:" do início da mensagem
-  const cleanResponse = (text: string): string => {
-    return text.replace(/^Resposta:\s*/i, '').trim();
-  };
-
-  // Scroll automático para o fim quando novas mensagens chegam
-  const scrollToBottom = () => {
-    setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, 100);
-  };
-
-  // Adiciona mensagem do usuário
-  const addUserMessage = (text: string) => {
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      text,
-      isUser: true,
-      timestamp: new Date(),
-    };
-    setMessages(prev => [...prev, newMessage]);
-    scrollToBottom();
-  };
-
-  // Adiciona mensagem do assistente
-  const addAssistantMessage = (text: string) => {
-    const cleanedText = cleanResponse(text);
-    const newMessage: Message = {
-      id: Date.now().toString() + '_assistant',
-      text: cleanedText,
-      isUser: false,
-      timestamp: new Date(),
-    };
-    setMessages(prev => [...prev, newMessage]);
-    scrollToBottom();
-  };
-
-  // Atualiza a última mensagem do assistente (para streaming)
-  const updateLastAssistantMessage = (text: string) => {
-    const cleanedText = cleanResponse(text);
-    setMessages(prev => {
-      const newMessages = [...prev];
-      const lastMessage = newMessages[newMessages.length - 1];
-      
-      if (lastMessage && !lastMessage.isUser) {
-        lastMessage.text = cleanedText;
-      } else {
-        newMessages.push({
-          id: Date.now().toString() + '_assistant',
-          text: cleanedText,
-          isUser: false,
-          timestamp: new Date(),
-        });
-      }
-      
-      return newMessages;
-    });
-    scrollToBottom();
-  };
-
-  // Função para processar texto com formatação Markdown
-  const processMarkdownText = (text: string): MarkdownElement[] => {
-    if (!text) return [];
+    isReady,
+    error,
+    isGenerating,
     
-    const elements: MarkdownElement[] = [];
-    const lines = text.split('\n');
-    let currentIndex = 0;
-    let inCodeBlock = false;
-    let codeBlockContent = '';
-    let codeBlockLanguage = '';
-    let tableHeaders: string[] = [];
-    let tableRows: string[][] = [];
-    let inTable = false;
+    // Funções
+    handleInputSubmit,
+    clearMessages,
+    initializeLlama,
+    resetError,
+    cancelGeneration,
+  } = useChat();
 
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const trimmedLine = line.trim();
-
-      // Code blocks
-      if (trimmedLine.startsWith('```')) {
-        if (inCodeBlock) {
-          // End code block
-          elements.push({
-            type: 'codeblock',
-            content: codeBlockContent.trim(),
-            language: codeBlockLanguage,
-            key: `codeblock_${currentIndex++}`
-          });
-          inCodeBlock = false;
-          codeBlockContent = '';
-          codeBlockLanguage = '';
-        } else {
-          // Start code block
-          inCodeBlock = true;
-          codeBlockLanguage = trimmedLine.slice(3);
-        }
-        continue;
-      }
-
-      if (inCodeBlock) {
-        codeBlockContent += line + '\n';
-        continue;
-      }
-
-      // Table detection
-      if (trimmedLine.includes('|') && !inTable) {
-        // Start table
-        inTable = true;
-        tableHeaders = trimmedLine.split('|').map(h => h.trim()).filter(h => h);
-        continue;
-      } else if (inTable && trimmedLine.includes('|')) {
-        if (trimmedLine.match(/^\s*\|[\s\-:]+\|\s*$/)) {
-          // Table separator line - skip
-          continue;
-        }
-        const row = trimmedLine.split('|').map(cell => cell.trim()).filter(cell => cell);
-        tableRows.push(row);
-        continue;
-      } else if (inTable && !trimmedLine.includes('|')) {
-        // End table
-        elements.push({
-          type: 'table',
-          content: '',
-          headers: tableHeaders,
-          rows: tableRows,
-          key: `table_${currentIndex++}`
-        });
-        inTable = false;
-        tableHeaders = [];
-        tableRows = [];
-      }
-
-      // Headers
-      if (trimmedLine.startsWith('### ')) {
-        elements.push({
-          type: 'h3',
-          content: trimmedLine.slice(4),
-          key: `h3_${currentIndex++}`
-        });
-      } else if (trimmedLine.startsWith('## ')) {
-        elements.push({
-          type: 'h2',
-          content: trimmedLine.slice(3),
-          key: `h2_${currentIndex++}`
-        });
-      } else if (trimmedLine.startsWith('# ')) {
-        elements.push({
-          type: 'h1',
-          content: trimmedLine.slice(2),
-          key: `h1_${currentIndex++}`
-        });
-      }
-      // Checkbox lists
-      else if (trimmedLine.match(/^\d+\.\s+\*\*(.*?)\*\*/) || trimmedLine.match(/^-\s+\[.\]\s+/)) {
-        const isChecked = trimmedLine.includes('[x]') || trimmedLine.includes('[X]');
-        const content = trimmedLine.replace(/^-\s+\[.\]\s+/, '').replace(/^\d+\.\s+\*\*(.*?)\*\*/, '$1');
-        elements.push({
-          type: 'checkbox',
-          content,
-          checked: isChecked,
-          key: `checkbox_${currentIndex++}`
-        });
-      }
-      // Numbered/bullet lists
-      else if (trimmedLine.match(/^\d+\.\s+/) || trimmedLine.match(/^-\s+/) || trimmedLine.match(/^\*\s+/)) {
-        const content = trimmedLine.replace(/^\d+\.\s+/, '').replace(/^[-*]\s+/, '');
-        elements.push({
-          type: 'list',
-          content,
-          key: `list_${currentIndex++}`
-        });
-      }
-      // Quotes
-      else if (trimmedLine.startsWith('> ')) {
-        elements.push({
-          type: 'quote',
-          content: trimmedLine.slice(2),
-          key: `quote_${currentIndex++}`
-        });
-      }
-      // Regular text with inline formatting
-      else if (trimmedLine) {
-        elements.push({
-          type: 'text',
-          content: line,
-          key: `text_${currentIndex++}`
-        });
-      }
-      // Empty line
-      else {
-        elements.push({
-          type: 'text',
-          content: '',
-          key: `empty_${currentIndex++}`
-        });
-      }
+  // Inicializa o Llama quando o componente monta
+  useEffect(() => {
+    if (!isReady && !isInitializing && !error) {
+      initializeLlama();
     }
+  }, []);
 
-    // Handle remaining table if exists
-    if (inTable && tableHeaders.length > 0) {
-      elements.push({
-        type: 'table',
-        content: '',
-        headers: tableHeaders,
-        rows: tableRows,
-        key: `table_${currentIndex++}`
-      });
-    }
-
-    return elements;
-  };
-
-  // Função para renderizar inline formatting (bold, italic, code)
-  const renderInlineText = (text: string) => {
-    if (!text) return null;
-
-    const parts = [];
-    let currentIndex = 0;
-    
-    // Regex para encontrar formatação inline
-    const inlineRegex = /(\*\*(.*?)\*\*)|(\*(.*?)\*)|(`(.*?)`)/g;
-    let match;
-    
-    while ((match = inlineRegex.exec(text)) !== null) {
-      // Adiciona texto antes da formatação
-      if (match.index > currentIndex) {
-        const beforeText = text.substring(currentIndex, match.index);
-        parts.push(
-          <Text key={`text_${currentIndex}`} className="text-white text-base font-sans">
-            {beforeText}
-          </Text>
-        );
-      }
-      
-      if (match[1]) {
-        // Bold **text**
-        parts.push(
-          <Text key={`bold_${match.index}`} className="text-white text-base font-bold font-sans">
-            {match[2]}
-          </Text>
-        );
-      } else if (match[3]) {
-        // Italic *text*
-        parts.push(
-          <Text key={`italic_${match.index}`} className="text-white text-base italic font-sans">
-            {match[4]}
-          </Text>
-        );
-      } else if (match[5]) {
-        // Code `text`
-        parts.push(
-          <View key={`code_${match.index}`} className="bg-zinc-600 px-1 rounded">
-            <Text className="text-green-300 text-sm font-mono">
-              {match[6]}
-            </Text>
-          </View>
-        );
-      }
-      
-      currentIndex = match.index + match[0].length;
-    }
-    
-    // Adiciona texto restante
-    if (currentIndex < text.length) {
-      const remainingText = text.substring(currentIndex);
-      parts.push(
-        <Text key={`text_${currentIndex}`} className="text-white text-base font-sans">
-          {remainingText}
-        </Text>
+  // Exibe erro se houver
+  useEffect(() => {
+    if (error) {
+      Alert.alert(
+        'Erro',
+        `Houve um problema com o assistente: ${error}`,
+        [
+          { text: 'Tentar Novamente', onPress: () => { resetError(); initializeLlama(); } },
+          { text: 'Cancelar', style: 'cancel' }
+        ]
       );
     }
-    
-    // Se não há formatação, retorna texto simples
-    if (parts.length === 0) {
-      return (
-        <Text className="text-white text-base font-sans">
-          {text}
-        </Text>
-      );
-    }
-    
-    return <Text>{parts}</Text>;
+  }, [error]);
+
+  // Estilos personalizados para o markdown
+  const markdownStyles = {
+    body: {
+      color: '#ffffff',
+      fontSize: 15,
+      lineHeight: 22,
+    },
+    heading1: {
+      color: '#ffffff',
+      fontSize: 30,
+      fontWeight: 'bold' as const,
+      marginBottom: 12,
+      marginTop: 16,
+    },
+    heading2: {
+      color: '#ffffff',
+      fontSize: 22,
+      fontWeight: 'bold' as const,
+      marginBottom: 8,
+      marginTop: 12,
+    },
+    heading3: {
+      color: '#ffffff',
+      fontSize: 20,
+      fontWeight: 'bold' as const,
+      marginBottom: 6,
+      marginTop: 10,
+    },
+    paragraph: {
+      color: '#ffffff',
+      fontSize: 17,
+      lineHeight: 22,
+      marginBottom: 8,
+    },
+    strong: {
+      color: '#ffffff',
+      fontWeight: 'bold' as const,
+    },
+    em: {
+      color: '#ffffff',
+      fontStyle: 'italic' as const,
+    },
+    code_inline: {
+      backgroundColor: '#52525b',
+      color: '#ffffff',
+      paddingHorizontal: 4,
+      paddingVertical: 2,
+      borderRadius: 4,
+      fontSize: 14,
+      fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    },
+    code_block: {
+      backgroundColor: '#404040',
+      color: '#ffffff',
+      padding: 12,
+      borderRadius: 8,
+      fontSize: 14,
+      fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+      marginVertical: 8,
+    },
+    fence: {
+      backgroundColor: '#404040',
+      color: '#ffffff',
+      padding: 12,
+      borderRadius: 8,
+      fontSize: 14,
+      fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+      marginVertical: 8,
+    },
+    blockquote: {
+      backgroundColor: '#374151',
+      borderLeftWidth: 4,
+      borderLeftColor: '#ffa41f',
+      paddingLeft: 12,
+      paddingVertical: 8,
+      marginVertical: 8,
+      borderRadius: 4,
+    },
+    bullet_list: { marginVertical: 4 },
+    ordered_list: { marginVertical: 4 },
+    list_item: { flexDirection: 'row' as const, marginVertical: 2 },
+    bullet_list_icon: { color: '#ffffff', marginRight: 8, fontSize: 15, lineHeight: 22 },
+    bullet_list_content: { flex: 1 },
+    ordered_list_content: { flex: 1 },
+    table: {
+      borderWidth: 1,
+      borderColor: '#52525b',
+      borderRadius: 4,
+      marginVertical: 8,
+    },
+    thead: { backgroundColor: '#374151' },
+    tbody: { backgroundColor: '#1f2937' },
+    th: { borderWidth: 1, borderColor: '#52525b', padding: 8 },
+    td: { borderWidth: 1, borderColor: '#52525b', padding: 8 },
+    tr: { borderBottomWidth: 1, borderColor: '#52525b' },
+    link: { color: '#ffa41f', textDecorationLine: 'underline' as const },
+    text: { color: '#ffffff' },
+    hr: { backgroundColor: '#52525b', height: 1, marginVertical: 16 },
   };
 
-  // Função para renderizar cada elemento
-  const renderMarkdownElement = (element: MarkdownElement) => {
-    switch (element.type) {
-      case 'h1':
-        return (
-          <Text key={element.key} className="text-white text-2xl font-bold font-sans mb-3 mt-2">
-            {element.content}
-          </Text>
-        );
-      case 'h2':
-        return (
-          <Text key={element.key} className="text-white text-xl font-bold font-sans mb-2 mt-2">
-            {element.content}
-          </Text>
-        );
-      case 'h3':
-        return (
-          <Text key={element.key} className="text-white text-lg font-bold font-sans mb-2 mt-1">
-            {element.content}
-          </Text>
-        );
-      case 'quote':
-        return (
-          <View key={element.key} className="border-l-4 border-blue-500 pl-4 py-2 my-2 bg-zinc-800">
-            <Text className="text-gray-300 text-base italic font-sans">
-              {element.content}
-            </Text>
-          </View>
-        );
-      case 'list':
-        return (
-          <View key={element.key} className="flex-row mb-1">
-            <Text className="text-white text-base font-sans mr-2">•</Text>
-            {renderInlineText(element.content)}
-          </View>
-        );
-      case 'checkbox':
-        return (
-          <View key={element.key} className="flex-row items-center mb-1">
-            <Text className="text-white text-base font-sans mr-2">
-              {element.checked ? '☑️' : '☐'}
-            </Text>
-            {renderInlineText(element.content)}
-          </View>
-        );
-      case 'codeblock':
-        return (
-          <View key={element.key} className="bg-zinc-900 p-3 rounded-lg my-2">
-            {element.language && (
-              <Text className="text-gray-400 text-xs mb-2 font-mono">
-                {element.language}
-              </Text>
-            )}
-            <Text className="text-green-300 text-sm font-mono">
-              {element.content}
-            </Text>
-          </View>
-        );
-      case 'table':
-        return (
-          <View key={element.key} className="my-3">
-            {/* Table Headers */}
-            <View className="flex-row border-b border-zinc-600 pb-2 mb-2">
-              {element.headers?.map((header, index) => (
-                <Text key={index} className="flex-1 text-white font-bold text-sm text-center">
-                  {header}
-                </Text>
-              ))}
-            </View>
-            {/* Table Rows */}
-            {element.rows?.map((row, rowIndex) => (
-              <View key={rowIndex} className="flex-row py-1">
-                {row.map((cell, cellIndex) => (
-                  <Text key={cellIndex} className="flex-1 text-white text-sm text-center">
-                    {cell}
-                  </Text>
-                ))}
-              </View>
-            ))}
-          </View>
-        );
-      case 'text':
-      default:
-        if (!element.content.trim()) {
-          return <View key={element.key} className="h-2" />;
-        }
-        return (
-          <View key={element.key} className="mb-1">
-            {renderInlineText(element.content)}
-          </View>
-        );
-    }
-  };
-
-  // Função para renderizar texto formatado
-  const renderFormattedText = (text: string) => {
-    const elements = processMarkdownText(text);
+  // Função para renderizar cada mensagem
+  const renderMessage = ({ item, index }: { item: Message; index: number }) => {
+    const isUser = item.role === 'user';
     
     return (
-      <View>
-        {elements.map(element => renderMarkdownElement(element))}
+      <View 
+        className={`mb-6 ${isUser ? 'items-end' : 'items-start'}`}
+        key={`message-${index}`}
+      >
+        <View className={`rounded-3xl px-4 py-3 ${
+          isUser ? 'bg-[#1e1e1e]' : 'bg-transparent'
+        }`}>
+          {isUser ? (
+            <Text className="text-white text-[15px] font-sans">
+              {item.content}
+            </Text>
+          ) : (
+            <Markdown style={markdownStyles}>
+              {item.content}
+            </Markdown>
+          )}
+        </View>
       </View>
     );
   };
 
-  // Monitora mudanças na resposta (streaming)
-  useEffect(() => {
-    if (answer) {
-      updateLastAssistantMessage(answer);
-    }
-  }, [answer]);
-
-  // Monitora erros
-  useEffect(() => {
-    if (error) {
-      Alert.alert('Erro', error);
-    }
-  }, [error]);
-
-  const handleSendMessage = async () => {
-    const text = inputText.trim();
-    if (!text || loading) return;
-
-    if (!modelReady && downloadProgress < 100) {
-      Alert.alert('Aguarde', `Modelo carregando... ${downloadProgress.toFixed(1)}%`);
-      return;
-    }
-
-    // Adiciona mensagem do usuário
-    addUserMessage(text);
-    setInputText('');
+  // Função para renderizar o indicador de digitação
+  const renderTypingIndicator = () => {
+    if (!isTyping) return null;
     
-    // Adiciona mensagem vazia do assistente (será preenchida via streaming)
-    addAssistantMessage('');
-
-    try {
-      // Executa o RAG
-      await run(text);
-    } catch (err) {
-      console.error('Erro ao enviar mensagem:', err);
-    }
-  };
-
-  const renderMessage = (message: Message) => {
-    if (message.isUser) {
-      // Mensagem do usuário - mantém o layout original em balãozinho
-      return (
-        <View key={message.id} className="mb-4 items-end">
-          <View className="max-w-[85%] p-4 rounded-2xl bg-blue-600">
-            <Text className="text-white text-base font-sans">
-              {message.text}
+    return (
+      <View className="mb-6 items-start">
+        <View className="rounded-3xl px-4 py-3 bg-zinc-700 max-w-[85%]">
+          <View className="flex-row items-center">
+            <Ionicons name="ellipsis-horizontal" size={20} color="white" />
+            <Text className="text-white ml-2 text-sm">
+              {typingText || 'Pensando...'}
             </Text>
           </View>
-          <Text className="text-zinc-400 text-xs mt-1 font-sans">
-            {message.timestamp.toLocaleTimeString('pt-BR', {
-              hour: '2-digit',
-              minute: '2-digit'
-            })}
-          </Text>
         </View>
-      );
-    } else {
-      // Mensagem da IA - largura total, centralizada, sem balãozinho
-      return (
-        <View key={message.id} className="mb-4 w-full">
-          <View className="w-full px-2">
-            {renderFormattedText(message.text)}
-          </View>
-          <Text className="text-zinc-400 text-xs mt-2 text-center font-sans">
-            {message.timestamp.toLocaleTimeString('pt-BR', {
-              hour: '2-digit',
-              minute: '2-digit'
-            })}
-          </Text>
-        </View>
-      );
+      </View>
+    );
+  };
+
+  // Função para renderizar conteúdo vazio
+  const renderEmptyState = () => {
+    if (messages.length > 0 || isTyping) return null;
+    
+    return (
+      <View className="flex-1 justify-center items-center py-20">
+        <Ionicons name="chatbubbles-outline" size={60} color="#52525b" />
+        <Text className="text-zinc-400 text-center mt-4 text-base">
+          Olá! Sou o Fuoco, seu assistente de produtividade{'\n'}Como posso te ajudar hoje?
+        </Text>
+      </View>
+    );
+  };
+
+  // Função para enviar mensagem
+  const handleSend = () => {
+    if (!input.trim()) return;
+    
+    handleInputSubmit(input, setInput);
+  };
+
+  // Função para determinar se o botão de enviar deve estar ativo
+  const isSendButtonActive = () => {
+    return input.trim() && !isTyping && !isGenerating && (isReady || (!isInitializing && !isDownloading));
+  };
+
+  // Função para determinar o status do progresso
+  const getProgressStatus = () => {
+    if (isInitializing && !isDownloading) {
+      return 'Inicializando modelo...';
     }
+    if (isDownloading) {
+      return `Baixando modelo... ${Math.round(downloadProgress)}%`;
+    }
+    if (isGenerating) {
+      return 'Gerando resposta...';
+    }
+    if (isReady) {
+      return 'Pronto para conversar!';
+    }
+    if (error) {
+      return 'Erro - toque no botão de envio para tentar novamente';
+    }
+    return 'Preparando assistente...';
   };
 
   return (
     <SafeAreaView className={`flex-1 bg-zinc-800 ${Platform.OS === 'android' && 'py-[30px]'}`}>
+      {/* Header */}
       <View className="mt-8 px-4 mb-6 flex-row items-center justify-between">
-        <View className="w-[80px]" />
+        <TouchableOpacity onPress={clearMessages} className="w-[80px]">
+          <Ionicons name="trash-outline" size={20} color="#A1A1AA" />
+        </TouchableOpacity>
         <View className="absolute left-0 right-0 items-center">
           <Text className="text-white font-sans text-[18px] font-medium">Assistente</Text>
-          {!modelReady && downloadProgress > 0 && downloadProgress < 100 && (
-            <Text className="text-zinc-400 text-xs font-sans mt-1">
-              Carregando modelo... {downloadProgress.toFixed(1)}%
-            </Text>
-          )}
         </View>
         <TouchableOpacity 
+          onPress={isGenerating ? cancelGeneration : undefined} 
           className="w-[80px] items-end"
-          onPress={() => {
-            setMessages([]);
-            reset();
-          }}
         >
-          <Ionicons name="refresh" size={24} color="#A1A1AA" />
+          {isGenerating && (
+            <Ionicons name="stop" size={20} color="#ffa41f" />
+          )}
         </TouchableOpacity>
       </View>
 
+      {/* Seção de estatísticas */}
       <ChatStatsSection />
 
+      {/* Área de chat */}
       <View className="flex-1 relative">
-        <ScrollView 
-          ref={scrollViewRef}
-          style={{ flex: 1 }}
-          contentContainerStyle={{ padding: 16, paddingBottom: 20 }}
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          renderItem={renderMessage}
+          keyExtractor={(item, index) => `message-${index}`}
+          contentContainerStyle={{ 
+            padding: 16, 
+            paddingBottom: 20,
+            flexGrow: 1 
+          }}
           showsVerticalScrollIndicator={false}
-        >
-          {messages.length === 0 ? (
-            <View className="flex-1 justify-center items-center">
-              <Text className="text-zinc-400 text-center font-sans text-base">
-                {!modelReady && downloadProgress > 0 && downloadProgress < 100
-                  ? `Preparando o assistente...\n${downloadProgress.toFixed(1)}%`
-                  : 'Comece uma conversa enviando uma mensagem'}
-              </Text>
-            </View>
-          ) : (
-            messages.map(renderMessage)
-          )}
-          
-          {loading && (
-            <View className="w-full mb-4">
-              <View className="w-full px-2">
-                <Text className="text-zinc-400 font-sans">Digitando...</Text>
-              </View>
-            </View>
-          )}
-        </ScrollView>
+          ListEmptyComponent={renderEmptyState}
+          ListFooterComponent={renderTypingIndicator}
+        />
       </View>
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View className="w-full rounded-t-[30px] pt-8 pl-6 pb-6" style={{ backgroundColor: '#1e1e1e' }}>
-            <View className="flex-row pr-6">
-              <TextInput
-                value={inputText}
-                onChangeText={setInputText}
-                placeholder={
-                  !modelReady && downloadProgress < 100
-                    ? "Aguardando modelo..."
-                    : loading
-                      ? "Processando..."
-                      : "Digite algo..."
-                }
-                placeholderTextColor="#A1A1AA"
-                multiline
-                textAlignVertical="top"
-                className="flex-1 font-sans text-white font-light text-xl max-h-[120px]"
-                blurOnSubmit={false}
-                onSubmitEditing={handleSendMessage}
-                editable={!loading && modelReady}
+      {/* Composer */}
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <View className="w-full rounded-t-[30px] pt-8 pl-6 pb-6" style={{ backgroundColor: '#1e1e1e' }}>
+          <View className="flex-row pr-6">
+            <TextInput
+              value={input}
+              onChangeText={setInput}
+              placeholder="Digite sua mensagem..."
+              placeholderTextColor="#A1A1AA"
+              multiline
+              textAlignVertical="top"
+              className="flex-1 font-sans text-white font-light text-xl"
+              editable={!isTyping && !isGenerating}
+              onSubmitEditing={handleSend}
+              blurOnSubmit={false}
+            />
+            <TouchableOpacity
+              onPress={handleSend}
+              className={`w-[40px] h-[40px] rounded-full mr-4 pl-1 justify-center items-center ${
+                isSendButtonActive() ? 'bg-[#ffa41f]' : 'bg-zinc-600'
+              }`}
+              activeOpacity={0.8}
+              disabled={!isSendButtonActive()}
+            >
+              <Ionicons 
+                name="send" 
+                size={18} 
+                color={isSendButtonActive() ? '#ffffff' : '#52525b'} 
               />
-              <TouchableOpacity
-                onPress={handleSendMessage}
-                disabled={loading || !inputText.trim() || (!modelReady && downloadProgress < 100)}
-                className={`w-[30px] h-[30px] rounded-full mr-4 pl-1 mt-2 justify-center items-center ${
-                  loading || !inputText.trim() || (!modelReady && downloadProgress < 100)
-                    ? 'bg-zinc-700' 
-                    : 'bg-blue-600'
-                }`}
-              >
-                <Ionicons 
-                  name={loading ? "hourglass" : "send"} 
-                  size={16} 
-                  color={loading || !inputText.trim() || (!modelReady && downloadProgress < 100) ? "#6B7280" : "#FFFFFF"} 
-                />
-              </TouchableOpacity>
-            </View>
+            </TouchableOpacity>
           </View>
-        </TouchableWithoutFeedback>
+
+          {/* Barra de progresso e status */}
+          {(isInitializing || isDownloading || isGenerating || !isReady) && (
+            <View className="mt-4 mr-6">
+              <View className="bg-zinc-700 h-2 rounded-full overflow-hidden">
+                <View 
+                  className="bg-[#ffa41f] h-full rounded-full transition-all duration-300" 
+                  style={{ 
+                    width: `${isDownloading ? downloadProgress : (isReady ? 100 : 0)}%` 
+                  }} 
+                />
+              </View>
+              <Text className="text-zinc-400 text-xs text-center mt-1">
+                {getProgressStatus()}
+              </Text>
+            </View>
+          )}
+        </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
