@@ -11,6 +11,7 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@expo-google-fonts/poppins": "^0.4.0",
     "@expo/metro-runtime": "~5.0.4",
     "@react-native-async-storage/async-storage": "^2.1.2",
     "@react-native-community/datetimepicker": "8.4.1",
@@ -29,7 +30,7 @@
     "expo-calendar": "~14.1.4",
     "expo-constants": "~17.1.6",
     "expo-dev-client": "~5.2.4",
-    "expo-font": "~13.3.1",
+    "expo-font": "~13.3.2",
     "expo-linear-gradient": "~14.1.5",
     "expo-local-authentication": "~16.0.5",
     "expo-notifications": "~0.31.4",

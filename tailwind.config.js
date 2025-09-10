@@ -5,13 +5,17 @@ module.exports = {
     './components/**/*.{js,jsx,ts,tsx}',
     './widgets/**/*.{js,jsx,ts,tsx}',
     './components/comps/**/*.{js,jsx,ts,tsx}',
-
   ],
   presets: [require('nativewind/preset')],
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Poppins'],
+
+        poppins: ['Poppins_400Regular'],
+        'poppins-medium': ['Poppins_500Medium'],
+        'poppins-semibold': ['Poppins_600SemiBold'],
+        'poppins-bold': ['Poppins_700Bold'],
+        'poppins-italic': ['Poppins_400Regular_Italic'],
       },
     },
   },

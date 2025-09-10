@@ -1,6 +1,5 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { useFonts } from 'expo-font';
 import { View, Text } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { useCallback, useEffect, useMemo, useState, createContext } from 'react';
@@ -22,6 +21,16 @@ import MoreScreen from 'components/Screens/More/MoreScreen';
 import NoteScreen from 'components/Screens/Notes/NoteScreen';
 import GoalScreen from 'components/Screens/Goal/GoalScreen';
 import TimerScreen from 'components/Screens/Timer/TimerScreen';
+
+import { useFonts } from 'expo-font';
+import {
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+  Poppins_400Regular_Italic,
+} from '@expo-google-fonts/poppins';
+
 
 // ===== Integração LLM =====
 import { bootstrapLlama } from './llm.config';
@@ -71,9 +80,17 @@ export const LlmContext = createContext<LlmContextType>({
 // =========================================================
 
 export default function App() {
-  const [fontsLoaded] = useFonts({
-    Poppins: require('./assets/Poppins/Poppins-Regular.ttf'),
+
+const [fontsLoaded] = useFonts({
+    // nomes “amigáveis” que você vai usar no fontFamily:
+    Poppins_400Regular,
+    Poppins_500Medium,
+    Poppins_600SemiBold,
+    Poppins_700Bold,
+    Poppins_400Regular_Italic,
   });
+
+
 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isDbReady, setIsDbReady] = useState<boolean | null>(null);
