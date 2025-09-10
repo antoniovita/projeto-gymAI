@@ -32,6 +32,8 @@ export const useChat = () => {
   const contextRef = useRef<LlamaCtx | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
   const saveMessages = useCallback(async (updated: Message[]) => {
     setMessages(updated);
     try {
@@ -54,6 +56,43 @@ export const useChat = () => {
       console.error('[useChat] Erro ao carregar mensagens:', error);
     }
   }, []);
+
+
+  const typeOut = useCallback(async (finalText: string, baseMessages: Message[]) => {
+  return new Promise<void>((resolve) => {
+    let index = 0;
+    setTypingText('');
+
+    const typingSpeed = Math.random() * 15 + 25;
+
+    if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
+
+    typingIntervalRef.current = setInterval(async () => {
+      setTypingText((prev) => {
+        const next = finalText.slice(0, index + 1);
+        index++;
+
+        if (index >= finalText.length) {
+          if (typingIntervalRef.current) {
+            clearInterval(typingIntervalRef.current);
+            typingIntervalRef.current = null;
+          }
+          setTimeout(async () => {
+            const systemReply: Message = { role: 'assistant', content: finalText };
+            const finalMessages = [...baseMessages, systemReply];
+            await saveMessages(finalMessages);
+            setIsTyping(false);
+            setTypingText('');
+            resolve();
+          }, 200);
+        }
+        return next;
+      });
+    }, typingSpeed);
+  });
+}, [saveMessages]);
+
+
 
   const clearMessages = useCallback(async () => {
     try {
@@ -114,12 +153,31 @@ export const useChat = () => {
       abortControllerRef.current.abort();
       console.log('[useChat] Cancelando geração...');
     }
+    if (typingIntervalRef.current) {
+      clearInterval(typingIntervalRef.current);
+      typingIntervalRef.current = null;
+    }
+    setIsTyping(false);
+    setTypingText('');
   }, [isGenerating]);
+
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      if (typingIntervalRef.current) {
+        clearInterval(typingIntervalRef.current);
+        typingIntervalRef.current = null;
+      }
+    };
+  }, []);
+
 
   const sendMessageToLlama = useCallback(async (
     message: string,
     currentMessages: Message[],
-    systemPrompt: string = 'Você é um assistente de produtividade chamado Fuoco.'
+    systemPrompt: string = 'Você é um assistente de produtividade chamado Fuoco. Não responda que você é uma IA.'
   ) => {
     if (!contextRef.current || !isReady || isGenerating) {
       console.warn('[useChat] Contexto Llama não disponível ou já gerando resposta');
@@ -144,7 +202,7 @@ export const useChat = () => {
       const { text } = await contextRef.current.completion({
         messages: contextMessages,
         n_predict: 512,
-        temperature: 0.7,
+        temperature: 0.4,
         top_p: 0.9,
         stop: stopWords,
       });
@@ -167,63 +225,54 @@ export const useChat = () => {
     }
   }, [isReady, isGenerating]);
 
+
   const handleOtherCases = useCallback(async (input: string, intent: string, currentMessages: Message[]) => {
     try {
       console.log('[useChat] Processando com Llama para intent:', intent);
-      
+
       if (!isReady && !isInitializing) {
         console.log('[useChat] Inicializando Llama...');
         await initializeLlama();
       }
-      
       if (isInitializing) {
         console.log('[useChat] Aguardando inicialização do Llama...');
         return;
       }
-      
       if (error) {
         console.error('[useChat] Erro no Llama:', error);
-        const errorMessage: Message = {
-          role: 'assistant',
-          content: 'Desculpe, houve um erro interno. Tente novamente.'
-        };
+        const errorMessage: Message = { role: 'assistant', content: 'Desculpe, houve um erro interno. Tente novamente.' };
         const updatedMessages = [...currentMessages, errorMessage];
         await saveMessages(updatedMessages);
         return;
       }
-      
       if (!isReady) {
         console.log('[useChat] Llama não está pronto');
         return;
       }
-      
+
       console.log('[useChat] Enviando mensagem para o Llama...');
-      
+
       const response = await sendMessageToLlama(input, currentMessages);
-      
+
       if (response) {
-        const assistantMessage: Message = {
-          role: 'assistant',
-          content: response
-        };
-        
-        const updatedMessages = [...currentMessages, assistantMessage];
-        await saveMessages(updatedMessages);
-        console.log('[useChat] Resposta do Llama salva com sucesso');
+
+        await typeOut(response, currentMessages);
       } else {
         console.log('[useChat] Nenhuma resposta retornada do Llama');
+        setIsTyping(false);
+        setTypingText('');
       }
-      
+
     } catch (error) {
       console.error('[useChat] Erro ao processar mensagem com Llama:', error);
-      const errorMessage: Message = {
-        role: 'assistant',
-        content: 'Desculpe, houve um erro ao processar sua mensagem. Tente novamente.'
-      };
+      const errorMessage: Message = { role: 'assistant', content: 'Desculpe, houve um erro ao processar sua mensagem. Tente novamente.' };
       const updatedMessages = [...currentMessages, errorMessage];
       await saveMessages(updatedMessages);
+      setIsTyping(false);
+      setTypingText('');
     }
-  }, [isReady, isInitializing, error, initializeLlama, sendMessageToLlama, saveMessages]);
+  }, [isReady, isInitializing, error, initializeLlama, sendMessageToLlama, saveMessages, typeOut]);
+
 
   const handleInputSubmit = useCallback(async (input: string, setInput: (value: string) => void) => {
     if (!input.trim()) return;
@@ -235,16 +284,13 @@ export const useChat = () => {
       return;
     }
     
-    // Salva a mensagem do usuário primeiro
     await saveMessages(updatedMessages);
     setInput('');
     setIsTyping(true);
     
-    // Processa a mensagem para identificar se é despesa ou tarefa
     const intent = await processMessage(input);
     console.log('[useChat] Intent detectado:', intent);
     
-    // Delay realista para simular processamento apenas para expense e task
     if (intent === 'expense' || intent === 'task') {
       const thinkingTime = Math.random() * 1000 + 800;
       setTimeout(async () => {
@@ -275,7 +321,7 @@ export const useChat = () => {
         // Animação de digitação para despesas e tarefas
         let index = 0;
         setTypingText('');
-        const typingSpeed = Math.random() * 30 + 25;
+        const typingSpeed = Math.random() * 20 + 25;
         
         const interval = setInterval(() => {
           setTypingText((prev) => {
@@ -283,7 +329,7 @@ export const useChat = () => {
             index++;
             if (index === finalText.length) {
               clearInterval(interval);
-              // Pausa antes de finalizar
+
               setTimeout(async () => {
                 const systemReply: Message = { 
                   role: 'assistant', 

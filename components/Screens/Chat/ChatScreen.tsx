@@ -28,7 +28,6 @@ export default function ChatScreen() {
     // Estados do Llama
     isInitializing,
     isDownloading,
-    downloadProgress,
     isReady,
     error,
     isGenerating,
@@ -66,7 +65,7 @@ export default function ChatScreen() {
   const markdownStyles = {
     body: {
       color: '#ffffff',
-      fontSize: 15,
+      fontSize: 16,
       lineHeight: 22,
     },
     heading1: {
@@ -168,14 +167,14 @@ export default function ChatScreen() {
     
     return (
       <View 
-        className={`mb-6 ${isUser ? 'items-end' : 'items-start'}`}
+        className={` ${isUser ? 'items-end' : 'items-start'}`}
         key={`message-${index}`}
       >
-        <View className={`rounded-3xl px-4 py-3 ${
-          isUser ? 'bg-[#1e1e1e]' : 'bg-transparent'
-        }`}>
+        <View className={`rounded-3xl ${
+          isUser ? 'px-5 bg-[#1e1e1e] max-w-[85%]' : 'bg-transparent px-1'
+        } py-3`}>
           {isUser ? (
-            <Text className="text-white text-[15px] font-sans">
+            <Text className="text-white text-[16px] font-sans">
               {item.content}
             </Text>
           ) : (
@@ -188,19 +187,30 @@ export default function ChatScreen() {
     );
   };
 
-  // Função para renderizar o indicador de digitação
+  // Função para renderizar o indicador de digitação com animação
   const renderTypingIndicator = () => {
-    if (!isTyping) return null;
+    const showTyping = isTyping || isGenerating;
+    
+    if (!showTyping) return null;
     
     return (
       <View className="mb-6 items-start">
-        <View className="rounded-3xl px-4 py-3 bg-zinc-700 max-w-[85%]">
-          <View className="flex-row items-center">
-            <Ionicons name="ellipsis-horizontal" size={20} color="white" />
-            <Text className="text-white ml-2 text-sm">
-              {typingText || 'Pensando...'}
-            </Text>
-          </View>
+        <View className="rounded-3xl px-4 py-3 bg-transparent">
+          {typingText && typingText.length > 0 ? (
+            // Se há texto sendo digitado, mostra com animação caractere por caractere
+            <Markdown style={markdownStyles}>
+              {typingText + ' |'}
+            </Markdown>
+          ) : (
+            // Estados de loading padrão
+            <View className="flex-row items-center">
+              <Ionicons name="ellipsis-horizontal" size={20} color="white" />
+              <Text className="text-white ml-2 text-sm">
+                {isTyping ? 'Pensando...' : 
+                 'Processando...'}
+              </Text>
+            </View>
+          )}
         </View>
       </View>
     );
@@ -232,44 +242,24 @@ export default function ChatScreen() {
     return input.trim() && !isTyping && !isGenerating && (isReady || (!isInitializing && !isDownloading));
   };
 
-  // Função para determinar o status do progresso
-  const getProgressStatus = () => {
-    if (isInitializing && !isDownloading) {
-      return 'Inicializando modelo...';
-    }
-    if (isDownloading) {
-      return `Baixando modelo... ${Math.round(downloadProgress)}%`;
-    }
-    if (isGenerating) {
-      return 'Gerando resposta...';
-    }
-    if (isReady) {
-      return 'Pronto para conversar!';
-    }
-    if (error) {
-      return 'Erro - toque no botão de envio para tentar novamente';
-    }
-    return 'Preparando assistente...';
-  };
-
   return (
     <SafeAreaView className={`flex-1 bg-zinc-800 ${Platform.OS === 'android' && 'py-[30px]'}`}>
       {/* Header */}
-      <View className="mt-8 px-4 mb-6 flex-row items-center justify-between">
-        <TouchableOpacity onPress={clearMessages} className="w-[80px]">
-          <Ionicons name="trash-outline" size={20} color="#A1A1AA" />
-        </TouchableOpacity>
+      <View className="mt-9 px-4 mb-6 flex-row items-center justify-between">
+        <View className="w-[80px]" />
         <View className="absolute left-0 right-0 items-center">
           <Text className="text-white font-sans text-[18px] font-medium">Assistente</Text>
         </View>
-        <TouchableOpacity 
-          onPress={isGenerating ? cancelGeneration : undefined} 
-          className="w-[80px] items-end"
-        >
-          {isGenerating && (
-            <Ionicons name="stop" size={20} color="#ffa41f" />
-          )}
-        </TouchableOpacity>
+        <View className="flex-row items-center gap-4 mr-1">
+          {/* Botão para limpar mensagens (opcional) */}
+          <TouchableOpacity
+            onPress={clearMessages}
+            className="w-8 h-8 rounded-full bg-zinc-700 justify-center items-center"
+            activeOpacity={0.7}
+          >
+            <Ionicons name="trash-outline" size={16} color="#ffffff" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Seção de estatísticas */}
@@ -290,6 +280,12 @@ export default function ChatScreen() {
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={renderEmptyState}
           ListFooterComponent={renderTypingIndicator}
+          onContentSizeChange={() => {
+            // Auto scroll para a última mensagem
+            setTimeout(() => {
+              flatListRef.current?.scrollToEnd({ animated: true });
+            }, 200);
+          }}
         />
       </View>
 
@@ -303,11 +299,13 @@ export default function ChatScreen() {
               placeholder="Digite sua mensagem..."
               placeholderTextColor="#A1A1AA"
               multiline
+              maxLength={500}
               textAlignVertical="top"
-              className="flex-1 font-sans text-white font-light text-xl"
+              className="flex-1 font-sans text-white font-light text-xl max-h-32"
               editable={!isTyping && !isGenerating}
               onSubmitEditing={handleSend}
               blurOnSubmit={false}
+              returnKeyType="send"
             />
             <TouchableOpacity
               onPress={handleSend}
@@ -324,23 +322,6 @@ export default function ChatScreen() {
               />
             </TouchableOpacity>
           </View>
-
-          {/* Barra de progresso e status */}
-          {(isInitializing || isDownloading || isGenerating || !isReady) && (
-            <View className="mt-4 mr-6">
-              <View className="bg-zinc-700 h-2 rounded-full overflow-hidden">
-                <View 
-                  className="bg-[#ffa41f] h-full rounded-full transition-all duration-300" 
-                  style={{ 
-                    width: `${isDownloading ? downloadProgress : (isReady ? 100 : 0)}%` 
-                  }} 
-                />
-              </View>
-              <Text className="text-zinc-400 text-xs text-center mt-1">
-                {getProgressStatus()}
-              </Text>
-            </View>
-          )}
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
