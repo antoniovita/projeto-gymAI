@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "dayo",
-    "slug": "dayo",
+    "name": "Fuoco",
+    "slug": "Fuoco",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,7 +16,7 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.dayodev.dayo",
+      "bundleIdentifier": "com.fuocodev.fuoco",
       "infoPlist": {
         "NSFaceIDUsageDescription": "Precisamos usar o Face ID para proteger seu PIN.",
         "ITSAppUsesNonExemptEncryption": false
@@ -27,7 +27,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.dayodev.dayo"
+      "package": "com.fuocodev.fuoco"
     },
     "web": {
       "favicon": "./assets/favicon.png"

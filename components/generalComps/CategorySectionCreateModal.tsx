@@ -60,7 +60,7 @@ const CategorySectionCreateModal: React.FC<CategorySectionCreateModalProps> = ({
                   }}
                 />
                 <Text
-                  className={`font-sans text-sm ${
+                  className={`font-poppins text-sm ${
                     isSelected ? 'text-white' : 'text-white'
                   }`}
                 >
@@ -85,7 +85,7 @@ const CategorySectionCreateModal: React.FC<CategorySectionCreateModalProps> = ({
           className={`flex-row items-center gap-2 px-2.5 py-1 rounded-xl ${unselectedColor}`}
         >
           <Ionicons name="add" size={16} color="white" />
-          <Text className="text-white text-sm font-sans">{addButtonText}</Text>
+          <Text className="text-white text-sm font-poppins">{addButtonText}</Text>
         </Pressable>
       )}
     </View>

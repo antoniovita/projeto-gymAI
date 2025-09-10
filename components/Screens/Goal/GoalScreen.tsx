@@ -26,11 +26,11 @@ const EmptyState = ({ onCreateGoal }: { onCreateGoal: () => void }) => {
           <Ionicons name="trophy-outline" size={60} color="gray" />
         </View>
         
-        <Text className="text-neutral-400 text-xl font-sans mb-2 text-center">
+        <Text className="text-neutral-400 text-xl font-poppins mb-2 text-center">
           Nenhuma meta criada
         </Text>
         
-        <Text className="text-neutral-400 text-sm font-sans mb-4 text-center" style={{ maxWidth: 230 }}>
+        <Text className="text-neutral-400 text-sm font-poppins mb-4 text-center" style={{ maxWidth: 230 }}>
           Crie sua primeira meta para começar
         </Text>
       </View>
@@ -80,8 +80,8 @@ const StatisticsView = ({ goals }: { goals: Goal[] }) => {
             <Ionicons name="stats-chart" size={16} color="#fb7185" />
           </View>
           <View className="flex-col">
-            <Text className="text-zinc-400 font-sans text-xs mb-1">Estatísticas gerais</Text>
-            <Text className="text-white font-sans text-sm font-semibold">
+            <Text className="text-zinc-400 font-poppins text-xs mb-1">Estatísticas gerais</Text>
+            <Text className="text-white font-poppins text-sm font-semibold">
               {totalGoals} {totalGoals === 1 ? 'meta' : 'metas'}  •  {averageProgress}% de progresso médio
             </Text>
           </View>
@@ -92,17 +92,17 @@ const StatisticsView = ({ goals }: { goals: Goal[] }) => {
       <View className="flex-row items-center gap-2">
         <Pressable className="flex-row items-center gap-1.5 bg-zinc-700 rounded-xl px-3 py-1 flex-1">
           <Feather name="check-circle" size={14} color="#10b981" />
-            <Text className="text-white font-sans text-sm">{completedGoals} concluídas </Text>
+            <Text className="text-white font-poppins text-sm">{completedGoals} concluídas </Text>
         </Pressable>
 
         <Pressable className="flex-row items-center gap-1.5 bg-zinc-700 rounded-xl px-3 py-1 flex-1">
           <Ionicons name="time-outline" size={15} color="#f59e0b" />
-            <Text className="text-white font-sans text-sm">{upcomingGoals} {goals.length == 1 ? "pendente" : "pendentes"}</Text>
+            <Text className="text-white font-poppins text-sm">{upcomingGoals} {goals.length == 1 ? "pendente" : "pendentes"}</Text>
         </Pressable>
 
         <Pressable className="flex-row items-center gap-1.5 bg-zinc-700 rounded-xl px-3 py-1 flex-1">
           <Feather name="x-circle" size={14} color="#ff7a7f" />
-            <Text className="text-white font-sans text-sm">{overdueGoals} {overdueGoals == 1 ? "atrasada" : "atrasadas"}</Text>
+            <Text className="text-white font-poppins text-sm">{overdueGoals} {overdueGoals == 1 ? "atrasada" : "atrasadas"}</Text>
         </Pressable>
       </View>
     </View>
@@ -302,18 +302,18 @@ const GoalScreen: React.FC = () => {
           <View className="w-full flex flex-col justify-center px-6 py-4 border-b border-neutral-700 bg-zinc-800">
             <View className="flex flex-row justify-between items-start mb-3">
               <View className="flex-1">
-                <Text className="text-white text-lg mb-1 font-sans line-clamp-1">{item.name}</Text>
+                <Text className="text-white text-lg mb-1 font-poppins line-clamp-1">{item.name}</Text>
                 {item.description && (
-                  <Text className="text-zinc-400 text-sm mb-2 font-sans line-clamp-1">{item.description}</Text>
+                  <Text className="text-zinc-400 text-sm mb-2 font-poppins line-clamp-1">{item.description}</Text>
                 )}
-                <Text className="text-zinc-500 text-xs font-sans">{formatDate(item.deadline)}</Text>
+                <Text className="text-zinc-500 text-xs font-poppins">{formatDate(item.deadline)}</Text>
               </View>
             </View>
             
             {/* Progress Bar */}
             <View>
               <View className="flex absolute bottom-2 right-1 flex-row justify-between mb-2">
-                <Text className="text-white text-sm font-sans">{item.progress}%</Text>
+                <Text className="text-white text-sm font-poppins">{item.progress}%</Text>
               </View>
               <View className="bg-zinc-600 h-2 rounded-full overflow-hidden">
                 <View 
@@ -353,10 +353,10 @@ const GoalScreen: React.FC = () => {
       <View className="mt-5 px-4 mb-6 flex-row items-center justify-between">
         <Pressable onPress={handleGoBack} className="flex-row items-center">
           <Ionicons name="chevron-back" size={24} color="white" />
-          <Text className="ml-1 text-white font-sans text-[16px]">Voltar</Text>
+          <Text className="ml-1 text-white font-poppins text-[16px]">Voltar</Text>
         </Pressable>
         <View className="absolute left-0 right-0 items-center">
-          <Text className="text-white font-sans text-[18px] font-medium">Metas</Text>
+          <Text className="text-white font-poppins text-[18px] font-medium">Metas</Text>
         </View>
         <View className="flex-row items-center gap-4 mr-1">
           <Pressable 
@@ -370,9 +370,9 @@ const GoalScreen: React.FC = () => {
       {/* Error Display */}
       {error && (
         <View className="mx-6 mb-4 bg-red-900/20 border border-red-500/30 rounded-lg p-3">
-          <Text className="text-red-400 font-sans text-sm">{error}</Text>
+          <Text className="text-red-400 font-poppins text-sm">{error}</Text>
           <Pressable onPress={clearError} className="mt-2">
-            <Text className="text-red-300 font-sans text-xs">Dispensar</Text>
+            <Text className="text-red-300 font-poppins text-xs">Dispensar</Text>
           </Pressable>
         </View>
       )}

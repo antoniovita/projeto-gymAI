@@ -79,7 +79,7 @@ const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
             onPress={onClose}
           >
             <Ionicons name="chevron-back" size={28} color="white" />
-            <Text className="text-white text-lg font-sans ml-1">Voltar</Text>
+            <Text className="text-white text-lg font-poppins ml-1">Voltar</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
@@ -88,7 +88,7 @@ const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
             disabled={!newTaskTitle.trim() || !selectedExpenseType}
           >
             <Text 
-              className={`text-lg font-semibold font-sans ${
+              className={`text-lg font-semibold font-poppins ${
                 (!newTaskTitle.trim() || !selectedExpenseType) 
                   ? 'text-zinc-500' 
                   : 'text-[#ffa41f]'
@@ -107,7 +107,7 @@ const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
               placeholderTextColor="#71717a"
               value={newTaskTitle}
               onChangeText={setNewTaskTitle}
-              className="text-white text-2xl font-sans"
+              className="text-white text-2xl font-poppins"
               multiline
             />
           </View>
@@ -133,7 +133,7 @@ const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
                     color={selectedExpenseType === ExpenseType.GAIN ? "#34D399" : "#71717a"} 
                   />
                   <Text 
-                    className={`font-sans font-medium ${
+                    className={`font-poppins font-medium ${
                       selectedExpenseType === ExpenseType.GAIN
                         ? 'text-emerald-400'
                         : 'text-zinc-400'
@@ -159,7 +159,7 @@ const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
                     color={selectedExpenseType === ExpenseType.LOSS ? "#ff7a7f" : "#71717a"} 
                   />
                   <Text 
-                    className={`font-sans font-medium ${
+                    className={`font-poppins font-medium ${
                       selectedExpenseType === ExpenseType.LOSS
                         ? 'text-red-400'
                         : 'text-zinc-400'
@@ -178,7 +178,7 @@ const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
             </Text>
             <View className="flex-row items-center bg-zinc-700/50 px-3 py-3 rounded-xl">
               <Text
-                className="text-xl font-sans ml-2 mr-1"
+                className="text-xl font-poppins ml-2 mr-1"
                 style={{ color: expenseValue.trim() ? "#fff" : "#71717a" }}
               >
                 R$
@@ -186,7 +186,7 @@ const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
               <TextInput
                 placeholder="0,00"
                 placeholderTextColor="#71717a"
-                className="text-xl font-sans flex-1"
+                className="text-xl font-poppins flex-1"
                 keyboardType="numeric"
                 value={expenseValue}
                 onChangeText={setExpenseValue}
@@ -210,7 +210,7 @@ const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
             <TextInput
               placeholder="Adicione uma descrição para sua despesa..."
               placeholderTextColor="#71717a"
-              className="text-white text-base leading-6 bg-zinc-700/30 font-sans border-zinc-600 rounded-xl px-4 py-3 min-h-[100px]"
+              className="text-white text-base leading-6 bg-zinc-700/30 font-poppins border-zinc-600 rounded-xl px-4 py-3 min-h-[100px]"
               multiline
               textAlignVertical="top"
               value={taskContent}

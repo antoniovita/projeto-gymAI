@@ -16,7 +16,7 @@ import { useState, useEffect, useRef } from 'react';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import Slider from '@react-native-community/slider';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
-import { Goal } from '../../../api/model/Goal';
+import { Goal } from '../../../../api/model/Goal';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 
 interface Update {
@@ -335,7 +335,7 @@ const GoalModal: React.FC<GoalModalProps> = ({
             onPress={onClose}
           >
             <Ionicons name="chevron-back" size={28} color="white" />
-            <Text className="text-white text-lg font-sans ml-1">Voltar</Text>
+            <Text className="text-white text-lg font-poppins ml-1">Voltar</Text>
           </Pressable>
 
           <View className="flex-row items-center space-x-4">
@@ -345,7 +345,7 @@ const GoalModal: React.FC<GoalModalProps> = ({
               className="px-4 py-2"
               disabled={isSaveDisabled()}
             >
-              <Text className={`text-lg font-semibold font-sans ${
+              <Text className={`text-lg font-semibold font-poppins ${
                 isSaveDisabled()
                   ? 'text-zinc-500'
                   : 'text-rose-400'
@@ -364,7 +364,7 @@ const GoalModal: React.FC<GoalModalProps> = ({
               placeholderTextColor="#71717a"
               value={goalName}
               onChangeText={setGoalName}
-              className="text-white text-2xl font-sans"
+              className="text-white text-2xl font-poppins"
               multiline
               autoFocus={mode === 'create'}
               editable={!loading}
@@ -387,7 +387,7 @@ const GoalModal: React.FC<GoalModalProps> = ({
                 size={18} 
                 color={selectedDate ? "#fb7185" : "#71717a"} 
               />
-              <Text className={`text-base font-sans ml-2 ${
+              <Text className={`text-base font-poppins ml-2 ${
                 selectedDate ? 'text-white' : 'text-zinc-400'
               }`}>
                 {selectedDate ? formatDeadlineDate(selectedDate) : "Selecionar prazo"}
@@ -399,7 +399,7 @@ const GoalModal: React.FC<GoalModalProps> = ({
                 className="flex-row items-center  w-full bg-rose-400 rounded-xl justify-center mt-2 py-3"
                 disabled={loading}
               >
-                <Text className="text-white text-md font-sans ml-1">Remover prazo</Text>
+                <Text className="text-white text-md font-poppins ml-1">Remover prazo</Text>
               </Pressable>
             )}
           </View>
@@ -412,7 +412,7 @@ const GoalModal: React.FC<GoalModalProps> = ({
             <TextInput
               placeholder="Descreva sua meta..."
               placeholderTextColor="#71717a"
-              className="text-white text-base leading-6 bg-zinc-700/30 font-sans border-zinc-600 rounded-xl px-4 py-3 min-h-[100px]"
+              className="text-white text-base leading-6 bg-zinc-700/30 font-poppins border-zinc-600 rounded-xl px-4 py-3 min-h-[100px]"
               multiline
               textAlignVertical="top"
               value={goalDescription}
@@ -431,17 +431,17 @@ const GoalModal: React.FC<GoalModalProps> = ({
                 </Text>
                 <View className="bg-zinc-700/30 px-4 py-4 rounded-xl">
                   <View className="flex-row justify-between mb-4">
-                    <Text className="text-white font-sans text-lg">Progresso</Text>
+                    <Text className="text-white font-poppins text-lg">Progresso</Text>
                     <View className="flex-row items-center">
                       {(selectedGoal?.progress || 0) === 100 && (
                         <View className=" bg-green-500/20 px-2 py-1 rounded-full">
-                          <Text className="text-green-400 text-xs font-sans font-medium">
+                          <Text className="text-green-400 text-xs font-poppins font-medium">
                             Concluída
                           </Text>
                         </View>
                       )}
                        {!(selectedGoal?.progress! === 100) && (
-                      <Text className="text-white font-medium font-sans text-lg">
+                      <Text className="text-white font-medium font-poppins text-lg">
                         {selectedGoal?.progress || 0}%
                       </Text> 
                       )} 
@@ -461,7 +461,7 @@ const GoalModal: React.FC<GoalModalProps> = ({
                   
                   <View className="flex-row items-center justify-center">
                     <Ionicons name="information-circle-outline" size={14} color="#71717a" />
-                    <Text className="text-zinc-400 text-xs font-sans ml-1">
+                    <Text className="text-zinc-400 text-xs font-poppins ml-1">
                       Use o botão flutuante para adicionar atualizações
                     </Text>
                   </View>
@@ -480,7 +480,7 @@ const GoalModal: React.FC<GoalModalProps> = ({
                       className="px-3 py-1"
                       disabled={loading}
                     >
-                      <Text className="text-rose-400 font-sans text-sm">Limpar Todas</Text>
+                      <Text className="text-rose-400 font-poppins text-sm">Limpar Todas</Text>
                     </Pressable>
                   </View>
                   
@@ -501,7 +501,7 @@ const GoalModal: React.FC<GoalModalProps> = ({
                           <View className="flex-row justify-between items-start">
                             <View className="flex-1">
                               <View className="flex-row items-center mb-1">
-                                <Text className="text-white font-medium text-lg font-sans flex-1" numberOfLines={2}>
+                                <Text className="text-white font-medium text-lg font-poppins flex-1" numberOfLines={2}>
                                   {update.name}
                                 </Text>
                                 <View className="flex-row items-center ml-2">
@@ -512,7 +512,7 @@ const GoalModal: React.FC<GoalModalProps> = ({
                                   ) : (
                                     <Ionicons name="remove-circle-outline" className="absolute right-[160%]" size={20} color="#71717a" />
                                   )} */}
-                                  <Text className={`text-md font-sans ml-1 font-medium ${
+                                  <Text className={`text-md font-poppins ml-1 font-medium ${
                                     update.progress > update.previousProgress 
                                       ? 'text-green-400' 
                                       : update.progress < update.previousProgress 
@@ -523,7 +523,7 @@ const GoalModal: React.FC<GoalModalProps> = ({
                                   </Text>
                                 </View>
                               </View>
-                              <Text className="text-zinc-400 text-xs font-sans">
+                              <Text className="text-zinc-400 text-xs font-poppins">
                                 {formatTimestamp(update.timestamp)}
                               </Text>
                             </View>
@@ -611,7 +611,7 @@ const GoalModal: React.FC<GoalModalProps> = ({
                       <TextInput
                         placeholder="Insira o progresso realizado..."
                         placeholderTextColor="#52525b"
-                        className="text-white text-xl font-sans py-4"
+                        className="text-white text-xl font-poppins py-4"
                         multiline
                         textAlignVertical="top"
                         value={updateName}
@@ -627,9 +627,9 @@ const GoalModal: React.FC<GoalModalProps> = ({
                       <View className="bg-zinc-700/30 rounded-xl p-5">
                         {/* Progress Display */}
                         <View className="flex-row justify-between items-center mb-6">
-                          <Text className="text-zinc-300 font-sans text-base">Progresso atual</Text>
+                          <Text className="text-zinc-300 font-poppins text-base">Progresso atual</Text>
                           <View className='bg-zinc-800 w-[80px] h-[40px] absolute right-2 top-[-100%] rounded-b-2xl flex items-center justify-center'>
-                            <Text className="text-white font-semibold font-sans text-xl ml-2">
+                            <Text className="text-white font-semibold font-poppins text-xl ml-2">
                               {updateProgress}%
                             </Text>
                           </View>
@@ -649,8 +649,8 @@ const GoalModal: React.FC<GoalModalProps> = ({
                           disabled={loading}
                         />
                         <View className="flex-row justify-between mt-2">
-                          <Text className="text-zinc-500 text-sm font-sans">0%</Text>
-                          <Text className="text-zinc-500 text-sm font-sans">100%</Text>
+                          <Text className="text-zinc-500 text-sm font-poppins">0%</Text>
+                          <Text className="text-zinc-500 text-sm font-poppins">100%</Text>
                         </View>
                         
                       </View>
@@ -665,7 +665,7 @@ const GoalModal: React.FC<GoalModalProps> = ({
                         className="flex-1 py-4 px-6 bg-zinc-700/30 rounded-xl items-center"
                         disabled={loading}
                       >
-                        <Text className="text-zinc-300 font-sans font-medium">Cancelar</Text>
+                        <Text className="text-zinc-300 font-poppins font-medium">Cancelar</Text>
                       </Pressable>
 
                       <Pressable
@@ -677,7 +677,7 @@ const GoalModal: React.FC<GoalModalProps> = ({
                         }`}
                         disabled={loading || !updateName.trim()}
                       >
-                        <Text className={`font-semibold font-sans ${
+                        <Text className={`font-semibold font-poppins ${
                           loading ? 'text-zinc-400' : 'text-black'
                         }`}>
                           {loading ? 'Salvando...' : 'Salvar Update'}

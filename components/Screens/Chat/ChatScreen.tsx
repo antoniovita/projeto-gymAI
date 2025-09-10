@@ -9,11 +9,13 @@ import {
   FlatList,
   TouchableOpacity,
   Alert,
+  Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Markdown from 'react-native-markdown-display';
 import ChatStatsSection from './comps/ChatStatsSection';
 import { useChat, Message } from '../../../hooks/useChat';
+import GradientIcon from 'components/generalComps/GradientIcon';
 
 export default function ChatScreen() {
   const [input, setInput] = useState('');
@@ -66,38 +68,43 @@ export default function ChatScreen() {
     body: {
       color: '#ffffff',
       fontSize: 16,
-      lineHeight: 22,
+      lineHeight: 25,
+      fontFamily: 'Poppins_400Regular',
     },
     heading1: {
       color: '#ffffff',
       fontSize: 30,
-      fontWeight: 'bold' as const,
+      lineHeight: 25,
+      fontFamily: 'Poppins_600SemiBold',
       marginBottom: 12,
       marginTop: 16,
     },
     heading2: {
       color: '#ffffff',
       fontSize: 22,
-      fontWeight: 'bold' as const,
+      lineHeight: 25,
+      fontFamily: 'Poppins_600SemiBold',
       marginBottom: 8,
       marginTop: 12,
     },
     heading3: {
       color: '#ffffff',
       fontSize: 20,
-      fontWeight: 'bold' as const,
+      fontFamily: 'Poppins_600SemiBold',
       marginBottom: 6,
+      lineHeight: 25,
       marginTop: 10,
     },
     paragraph: {
       color: '#ffffff',
       fontSize: 17,
-      lineHeight: 22,
+      lineHeight: 25,
+      wordSpacing: 20,
       marginBottom: 8,
     },
     strong: {
       color: '#ffffff',
-      fontWeight: 'bold' as const,
+      fontFamily: 'Poppins_600SemiBold',
     },
     em: {
       color: '#ffffff',
@@ -142,7 +149,7 @@ export default function ChatScreen() {
     bullet_list: { marginVertical: 4 },
     ordered_list: { marginVertical: 4 },
     list_item: { flexDirection: 'row' as const, marginVertical: 2 },
-    bullet_list_icon: { color: '#ffffff', marginRight: 8, fontSize: 15, lineHeight: 22 },
+    bullet_list_icon: { color: '#ffffff', marginRight: 8, fontSize: 60, lineHeight: 54},
     bullet_list_content: { flex: 1 },
     ordered_list_content: { flex: 1 },
     table: {
@@ -170,11 +177,11 @@ export default function ChatScreen() {
         className={` ${isUser ? 'items-end' : 'items-start'}`}
         key={`message-${index}`}
       >
-        <View className={`rounded-3xl ${
+        <View className={`rounded-3xl mb-2 ${
           isUser ? 'px-5 bg-[#1e1e1e] max-w-[85%]' : 'bg-transparent px-1'
         } py-3`}>
           {isUser ? (
-            <Text className="text-white text-[16px] font-sans">
+            <Text className="text-white text-[16px] font-poppins">
               {item.content}
             </Text>
           ) : (
@@ -195,7 +202,7 @@ export default function ChatScreen() {
     
     return (
       <View className="mb-6 items-start">
-        <View className="rounded-3xl px-4 py-3 bg-transparent">
+        <View className="rounded-3xl px-1 py-3 bg-transparent">
           {typingText && typingText.length > 0 ? (
             // Se há texto sendo digitado, mostra com animação caractere por caractere
             <Markdown style={markdownStyles}>
@@ -205,7 +212,7 @@ export default function ChatScreen() {
             // Estados de loading padrão
             <View className="flex-row items-center">
               <Ionicons name="ellipsis-horizontal" size={20} color="white" />
-              <Text className="text-white ml-2 text-sm">
+              <Text className="text-white ml-2 text-[16px] font-poppins">
                 {isTyping ? 'Pensando...' : 
                  'Processando...'}
               </Text>
@@ -245,20 +252,15 @@ export default function ChatScreen() {
   return (
     <SafeAreaView className={`flex-1 bg-zinc-800 ${Platform.OS === 'android' && 'py-[30px]'}`}>
       {/* Header */}
-      <View className="mt-9 px-4 mb-6 flex-row items-center justify-between">
+      <View className="mt-5 mb-2 px-4 flex-row items-center justify-between">
         <View className="w-[80px]" />
         <View className="absolute left-0 right-0 items-center">
-          <Text className="text-white font-sans text-[18px] font-medium">Assistente</Text>
+          <Text className="text-white font-poppins text-[18px] font-medium">Assistente</Text>
         </View>
         <View className="flex-row items-center gap-4 mr-1">
-          {/* Botão para limpar mensagens (opcional) */}
-          <TouchableOpacity
-            onPress={clearMessages}
-            className="w-8 h-8 rounded-full bg-zinc-700 justify-center items-center"
-            activeOpacity={0.7}
-          >
-            <Ionicons name="trash-outline" size={16} color="#ffffff" />
-          </TouchableOpacity>
+          <Pressable onPress={clearMessages}>
+            <GradientIcon name='trash'/>
+          </Pressable>
         </View>
       </View>
 
@@ -291,7 +293,7 @@ export default function ChatScreen() {
 
       {/* Composer */}
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <View className="w-full rounded-t-[30px] pt-8 pl-6 pb-6" style={{ backgroundColor: '#1e1e1e' }}>
+        <View className="w-full rounded-t-[30px] pt-6 pl-6 pb-6" style={{ backgroundColor: '#1e1e1e' }}>
           <View className="flex-row pr-6">
             <TextInput
               value={input}
@@ -301,7 +303,7 @@ export default function ChatScreen() {
               multiline
               maxLength={500}
               textAlignVertical="top"
-              className="flex-1 font-sans text-white font-light text-xl max-h-32"
+              className="flex-1 font-poppins text-white font-light text-xl max-h-32"
               editable={!isTyping && !isGenerating}
               onSubmitEditing={handleSend}
               blurOnSubmit={false}
@@ -309,16 +311,15 @@ export default function ChatScreen() {
             />
             <TouchableOpacity
               onPress={handleSend}
-              className={`w-[40px] h-[40px] rounded-full mr-4 pl-1 justify-center items-center ${
-                isSendButtonActive() ? 'bg-[#ffa41f]' : 'bg-zinc-600'
+              className={`w-[43px] h-[43px] rounded-full mr-4 justify-center items-center bg-white
               }`}
               activeOpacity={0.8}
               disabled={!isSendButtonActive()}
             >
               <Ionicons 
-                name="send" 
-                size={18} 
-                color={isSendButtonActive() ? '#ffffff' : '#52525b'} 
+                name="arrow-up" 
+                size={23} 
+                color={isSendButtonActive() ? 'black' : '#52525b'} 
               />
             </TouchableOpacity>
           </View>

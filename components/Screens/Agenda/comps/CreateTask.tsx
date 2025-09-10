@@ -62,7 +62,7 @@ export default function TaskModal({
             onPress={onClose}
           >
             <Ionicons name="chevron-back" size={28} color="white" />
-            <Text className="text-white text-lg font-sans ml-1">Voltar</Text>
+            <Text className="text-white text-lg font-poppins ml-1">Voltar</Text>
           </TouchableOpacity>
           
           <TouchableOpacity
@@ -70,7 +70,7 @@ export default function TaskModal({
             className="px-4 py-2"
             disabled={!newTaskTitle.trim()}
           >
-            <Text className="text-[#ffa41f] text-lg font-semibold font-sans">
+            <Text className="text-[#ffa41f] text-lg font-semibold font-poppins">
               Salvar
             </Text>
           </TouchableOpacity>
@@ -83,7 +83,7 @@ export default function TaskModal({
               placeholderTextColor="#71717a"
               value={newTaskTitle}
               onChangeText={setNewTaskTitle}
-              className="text-white text-2xl font-sans"
+              className="text-white text-2xl font-poppins"
               multiline
             />
           </View>
@@ -98,7 +98,7 @@ export default function TaskModal({
                 className="flex-row items-center bg-zinc-700/50 border border-[#ffa41f] px-4 py-3 rounded-xl flex-1"
               >
                 <GradientIcon name="calendar" size={18} />
-                <Text className="text-white text-base font-sans ml-2">
+                <Text className="text-white text-base font-poppins ml-2">
                   {date.toLocaleDateString('pt-BR')}
                 </Text>
               </TouchableOpacity>
@@ -108,7 +108,7 @@ export default function TaskModal({
                 className="flex-row items-center bg-zinc-700/50 border border-[#ffa41f] px-4 py-3 rounded-xl flex-1"
               >
                 <GradientIcon name="time" size={18} />
-                <Text className="text-white text-base font-sans ml-2">
+                <Text className="text-white text-base font-poppins ml-2">
                   {time.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                 </Text>
               </TouchableOpacity>
@@ -141,7 +141,7 @@ export default function TaskModal({
                       }`}
                     >
                       <Text
-                        className={`font-sans text-sm ${
+                        className={`font-poppins text-sm ${
                           isSelected ? 'text-black font-medium' : 'text-white'
                         }`}
                       >
@@ -154,10 +154,10 @@ export default function TaskModal({
             ) : (
               <View className="bg-zinc-700/30 px-4 py-6 rounded-xl items-center justify-center">
                 <Ionicons name="folder-outline" size={24} color="#71717a" />
-                <Text className="text-zinc-400 text-base font-sans mt-2">
+                <Text className="text-zinc-400 text-base font-poppins mt-2">
                   Nenhuma categoria disponível
                 </Text>
-                <Text className="text-zinc-500 text-sm font-sans mt-1 text-center">
+                <Text className="text-zinc-500 text-sm font-poppins mt-1 text-center">
                   Crie categorias para organizar suas tarefas
                 </Text>
               </View>
@@ -171,7 +171,7 @@ export default function TaskModal({
             <TextInput
               placeholder="Adicione uma descrição para sua tarefa..."
               placeholderTextColor="#71717a"
-              className="text-white leading-6 bg-zinc-700/30 fonts-sans text-lg border-zinc-600 rounded-xl px-4 py-3 min-h-[100px]"
+              className="text-white leading-6 bg-zinc-700/30 fonts-poppins text-lg border-zinc-600 rounded-xl px-4 py-3 min-h-[100px]"
               multiline
               textAlignVertical="top"
               value={taskContent}

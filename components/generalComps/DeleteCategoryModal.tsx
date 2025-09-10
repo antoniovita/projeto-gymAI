@@ -83,10 +83,10 @@ export default function DeleteCategoryModal({
             {categories.length === 0 ? (
               <View className="py-8 items-center">
                 <Ionicons name="folder-outline" size={48} color="#6b7280" className="mb-3" />
-                <Text className="text-neutral-400 font-sans text-center">
+                <Text className="text-neutral-400 font-poppins text-center">
                   Você ainda não criou categorias.
                 </Text>
-                <Text className="text-neutral-500 font-sans text-sm text-center mt-1">
+                <Text className="text-neutral-500 font-poppins text-sm text-center mt-1">
                   Crie categorias personalizadas na tela principal
                 </Text>
               </View>
@@ -105,7 +105,7 @@ export default function DeleteCategoryModal({
                         backgroundColor: category.color,
                       }}
                     />
-                    <Text className="text-white font-sans text-base">{category.name}</Text>
+                    <Text className="text-white font-poppins text-base">{category.name}</Text>
                   </View>
                   <Pressable
                     onPress={() => handleDeletePress(category.name)}
@@ -122,7 +122,7 @@ export default function DeleteCategoryModal({
             onPress={handleClose}
             className="mt-4 p-2 bg-[#ffa41f] py-3 rounded-xl"
           >
-            <Text className="text-black text-center font-sans">Fechar</Text>
+            <Text className="text-black text-center font-poppins">Fechar</Text>
           </Pressable>
         </Animated.View>
       </View>

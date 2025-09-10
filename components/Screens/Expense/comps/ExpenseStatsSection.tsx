@@ -43,7 +43,7 @@ const ExpenseStatsSection: React.FC<ExpenseStatsSectionProps> = ({
         className="flex-row gap-2 bg-zinc-800/80 items-center absolute left-4 px-3 rounded-b-xl py-1"
       >
         <View style={{width: 8, height: 8, borderRadius: '100%', backgroundColor: '#ffa41f'}}></View>
-        <Text className="font-sans text-sm text-zinc-400">{dateFilterDisplayText}</Text>
+        <Text className="font-poppins text-sm text-zinc-400">{dateFilterDisplayText}</Text>
       </Pressable>
 
 
@@ -53,7 +53,7 @@ const ExpenseStatsSection: React.FC<ExpenseStatsSectionProps> = ({
         pointerEvents="box-none"
       >
         <View className="items-center mt-8">
-          <Text className={`text-3xl font-sans font-semibold text-white`}>
+          <Text className={`text-3xl font-poppins font-semibold text-white`}>
             {isVisible ? formatValue(balance) : hiddenValue}
           </Text>
           <Pressable 
@@ -92,8 +92,8 @@ const ExpenseStatsSection: React.FC<ExpenseStatsSectionProps> = ({
             <Ionicons name="arrow-up" size={16} color="black" />
           </LinearGradient>
           <View className="flex-col">
-            <Text className="text-xs font-sans text-zinc-500">Entradas</Text>
-            <Text className="text-lg font-sans font-medium text-[#ffa41f]">
+            <Text className="text-xs font-poppins text-zinc-500">Entradas</Text>
+            <Text className="text-lg font-poppins font-medium text-[#ffa41f]">
               {isVisible ? formatValue(gains) : hiddenValue}
             </Text>
           </View>
@@ -117,8 +117,8 @@ const ExpenseStatsSection: React.FC<ExpenseStatsSectionProps> = ({
             <Ionicons name="arrow-down" size={16} color="black" />
           </LinearGradient>
           <View className="flex-col">
-            <Text className="text-xs font-sans text-zinc-500">Saídas</Text>
-            <Text className="text-lg font-sans font-medium text-[#ffa41f]">
+            <Text className="text-xs font-poppins text-zinc-500">Saídas</Text>
+            <Text className="text-lg font-poppins font-medium text-[#ffa41f]">
               {isVisible ? formatValue(losses) : hiddenValue}
             </Text>
           </View>

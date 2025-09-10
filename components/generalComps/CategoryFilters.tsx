@@ -44,7 +44,7 @@ const CategoryFilters: React.FC<CategoryFiltersProps> = ({
             <View style={ isSelected ? {backgroundColor: "#000000", width: 10, height: 10, borderRadius: '100%' } : {backgroundColor: category.color, width: 10, height: 10, borderRadius: '100%' } }></View>
 
             <Text
-              className={`font-sans text-sm ${
+              className={`font-poppins text-sm ${
                 isSelected ? 'text-black' : 'text-white'
               }`}
             >
@@ -61,7 +61,7 @@ const CategoryFilters: React.FC<CategoryFiltersProps> = ({
         >
           <Ionicons name="add" size={16} color="white" />
           {categories.length == 0 && (
-            <Text className="text-white text-sm font-sans">{addButtonText}</Text>
+            <Text className="text-white text-sm font-poppins">{addButtonText}</Text>
           )}
         </Pressable>
       ) : (

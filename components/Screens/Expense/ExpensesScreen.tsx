@@ -346,14 +346,14 @@ const ExpensesScreen: React.FC<ExpensesScreenProps> = () => {
         <View className="w-full flex flex-col justify-center px-6 h-[90px] pb-4 border-b border-neutral-700 bg-zinc-800">
           <View className="flex flex-row justify-between">
             <Pressable className="flex flex-col gap-1 mt-1" onPress={() => openEditModal(item)}>
-              <Text className="text-xl font-sans font-medium text-gray-300 max-w-[250px]">
+              <Text className="text-xl font-poppins font-medium text-gray-300 max-w-[250px]">
                 {truncateExpenseName(item.name)}
               </Text>
-              <Text className="text-neutral-400 text-sm mt-1 font-sans">
+              <Text className="text-neutral-400 text-sm mt-1 font-poppins">
                 {new Date(item.date ?? '').toLocaleDateString('pt-BR')} - {new Date(item.time ?? '').toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
               </Text>
             </Pressable>
-            <Text className={`font-sans ${textColor} text-2xl mt-6`}>
+            <Text className={`font-poppins ${textColor} text-2xl mt-6`}>
               {isLargeNumber(Number(item.amount)) 
                 ? `R$ ${formatLargeNumber(Number(item.amount))}`
                 : currencyFormat(Number(item.amount))
@@ -420,7 +420,7 @@ const ExpensesScreen: React.FC<ExpensesScreenProps> = () => {
       <View className="mt-5 px-4 mb-6 flex-row items-center justify-between">
         <View className="w-[80px]" />
         <View className="absolute left-0 right-0 items-center">
-          <Text className="text-white font-sans text-[18px] font-medium">Despesas</Text>
+          <Text className="text-white font-poppins text-[18px] font-medium">Despesas</Text>
         </View>
         <View className="flex-row items-center gap-4 mr-1">
           <Pressable onPress={() => setShowDeleteCategoryModal(true)}>

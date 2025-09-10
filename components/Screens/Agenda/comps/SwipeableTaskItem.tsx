@@ -69,18 +69,18 @@ const SwipeableTaskItem: React.FC<SwipeableTaskItemProps> = ({
           <View className="flex flex-row justify-between">
             <Pressable className="flex flex-col gap-1 mt-1" onPress={() => onEdit(item)}>
               <View className="flex flex-row items-center gap-2">
-                <Text className={`text-xl font-sans font-medium max-w-[260px] line-clamp-1 ${
+                <Text className={`text-xl font-poppins font-medium max-w-[260px] line-clamp-1 ${
                   item.completed ? 'line-through text-neutral-500' : 'text-gray-300'
                 }`}>
                   {item.title}
                 </Text>
                 {item.isRoutine && (
                   <View className="bg-[#ffa41f] px-2 py-0.5 rounded-full">
-                    <Text className="text-black text-[10px] font-sans">rotina</Text>
+                    <Text className="text-black text-[10px] font-poppins">rotina</Text>
                   </View>
                 )}
               </View>
-              <Text className="text-neutral-400 text-sm mt-1 font-sans">
+              <Text className="text-neutral-400 text-sm mt-1 font-poppins">
                 {format(new Date(item.datetime), 'dd/MM/yyyy')} - {format(new Date(item.datetime), 'HH:mm')}
               </Text>
             </Pressable>

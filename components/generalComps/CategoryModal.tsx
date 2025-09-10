@@ -100,7 +100,7 @@ placeholder="Nome da categoria"
 placeholderTextColor="#a1a1aa"
 value={newCategoryName}
 onChangeText={setNewCategoryName}
-className="text-white font-sans pb-4 text-lg max-w-[300px] rounded mb-4"
+className="text-white font-poppins pb-4 text-lg max-w-[300px] rounded mb-4"
 />
 <View className="flex flex-row flex-wrap gap-2 mb-4">
 {colorOptions.map((color) => (
@@ -122,13 +122,13 @@ borderColor: newCategoryColor === color ? '#fff' : '#333',
 onPress={handleAddCategory}
 className="bg-[#ffa41f] p-3 mt-3 rounded-xl items-center"
 >
-<Text className="text-black font-semibold font-sans">Adicionar Categoria</Text>
+<Text className="text-black font-semibold font-poppins">Adicionar Categoria</Text>
 </TouchableOpacity>
 <TouchableOpacity
 onPress={handleClose}
 className="mt-4 p-2"
 >
-<Text className="text-neutral-400 text-center font-sans">Cancelar</Text>
+<Text className="text-neutral-400 text-center font-poppins">Cancelar</Text>
 </TouchableOpacity>
 </Animated.View>
 </View>

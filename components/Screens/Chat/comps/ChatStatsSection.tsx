@@ -18,7 +18,7 @@ const ChatStatsSection = () => {
       <View className=" h-[100%] w-[60%] flex-col p-4">
         <View className="flex-row self-end justify-between items-center gap-2 rounded-2xl bg-[#1e1e1e] px-3 py-1">
             <View style = {{width: 10, height: 10, borderRadius: "100%", backgroundColor: "#ffa41f"}} />
-            <Text className="text-white font-sans"> Fuoco </Text>
+            <Text className="text-white font-poppins"> Fuoco </Text>
 
         </View>
 

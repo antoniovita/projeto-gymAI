@@ -108,9 +108,9 @@ export const StatsSection = () => {
             <View className="w-8 h-8 bg-[#ffa41f] rounded-full items-center justify-center mr-3">
               <Text className="text-black font-bold text-lg">{currentLevel}</Text>
             </View>
-            <Text className="text-white font-sans text-base">Nível {currentLevel}</Text>
+            <Text className="text-white font-poppins text-base">Nível {currentLevel}</Text>
           </View>
-          <Text className="text-zinc-400 font-sans text-sm">
+          <Text className="text-zinc-400 font-poppins text-sm">
             {currentXp}/{currentXp + xpToNextLevel} XP
           </Text>
         </View>
@@ -197,11 +197,11 @@ export const StatsSection = () => {
                 <View className="bg-[#2a2a2f] rounded-xl py-4 p-3 flex-1 min-w-[70px] border border-zinc-700/50">
                   <View className="flex-row items-center gap-1 mb-1">
                     <GradientIcon name="flame" size={20} />
-                    <Text className="text-white font-sans text-xl font-bold">
+                    <Text className="text-white font-poppins text-xl font-bold">
                       {taskStats.consecutiveDays}
                     </Text>
                   </View>
-                  <Text className="text-zinc-400 font-sans text-[11px] pt-1 leading-3">
+                  <Text className="text-zinc-400 font-poppins text-[11px] pt-1 leading-3">
                     dias seguidos
                   </Text>
                 </View>
@@ -210,11 +210,11 @@ export const StatsSection = () => {
               <View className="bg-[#2a2a2f] rounded-xl p-3 flex-1 min-w-[70px] border border-zinc-700/50">
                   <View className="flex-row items-center gap-1.5 mb-1">
                     <GradientIcon name="checkmark-circle" size={20} />
-                    <Text className="text-white font-sans text-xl font-bold">
+                    <Text className="text-white font-poppins text-xl font-bold">
                       {taskStats.completedTasksQuantity}
                     </Text>
                   </View>
-                  <Text className="text-zinc-400 font-sans text-[11px] pt-1 leading-3">
+                  <Text className="text-zinc-400 font-poppins text-[11px] pt-1 leading-3">
                     tarefas feitas
                   </Text>
                 </View>
@@ -225,11 +225,11 @@ export const StatsSection = () => {
               <View className="bg-[#2a2a2f] rounded-xl p-3 flex-1 min-w-[70px] border border-zinc-700/50">
                   <View className="flex-row items-center gap-2 mb-1">
                     <GradientIcon name="trophy" size={19} />
-                    <Text className="text-white font-sans text-xl font-bold">
+                    <Text className="text-white font-poppins text-xl font-bold">
                       {taskStats.completedTasksQuantity}
                     </Text>
                   </View>
-                  <Text className="text-zinc-400 font-sans text-[11px] pt-1 leading-3">
+                  <Text className="text-zinc-400 font-poppins text-[11px] pt-1 leading-3">
                     conquistas
                   </Text>
                 </View>
@@ -238,11 +238,11 @@ export const StatsSection = () => {
                 <View className="bg-[#2a2a2f] rounded-xl p-3 flex-1 min-w-[70px] border border-zinc-700/50">
                   <View className="flex-row items-center gap-2 mb-1">
                     <GradientIcon name="star" size={19} />
-                    <Text className="text-white font-sans text-xl font-bold">
+                    <Text className="text-white font-poppins text-xl font-bold">
                       {taskStats.completedTasksQuantity}
                     </Text>
                   </View>
-                  <Text className="text-zinc-400 font-sans text-[11px] pt-1 leading-3">
+                  <Text className="text-zinc-400 font-poppins text-[11px] pt-1 leading-3">
                     medalhas
                   </Text>
                 </View>

@@ -264,10 +264,10 @@ const LevelUpModal: React.FC<LevelUpModalProps> = ({
               transform: [{ translateY: slideValue }],
             }}
           >
-            <Text className="text-white font-sans text-2xl font-bold mb-2">
+            <Text className="text-white font-poppins text-2xl font-bold mb-2">
               {title}
             </Text>
-            <Text className="text-zinc-300 font-sans text-base">
+            <Text className="text-zinc-300 font-poppins text-base">
               {subtitle}
             </Text>
           </Animated.View>
@@ -288,7 +288,7 @@ const LevelUpModal: React.FC<LevelUpModalProps> = ({
               }}
             >
               <View className="w-24 h-24 bg-rose-500 rounded-full items-center justify-center pt-2 mb-3">
-                <Text className="text-white font-sans text-4xl font-bold">
+                <Text className="text-white font-poppins text-4xl font-bold">
                   {displayLevel}
                 </Text>
               </View>
@@ -356,7 +356,7 @@ const LevelUpModal: React.FC<LevelUpModalProps> = ({
                 alignItems: 'center',
               }}
             >
-              <Text className="text-white font-sans text-lg">
+              <Text className="text-white font-poppins text-lg">
                 Continuar
               </Text>
             </Pressable>

@@ -519,7 +519,7 @@ export default function AgendaScreen() {
       <View className="mt-5 px-4 mb-6 flex-row items-center justify-between">
         <View className="w-[80px]" />
         <View className="absolute left-0 right-0 items-center">
-          <Text className="text-white font-sans text-[18px] font-medium">Agenda</Text>
+          <Text className="text-white font-poppins text-[18px] font-medium">Agenda</Text>
         </View>
         <View className="flex-row items-center gap-4 mr-1">
           <Pressable onPress={goToCurrentWeek}>
@@ -538,7 +538,7 @@ export default function AgendaScreen() {
       <View className="px-4 mb-4">
         <View className="bg-[#35353a] rounded-xl overflow-hidden">
           <View className="flex-row items-center px-6 py-3 ">
-            <Text className="text-white text-base font-sans">
+            <Text className="text-white text-base font-poppins">
               {format(currentWeekStart, 'MMMM yyyy', { locale: ptBR }).replace(/^./, (c) => c.toUpperCase())}
             </Text>
           </View>
@@ -547,7 +547,7 @@ export default function AgendaScreen() {
             {getWeekDays(currentWeekStart).map((day, index) => {
               const dayLetter = format(day, 'EEEEE', { locale: ptBR }).toUpperCase();
               return (
-                <Text key={index} className="text-neutral-400 text-xs font-sans text-center w-10">
+                <Text key={index} className="text-neutral-400 text-xs font-poppins text-center w-10">
                   {dayLetter}
                 </Text>
               );
@@ -573,7 +573,7 @@ export default function AgendaScreen() {
                       selected ? 'bg-[#ffa41f]' : 'bg-transparent'
                     }`}
                   >
-                    <Text className={`text-sm font-sans ${
+                    <Text className={`text-sm font-poppins ${
                       selected ? 'text-black font-bold' :
                       today ? 'text-[#ffa41f] font-medium' :
                       'text-white'

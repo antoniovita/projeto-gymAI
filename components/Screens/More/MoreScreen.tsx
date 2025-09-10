@@ -92,7 +92,7 @@ const MoreScreen = () => {
       {/* Header */}
       <View className="mt-5 px-4 mb-6 flex-row items-center justify-between">
         <View className="absolute left-0 right-0 items-center">
-          <Text className="text-white font-sans text-[18px] font-medium">Mais recursos</Text>
+          <Text className="text-white font-poppins text-[18px] font-medium">Mais recursos</Text>
         </View>
         <View className="flex-row items-center gap-4 mr-1">
           {/* Placeholder para manter simetria */}
@@ -110,7 +110,7 @@ const MoreScreen = () => {
 
         {categories.map((category) => (
           <View key={category.title} className="mb-6">
-            <Text className="text-neutral-400 font-sans text-sm font-medium mb-3 px-2">
+            <Text className="text-neutral-400 font-poppins text-sm font-medium mb-3 px-2">
               {category.title.toUpperCase()}
             </Text>
             <View className="flex flex-col gap-4">
@@ -128,10 +128,10 @@ const MoreScreen = () => {
                         <GradientIcon name={item.icon as any} size={24} />
                       </View>
                       <View className="flex flex-col">
-                        <Text className="text-white text-lg font-semibold font-sans">
+                        <Text className="text-white text-lg font-semibold font-poppins">
                           {item.title}
                         </Text>
-                        <Text className="text-neutral-400 text-sm font-sans mt-0.5">
+                        <Text className="text-neutral-400 text-sm font-poppins mt-0.5">
                           {item.subtitle}
                         </Text>
                       </View>
@@ -146,7 +146,7 @@ const MoreScreen = () => {
 
         {/* Premium Section */}
         <View className="pt-3">
-          <Text className="text-neutral-400 font-sans text-sm font-medium mb-3 px-2">
+          <Text className="text-neutral-400 font-poppins text-sm font-medium mb-3 px-2">
             PREMIUM
           </Text>
           <View className=" rounded-2xl p-4  border-orange-400 border-2">
@@ -154,19 +154,19 @@ const MoreScreen = () => {
               <View className="w-8 h-8 rounded-full bg-orange-400/40 items-center justify-center">
                 <GradientIcon name="star" size={16} />
               </View>
-              <Text className="text-white font-sans text-lg font-semibold">
+              <Text className="text-white font-poppins text-lg font-semibold">
                 Acesso Premium
               </Text>
             </View>
-            <Text className="text-neutral-300 font-sans text-sm mb-3">
+            <Text className="text-neutral-300 font-poppins text-sm mb-3">
               Desbloqueie todos os recursos e funcionalidades avançadas
             </Text>
             <View className="flex-row items-center justify-between">
-              <Text className="text-[#ffa41f] font-sans text-lg font-bold">
+              <Text className="text-[#ffa41f] font-poppins text-lg font-bold">
                 R$ 5,99/mês
               </Text>
               <Pressable className="bg-[#ffa41f] px-4 py-2 rounded-xl">
-                <Text className="text-black font-sans font-semibold">
+                <Text className="text-black font-poppins font-semibold">
                   Assinar
                 </Text>
               </Pressable>
@@ -176,7 +176,7 @@ const MoreScreen = () => {
 
         {/* App Info */}
         <View className="mt-6 items-center">
-          <Text className="text-neutral-500 font-sans text-xs">
+          <Text className="text-neutral-500 font-poppins text-xs">
             Versão 1.0.0
           </Text>
         </View>

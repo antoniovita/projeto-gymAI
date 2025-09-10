@@ -115,7 +115,7 @@ const DateFilterModal: React.FC<DateFilterModalProps> = ({
           size={22} 
           color={isSelected ? 'black' : '#999'} 
         />
-        <Text className={`font-sans text-[16px] ${isSelected ? 'text-black font-medium' : 'text-zinc-300'}`}>
+        <Text className={`font-poppins text-[16px] ${isSelected ? 'text-black font-medium' : 'text-zinc-300'}`}>
           {title}
         </Text>
       </View>
@@ -126,7 +126,7 @@ const DateFilterModal: React.FC<DateFilterModalProps> = ({
   );
 
   const SectionTitle = ({ title }: { title: string }) => (
-    <Text className="text-zinc-400 font-sans text-[13px] font-medium mb-2 mt-6 uppercase tracking-wide">
+    <Text className="text-zinc-400 font-poppins text-[13px] font-medium mb-2 mt-6 uppercase tracking-wide">
       {title}
     </Text>
   );
@@ -155,7 +155,7 @@ const DateFilterModal: React.FC<DateFilterModalProps> = ({
                 selectedYear === year ? 'bg-rose-400' : 'bg-zinc-800'
               }`}
             >
-              <Text className={`font-sans text-[15px] font-medium ${
+              <Text className={`font-poppins text-[15px] font-medium ${
                 selectedYear === year ? 'text-black' : 'text-zinc-300'
               }`}>
                 {year}
@@ -196,7 +196,7 @@ const DateFilterModal: React.FC<DateFilterModalProps> = ({
                 selectedMonth === index ? 'bg-rose-400' : 'bg-zinc-800'
               }`}
             >
-              <Text className={`font-sans text-[13px] font-medium ${
+              <Text className={`font-poppins text-[13px] font-medium ${
                 selectedMonth === index ? 'text-black' : 'text-zinc-300'
               }`}>
                 {month}
@@ -214,13 +214,13 @@ const DateFilterModal: React.FC<DateFilterModalProps> = ({
         onPress={handleClose}
         className="flex-1 bg-zinc-800 py-4 rounded-2xl items-center"
       >
-        <Text className="text-zinc-300 font-sans font-medium text-[16px]">Cancelar</Text>
+        <Text className="text-zinc-300 font-poppins font-medium text-[16px]">Cancelar</Text>
       </TouchableOpacity>
       <TouchableOpacity
         onPress={handleApply}
         className="flex-1 bg-rose-400 py-4 rounded-2xl items-center"
       >
-        <Text className="text-black font-sans font-medium text-[16px]">Aplicar</Text>
+        <Text className="text-black font-poppins font-medium text-[16px]">Aplicar</Text>
       </TouchableOpacity>
     </View>
   );
@@ -268,7 +268,7 @@ const DateFilterModal: React.FC<DateFilterModalProps> = ({
               }}
             >
               <View className="flex-row justify-between items-center mb-6">
-                <Text className="text-zinc-100 text-[20px] font-semibold font-sans">
+                <Text className="text-zinc-100 text-[20px] font-semibold font-poppins">
                   Filtrar por período
                 </Text>
                 <TouchableOpacity 
