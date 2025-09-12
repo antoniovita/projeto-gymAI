@@ -1,3 +1,4 @@
+// general imports
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, Text } from 'react-native';
@@ -6,15 +7,13 @@ import { useCallback, useEffect, useMemo, useState, createContext } from 'react'
 import * as Notifications from 'expo-notifications';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ThemeProvider } from "styled-components/native";
+import { useFonts } from 'expo-font';
 
-import { themes } from 'theme/themes';
-
-
-import "./global.css";
-
+// database and auth
 import { AuthService } from 'api/service/authService';
 import { initDatabase } from 'database';
 
+// components
 import WelcomeScreen from './components/Screens/Welcome/WelcomeScreen';
 import SettingsScreen from 'components/SettingsScreen';
 import InfoScreen from 'components/InfoScreen';
@@ -27,11 +26,11 @@ import NoteScreen from 'components/Screens/Notes/NoteScreen';
 import GoalScreen from 'components/Screens/Goal/GoalScreen';
 import TimerScreen from 'components/Screens/Timer/TimerScreen';
 
+//maintabs
 import MainTabs from './widgets/MainTabs';
 import { RootStackParamList } from 'widgets/types';
 
-import { useFonts } from 'expo-font';
-
+//fonts
 import {
   Poppins_400Regular,
   Poppins_500Medium,
@@ -40,9 +39,16 @@ import {
   Poppins_400Regular_Italic,
 } from '@expo-google-fonts/poppins';
 
-// integração com o llama-rn
+// llama-rn
 import { bootstrapLlama } from './llm.config';
 import type { LlamaCtx } from './llm.config';
+
+//styles and theme
+import "./global.css";
+import { themes } from 'appearance';
+
+
+
 
 // import Purchases, { LOG_LEVEL } from 'react-native-purchases';
 

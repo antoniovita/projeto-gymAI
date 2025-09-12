@@ -1,6 +1,6 @@
-import { detectIntent } from '../lib/nlp/intentRouter';
-import { parseDate } from '../lib/nlp/dateParser';
-import { parseExpense } from '../lib/nlp/expenseParser';
+import { detectIntent } from '../nlp/intentRouter';
+import { parseDate } from '../nlp/dateParser';
+import { parseExpense } from '../nlp/expenseParser';
 import { useTask } from './useTask';
 import { useExpenses } from './useExpenses';
 import { ExpenseType } from 'api/model/Expenses';
