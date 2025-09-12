@@ -5,13 +5,18 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useCallback, useEffect, useMemo, useState, createContext } from 'react';
 import * as Notifications from 'expo-notifications';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { ThemeProvider } from "styled-components/native";
+
+import { themes } from 'theme/themes';
+
+
 import "./global.css";
+
 import { AuthService } from 'api/service/authService';
 import { initDatabase } from 'database';
+
 import WelcomeScreen from './components/Screens/Welcome/WelcomeScreen';
-import MainTabs from './widgets/MainTabs';
 import SettingsScreen from 'components/SettingsScreen';
-import { RootStackParamList } from 'widgets/types';
 import InfoScreen from 'components/InfoScreen';
 import HelpScreen from 'components/HelpScreen';
 import PinScreen from 'components/PinScreen';
@@ -22,7 +27,11 @@ import NoteScreen from 'components/Screens/Notes/NoteScreen';
 import GoalScreen from 'components/Screens/Goal/GoalScreen';
 import TimerScreen from 'components/Screens/Timer/TimerScreen';
 
+import MainTabs from './widgets/MainTabs';
+import { RootStackParamList } from 'widgets/types';
+
 import { useFonts } from 'expo-font';
+
 import {
   Poppins_400Regular,
   Poppins_500Medium,
@@ -31,11 +40,9 @@ import {
   Poppins_400Regular_Italic,
 } from '@expo-google-fonts/poppins';
 
-
-// ===== Integração LLM =====
+// integração com o llama-rn
 import { bootstrapLlama } from './llm.config';
 import type { LlamaCtx } from './llm.config';
-// ==========================
 
 // import Purchases, { LOG_LEVEL } from 'react-native-purchases';
 
@@ -82,7 +89,6 @@ export const LlmContext = createContext<LlmContextType>({
 export default function App() {
 
 const [fontsLoaded] = useFonts({
-    // nomes “amigáveis” que você vai usar no fontFamily:
     Poppins_400Regular,
     Poppins_500Medium,
     Poppins_600SemiBold,
@@ -260,6 +266,7 @@ const [fontsLoaded] = useFonts({
     initialRoute = 'MainTabs';
   }
 
+
   // Valor do contexto do LLM (reutilizável em telas)
   const llmValue = useMemo<LlmContextType>(() => ({
     ctx: llmCtx,
@@ -270,6 +277,7 @@ const [fontsLoaded] = useFonts({
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThemeProvider theme={themes.default}>
       <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
         <LlmContext.Provider value={llmValue}>
           {isBooting ? (
@@ -310,6 +318,7 @@ const [fontsLoaded] = useFonts({
           )}
         </LlmContext.Provider>
       </View>
+    </ThemeProvider>
     </GestureHandlerRootView>
   );
 }

@@ -17,7 +17,6 @@ export default function MainTabs(): JSX.Element {
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarShowLabel: false,
-        tabBarActiveTintColor: '#ffa41f',
         tabBarInactiveTintColor: '#9CA3AF',
         tabBarLabelStyle: { 
           fontSize: 12, 

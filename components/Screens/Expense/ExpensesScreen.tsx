@@ -14,6 +14,7 @@ import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { useExpenses } from '../../../hooks/useExpenses';
 import { useCategory } from '../../../hooks/useCategory';
 import { useAuth } from '../../../hooks/useAuth';
+import { useTheme } from '../../../hooks/useTheme';
 import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import GradientIcon from '../../generalComps/GradientIcon';
@@ -45,6 +46,7 @@ import {
 interface ExpensesScreenProps {}
 
 const ExpensesScreen: React.FC<ExpensesScreenProps> = () => {
+  const theme = useTheme();
 
   // Form states
   const [newTaskTitle, setNewTaskTitle] = useState<string>('');
@@ -58,7 +60,7 @@ const ExpensesScreen: React.FC<ExpensesScreenProps> = () => {
   // Category modal states
   const [isCategoryModalVisible, setIsCategoryModalVisible] = useState<boolean>(false);
   const [newCategoryName, setNewCategoryName] = useState<string>('');
-  const [newCategoryColor, setNewCategoryColor] = useState<string>('#ff7a7f');
+  const [newCategoryColor, setNewCategoryColor] = useState<string>(theme.colors.loss);
   
   // Financial totals
   const [gains, setGains] = useState<number>(0);
@@ -265,7 +267,7 @@ const ExpensesScreen: React.FC<ExpensesScreenProps> = () => {
       await createCategory(trimmedName, newCategoryColor, 'expense');
       setIsCategoryModalVisible(false);
       setNewCategoryName('');
-      setNewCategoryColor('#ff7a7f');
+      setNewCategoryColor(theme.colors.loss);
     } catch (error) {
       console.error('Erro ao criar categoria:', error);
       alert('Erro ao criar categoria.');
@@ -311,7 +313,16 @@ const ExpensesScreen: React.FC<ExpensesScreenProps> = () => {
   // Render functions
   const renderLeftActions = (item: Expense) => {
     return (
-      <View className="flex-row items-center justify-start border-t bg-rose-500 px-4 h-full">
+      <View style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        borderTopWidth: 1,
+        borderTopColor: theme.colors.border,
+        backgroundColor: theme.colors.deleteAction,
+        paddingHorizontal: 16,
+        height: '100%'
+      }}>
         <TouchableOpacity
           onPress={() => handleDeleteExpense(item.id)}
           style={{
@@ -323,7 +334,7 @@ const ExpensesScreen: React.FC<ExpensesScreenProps> = () => {
             borderRadius: 32,
           }}
         >
-          <Ionicons name="trash" size={24} color="white" />
+          <Ionicons name="trash" size={24} color={theme.colors.deleteActionIcon} />
         </TouchableOpacity>
       </View>
     );
@@ -331,7 +342,7 @@ const ExpensesScreen: React.FC<ExpensesScreenProps> = () => {
 
   const renderExpenseItem = ({ item }: { item: Expense }) => {
     const isGain = item.expense_type === ExpenseType.GAIN;
-    const textColor = isGain ? "text-emerald-400" : "text-[#ff7a7f]";
+    const textColor = isGain ? theme.colors.gain : theme.colors.loss;
 
     return (
       <Swipeable
@@ -343,17 +354,45 @@ const ExpensesScreen: React.FC<ExpensesScreenProps> = () => {
         dragOffsetFromLeftEdge={80}
         friction={1}
       >
-        <View className="w-full flex flex-col justify-center px-6 h-[90px] pb-4 border-b border-neutral-700 bg-zinc-800">
-          <View className="flex flex-row justify-between">
-            <Pressable className="flex flex-col gap-1 mt-1" onPress={() => openEditModal(item)}>
-              <Text className="text-xl font-poppins font-medium text-gray-300 max-w-[250px]">
+        <View style={{
+          width: '100%',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          paddingHorizontal: 24,
+          height: 90,
+          paddingBottom: 16,
+          borderBottomWidth: 1,
+          borderBottomColor: theme.colors.border,
+          backgroundColor: theme.colors.background
+        }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Pressable 
+              style={{ flexDirection: 'column', gap: 4, marginTop: 4 }} 
+              onPress={() => openEditModal(item)}
+            >
+              <Text style={{
+                fontSize: 20,
+                fontFamily: 'Poppins-Medium',
+                color: theme.colors.textExpenseName,
+                maxWidth: 250
+              }}>
                 {truncateExpenseName(item.name)}
               </Text>
-              <Text className="text-neutral-400 text-sm mt-1 font-poppins">
+              <Text style={{
+                color: theme.colors.textExpenseDate,
+                fontSize: 14,
+                marginTop: 4,
+                fontFamily: 'Poppins-Regular'
+              }}>
                 {new Date(item.date ?? '').toLocaleDateString('pt-BR')} - {new Date(item.time ?? '').toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
               </Text>
             </Pressable>
-            <Text className={`font-poppins ${textColor} text-2xl mt-6`}>
+            <Text style={{
+              fontFamily: 'Poppins-Regular',
+              color: textColor,
+              fontSize: 24,
+              marginTop: 24
+            }}>
               {isLargeNumber(Number(item.amount)) 
                 ? `R$ ${formatLargeNumber(Number(item.amount))}`
                 : currencyFormat(Number(item.amount))
@@ -401,28 +440,60 @@ const ExpensesScreen: React.FC<ExpensesScreenProps> = () => {
   }, []);
 
   return (
-    <SafeAreaView className={`flex-1 bg-zinc-800 ${Platform.OS === 'android' && 'py-[30px]'}`}>
+    <SafeAreaView style={{
+      flex: 1,
+      backgroundColor: theme.colors.background,
+      ...(Platform.OS === 'android' && { paddingVertical: 30 })
+    }}>
       <Pressable
-        className="absolute bottom-6 right-6 z-20 rounded-full items-center justify-center"
+        style={{
+          position: 'absolute',
+          bottom: 24,
+          right: 24,
+          zIndex: 20,
+          borderRadius: 25,
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
         onPress={openCreateModal}
       >
        <LinearGradient
-          colors={['#FFD45A', '#FFA928', '#FF7A00']}
+          colors={[...theme.colors.linearGradient.primary] as [string, string, ...string[]]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={{ width: 50, height: 50, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "100%"}}
+          style={{ 
+            width: 50, 
+            height: 50, 
+            display: "flex", 
+            alignItems: "center", 
+            justifyContent: "center", 
+            borderRadius: 25
+          }}
           >
-        <Feather name="plus" strokeWidth={3} size={32} color="black" />
+        <Feather name="plus" strokeWidth={3} size={32} color={theme.colors.onPrimary} />
       </LinearGradient>
       </Pressable>
 
       {/* Header */}
-      <View className="mt-5 px-4 mb-6 flex-row items-center justify-between">
-        <View className="w-[80px]" />
-        <View className="absolute left-0 right-0 items-center">
-          <Text className="text-white font-poppins text-[18px] font-medium">Despesas</Text>
+      <View style={{
+        marginTop: 20,
+        paddingHorizontal: 16,
+        marginBottom: 24,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+      }}>
+        <View style={{ width: 80 }} />
+        <View style={{ position: 'absolute', left: 0, right: 0, alignItems: 'center' }}>
+          <Text style={{
+            color: theme.colors.text,
+            fontFamily: 'Poppins-Medium',
+            fontSize: 18
+          }}>
+            Despesas
+          </Text>
         </View>
-        <View className="flex-row items-center gap-4 mr-1">
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginRight: 4 }}>
           <Pressable onPress={() => setShowDeleteCategoryModal(true)}>
             <GradientIcon name="folder" size={22} />
           </Pressable>

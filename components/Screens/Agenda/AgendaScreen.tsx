@@ -12,6 +12,7 @@ import { useStats } from '../../../hooks/useStats';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAuth } from 'hooks/useAuth';
+import { useTheme } from 'hooks/useTheme';
 import { RoutineTask } from 'api/model/RoutineTasks';
 import CategoryModal from '../../generalComps/CategoryModal';
 import DeleteCategoryModal from '../../generalComps/DeleteCategoryModal';
@@ -23,7 +24,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import SwipeableTaskItem from './comps/SwipeableTaskItem';
 import { useCategory } from 'hooks/useCategory';
 import { OUTLINE } from '../../../imageConstants'
-
 
 import {
   UnifiedTask,
@@ -47,6 +47,7 @@ import TaskModal from './comps/CreateTask';
 import CategoryFilters from 'components/generalComps/CategoryFilters';
 
 export default function AgendaScreen() {
+  const { colors } = useTheme();
   const { userId } = useAuth();
   
   const {
@@ -479,7 +480,11 @@ export default function AgendaScreen() {
   );
 
   return (
-    <SafeAreaView className={`flex-1 bg-zinc-800 ${Platform.OS === 'android' && 'py-[30px]'}`}>
+    <SafeAreaView style={[{ 
+      flex: 1, 
+      backgroundColor: colors.background,
+      paddingTop: Platform.OS === 'android' ? 30 : 0 
+    }]}>
       <LevelUpModal
         visible={isLevelUpVisible}
         currentLevel={levelUpData.newLevel}
@@ -492,14 +497,22 @@ export default function AgendaScreen() {
 
       {/* Floating Action Button */}
       <Pressable
-        className="absolute bottom-6 right-6 z-20 rounded-full items-center justify-center"
+        style={{
+          position: 'absolute',
+          bottom: 24,
+          right: 24,
+          zIndex: 20,
+          borderRadius: 25,
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
         onPress={() => {
           resetModal();
           setIsCreateVisible(true);
         }}
       >
         <LinearGradient
-          colors={['#FFD45A', '#FFA928', '#FF7A00']}
+          colors={[...(colors.linearGradient.primary as [string, string, ...string[]])]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={{ 
@@ -508,20 +521,41 @@ export default function AgendaScreen() {
             display: "flex", 
             alignItems: "center", 
             justifyContent: "center", 
-            borderRadius: "100%"
+            borderRadius: 25
           }}
         >
-          <Feather name="plus" strokeWidth={3} size={32} color="black" />
+          <Feather name="plus" strokeWidth={3} size={32} color={colors.onPrimary} />
         </LinearGradient>
       </Pressable>
 
       {/* Header */}
-      <View className="mt-5 px-4 mb-6 flex-row items-center justify-between">
-        <View className="w-[80px]" />
-        <View className="absolute left-0 right-0 items-center">
-          <Text className="text-white font-poppins text-[18px] font-medium">Agenda</Text>
+      <View style={{
+        marginTop: 20,
+        paddingHorizontal: 16,
+        marginBottom: 24,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+      }}>
+        <View style={{ width: 80 }} />
+        <View style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          alignItems: 'center'
+        }}>
+          <Text style={{
+            color: colors.text,
+            fontSize: 18,
+            fontWeight: '500'
+          }}>Agenda</Text>
         </View>
-        <View className="flex-row items-center gap-4 mr-1">
+        <View style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 16,
+          marginRight: 4
+        }}>
           <Pressable onPress={goToCurrentWeek}>
             <GradientIcon name="today" size={22} />
           </Pressable>
@@ -535,31 +569,61 @@ export default function AgendaScreen() {
       </View>
 
       {/* Calendar Widget */}
-      <View className="px-4 mb-4">
-        <View className="bg-[#35353a] rounded-xl overflow-hidden">
-          <View className="flex-row items-center px-6 py-3 ">
-            <Text className="text-white text-base font-poppins">
+      <View style={{ paddingHorizontal: 16, marginBottom: 16 }}>
+        <View style={{
+          backgroundColor: colors.secondary,
+          borderRadius: 12,
+          overflow: 'hidden'
+        }}>
+          <View style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: 24,
+            paddingVertical: 12
+          }}>
+            <Text style={{
+              color: colors.text,
+              fontSize: 16
+            }}>
               {format(currentWeekStart, 'MMMM yyyy', { locale: ptBR }).replace(/^./, (c) => c.toUpperCase())}
             </Text>
           </View>
           
-          <View className="flex-row justify-around py-2 bg-zinc-800/80">
+          <View style={{
+            flexDirection: 'row',
+            justifyContent: 'space-around',
+            paddingVertical: 8,
+            backgroundColor: colors.surface
+          }}>
             {getWeekDays(currentWeekStart).map((day, index) => {
               const dayLetter = format(day, 'EEEEE', { locale: ptBR }).toUpperCase();
               return (
-                <Text key={index} className="text-neutral-400 text-xs font-poppins text-center w-10">
+                <Text key={index} style={{
+                  color: colors.textMuted,
+                  fontSize: 12,
+                  textAlign: 'center',
+                  width: 40
+                }}>
                   {dayLetter}
                 </Text>
               );
             })}
           </View>
           
-          <View className="flex-row items-center py-3">
-            <Pressable onPress={goToPreviousWeek} className="px-3">
-              <Ionicons name="chevron-back" size={20} color="#ffa41f" />
+          <View style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingVertical: 12
+          }}>
+            <Pressable onPress={goToPreviousWeek} style={{ paddingHorizontal: 12 }}>
+              <Ionicons name="chevron-back" size={20} color={colors.chevronColor} />
             </Pressable>
             
-            <View className="flex-1 flex-row justify-around">
+            <View style={{
+              flex: 1,
+              flexDirection: 'row',
+              justifyContent: 'space-around'
+            }}>
               {getWeekDays(currentWeekStart).map((day, index) => {
                 const selected = isSelectedDay(day, dateFilter);
                 const today = isToday(day);
@@ -569,27 +633,42 @@ export default function AgendaScreen() {
                   <Pressable
                     key={index}
                     onPress={() => onDaySelect(day)}
-                    className={`w-8 h-8 rounded-full items-center justify-center ${
-                      selected ? 'bg-[#ffa41f]' : 'bg-transparent'
-                    }`}
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 16,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: selected ? colors.selected : 'transparent'
+                    }}
                   >
-                    <Text className={`text-sm font-poppins ${
-                      selected ? 'text-black font-bold' :
-                      today ? 'text-[#ffa41f] font-medium' :
-                      'text-white'
-                    }`}>
+                    <Text style={{
+                      fontFamily: "Poppins_500Medium",
+                      fontSize: 14,
+                      color: selected ? colors.textSelected : 
+                             today ? colors.textToday : 
+                             colors.text,
+                      fontWeight: selected ? 'bold' : today ? '500' : 'normal'
+                    }}>
                       {day.getDate()}
                     </Text>
                     {hasTasks && !selected && (
-                      <View className="w-1 h-1 bg-[#ffa41f] rounded-full absolute bottom-0" />
+                      <View style={{
+                        width: 4,
+                        height: 4,
+                        backgroundColor: colors.taskIndicator,
+                        borderRadius: 2,
+                        position: 'absolute',
+                        bottom: 0
+                      }} />
                     )}
                   </Pressable>
                 );
               })}
             </View>
             
-            <Pressable onPress={goToNextWeek} className="px-3">
-              <Ionicons name="chevron-forward" size={20} color="#ffa41f" />
+            <Pressable onPress={goToNextWeek} style={{ paddingHorizontal: 12 }}>
+              <Ionicons name="chevron-forward" size={20} color={colors.chevronColor} />
             </Pressable>
           </View>
         </View>

@@ -4,16 +4,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import type { ColorValue } from 'react-native';
 import { View } from 'react-native';
+import { useTheme } from '../../hooks/useTheme';
 
 // Tupla com >=2 cores
 type GradientColors = readonly [ColorValue, ColorValue, ...ColorValue[]];
-
-const HOT_COLORS = ['#FFD45A', '#FFA928', '#FF7A00'] as const satisfies GradientColors;
-const COLD_COLORS = [
-  'rgba(255,212,90,0.55)',
-  'rgba(255,169,40,0.55)',
-  'rgba(255,122,0,0.55)',
-] as const satisfies GradientColors;
 
 type BaseProps = {
   name: keyof typeof Ionicons.glyphMap;
@@ -33,7 +27,7 @@ type CustomModeProps = BaseProps & {
   focused?: never; // não permite focused quando mode é custom
 };
 
-// Modo Default - sempre usa as cores "hot"
+// Modo Default - sempre usa as cores do tema
 type DefaultModeProps = BaseProps & {
   mode?: 'default';
   focused?: never;
@@ -43,20 +37,59 @@ type DefaultModeProps = BaseProps & {
 type Props = TabModeProps | CustomModeProps | DefaultModeProps;
 
 export default function GradientIcon(props: Props): JSX.Element {
+  const theme = useTheme();
   const { name, size = 24 } = props;
   
+  // Cores "cold" baseadas no tema com transparência
+  const convertToRgbaWithOpacity = (color: ColorValue): string => {
+    const colorString = String(color);
+    
+    // Se já é rgba, apenas substitui a opacidade
+    if (colorString.startsWith('rgba(')) {
+      return colorString.replace(/,\s*[\d.]+\)$/, ', 0.55)');
+    }
+    
+    // Se é rgb, converte para rgba
+    if (colorString.startsWith('rgb(')) {
+      return colorString.replace('rgb(', 'rgba(').replace(')', ', 0.55)');
+    }
+    
+    // Se é hex, converte para rgba
+    if (colorString.startsWith('#')) {
+      const hex = colorString.slice(1);
+      const r = parseInt(hex.substr(0, 2), 16);
+      const g = parseInt(hex.substr(2, 2), 16);
+      const b = parseInt(hex.substr(4, 2), 16);
+      return `rgba(${r}, ${g}, ${b}, 0.55)`;
+    }
+    
+    return colorString;
+  };
+
+  // Garante que temos pelo menos 2 cores do tema
+  const themeColors = theme.colors.linearGradient.primary;
+  const primaryColors: GradientColors = themeColors.length >= 2 
+    ? (themeColors as unknown as GradientColors)
+    : ['#FFD45A', '#FFA928', '#FF7A00'] as const;
+
+  const coldColors: GradientColors = [
+    convertToRgbaWithOpacity(primaryColors[0]),
+    convertToRgbaWithOpacity(primaryColors[1]),
+    ...primaryColors.slice(2).map(convertToRgbaWithOpacity)
+  ] as const;
+
   let colors: GradientColors;
 
   switch (props.mode) {
     case 'tab':
-      colors = props.focused ? HOT_COLORS : COLD_COLORS;
+      colors = props.focused ? primaryColors : coldColors;
       break;
     case 'custom':
       colors = props.colors;
       break;
     case 'default':
     default:
-      colors = HOT_COLORS;
+      colors = primaryColors;
       break;
   }
 
@@ -79,17 +112,14 @@ export default function GradientIcon(props: Props): JSX.Element {
 }
 
 // Exemplos de uso:
-
 // 1. Modo Tab (para uso em Tab Navigator)
 // <GradientIcon name="home" mode="tab" focused={true} />
-
 // 2. Modo Custom (cores personalizadas)
-// <GradientIcon 
-//   name="heart" 
-//   mode="custom" 
-//   colors={['#FF6B6B', '#FF8E8E', '#FFB6B6']} 
+// <GradientIcon
+//   name="heart"
+//   mode="custom"
+//   colors={['#FF6B6B', '#FF8E8E', '#FFB6B6']}
 // />
-
-// 3. Modo Default (sempre "hot colors")
+// 3. Modo Default (sempre cores do tema)
 // <GradientIcon name="star" />
 // <GradientIcon name="star" mode="default" />

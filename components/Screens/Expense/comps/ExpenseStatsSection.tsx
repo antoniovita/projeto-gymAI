@@ -3,6 +3,7 @@ import { Pressable, View, Text } from 'react-native';
 import GradientIcon from 'components/generalComps/GradientIcon';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from 'styled-components';
 
 interface ExpenseStatsSectionProps {
   onDateFilterPress: () => void;
@@ -23,11 +24,15 @@ const ExpenseStatsSection: React.FC<ExpenseStatsSectionProps> = ({
   currencyFormat,
   isLargeNumber,
 }) => {
+  const theme = useTheme();
   const [isVisible, setIsVisible] = useState(false);
-  
+
   const balance = gains - losses;
-  const balanceColor =
-    balance > 0 ? 'text-emerald-400' : balance < 0 ? 'text-[#ff7a7f]' : 'text-white';
+  const balanceColor = balance > 0 
+    ? theme.colors.gain 
+    : balance < 0 
+    ? theme.colors.loss 
+    : theme.colors.text;
 
   const formatValue = (value: number) =>
     isLargeNumber(value) ? formatLargeNumber(value) : currencyFormat(value);
@@ -35,49 +40,93 @@ const ExpenseStatsSection: React.FC<ExpenseStatsSectionProps> = ({
   const hiddenValue = '••••••';
 
   return (
-    <View className="relative mx-4 mb-4 rounded-2xl bg-[#35353a] px-4 h-[120px] flex-col justify-between py-4">
-
-      {/* Header com filtro de data (já é absolute) */}
+    <View style={{
+      position: 'relative',
+      marginHorizontal: 16,
+      marginBottom: 16,
+      borderRadius: 16,
+      backgroundColor: theme.colors.secondary,
+      paddingHorizontal: 16,
+      height: 120,
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+      paddingVertical: 16
+    }}>
+      {/* Header com filtro de data */}
       <Pressable
         onPress={onDateFilterPress}
-        className="flex-row gap-2 bg-zinc-800/80 items-center absolute left-4 px-3 rounded-b-xl py-1"
+        style={{
+          flexDirection: 'row',
+          gap: 8,
+          backgroundColor: `${theme.colors.background}CC`, // 80% opacity
+          alignItems: 'center',
+          position: 'absolute',
+          left: 16,
+          paddingHorizontal: 12,
+          borderBottomLeftRadius: 12,
+          borderBottomRightRadius: 12,
+          paddingVertical: 4
+        }}
       >
-        <View style={{width: 8, height: 8, borderRadius: '100%', backgroundColor: '#ffa41f'}}></View>
-        <Text className="font-poppins text-sm text-zinc-400">{dateFilterDisplayText}</Text>
+        <View style={{
+          width: 8, 
+          height: 8, 
+          borderRadius: 4, 
+          backgroundColor: theme.colors.primary
+        }} />
+        <Text style={{
+          fontFamily: 'Poppins-Regular',
+          fontSize: 14,
+          color: theme.colors.textMuted
+        }}>
+          {dateFilterDisplayText}
+        </Text>
       </Pressable>
 
-
-      {/* Saldo central - agora absolute no centro, sem afetar o layout */}
-      <View 
-        className="absolute inset-0 items-center justify-center"
+      {/* Saldo central */}
+      <View
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
         pointerEvents="box-none"
       >
-        <View className="items-center mt-8">
-          <Text className={`text-3xl font-poppins font-semibold text-white`}>
+        <View style={{ alignItems: 'center', marginTop: 32 }}>
+          <Text style={{
+            fontSize: 30,
+            fontFamily: 'Poppins-SemiBold',
+            color: balanceColor
+          }}>
             {isVisible ? formatValue(balance) : hiddenValue}
           </Text>
-          <Pressable 
-            onPress={() => setIsVisible(!isVisible)}
-            className=""
-          >
-            <Ionicons 
-              name={isVisible ? "eye-outline" : "eye-off-outline"} 
-              size={18} 
-              color="#a1a1aa" 
+          <Pressable onPress={() => setIsVisible(!isVisible)}>
+            <Ionicons
+              name={isVisible ? "eye-outline" : "eye-off-outline"}
+              size={18}
+              color={theme.colors.textMuted}
             />
           </Pressable>
         </View>
       </View>
 
       {/* Espaçador para manter a posição do restante igual a antes */}
-      <View className="mt-3.5" style={{ height: 48 }} />
+      <View style={{ marginTop: 14, height: 48 }} />
 
       {/* Entradas e Saídas */}
-      <View className="flex-row justify-between mb-2">
+      <View style={{
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 8
+      }}>
         {/* Entradas */}
-        <View className="flex-row gap-2 items-center">
+        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
           <LinearGradient
-          colors={['#FFD45A', '#FFA928', '#FF7A00']}
+            colors={[...theme.colors.linearGradient.primary] as [string, string, ...string[]]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={{
@@ -86,23 +135,33 @@ const ExpenseStatsSection: React.FC<ExpenseStatsSectionProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              borderRadius: 100, // número em RN
+              borderRadius: 17.5
             }}
           >
-            <Ionicons name="arrow-up" size={16} color="black" />
+            <Ionicons name="arrow-up" size={16} color={theme.colors.onPrimary} />
           </LinearGradient>
-          <View className="flex-col">
-            <Text className="text-xs font-poppins text-zinc-500">Entradas</Text>
-            <Text className="text-lg font-poppins font-medium text-[#ffa41f]">
+          <View style={{ flexDirection: 'column' }}>
+            <Text style={{
+              fontSize: 12,
+              fontFamily: 'Poppins-Regular',
+              color: theme.colors.textMuted
+            }}>
+              Entradas
+            </Text>
+            <Text style={{
+              fontSize: 18,
+              fontFamily: 'Poppins-Medium',
+              color: theme.colors.primary
+            }}>
               {isVisible ? formatValue(gains) : hiddenValue}
             </Text>
           </View>
         </View>
 
         {/* Saídas */}
-        <View className="flex-row gap-2 items-center">
+        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
           <LinearGradient
-          colors={['#FFD45A', '#FFA928', '#FF7A00']}
+            colors={[...theme.colors.linearGradient.primary] as [string, string, ...string[]]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={{
@@ -111,14 +170,24 @@ const ExpenseStatsSection: React.FC<ExpenseStatsSectionProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              borderRadius: 16,
+              borderRadius: 17.5
             }}
           >
-            <Ionicons name="arrow-down" size={16} color="black" />
+            <Ionicons name="arrow-down" size={16} color={theme.colors.onPrimary} />
           </LinearGradient>
-          <View className="flex-col">
-            <Text className="text-xs font-poppins text-zinc-500">Saídas</Text>
-            <Text className="text-lg font-poppins font-medium text-[#ffa41f]">
+          <View style={{ flexDirection: 'column' }}>
+            <Text style={{
+              fontSize: 12,
+              fontFamily: 'Poppins-Regular',
+              color: theme.colors.textMuted
+            }}>
+              Saídas
+            </Text>
+            <Text style={{
+              fontSize: 18,
+              fontFamily: 'Poppins-Medium',
+              color: theme.colors.primary
+            }}>
               {isVisible ? formatValue(losses) : hiddenValue}
             </Text>
           </View>

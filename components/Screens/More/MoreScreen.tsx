@@ -5,9 +5,11 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "widgets/types";
 import { StatsSection } from "./comps/StatsSection";
 import GradientIcon from "../../generalComps/GradientIcon";
+import { useTheme } from "../../../hooks/useTheme";
 
 const MoreScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const theme = useTheme();
   
   const categories = [
     {
@@ -18,7 +20,7 @@ const MoreScreen = () => {
           title: "Configurações",
           subtitle: "Gerenciar suas preferências da conta",
           icon: "settings",
-          color: "#ff7a7f",
+          color: theme.colors.settingsIcon,
           onPress: () => {
             navigation.navigate("SettingsScreen")
           }
@@ -74,7 +76,7 @@ const MoreScreen = () => {
           title: "Notas",
           subtitle: "Criar e organizar suas anotações",
           icon: "document-text",
-          color: "#ff7a7f",
+          color: theme.colors.notesIcon,
           onPress: () => {
             navigation.navigate("NoteScreen")
           }
@@ -83,60 +85,121 @@ const MoreScreen = () => {
     }
   ];
 
-  const handleGoBack = () => {
-    navigation.goBack();
-  };
-
   return (
-    <SafeAreaView className={`flex-1 bg-zinc-800 ${Platform.OS === 'android' && 'py-[30px]'}`}>
+    <SafeAreaView 
+      style={{ 
+        flex: 1, 
+        backgroundColor: theme.colors.background,
+        paddingTop: Platform.OS === 'android' ? 30 : 0 
+      }}
+    >
       {/* Header */}
-      <View className="mt-5 px-4 mb-6 flex-row items-center justify-between">
-        <View className="absolute left-0 right-0 items-center">
-          <Text className="text-white font-poppins text-[18px] font-medium">Mais recursos</Text>
+      <View 
+        style={{
+          marginTop: 20,
+          paddingHorizontal: 16,
+          marginBottom: 24,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}
+      >
+        <View style={{ position: 'absolute', left: 0, right: 0, alignItems: 'center' }}>
+          <Text 
+            style={{
+              color: theme.colors.moreScreenTitle,
+              fontSize: 18,
+              fontWeight: '500',
+              fontFamily: 'Poppins'
+            }}
+          >
+            Mais recursos
+          </Text>
         </View>
-        <View className="flex-row items-center gap-4 mr-1">
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginRight: 4 }}>
           {/* Placeholder para manter simetria */}
           <View style={{ width: 22, height: 22 }} />
         </View>
       </View>
 
       <ScrollView 
-        className="flex-1" 
+        style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}
       >
-
         <StatsSection />
 
         {categories.map((category) => (
-          <View key={category.title} className="mb-6">
-            <Text className="text-neutral-400 font-poppins text-sm font-medium mb-3 px-2">
+          <View key={category.title} style={{ marginBottom: 24 }}>
+            <Text 
+              style={{
+                color: theme.colors.categoryTitle,
+                fontSize: 14,
+                fontWeight: '500',
+                marginBottom: 12,
+                paddingHorizontal: 8,
+                fontFamily: 'Poppins'
+              }}
+            >
               {category.title.toUpperCase()}
             </Text>
-            <View className="flex flex-col gap-4">
+            <View style={{ gap: 16 }}>
               {category.items.map((item) => (
                 <Pressable
                   key={item.id}
                   onPress={item.onPress}
-                  className="bg-[#35353a] rounded-2xl p-4"
+                  style={{
+                    backgroundColor: theme.colors.itemBackground,
+                    borderRadius: 16,
+                    padding: 16
+                  }}
                 >
-                  <View className="flex flex-row items-center justify-between">
-                    <View className="flex flex-row items-center gap-4">
+                  <View style={{ 
+                    flexDirection: 'row', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between' 
+                  }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
                       <View
-                        className="w-12 h-12 rounded-xl items-center justify-center bg-orange-400/35"
+                        style={{
+                          width: 48,
+                          height: 48,
+                          borderRadius: 12,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: `${theme.colors.primary}35`
+                        }}
                       >
                         <GradientIcon name={item.icon as any} size={24} />
                       </View>
-                      <View className="flex flex-col">
-                        <Text className="text-white text-lg font-semibold font-poppins">
+                      <View>
+                        <Text 
+                          style={{
+                            color: theme.colors.itemTitle,
+                            fontSize: 18,
+                            fontWeight: '600',
+                            fontFamily: 'Poppins'
+                          }}
+                        >
                           {item.title}
                         </Text>
-                        <Text className="text-neutral-400 text-sm font-poppins mt-0.5">
+                        <Text 
+                          style={{
+                            color: theme.colors.itemSubtitle,
+                            fontSize: 14,
+                            fontFamily: 'Poppins',
+                            marginTop: 2
+                          }}
+                        >
                           {item.subtitle}
                         </Text>
                       </View>
                     </View>
-                    <Ionicons name="chevron-forward" size={20} color="#71717a" />
+                    <Ionicons 
+                      name="chevron-forward" 
+                      size={20} 
+                      color={theme.colors.chevronIcon} 
+                    />
                   </View>
                 </Pressable>
               ))}
@@ -145,28 +208,88 @@ const MoreScreen = () => {
         ))}
 
         {/* Premium Section */}
-        <View className="pt-3">
-          <Text className="text-neutral-400 font-poppins text-sm font-medium mb-3 px-2">
+        <View style={{ paddingTop: 12 }}>
+          <Text 
+            style={{
+              color: theme.colors.categoryTitle,
+              fontSize: 14,
+              fontWeight: '500',
+              marginBottom: 12,
+              paddingHorizontal: 8,
+              fontFamily: 'Poppins'
+            }}
+          >
             PREMIUM
           </Text>
-          <View className=" rounded-2xl p-4  border-orange-400 border-2">
-            <View className="flex-row items-center gap-3 mb-2">
-              <View className="w-8 h-8 rounded-full bg-orange-400/40 items-center justify-center">
+          <View 
+            style={{
+              backgroundColor: theme.colors.premiumBackground,
+              borderRadius: 16,
+              padding: 16,
+              borderColor: theme.colors.premiumBadge,
+              borderWidth: 2
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+              <View 
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 16,
+                  backgroundColor: `${theme.colors.premiumBadge}40`,
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
                 <GradientIcon name="star" size={16} />
               </View>
-              <Text className="text-white font-poppins text-lg font-semibold">
+              <Text 
+                style={{
+                  color: theme.colors.premiumTitle,
+                  fontSize: 18,
+                  fontWeight: '600',
+                  fontFamily: 'Poppins'
+                }}
+              >
                 Acesso Premium
               </Text>
             </View>
-            <Text className="text-neutral-300 font-poppins text-sm mb-3">
+            <Text 
+              style={{
+                color: theme.colors.premiumDescription,
+                fontSize: 14,
+                marginBottom: 12,
+                fontFamily: 'Poppins'
+              }}
+            >
               Desbloqueie todos os recursos e funcionalidades avançadas
             </Text>
-            <View className="flex-row items-center justify-between">
-              <Text className="text-[#ffa41f] font-poppins text-lg font-bold">
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Text 
+                style={{
+                  color: theme.colors.premiumPrice,
+                  fontSize: 18,
+                  fontWeight: 'bold',
+                  fontFamily: 'Poppins'
+                }}
+              >
                 R$ 5,99/mês
               </Text>
-              <Pressable className="bg-[#ffa41f] px-4 py-2 rounded-xl">
-                <Text className="text-black font-poppins font-semibold">
+              <Pressable 
+                style={{
+                  backgroundColor: theme.colors.premiumButton,
+                  paddingHorizontal: 16,
+                  paddingVertical: 8,
+                  borderRadius: 12
+                }}
+              >
+                <Text 
+                  style={{
+                    color: theme.colors.premiumButtonText,
+                    fontWeight: '600',
+                    fontFamily: 'Poppins'
+                  }}
+                >
                   Assinar
                 </Text>
               </Pressable>
@@ -175,8 +298,14 @@ const MoreScreen = () => {
         </View>
 
         {/* App Info */}
-        <View className="mt-6 items-center">
-          <Text className="text-neutral-500 font-poppins text-xs">
+        <View style={{ marginTop: 24, alignItems: 'center' }}>
+          <Text 
+            style={{
+              color: theme.colors.appVersion,
+              fontSize: 12,
+              fontFamily: 'Poppins'
+            }}
+          >
             Versão 1.0.0
           </Text>
         </View>
