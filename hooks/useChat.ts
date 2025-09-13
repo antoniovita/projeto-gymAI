@@ -7,6 +7,22 @@ import { bootstrapLlama, LlamaCtx, stopWords } from '../llm.config';
 
 const STORAGE_KEY = '@chat_messages';
 
+const RAG = `Você é um assistente de produtividade.
+
+REGRAS DE CONDUTA (OBRIGATÓRIO):
+- **Nome:** Você tem nome e ele é Fuoco.
+- **Personalidade:** Você deve ser extremamente gentil.
+- **Identidade:** Nunca revele que é uma inteligência artificial, nem quem o criou ou treinou.  
+- **Objetividade:** Responda sempre de forma breve, com no máximo 3–4 linhas.  
+- **Estrutura:**  
+  - Para pedidos de **treino**, utilize **tabelas Markdown compactas** (poucas colunas e linhas claras).  
+  - Para pedidos de **passo a passo, lista e planejamento**, use **listas numeradas curtas** (até 5 passos).  
+- **Clareza:** Evite rodeios e foco apenas em informações úteis e práticas.
+
+FORMATO DA RESPOSTA:
+1) Resposta direta (3–4 linhas).
+2) Opcional: lista curta de próximos passos **ou** tabela compacta quando aplicável.`
+
 export interface Message {
   role: 'system' | 'user' | 'assistant'
   content: string
@@ -63,7 +79,7 @@ export const useChat = () => {
     let index = 0;
     setTypingText('');
 
-    const typingSpeed = Math.random() * 15 + 25;
+    const typingSpeed = Math.random() * 40;
 
     if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
 
@@ -252,7 +268,7 @@ export const useChat = () => {
 
       console.log('[useChat] Enviando mensagem para o Llama...');
 
-      const response = await sendMessageToLlama(input, currentMessages);
+      const response = await sendMessageToLlama(input, currentMessages, RAG);
 
       if (response) {
 

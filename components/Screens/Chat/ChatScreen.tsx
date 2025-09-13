@@ -21,13 +21,13 @@ export default function ChatScreen() {
   const [input, setInput] = useState('');
   
   const {
-    // Estados do chat
+    // estados do chat
     messages,
     isTyping,
     typingText,
     flatListRef,
     
-    // Estados do Llama
+    // estados do Llama
     isInitializing,
     isDownloading,
     isReady,
@@ -152,20 +152,32 @@ export default function ChatScreen() {
     bullet_list_icon: { color: '#ffffff', marginRight: 8, fontSize: 60, lineHeight: 54},
     bullet_list_content: { flex: 1 },
     ordered_list_content: { flex: 1 },
-    table: {
-      borderWidth: 1,
-      borderColor: '#52525b',
-      borderRadius: 4,
-      marginVertical: 8,
-    },
-    thead: { backgroundColor: '#374151' },
-    tbody: { backgroundColor: '#1f2937' },
-    th: { borderWidth: 1, borderColor: '#52525b', padding: 8 },
-    td: { borderWidth: 1, borderColor: '#52525b', padding: 8 },
-    tr: { borderBottomWidth: 1, borderColor: '#52525b' },
-    link: { color: '#ffa41f', textDecorationLine: 'underline' as const },
-    text: { color: '#ffffff' },
-    hr: { backgroundColor: '#52525b', height: 1, marginVertical: 16 },
+   table: {
+    borderWidth: 1,
+    borderColor: '#3E3F4B',
+    borderRadius: 6,
+    marginVertical: 10,
+  },
+  thead: { backgroundColor: '#202123' },
+  tbody: { backgroundColor: '#202123' },
+  th: {
+    borderWidth: 1,
+    borderColor: '#3E3F4B',
+    padding: 10,
+    fontWeight: '600',
+    color: '#E5E7EB',
+  },
+  td: {
+    borderWidth: 1,
+    borderColor: '#3E3F4B',
+    padding: 10,
+    color: '#E5E7EB',
+  },
+  tr: { borderBottomWidth: 1, borderColor: '#3E3F4B' },
+  link: { color: '#10A37F', textDecorationLine: 'underline' as const },
+  text: { color: '#E5E7EB' },
+  hr: { backgroundColor: '#3E3F4B', height: 1, marginVertical: 16 },
+
   };
 
   // Função para renderizar cada mensagem
@@ -309,7 +321,25 @@ export default function ChatScreen() {
               blurOnSubmit={false}
               returnKeyType="send"
             />
+
+            {isTyping? (
+
             <TouchableOpacity
+              onPress={cancelGeneration}
+              className={`w-[43px] h-[43px] rounded-full mr-4 justify-center items-center bg-white
+              }`}
+              activeOpacity={0.8}
+            >
+              <Ionicons 
+                name="stop" 
+                size={20} 
+                color= 'black' 
+              />
+            </TouchableOpacity>
+
+            ) : (            
+              
+              <TouchableOpacity
               onPress={handleSend}
               className={`w-[43px] h-[43px] rounded-full mr-4 justify-center items-center bg-white
               }`}
@@ -319,9 +349,11 @@ export default function ChatScreen() {
               <Ionicons 
                 name="arrow-up" 
                 size={23} 
-                color={isSendButtonActive() ? 'black' : '#52525b'} 
+                color='black'
               />
             </TouchableOpacity>
+          )
+          }
           </View>
         </View>
       </KeyboardAvoidingView>

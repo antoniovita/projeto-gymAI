@@ -8,7 +8,7 @@ import { useAuth } from '../../../../hooks/useAuth';
 import { useTask } from '../../../../hooks/useTask';
 import GradientIcon from 'components/generalComps/GradientIcon';
 import { MAIN } from 'imageConstants';
-import { useTheme } from 'styled-components/native';
+import { useTheme } from 'hooks/useTheme';
 
 export const StatsSection = () => {
   const theme = useTheme();
