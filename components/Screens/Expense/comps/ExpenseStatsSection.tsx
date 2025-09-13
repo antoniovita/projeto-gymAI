@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { Pressable, View, Text } from 'react-native';
-import GradientIcon from 'components/generalComps/GradientIcon';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useTheme } from 'styled-components';
+import { useTheme } from 'hooks/useTheme';
 
 interface ExpenseStatsSectionProps {
   onDateFilterPress: () => void;
@@ -46,11 +45,11 @@ const ExpenseStatsSection: React.FC<ExpenseStatsSectionProps> = ({
       marginBottom: 16,
       borderRadius: 16,
       backgroundColor: theme.colors.secondary,
-      paddingHorizontal: 16,
+      paddingHorizontal: 20,
       height: 120,
       flexDirection: 'column',
       justifyContent: 'space-between',
-      paddingVertical: 16
+      paddingVertical: 9
     }}>
       {/* Header com filtro de data */}
       <Pressable
@@ -99,7 +98,7 @@ const ExpenseStatsSection: React.FC<ExpenseStatsSectionProps> = ({
         <View style={{ alignItems: 'center', marginTop: 32 }}>
           <Text style={{
             fontSize: 30,
-            fontFamily: 'Poppins-SemiBold',
+            fontFamily: 'Poppins-Regular400',
             color: balanceColor
           }}>
             {isVisible ? formatValue(balance) : hiddenValue}
@@ -119,12 +118,10 @@ const ExpenseStatsSection: React.FC<ExpenseStatsSectionProps> = ({
 
       {/* Entradas e Saídas */}
       <View style={{
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 8
+        position: 'relative',
       }}>
         {/* Entradas */}
-        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', position: 'absolute', bottom: 2, right: 2}}>
           <LinearGradient
             colors={[...theme.colors.linearGradient.primary] as [string, string, ...string[]]}
             start={{ x: 0, y: 0 }}
@@ -143,14 +140,14 @@ const ExpenseStatsSection: React.FC<ExpenseStatsSectionProps> = ({
           <View style={{ flexDirection: 'column' }}>
             <Text style={{
               fontSize: 12,
-              fontFamily: 'Poppins-Regular',
+              fontFamily: 'Poppins-Regular400',
               color: theme.colors.textMuted
             }}>
               Entradas
             </Text>
             <Text style={{
               fontSize: 18,
-              fontFamily: 'Poppins-Medium',
+              fontFamily: 'Poppins-Regular400',
               color: theme.colors.primary
             }}>
               {isVisible ? formatValue(gains) : hiddenValue}
@@ -159,7 +156,7 @@ const ExpenseStatsSection: React.FC<ExpenseStatsSectionProps> = ({
         </View>
 
         {/* Saídas */}
-        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', position: 'absolute', bottom: 2, left: 2}}>
           <LinearGradient
             colors={[...theme.colors.linearGradient.primary] as [string, string, ...string[]]}
             start={{ x: 0, y: 0 }}
@@ -178,14 +175,14 @@ const ExpenseStatsSection: React.FC<ExpenseStatsSectionProps> = ({
           <View style={{ flexDirection: 'column' }}>
             <Text style={{
               fontSize: 12,
-              fontFamily: 'Poppins-Regular',
+              fontFamily: 'Poppins-Regular400',
               color: theme.colors.textMuted
             }}>
               Saídas
             </Text>
             <Text style={{
               fontSize: 18,
-              fontFamily: 'Poppins-Medium',
+              fontFamily: 'Poppins-Regular400',
               color: theme.colors.primary
             }}>
               {isVisible ? formatValue(losses) : hiddenValue}

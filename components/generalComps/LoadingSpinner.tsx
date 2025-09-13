@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Modal, Text, Animated, Dimensions } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { useTheme } from 'hooks/useTheme';
 
 const { width, height } = Dimensions.get('window');
 
@@ -20,7 +21,10 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   const showStartTime = useRef<number | null>(null);
   const hideTimeout = useRef<NodeJS.Timeout | null>(null);
   const [internalVisible, setInternalVisible] = useState(false);
-
+  
+  // Add theme hook
+  const theme = useTheme();
+  
   const ANIMATION_DURATION = 1200; // Duração de uma volta completa
   const MIN_DISPLAY_TIME = ANIMATION_DURATION; // Tempo mínimo de exibição
 
@@ -31,11 +35,11 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
         clearTimeout(hideTimeout.current);
         hideTimeout.current = null;
       }
-
+      
       // Marca o tempo de início da exibição
       showStartTime.current = Date.now();
       setInternalVisible(true);
-
+      
       // Animações de entrada
       Animated.parallel([
         Animated.timing(fadeValue, {
@@ -50,7 +54,7 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
           useNativeDriver: true,
         }),
       ]).start();
-
+      
       // Animação de rotação
       spinValue.setValue(0);
       spinAnimation.current = Animated.loop(
@@ -65,7 +69,7 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
       // Calcula quanto tempo passou desde que começou a mostrar
       const elapsedTime = showStartTime.current ? Date.now() - showStartTime.current : 0;
       const remainingTime = Math.max(0, MIN_DISPLAY_TIME - elapsedTime);
-
+      
       // Se ainda não passou o tempo mínimo, espera
       if (remainingTime > 0) {
         hideTimeout.current = setTimeout(() => {
@@ -104,7 +108,7 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
       setInternalVisible(false);
       showStartTime.current = null;
     });
-
+    
     // Para a animação de rotação
     spinAnimation.current?.stop();
   };
@@ -137,7 +141,7 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
         <Animated.View
           style={{
             transform: [{ scale: scaleValue }],
-            backgroundColor: 'rgba(28, 28, 30, 0.9)',
+            backgroundColor: theme.colors.surface,
             borderRadius: 16,
             padding: 24,
             alignItems: 'center',
@@ -160,11 +164,11 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
               marginBottom: 12,
             }}
           >
-            <Feather name="loader" size={32} color="#ffa41f" />
+            <Feather name="loader" size={32} color={theme.colors.primary} />
           </Animated.View>
           <Text
             style={{
-              color: 'white',
+              color: theme.colors.text,
               fontSize: 16,
               fontFamily: 'Poppins',
               textAlign: 'center',

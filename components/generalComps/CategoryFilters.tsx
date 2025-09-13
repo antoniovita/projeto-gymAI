@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../../hooks/useTheme'; // Add this import
 
 interface Category {
   id: string;
@@ -26,50 +27,89 @@ const CategoryFilters: React.FC<CategoryFiltersProps> = ({
   onToggleCategory,
   onAddNewCategory,
   addButtonText = "Nova Categoria",
-  containerClassName = "flex flex-row flex-wrap gap-2 px-4 pb-4",
-  unselectedColor = "bg-zinc-700",
 }) => {
+  // Add theme hook
+  const theme = useTheme();
+
   return (
-    <View className={containerClassName}>
+    <View style={{
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      paddingHorizontal: 16,
+      paddingBottom: 16,
+    }}>
       {categories.map((category) => {
         const isSelected = selectedTypes.includes(category.name);
-
         return (
           <Pressable
             key={category.id}
             onPress={() => onToggleCategory(category.name)}
-            className='flex-row items-center gap-2 px-2 py-1 rounded-xl'
-            style={isSelected? {backgroundColor: category.color} : {backgroundColor: "#3f3f46"} }
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              paddingHorizontal: 8,
+              paddingVertical: 4,
+              borderRadius: 12,
+              backgroundColor: isSelected ? category.color : theme.colors.secondary,
+            }}
           >
-            <View style={ isSelected ? {backgroundColor: "#000000", width: 10, height: 10, borderRadius: '100%' } : {backgroundColor: category.color, width: 10, height: 10, borderRadius: '100%' } }></View>
-
+            <View style={{
+              backgroundColor: isSelected ? theme.colors.onPrimary : category.color,
+              width: 10,
+              height: 10,
+              borderRadius: 5,
+            }} />
             <Text
-              className={`font-poppins text-sm ${
-                isSelected ? 'text-black' : 'text-white'
-              }`}
+              style={{
+                fontFamily: 'Poppins',
+                fontSize: 14,
+                color: isSelected ? theme.colors.textSelected : theme.colors.text,
+              }}
             >
               {category.name}
             </Text>
           </Pressable>
         );
       })}
-
-      {categories.length == 0 ? (
+      
+      {categories.length === 0 ? (
         <Pressable
           onPress={onAddNewCategory}
-          className={`flex-row items-center gap-2 px-2.5 py-1 rounded-xl ${unselectedColor}`}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+            paddingHorizontal: 10,
+            paddingVertical: 4,
+            borderRadius: 12,
+            backgroundColor: theme.colors.secondary,
+          }}
         >
-          <Ionicons name="add" size={16} color="white" />
-          {categories.length == 0 && (
-            <Text className="text-white text-sm font-poppins">{addButtonText}</Text>
-          )}
+          <Ionicons name="add" size={16} color={theme.colors.text} />
+          <Text style={{
+            color: theme.colors.text,
+            fontSize: 14,
+            fontFamily: 'Poppins',
+          }}>
+            {addButtonText}
+          </Text>
         </Pressable>
       ) : (
         <Pressable
           onPress={onAddNewCategory}
-          className={`flex-row items-center gap-2 px-1 py-1 rounded-full ${unselectedColor}`}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+            paddingHorizontal: 4,
+            paddingVertical: 4,
+            borderRadius: 20,
+            backgroundColor: theme.colors.secondary,
+          }}
         >
-          <Ionicons name="add" size={16} color="white" />
+          <Ionicons name="add" size={16} color={theme.colors.text} />
         </Pressable>
       )}
     </View>

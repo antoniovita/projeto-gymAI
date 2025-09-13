@@ -2,16 +2,13 @@ import {
   View,
   Text,
   SafeAreaView,
-  Modal,
-  TextInput,
   Alert,
-  ScrollView,
   FlatList,
   Pressable,
   Platform,
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { useWorkout } from '../../../hooks/useWorkout';
@@ -28,21 +25,8 @@ import GradientIcon from 'components/generalComps/GradientIcon';
 import WorkoutStatsSection from './comps/WorkoutStatsSection';
 import { EmptyState } from 'components/generalComps/EmptyState';
 import { OUTLINE } from 'imageConstants';
+import { useTheme } from '../../../hooks/useTheme';
 
-const colorOptions = [
-  '#EF4444', // Vermelho
-  '#F97316', // Laranja
-  '#EAB308', // Amarelo
-  '#10B981', // Verde
-  '#3B82F6', // Azul
-  '#6366F1', // Índigo
-  '#8B5CF6', // Roxo
-  '#EC4899', // Rosa
-  '#F43F5E', // Rosa escuro
-  '#6B7280', // Cinza
-  '#FF6B6B', // Coral
-  '#4ECDC4', // Turquesa
-];
 
 export default function WorkoutScreen() {
   const [isCreateVisible, setIsCreateVisible] = useState(false);
@@ -64,6 +48,9 @@ export default function WorkoutScreen() {
 
   const navigation = useNavigation();
   const { userId } = useAuth();
+  
+  // Add theme hook
+  const theme = useTheme();
 
   // Hook de categorias
   const {
@@ -113,7 +100,7 @@ export default function WorkoutScreen() {
 
   const getCategoryColor = (catName: string) => {
     const category = workoutCategories.find(c => c.name === catName);
-    return category ? category.color : '#999999';
+    return category ? category.color : theme.colors.textMuted;
   };
 
   const handleAddCategory = async () => {
@@ -130,7 +117,7 @@ export default function WorkoutScreen() {
     try {
       await createCategory(newCategoryName.trim(), newCategoryColor, 'workout');
       setNewCategoryName('');
-      setNewCategoryColor('#EF4444');
+      setNewCategoryColor(theme.colors.primary);
       setIsCategoryModalVisible(false);
     } catch (err) {
       console.error('Erro ao criar categoria:', err);
@@ -294,12 +281,12 @@ export default function WorkoutScreen() {
             width: 100,
             height: "100%",
             borderTopWidth: 1,
-            borderTopColor: '#404040',
-            backgroundColor: '#FFAA1D',
+            borderTopColor: theme.colors.border,
+            backgroundColor: theme.colors.primary,
           }}
           onPress={() => handleDuplicate(item.id)}
         >
-          <Ionicons name="copy" size={24} color="white" />
+          <Ionicons name="copy" size={24} color={theme.colors.onPrimary} />
         </TouchableOpacity>
         
         <TouchableOpacity
@@ -308,15 +295,15 @@ export default function WorkoutScreen() {
             alignItems: 'center',
             display: "flex",
             justifyContent: 'center',
-            backgroundColor: '#f43f5e',
+            backgroundColor: theme.colors.deleteAction,
             borderTopWidth: 1,
-            borderTopColor: '#404040',
+            borderTopColor: theme.colors.border,
             height: "100%",
             width: 100
           }}
           onPress={() => handleDelete(item.id)}
         >
-          <Ionicons name="trash" size={24} color="white" />
+          <Ionicons name="trash" size={24} color={theme.colors.deleteActionIcon} />
         </TouchableOpacity>
       </View>
     );
@@ -336,34 +323,77 @@ export default function WorkoutScreen() {
         dragOffsetFromLeftEdge={80}
         friction={1}
       >
-        <View className="w-full flex flex-col justify-center px-6 h-[102px] pt-1 pb-4 border-b border-neutral-700 bg-zinc-800">
-          <View className="flex flex-row justify-between">
+        <View style={{
+          width: '100%',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          paddingHorizontal: 24,
+          height: 102,
+          paddingTop: 4,
+          paddingBottom: 16,
+          borderBottomWidth: 1,
+          borderBottomColor: theme.colors.border,
+          backgroundColor: theme.colors.itemBackground,
+        }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
             <Pressable
-              className="flex flex-col gap-1 mt-1"
+              style={{ flexDirection: 'column', gap: 4, marginTop: 4 }}
               onPress={() => handleOpenEdit(item)}
             >
-              <Text className="text-xl font-sans font-medium text-gray-300">{item.name}</Text>
-              <View className="flex-row items-center gap-2">
-                <Text className="text-neutral-400 text-sm mt-1 font-sans">
+              <Text style={{ 
+                fontSize: 20, 
+                fontWeight: '500', 
+                color: theme.colors.itemTitle 
+              }}>
+                {item.name}
+              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Text style={{ 
+                  color: theme.colors.textExpenseDate, 
+                  fontSize: 14, 
+                  marginTop: 4 
+                }}>
                   {new Date(item.date ?? '').toLocaleDateString('pt-BR')}
                 </Text>
-                <Text className="text-neutral-400 text-sm font-sans">
+                <Text style={{ 
+                  color: theme.colors.textExpenseDate, 
+                  fontSize: 14 
+                }}>
                   • {exerciseCount} exercício{exerciseCount !== 1 ? 's' : ''}
                 </Text>
               </View>
             </Pressable>
           </View>
 
-          <View className="flex-row flex-wrap gap-2 justify-start mt-3 items-start flex-1 overflow-hidden">
+          <View style={{ 
+            flexDirection: 'row', 
+            flexWrap: 'wrap', 
+            gap: 8, 
+            justifyContent: 'flex-start', 
+            marginTop: 12, 
+            alignItems: 'flex-start', 
+            flex: 1, 
+            overflow: 'hidden' 
+          }}>
             {muscles.length > 0 ? (
               muscles.map((muscle: string) => (
                 <View
                   key={muscle}
-                  className="px-3 py-1 rounded-xl max-w-[80px] overflow-hidden"
-                  style={{ backgroundColor: getCategoryColor(muscle.trim()) }}
+                  style={{
+                    paddingHorizontal: 12,
+                    paddingVertical: 4,
+                    borderRadius: 12,
+                    maxWidth: 80,
+                    overflow: 'hidden',
+                    backgroundColor: getCategoryColor(muscle.trim()),
+                  }}
                 >
                   <Text
-                    className="text-xs font-medium text-white font-sans"
+                    style={{
+                      fontSize: 12,
+                      fontWeight: '500',
+                      color: 'white',
+                    }}
                     numberOfLines={1}
                     ellipsizeMode="tail"
                   >
@@ -373,11 +403,20 @@ export default function WorkoutScreen() {
               ))
             ) : (
               <View
-                className="px-3 py-1 rounded-xl overflow-hidden"
-                style={{ backgroundColor: '#94a3b8' }}
+                style={{
+                  paddingHorizontal: 12,
+                  paddingVertical: 4,
+                  borderRadius: 12,
+                  overflow: 'hidden',
+                  backgroundColor: theme.colors.textMuted,
+                }}
               >
                 <Text
-                  className="text-xs font-medium text-white font-sans"
+                  style={{
+                    fontSize: 12,
+                    fontWeight: '500',
+                    color: 'white',
+                  }}
                   numberOfLines={1}
                   ellipsizeMode="tail"
                 >
@@ -392,14 +431,26 @@ export default function WorkoutScreen() {
   };
 
   return (
-    <SafeAreaView className={`flex-1 bg-zinc-800 ${Platform.OS === 'android' && 'py-[30px]'}`}>
+    <SafeAreaView style={{
+      flex: 1,
+      backgroundColor: theme.colors.background,
+      ...(Platform.OS === 'android' && { paddingVertical: 30 })
+    }}>
 
       <Pressable
-        className="absolute bottom-6 right-6 z-20 rounded-full items-center justify-center"
+        style={{
+          position: 'absolute',
+          bottom: 24,
+          right: 24,
+          zIndex: 20,
+          borderRadius: 25,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
         onPress={handleOpenCreate}
       >
         <LinearGradient
-          colors={['#FFD45A', '#FFA928', '#FF7A00']}
+          colors={[...theme.colors.linearGradient.primary] as [string, string, ...string[]]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={{ 
@@ -408,19 +459,42 @@ export default function WorkoutScreen() {
             display: "flex", 
             alignItems: "center", 
             justifyContent: "center", 
-            borderRadius: "100%"
+            borderRadius: 25
           }}
         >
-          <Feather name="plus" strokeWidth={3} size={32} color="black" />
+          <Feather name="plus" strokeWidth={3} size={32} color={theme.colors.onPrimary} />
         </LinearGradient>
       </Pressable>
 
       {/* Header */}
-      <View className="mt-5 px-4 mb-6 flex-row items-center justify-end">
-        <View className="absolute left-0 right-0 items-center">
-          <Text className="text-white font-sans text-[18px] font-medium">Academia</Text>
+      <View style={{
+        marginTop: 20,
+        paddingHorizontal: 16,
+        marginBottom: 24,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+      }}>
+        <View style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          alignItems: 'center',
+        }}>
+          <Text style={{
+            color: theme.colors.text,
+            fontSize: 18,
+            fontWeight: '500',
+          }}>
+            Academia
+          </Text>
         </View>
-        <View className="flex-row items-center gap-4 mr-1">
+        <View style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 16,
+          marginRight: 4,
+        }}>
           <Pressable 
             onPress={() => setShowDeleteCategoryModal(true)}
           >
