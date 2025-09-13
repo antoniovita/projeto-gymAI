@@ -118,7 +118,6 @@ export default function AgendaScreen() {
   const [isSaving, setIsSaving] = useState(false);
 
   const taskCategories = getCategoriesByType('agenda');
-  const categories = taskCategories.map(cat => cat.name);
 
   // Handlers para categorias
   const handleAddCategory = async () => {
@@ -724,7 +723,8 @@ export default function AgendaScreen() {
         setTime={setTime}
         selectedCategories={selectedCategories}
         setSelectedCategories={setSelectedCategories}
-        categories={categories}
+        categories={taskCategories}
+        onAddNewCategory={() => setIsCategoryModalVisible(true)}
       />
 
       <CategoryModal

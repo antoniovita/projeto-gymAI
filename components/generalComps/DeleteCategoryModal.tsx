@@ -19,7 +19,6 @@ export default function DeleteCategoryModal({
 }: DeleteCategoryModalProps) {
   const scaleValue = useRef(new Animated.Value(0)).current;
   
-  // Add theme hook
   const theme = useTheme();
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-import React, { JSX } from 'react';
+import { JSX } from 'react';
 import MaskedView from '@react-native-masked-view/masked-view';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -6,7 +6,6 @@ import type { ColorValue } from 'react-native';
 import { View } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 
-// Tupla com >=2 cores
 type GradientColors = readonly [ColorValue, ColorValue, ...ColorValue[]];
 
 type BaseProps = {
@@ -14,20 +13,17 @@ type BaseProps = {
   size?: number;
 };
 
-// Modo Tab - usa focused state
 type TabModeProps = BaseProps & {
   mode: 'tab';
   focused: boolean;
 };
 
-// Modo Custom - permite cores customizadas
 type CustomModeProps = BaseProps & {
   mode: 'custom';
   colors: GradientColors;
   focused?: never; // não permite focused quando mode é custom
 };
 
-// Modo Default - sempre usa as cores do tema
 type DefaultModeProps = BaseProps & {
   mode?: 'default';
   focused?: never;

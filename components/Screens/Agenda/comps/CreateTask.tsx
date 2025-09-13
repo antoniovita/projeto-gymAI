@@ -6,6 +6,14 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import GradientIcon from 'components/generalComps/GradientIcon';
+import CategorySectionCreateModal from 'components/generalComps/CategorySectionCreateModal';
+import { useTheme } from 'hooks/useTheme';
+
+interface Category {
+  id: string;
+  name: string;
+  color: string;
+}
 
 interface TaskModalProps {
   isVisible: boolean;
@@ -23,9 +31,10 @@ interface TaskModalProps {
   setShowTimePicker: (show: boolean) => void;
   setDate: (date: Date) => void;
   setTime: (time: Date) => void;
-  categories: string[];
+  categories: Category[];
   selectedCategories: string[];
   setSelectedCategories: React.Dispatch<React.SetStateAction<string[]>>;
+  onAddNewCategory?: () => void;
 }
 
 export default function TaskModal({
@@ -47,7 +56,20 @@ export default function TaskModal({
   categories,
   selectedCategories,
   setSelectedCategories,
+  onAddNewCategory,
 }: TaskModalProps) {
+  
+  const theme= useTheme();
+  const { colors } = theme;
+  
+  const handleCategorySelect = (categoryName: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(categoryName)
+        ? prev.filter((c) => c !== categoryName)
+        : [...prev, categoryName]
+    );
+  };
+
   return (
     <Modal
       transparent
@@ -55,14 +77,22 @@ export default function TaskModal({
       visible={isVisible}
       onRequestClose={onClose}
     >
-      <View className={`flex-1 ${Platform.OS === 'ios' ? 'pt-12 pb-8' : 'pt-8 pb-4'} bg-zinc-800`}>
+      <View 
+        className={`flex-1 ${Platform.OS === 'ios' ? 'pt-12 pb-8' : 'pt-8 pb-4'}`}
+        style={{ backgroundColor: colors.modalBackground }}
+      >
         <View className="flex-row justify-between items-center px-4 py-4">
           <TouchableOpacity
             className="items-center flex flex-row"
             onPress={onClose}
           >
-            <Ionicons name="chevron-back" size={28} color="white" />
-            <Text className="text-white text-lg font-poppins ml-1">Voltar</Text>
+            <Ionicons name="chevron-back" size={28} color={colors.modalHeaderText} />
+            <Text 
+              className="text-lg font-poppins ml-1"
+              style={{ color: colors.modalHeaderText }}
+            >
+              Voltar
+            </Text>
           </TouchableOpacity>
           
           <TouchableOpacity
@@ -70,7 +100,10 @@ export default function TaskModal({
             className="px-4 py-2"
             disabled={!newTaskTitle.trim()}
           >
-            <Text className="text-[#ffa41f] text-lg font-semibold font-poppins">
+            <Text 
+              className="text-lg font-semibold font-poppins"
+              style={{ color: colors.modalSaveButton }}
+            >
               Salvar
             </Text>
           </TouchableOpacity>
@@ -80,98 +113,86 @@ export default function TaskModal({
           <View className="mt-3 mb-6">
             <TextInput
               placeholder="Nome da tarefa"
-              placeholderTextColor="#71717a"
+              placeholderTextColor={colors.modalPlaceholder}
               value={newTaskTitle}
               onChangeText={setNewTaskTitle}
-              className="text-white text-2xl font-poppins"
+              className="text-2xl font-poppins"
+              style={{ color: colors.text }}
               multiline
             />
           </View>
           
           <View className="mb-8">
-            <Text className="text-zinc-400 text-sm font-medium mb-3 uppercase tracking-wide">
+            <Text 
+              className="text-sm font-medium mb-3 uppercase tracking-wide"
+              style={{ color: colors.modalSectionTitle }}
+            >
               Data e Hora
             </Text>
             <View className="flex-row gap-3">
               <TouchableOpacity
                 onPress={() => setShowDatePicker(true)}
-                className="flex-row items-center bg-zinc-700/50 border border-[#ffa41f] px-4 py-3 rounded-xl flex-1"
+                className="flex-row items-center px-4 py-3 rounded-xl flex-1"
+                style={{ 
+                  backgroundColor: colors.modalInputBackground,
+                  borderWidth: 1,
+                  borderColor: colors.modalInputBorder 
+                }}
               >
                 <GradientIcon name="calendar" size={18} />
-                <Text className="text-white text-base font-poppins ml-2">
+                <Text 
+                  className="text-base font-poppins ml-2"
+                  style={{ color: colors.text }}
+                >
                   {date.toLocaleDateString('pt-BR')}
                 </Text>
               </TouchableOpacity>
               
               <TouchableOpacity
                 onPress={() => setShowTimePicker(true)}
-                className="flex-row items-center bg-zinc-700/50 border border-[#ffa41f] px-4 py-3 rounded-xl flex-1"
+                className="flex-row items-center px-4 py-3 rounded-xl flex-1"
+                style={{ 
+                  backgroundColor: colors.modalInputBackground,
+                  borderWidth: 1,
+                  borderColor: colors.modalInputBorder 
+                }}
               >
                 <GradientIcon name="time" size={18} />
-                <Text className="text-white text-base font-poppins ml-2">
+                <Text 
+                  className="text-base font-poppins ml-2"
+                  style={{ color: colors.text }}
+                >
                   {time.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                 </Text>
               </TouchableOpacity>
             </View>
           </View>
           
-          <View className="mb-8">
-            <Text className="text-zinc-400 text-sm font-medium mb-3 uppercase tracking-wide">
-              Categorias
-            </Text>
-            {categories.length > 0 ? (
-              <View className="flex flex-row flex-wrap gap-2">
-                {categories.map((category) => {
-                  const isSelected = selectedCategories.includes(category);
-                  
-                  return (
-                    <TouchableOpacity
-                      key={category}
-                      onPress={() =>
-                        setSelectedCategories((prev) =>
-                          prev.includes(category)
-                            ? prev.filter((c) => c !== category)
-                            : [...prev, category]
-                        )
-                      }
-                      className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${
-                        isSelected
-                          ? 'bg-[#ffa41f] border-[#ffa41f]'
-                          : 'bg-zinc-700 border-zinc-600'
-                      }`}
-                    >
-                      <Text
-                        className={`font-poppins text-sm ${
-                          isSelected ? 'text-black font-medium' : 'text-white'
-                        }`}
-                      >
-                        {category}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            ) : (
-              <View className="bg-zinc-700/30 px-4 py-6 rounded-xl items-center justify-center">
-                <Ionicons name="folder-outline" size={24} color="#71717a" />
-                <Text className="text-zinc-400 text-base font-poppins mt-2">
-                  Nenhuma categoria disponível
-                </Text>
-                <Text className="text-zinc-500 text-sm font-poppins mt-1 text-center">
-                  Crie categorias para organizar suas tarefas
-                </Text>
-              </View>
-            )}
-          </View>
+          <CategorySectionCreateModal
+            categories={categories}
+            selectedCategory={selectedCategories}
+            onCategorySelect={handleCategorySelect}
+            onAddNewCategory={onAddNewCategory}
+            addButtonText="Nova Categoria"
+            containerClassName="mb-8"
+            unselectedColor="bg-zinc-700" // Você pode criar uma cor específica para isso também
+          />
           
           <View className="mb-6">
-            <Text className="text-zinc-400 text-sm font-medium mb-3 uppercase tracking-wide">
+            <Text 
+              className="text-sm font-medium mb-3 uppercase tracking-wide"
+              style={{ color: colors.modalSectionTitle }}
+            >
               Descrição
             </Text>
             <TextInput
               placeholder="Adicione uma descrição para sua tarefa..."
-              placeholderTextColor="#71717a"
-              className="text-white leading-6 bg-zinc-700/30 fonts-poppins text-lg border-zinc-600 rounded-xl px-4 py-3 min-h-[100px]"
+              placeholderTextColor={colors.modalPlaceholder}
+              className="leading-6 fonts-poppins text-lg rounded-xl px-4 py-3 min-h-[100px]"
+              style={{ 
+                color: colors.text,
+                backgroundColor: colors.modalDescriptionBackground,
+              }}
               multiline
               textAlignVertical="top"
               value={taskContent}
@@ -190,8 +211,8 @@ export default function TaskModal({
           }}
           onCancel={() => setShowDatePicker(false)}
           textColor="#000000"
-          accentColor="#fb7185"
-          buttonTextColorIOS="#fb7185"
+          accentColor={colors.datePickerAccent}
+          buttonTextColorIOS={colors.datePickerButton}
           themeVariant="light"
           display="inline"
           locale="pt-BR"
@@ -207,8 +228,8 @@ export default function TaskModal({
           }}
           onCancel={() => setShowTimePicker(false)}
           textColor="#000000"
-          accentColor="#fb7185"
-          buttonTextColorIOS="#fb7185"
+          accentColor={colors.datePickerAccent}
+          buttonTextColorIOS={colors.datePickerButton}
           themeVariant="light"
           locale="pt-BR"
         />

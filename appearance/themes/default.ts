@@ -7,31 +7,31 @@ export const defaultColors: ThemeColors = {
   secondary: extra?.light?.secondary ?? "#35353A",
   background: extra?.light?.background ?? "#27272A",
   surface: extra?.light?.surface ?? "rgba(39, 39, 42, 0.8)",
-
+  
   text: extra?.light?.text ?? "#FFFFFF",
   textMuted: extra?.light?.textMuted ?? "#A3A3A3",
   textSelected: extra?.light?.textSelected ?? "#000000",
   textToday: extra?.light?.textToday ?? "#FFA41F",
   textExpenseName: extra?.light?.textExpenseName ?? "#D1D5DB",
   textExpenseDate: extra?.light?.textExpenseDate ?? "#A3A3A3",
-
+  
   selected: extra?.light?.selected ?? "#FFA41F",
   taskIndicator: extra?.light?.taskIndicator ?? "#FFA41F",
-
+  
   chevronColor: extra?.light?.chevronColor ?? "#FFA41F",
-
+  
   gain: extra?.light?.gain ?? "#34D399",
   loss: extra?.light?.loss ?? "#FF7A7F",
-
+  
   deleteAction: extra?.light?.deleteAction ?? "#F43F5E",
   deleteActionIcon: extra?.light?.deleteActionIcon ?? "#FFFFFF",
-
+  
   border: extra?.light?.border ?? "#404040",
-
+  
   tabBarBackground: extra?.light?.tabBarBackground ?? "#1E1E1E",
   tabBarActive: extra?.light?.tabBarActive ?? "#FFA41F",
   tabBarInactive: extra?.light?.tabBarInactive ?? "#9CA3AF",
-
+  
   moreScreenHeader: extra?.light?.moreScreenHeader ?? "#27272A",
   moreScreenTitle: extra?.light?.moreScreenTitle ?? "#FFFFFF",
   categoryTitle: extra?.light?.categoryTitle ?? "#A3A3A3",
@@ -50,6 +50,19 @@ export const defaultColors: ThemeColors = {
   premiumButtonText: extra?.light?.premiumButtonText ?? "#000000",
   appVersion: extra?.light?.appVersion ?? "#A3A3A3",
   chevronIcon: extra?.light?.chevronIcon ?? "#A3A3A3",
+
+  // TaskModal - Cores específicas
+  modalBackground: extra?.light?.modalBackground ?? "#27272A",
+  modalHeaderText: extra?.light?.modalHeaderText ?? "#FFFFFF",
+  modalSaveButton: extra?.light?.modalSaveButton ?? "#FFA41F",
+  modalPlaceholder: extra?.light?.modalPlaceholder ?? "#71717A",
+  modalSectionTitle: extra?.light?.modalSectionTitle ?? "#A1A1AA",
+  modalInputBackground: extra?.light?.modalInputBackground ?? "rgba(63, 63, 70, 0.5)",
+  modalInputBorder: extra?.light?.modalInputBorder ?? "#FFA41F",
+  modalDescriptionBackground: extra?.light?.modalDescriptionBackground ?? "rgba(63, 63, 70, 0.3)",
+  modalDescriptionBorder: extra?.light?.modalDescriptionBorder ?? "#52525B",
+  datePickerAccent: extra?.light?.datePickerAccent ?? "#FB7185",
+  datePickerButton: extra?.light?.datePickerButton ?? "#FB7185",
 
   linearGradient: {
     primary: extra?.light?.linearGradient?.primary ?? ["#FFD45A", "#FFA928", "#FF7A00"],

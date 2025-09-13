@@ -283,7 +283,7 @@ const [fontsLoaded] = useFonts({
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider theme={themes.default}>
+      <ThemeProvider theme={themes.blue}>
       <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
         <LlmContext.Provider value={llmValue}>
           {isBooting ? (

@@ -28,7 +28,7 @@ const CategoryFilters: React.FC<CategoryFiltersProps> = ({
   onAddNewCategory,
   addButtonText = "Nova Categoria",
 }) => {
-  // Add theme hook
+
   const theme = useTheme();
 
   return (

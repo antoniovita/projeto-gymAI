@@ -177,7 +177,6 @@ const MoreScreen = () => {
                           style={{
                             color: theme.colors.itemTitle,
                             fontSize: 18,
-                            fontWeight: '600',
                             fontFamily: 'Poppins'
                           }}
                         >

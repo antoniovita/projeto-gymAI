@@ -98,7 +98,8 @@ const ExpenseStatsSection: React.FC<ExpenseStatsSectionProps> = ({
         <View style={{ alignItems: 'center', marginTop: 32 }}>
           <Text style={{
             fontSize: 30,
-            fontFamily: 'Poppins-Regular400',
+            fontFamily: 'Poppins',
+            fontWeight: 400,
             color: balanceColor
           }}>
             {isVisible ? formatValue(balance) : hiddenValue}
