@@ -10,7 +10,6 @@ import {
   Platform,
   Animated,
   Dimensions,
-  KeyboardAvoidingView,
   FlatList
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
@@ -20,6 +19,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Picker } from '@react-native-picker/picker';
 import { Exercise, Workout } from '../../../../api/model/Workout';
 import { useStats } from 'hooks/useStats';
+import { useTheme } from 'hooks/useTheme';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -49,10 +49,10 @@ const WeightSlider: React.FC<{
   value: string;
   onValueChange: (value: string) => void;
 }> = ({ value, onValueChange }) => {
+  const theme = useTheme();
 
   const generateWeightOptions = () => {
     const options = [];
-
     for (let i = 0; i <= 250; i += 2.5) {
       options.push(i.toString());
     }
@@ -68,18 +68,28 @@ const WeightSlider: React.FC<{
     return (
       <Pressable
         onPress={() => onValueChange(item)}
-        className={`mx-1 px-3 py-2 rounded-lg min-w-[50px] items-center ${
-          isSelected ? 'bg-rose-400' : 'bg-zinc-700/20'
-        }`}
+        style={{
+          marginHorizontal: 4,
+          paddingHorizontal: 12,
+          paddingVertical: 8,
+          borderRadius: 12,
+          minWidth: 50,
+          alignItems: 'center',
+          backgroundColor: isSelected ? theme.colors.primary : theme.colors.surface,
+        }}
       >
-        <Text className={`font-sans text-base ${
-          isSelected ? 'text-black font-semibold' : 'text-white'
-        }`}>
+        <Text style={{
+          fontSize: 16,
+          color: isSelected ? theme.colors.textSelected : theme.colors.text,
+          fontWeight: isSelected ? '600' : 'normal',
+        }}>
           {item}
         </Text>
-        <Text className={`font-sans text-xs mt-0.5 ${
-          isSelected ? 'text-black/70' : 'text-zinc-400'
-        }`}>
+        <Text style={{
+          fontSize: 12,
+          marginTop: 2,
+          color: isSelected ? theme.colors.textSelected : theme.colors.textMuted,
+        }}>
           kg
         </Text>
       </Pressable>
@@ -128,12 +138,12 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({
   setNewExerciseSeries,
   userId
 }) => {
+  const theme = useTheme();
   const [isVisibleExerciseModal, setIsVisibleExerciseModal] = React.useState(false);
   const [newExerciseLoad, setNewExerciseLoad] = React.useState('');
 
-  const {addExperience} = useStats()
+  const {addExperience} = useStats();
   
-
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(screenHeight)).current;
 
@@ -143,18 +153,15 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({
     );
   };
 
-  // Funções de animação para o modal de exercício
   const showExerciseModal = () => {
     setIsVisibleExerciseModal(true);
     
-    // Fade in do fundo
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 300,
       useNativeDriver: true,
     }).start();
 
-    // Slide up da gavetinha
     Animated.timing(slideAnim, {
       toValue: 0,
       duration: 400,
@@ -163,21 +170,18 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({
   };
 
   const hideExerciseModal = () => {
-    // Slide down da gavetinha
     Animated.timing(slideAnim, {
       toValue: screenHeight,
       duration: 300,
       useNativeDriver: true,
     }).start();
 
-    // Fade out do fundo
     Animated.timing(fadeAnim, {
       toValue: 0,
       duration: 200,
       useNativeDriver: true,
     }).start(() => {
       setIsVisibleExerciseModal(false);
-      // Reset form
       setNewExerciseName('');
       setNewExerciseReps('10');
       setNewExerciseSeries('3');
@@ -277,7 +281,7 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'flex-start',
-        backgroundColor: '#f43f5e',
+        backgroundColor: theme.colors.deleteAction,
         paddingHorizontal: 16,
         height: '100%',
       }}>
@@ -291,7 +295,7 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({
           }}
           onPress={() => handleRemoveExercise(index)}
         >
-          <Ionicons name="trash" size={24} color="white" />
+          <Ionicons name="trash" size={24} color={theme.colors.deleteActionIcon} />
         </TouchableOpacity>
       </View>
     );
@@ -304,44 +308,89 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({
       visible={isCreateVisible}
       onRequestClose={() => setIsCreateVisible(false)}
     >
-      <View className={`flex-1 ${Platform.OS === 'ios' ? 'pt-12 pb-8' : 'pt-8 pb-4'} bg-zinc-800`}>
+      <View style={{
+        flex: 1,
+        paddingTop: Platform.OS === 'ios' ? 48 : 32,
+        paddingBottom: Platform.OS === 'ios' ? 32 : 16,
+        backgroundColor: theme.colors.background,
+      }}>
 
         {/* Header */}
-        <View className="flex-row justify-between items-center px-4 py-4">
+        <View style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          paddingHorizontal: 16,
+          paddingVertical: 16,
+        }}>
           <Pressable
-            className="items-center flex flex-row"
+            style={{
+              alignItems: 'center',
+              flexDirection: 'row',
+            }}
             onPress={() => setIsCreateVisible(false)}
           >
-            <Ionicons name="chevron-back" size={28} color="white" />
-            <Text className="text-white text-lg font-sans"> Voltar</Text>
+            <Ionicons name="chevron-back" size={28} color={theme.colors.text} />
+            <Text style={{
+              color: theme.colors.text,
+              fontSize: 18,
+              marginLeft: 4,
+            }}>
+              Voltar
+            </Text>
           </Pressable>
 
           <Pressable onPress={handleSaveWorkout}>
-            <Text className="text-rose-400 font-sans text-lg font-semibold mr-4">Salvar</Text>
+            <Text style={{
+              color: theme.colors.primary,
+              fontSize: 18,
+              fontWeight: '600',
+              marginRight: 16,
+            }}>
+              Salvar
+            </Text>
           </Pressable>
         </View>
 
-        <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
 
           {/* Título do Treino */}
-          <View className="mt-6 mb-6">
+          <View style={{ marginTop: 24, marginBottom: 24 }}>
             <TextInput
               placeholder="Nome do treino"
-              placeholderTextColor="#71717a"
+              placeholderTextColor={theme.colors.modalPlaceholder}
               value={newWorkoutTitle}
               onChangeText={setNewWorkoutTitle}
-              className="text-white text-2xl px-6 font-sans py-3"
+              style={{
+                color: theme.colors.text,
+                fontSize: 32,
+                paddingHorizontal: 24,
+                paddingVertical: 12,
+              }}
               multiline
             />
           </View>
 
           {/* Grupos Musculares */}
-          <View className="mb-8">
-            <Text className="text-zinc-400 text-sm px-6 font-medium mb-3 uppercase tracking-wide">
+          <View style={{ marginBottom: 32 }}>
+            <Text style={{
+              color: theme.colors.modalSectionTitle,
+              fontSize: 14,
+              paddingHorizontal: 24,
+              fontWeight: '500',
+              marginBottom: 12,
+              textTransform: 'uppercase',
+              letterSpacing: 1.2,
+            }}>
               Grupos Musculares
             </Text>
             
-            <View className="flex flex-row flex-wrap gap-2 px-6">
+            <View style={{
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+              gap: 8,
+              paddingHorizontal: 24,
+            }}>
               {categories.map((muscle) => {
                 const isSelected = selectedMusclesForWorkout.includes(muscle);
                 const color = getCategoryColor(muscle);
@@ -349,12 +398,27 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({
                   <Pressable
                     key={muscle}
                     onPress={() => toggleMuscleForWorkout(muscle)}
-                    className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${
-                    isSelected ? 'bg-rose-400' : 'bg-zinc-700'
-                    }`}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 8,
+                      paddingHorizontal: 12,
+                      paddingVertical: 4,
+                      borderRadius: 12,
+                      backgroundColor: isSelected ? theme.colors.primary : theme.colors.secondary,
+                    }}
                   >
-                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color, borderWidth: 0.5, borderColor: '#fff' }} />
-                    <Text className={`font-sans ${isSelected ? 'text-black' : 'text-white'}`}>
+                    <View style={{ 
+                      width: 10, 
+                      height: 10, 
+                      borderRadius: 5, 
+                      backgroundColor: color, 
+                      borderWidth: 0.5, 
+                      borderColor: theme.colors.text 
+                    }} />
+                    <Text style={{
+                      color: isSelected ? theme.colors.textSelected : theme.colors.text,
+                    }}>
                       {muscle}
                     </Text>
                   </Pressable>
@@ -364,14 +428,28 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({
           </View>
 
           {/* Exercícios */}
-          <View className="mb-8">
-            <View className='flex-row justify-between items-center'>
-              <Text className="text-zinc-400 text-sm px-6 font-medium uppercase tracking-wide">
+          <View style={{ marginBottom: 32 }}>
+            <View style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}>
+              <Text style={{
+                color: theme.colors.modalSectionTitle,
+                fontSize: 14,
+                paddingHorizontal: 24,
+                fontWeight: '500',
+                textTransform: 'uppercase',
+                letterSpacing: 1.2,
+              }}>
                 Exercícios ({exercises.length})
               </Text>
 
-              <Pressable className='px-6' onPress={showExerciseModal}>
-                <Feather name='plus' size={18} color='#a1a1aa' />
+              <Pressable 
+                style={{ paddingHorizontal: 24 }} 
+                onPress={showExerciseModal}
+              >
+                <Feather name='plus' size={18} color={theme.colors.modalSectionTitle} />
               </Pressable>
 
               {/* Modal de Exercício */}
@@ -394,132 +472,181 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({
                     onPress={hideExerciseModal}
                   />
                   
-                  <View
+                  <Animated.View 
+                    style={{
+                      backgroundColor: theme.colors.modalBackground,
+                      borderTopLeftRadius: 24,
+                      borderTopRightRadius: 24,
+                      paddingBottom: Platform.OS === 'ios' ? 32 : 16,
+                      transform: [{ translateY: slideAnim }],
+                    }}
                   >
-                    <Animated.View 
-                      style={{
-                        backgroundColor: '#27272a',
-                        borderTopLeftRadius: 24,
-                        borderTopRightRadius: 24,
-                        paddingBottom: Platform.OS === 'ios' ? 32 : 16,
-                        transform: [{ translateY: slideAnim }],
-                      }}
-                    >
-                      {/* Handle do modal */}
+                    <View style={{ paddingHorizontal: 24, paddingTop: 36 }}>
 
-                      <View className="px-6 pt-9">
-
-                        {/* Nome do exercício */}
-                        <View className="mb-6">
-                          <Text className="text-zinc-400 font-sans text-sm font-medium mb-2  uppercase tracking-wide">
-                            Nome
-                          </Text>
-                          <View className="bg-zinc-700/15 rounded-xl">
-                            <TextInput
-                              placeholder="Supino reto"
-                              placeholderTextColor="#71717a"
-                              value={newExerciseName}
-                              onChangeText={setNewExerciseName}
-                              className="text-white font-sans text-lg px-4 py-4"
-                            />
-                          </View>
+                      {/* Nome do exercício */}
+                      <View style={{ marginBottom: 24 }}>
+                        <Text style={{
+                          color: theme.colors.modalSectionTitle,
+                          fontSize: 14,
+                          fontWeight: '500',
+                          marginBottom: 8,
+                          textTransform: 'uppercase',
+                          letterSpacing: 1.2,
+                        }}>
+                          Nome
+                        </Text>
+                        <View style={{
+                          backgroundColor: theme.colors.modalInputBackground,
+                          borderRadius: 12,
+                        }}>
+                          <TextInput
+                            placeholder="Supino reto"
+                            placeholderTextColor={theme.colors.modalPlaceholder}
+                            value={newExerciseName}
+                            onChangeText={setNewExerciseName}
+                            style={{
+                              color: theme.colors.text,
+                              fontSize: 18,
+                              paddingHorizontal: 16,
+                              paddingVertical: 16,
+                            }}
+                          />
                         </View>
-
-                        {/* Carga com Slider Horizontal */}
-                        <View className="mb-6">
-                          <Text className="text-zinc-400 font-sans text-sm font-medium mb-2 uppercase tracking-wide">
-                            Carga - {newExerciseLoad || '0'} kg
-                          </Text>
-                          <View className="bg-zinc-700/10 rounded-xl py-3">
-                            <WeightSlider
-                              value={newExerciseLoad}
-                              onValueChange={setNewExerciseLoad}
-                            />
-                          </View>
-                        </View>
-
-                        {/* Séries e Repetições */}
-                        <View className="flex-row gap-4 mb-8">
-                          <View className="flex-1">
-                            <View className="bg-zinc-800 overflow-hidden">
-                              <Picker
-                                selectedValue={newExerciseSeries}
-                                onValueChange={(itemValue) => setNewExerciseSeries(itemValue)}
-                                style={{
-                                  color: 'white',
-                                  backgroundColor: 'transparent',
-                                  height: Platform.OS === 'ios' ? 180 : 50,
-                                }}
-                                itemStyle={{
-                                  color: 'white',
-                                  fontSize: 16,
-                                  fontWeight: '500',
-                                }}
-                              >
-                                {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
-                                  <Picker.Item 
-                                    key={num} 
-                                    label={`${num} série${num > 1 ? 's' : ''}`} 
-                                    value={num.toString()} 
-                                  />
-                                ))}
-                              </Picker>
-                            </View>
-                          </View>
-
-                          <View className="flex-1">
-                            <View className="bg-zinc-800 overflow-hidden">
-                              <Picker
-                                selectedValue={newExerciseReps}
-                                onValueChange={(itemValue) => setNewExerciseReps(itemValue)}
-                                style={{
-                                  color: 'white',
-                                  backgroundColor: 'transparent',
-                                  height: Platform.OS === 'ios' ? 180 : 50,
-                                }}
-                                itemStyle={{
-                                  color: 'white',
-                                  fontSize: 16,
-                                  fontWeight: '500',
-                                }}
-                              >
-                                {Array.from({ length: 50 }, (_, i) => i + 1).map((num) => (
-                                  <Picker.Item 
-                                    key={num} 
-                                    label={`${num} rep${num > 1 ? 's' : ''}`} 
-                                    value={num.toString()} 
-                                  />
-                                ))}
-                              </Picker>
-                            </View>
-                          </View>
-                        </View>
-
-                        <Pressable
-                          onPress={() => {
-                            handleAddExercise();
-                            hideExerciseModal();
-                          }}
-                          className="bg-rose-400 rounded-xl p-4 items-center mb-4"
-                        >
-                          <Text className="text-black font-sans font-semibold text-lg">
-                            Adicionar Exercício
-                          </Text>
-                        </Pressable>
-                        <Pressable
-                          onPress={hideExerciseModal}
-                          className="items-center py-2"
-                        >
-                          <Text className="text-zinc-400 font-sans">Cancelar</Text>
-                        </Pressable>
                       </View>
-                    </Animated.View>
-                  </View>
+
+                      {/* Carga com Slider Horizontal */}
+                      <View style={{ marginBottom: 24 }}>
+                        <Text style={{
+                          color: theme.colors.modalSectionTitle,
+                          fontSize: 14,
+                          fontWeight: '500',
+                          marginBottom: 8,
+                          textTransform: 'uppercase',
+                          letterSpacing: 1.2,
+                        }}>
+                          Carga - {newExerciseLoad || '0'} kg
+                        </Text>
+                        <View style={{
+                          backgroundColor: theme.colors.modalInputBackground,
+                          borderRadius: 12,
+                          paddingVertical: 12,
+                        }}>
+                          <WeightSlider
+                            value={newExerciseLoad}
+                            onValueChange={setNewExerciseLoad}
+                          />
+                        </View>
+                      </View>
+
+                      {/* Séries e Repetições */}
+                      <View style={{
+                        flexDirection: 'row',
+                        gap: 16,
+                        marginBottom: 32,
+                      }}>
+                        <View style={{ flex: 1 }}>
+                          <View style={{
+                            backgroundColor: theme.colors.secondary,
+                            overflow: 'hidden',
+                          }}>
+                            <Picker
+                              selectedValue={newExerciseSeries}
+                              onValueChange={(itemValue) => setNewExerciseSeries(itemValue)}
+                              style={{
+                                color: theme.colors.text,
+                                backgroundColor: 'transparent',
+                                height: Platform.OS === 'ios' ? 180 : 50,
+                              }}
+                              itemStyle={{
+                                color: theme.colors.text,
+                                fontSize: 16,
+                                fontWeight: '500',
+                              }}
+                            >
+                              {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
+                                <Picker.Item 
+                                  key={num} 
+                                  label={`${num} série${num > 1 ? 's' : ''}`} 
+                                  value={num.toString()} 
+                                />
+                              ))}
+                            </Picker>
+                          </View>
+                        </View>
+
+                        <View style={{ flex: 1 }}>
+                          <View style={{
+                            backgroundColor: theme.colors.secondary,
+                            overflow: 'hidden',
+                          }}>
+                            <Picker
+                              selectedValue={newExerciseReps}
+                              onValueChange={(itemValue) => setNewExerciseReps(itemValue)}
+                              style={{
+                                color: theme.colors.text,
+                                backgroundColor: 'transparent',
+                                height: Platform.OS === 'ios' ? 180 : 50,
+                              }}
+                              itemStyle={{
+                                color: theme.colors.text,
+                                fontSize: 16,
+                                fontWeight: '500',
+                              }}
+                            >
+                              {Array.from({ length: 50 }, (_, i) => i + 1).map((num) => (
+                                <Picker.Item 
+                                  key={num} 
+                                  label={`${num} rep${num > 1 ? 's' : ''}`} 
+                                  value={num.toString()} 
+                                />
+                              ))}
+                            </Picker>
+                          </View>
+                        </View>
+                      </View>
+
+                      <Pressable
+                        onPress={() => {
+                          handleAddExercise();
+                          hideExerciseModal();
+                        }}
+                        style={{
+                          backgroundColor: theme.colors.primary,
+                          borderRadius: 12,
+                          padding: 16,
+                          alignItems: 'center',
+                          marginBottom: 16,
+                        }}
+                      >
+                        <Text style={{
+                          color: theme.colors.textSelected,
+                          fontWeight: '600',
+                          fontSize: 18,
+                        }}>
+                          Adicionar Exercício
+                        </Text>
+                      </Pressable>
+                      
+                      <Pressable
+                        onPress={hideExerciseModal}
+                        style={{
+                          alignItems: 'center',
+                          paddingVertical: 8,
+                        }}
+                      >
+                        <Text style={{
+                          color: theme.colors.textMuted,
+                        }}>
+                          Cancelar
+                        </Text>
+                      </Pressable>
+                    </View>
+                  </Animated.View>
                 </Animated.View>
               </Modal>
             </View>
 
-            <View className='mt-2'>
+            <View style={{ marginTop: 8 }}>
               <GestureHandlerRootView>
                 {exercises.map((exercise, index) => (
                   <Swipeable
@@ -532,31 +659,72 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({
                     dragOffsetFromLeftEdge={80}
                     friction={1}
                   >
-                    <View className="w-full flex flex-col justify-center px-6 h-[90px] pb-4 border-b border-neutral-700 bg-zinc-800">
-                      <View className="flex flex-row justify-between">
-                        <Pressable className="flex flex-col gap-1 mt-1 flex-1">
-                          <View className="flex flex-row items-center gap-2">
-                            <Text className={`text-xl font-sans font-medium max-w-[280px] ${
-                              exercise.completion === 1 ? 'line-through text-neutral-500' : 'text-gray-300'
-                            }`}
-                            numberOfLines={1}
-                            ellipsizeMode="tail"
+                    <View style={{
+                      width: '100%',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                      paddingHorizontal: 24,
+                      height: 90,
+                      paddingBottom: 16,
+                      borderBottomWidth: 1,
+                      borderBottomColor: theme.colors.border,
+                      backgroundColor: theme.colors.background,
+                    }}>
+                      <View style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                      }}>
+                        <Pressable style={{
+                          flexDirection: 'column',
+                          gap: 4,
+                          marginTop: 4,
+                          flex: 1,
+                        }}>
+                          <View style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 8,
+                          }}>
+                            <Text
+                              style={{
+                                fontSize: 20,
+                                fontWeight: '500',
+                                maxWidth: 280,
+                                color: exercise.completion === 1 ? theme.colors.textMuted : theme.colors.text,
+                                textDecorationLine: exercise.completion === 1 ? 'line-through' : 'none',
+                              }}
+                              numberOfLines={1}
+                              ellipsizeMode="tail"
                             >
                               {exercise.name}
                             </Text>
                           </View>
-                          <Text className="text-neutral-400 text-sm mt-1 font-sans">
+                          <Text style={{
+                            color: theme.colors.textMuted,
+                            fontSize: 14,
+                            marginTop: 4,
+                          }}>
                             {exercise.series} série{exercise.series > 1 ? 's' : ''} • {exercise.reps} rep{exercise.reps > 1 ? 's' : ''} • {exercise.load}kg
                           </Text>
                         </Pressable>
+                        
                         <Pressable
                           onPress={() => toggleExerciseCompletion(index)}
-                          className={`w-[25px] h-[25px] mt-[20px] border rounded-lg ${
-                            exercise.completion === 1 ? 'bg-rose-500' : 'border-2 border-neutral-600'
-                          }`}
-                          style={{ alignItems: 'center', justifyContent: 'center' }}
+                          style={{
+                            width: 25,
+                            height: 25,
+                            marginTop: 20,
+                            borderWidth: exercise.completion === 1 ? 0 : 2,
+                            borderColor: theme.colors.border,
+                            borderRadius: 8,
+                            backgroundColor: exercise.completion === 1 ? theme.colors.primary : 'transparent',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
                         >
-                          {exercise.completion === 1 ? <Ionicons name="checkmark" size={20} color="white" /> : null}
+                          {exercise.completion === 1 ? (
+                            <Ionicons name="checkmark" size={20} color={theme.colors.textSelected} />
+                          ) : null}
                         </Pressable>
                       </View>
                     </View>
@@ -566,12 +734,26 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({
             </View>
 
             {exercises.length === 0 && (
-              <View className="items-center justify-center py-32">
-                <Ionicons name="barbell-outline" size={48} color="#71717a" />
-                <Text className="text-zinc-400 font-sans text-center mt-2">
+              <View style={{
+                alignItems: 'center',
+                justifyContent: 'center',
+                paddingVertical: 128,
+              }}>
+                <Ionicons name="barbell-outline" size={48} color={theme.colors.textMuted} />
+                <Text style={{
+                  color: theme.colors.textMuted,
+                  textAlign: 'center',
+                  marginTop: 8,
+                }}>
                   Nenhum exercício adicionado
                 </Text>
-                <Text className="text-zinc-500 font-sans text-sm text-center mt-1">
+                <Text style={{
+                  color: theme.colors.textMuted,
+                  fontSize: 14,
+                  textAlign: 'center',
+                  marginTop: 4,
+                  opacity: 0.7,
+                }}>
                   Adicione exercícios para compor seu treino
                 </Text>
               </View>

@@ -22,7 +22,7 @@ import { useTask } from 'hooks/useTask';
 import { useWorkout } from 'hooks/useWorkout';
 import { RootStackParamList } from 'widgets/types';
 import GradientIcon from './generalComps/GradientIcon';
-import { useChat } from 'hooks/useChat';
+import { useChat } from 'components/Screens/Chat/chatHelpers';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 

@@ -1,9 +1,9 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { FlatList } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useAuth } from './useAuth';
-import { useMessageParser } from './useMessageParser';
-import { bootstrapLlama, LlamaCtx, stopWords } from '../llm.config';
+import { useAuth } from '../../../hooks/useAuth';
+import { useMessageParser } from '../../../hooks/useMessageParser';
+import { bootstrapLlama, LlamaCtx, stopWords } from '../../../llm.config';
 
 const STORAGE_KEY = '@chat_messages';
 
@@ -13,7 +13,7 @@ REGRAS DE CONDUTA (OBRIGATÓRIO):
 - **Nome:** Você tem nome e ele é Fuoco.
 - **Personalidade:** Você deve ser extremamente gentil.
 - **Identidade:** Nunca revele que é uma inteligência artificial, nem quem o criou ou treinou.  
-- **Objetividade:** Responda sempre de forma breve, com no máximo 3–4 linhas.  
+- **Objetividade:** Responda sempre de forma breve, com no máximo 3–4 linhas, menos de 256 tokens.  
 - **Estrutura:**  
   - Para pedidos de **treino**, utilize **tabelas Markdown compactas** (poucas colunas e linhas claras).  
   - Para pedidos de **passo a passo, lista e planejamento**, use **listas numeradas curtas** (até 5 passos).  
@@ -31,7 +31,7 @@ export interface Message {
 export const useChat = () => {
 
   const [messages, setMessages] = useState<Message[]>([]);
-  const [isThinking, setIsThinking] = useState(false); // Novo estado para "pensando"
+  const [isThinking, setIsThinking] = useState(false); 
   const [isTyping, setIsTyping] = useState(false);
   const [typingText, setTypingText] = useState('');
   
@@ -78,10 +78,10 @@ export const useChat = () => {
     return new Promise<void>((resolve) => {
       let index = 0;
       setTypingText('');
-      setIsThinking(false); // Para de "pensar" quando começa a digitar
-      setIsTyping(true); // Começa a digitar
+      setIsThinking(false);
+      setIsTyping(true); 
 
-      const typingSpeed = Math.random() * 40;
+      const typingSpeed = 50 + Math.random() * 10;
 
       if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
 
@@ -99,10 +99,10 @@ export const useChat = () => {
               const systemReply: Message = { role: 'assistant', content: finalText };
               const finalMessages = [...baseMessages, systemReply];
               await saveMessages(finalMessages);
-              setIsTyping(false); // Para de digitar
+              setIsTyping(false);
               setTypingText('');
               resolve();
-            }, 200);
+            }, 100); 
           }
           return next;
         });
@@ -123,7 +123,7 @@ export const useChat = () => {
   const scrollToBottom = useCallback(() => {
     setTimeout(() => {
       flatListRef.current?.scrollToEnd({ animated: true });
-    }, 100);
+    }, 500);
   }, []);
 
   const initializeLlama = useCallback(async () => {
@@ -173,8 +173,8 @@ export const useChat = () => {
       clearInterval(typingIntervalRef.current);
       typingIntervalRef.current = null;
     }
-    setIsThinking(false); // Para de pensar
-    setIsTyping(false);   // Para de digitar
+    setIsThinking(false); 
+    setIsTyping(false);   
     setTypingText('');
   }, [isGenerating]);
 
@@ -193,7 +193,7 @@ export const useChat = () => {
   const sendMessageToLlama = useCallback(async (
     message: string,
     currentMessages: Message[],
-    systemPrompt: string = 'Você é um assistente de produtividade chamado Fuoco. Não responda que você é uma IA.'
+    systemPrompt: string = RAG
   ) => {
     if (!contextRef.current || !isReady || isGenerating) {
       console.warn('[useChat] Contexto Llama não disponível ou já gerando resposta');
@@ -217,7 +217,7 @@ export const useChat = () => {
       
       const { text } = await contextRef.current.completion({
         messages: contextMessages,
-        n_predict: 512,
+        n_predict: 256,
         temperature: 0.4,
         top_p: 0.9,
         stop: stopWords,
@@ -314,7 +314,8 @@ export const useChat = () => {
       // Inicia o thinking para respostas rápidas também
       setIsThinking(true);
       
-      const thinkingTime = Math.random() * 1000 + 800;
+      // Tempo de pensamento reduzido para 300-800ms (era 0-100ms aleatório)
+      const thinkingTime = 300 + Math.random() * 500;
       setTimeout(async () => {
         let finalText = '';
         
@@ -340,12 +341,14 @@ export const useChat = () => {
           finalText = taskResponses[Math.floor(Math.random() * taskResponses.length)];
         }
         
-        // Animação de digitação para despesas e tarefas
+        // Animação de digitação para despesas e tarefas - velocidade aumentada
         let index = 0;
         setTypingText('');
         setIsThinking(false); // Para de pensar
         setIsTyping(true);    // Começa a digitar
-        const typingSpeed = Math.random() * 20 + 25;
+        
+        // Velocidade aumentada: entre 15-25ms (era 0-100ms)
+        const typingSpeed = 15 + Math.random() * 10;
         
         const interval = setInterval(() => {
           setTypingText((prev) => {
@@ -363,7 +366,7 @@ export const useChat = () => {
                 await saveMessages(finalMessages);
                 setIsTyping(false); // Para de digitar
                 setTypingText('');
-              }, 200);
+              }, 100); // Reduzido de 200ms para 100ms
             }
             return next;
           });

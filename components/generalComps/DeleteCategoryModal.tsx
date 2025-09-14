@@ -86,7 +86,7 @@ export default function DeleteCategoryModal({
         <Animated.View
           style={{
             transform: [{ scale: scaleValue }],
-            backgroundColor: theme.colors.itemBackground,
+            backgroundColor: theme.colors.background,
             borderRadius: 16,
             width: '100%',
             maxHeight: '80%',

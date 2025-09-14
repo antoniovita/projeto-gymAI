@@ -27,29 +27,47 @@ import { EmptyState } from 'components/generalComps/EmptyState';
 import { OUTLINE } from 'imageConstants';
 import { useTheme } from '../../../hooks/useTheme';
 
+import {
+  validateWorkoutForm,
+  validateCategoryName,
+  extractMuscleCategories,
+  mergeCategoriesWithMuscles,
+  getCategoryColor,
+  filterWorkoutsByCategories,
+  formatWorkoutDate,
+  getCurrentDateString,
+  getExerciseCountText,
+  handleDeleteWorkout,
+  handleDuplicateWorkout,
+  handleDeleteCategory,
+  getInitialWorkoutForm,
+  getInitialExerciseForm,
+  workoutToFormData,
+  WorkoutFormData,
+  ExerciseFormData
+} from './workoutHelpers';
 
 export default function WorkoutScreen() {
+  // Estados do modal de criação/edição
   const [isCreateVisible, setIsCreateVisible] = useState(false);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [newWorkoutTitle, setNewWorkoutTitle] = useState('');
   const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
-  const [selectedMusclesForWorkout, setSelectedMusclesForWorkout] = useState<string[]>([]);
-  const [exercises, setExercises] = useState<Exercise[]>([]);
   
+  // Estados do formulário de treino
+  const [workoutForm, setWorkoutForm] = useState<WorkoutFormData>(getInitialWorkoutForm());
+  const [exerciseForm, setExerciseForm] = useState<ExerciseFormData>(getInitialExerciseForm());
+  
+  // Estados de filtros
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  
+  // Estados do modal de categorias
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('#EF4444');
   const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
-  const [showDeleteCategoryModal, setShowDeleteCategoryModal] = useState(false); 
+  const [showDeleteCategoryModal, setShowDeleteCategoryModal] = useState(false);
 
-  // Estados para controle dos exercícios
-  const [newExerciseName, setNewExerciseName] = useState('');
-  const [newExerciseReps, setNewExerciseReps] = useState('10');
-  const [newExerciseSeries, setNewExerciseSeries] = useState('3');
-
+  // Hooks
   const navigation = useNavigation();
   const { userId } = useAuth();
-  
-  // Add theme hook
   const theme = useTheme();
 
   // Hook de categorias
@@ -63,9 +81,7 @@ export default function WorkoutScreen() {
     refreshCategories
   } = useCategory();
 
-  // Filtrar categorias por tipo 'workout'
-  const workoutCategories = getCategoriesByType('workout');
-
+  // Hook de treinos
   const {
     workouts,
     createWorkout,
@@ -75,8 +91,13 @@ export default function WorkoutScreen() {
     duplicateWorkout,
   } = useWorkout();
 
-  const workout = workouts ?? [];
+  // Dados derivados
+  const workoutCategories = getCategoriesByType('workout');
+  const taskMuscles = extractMuscleCategories(workouts ?? []);
+  const categories = mergeCategoriesWithMuscles(workoutCategories, taskMuscles);
+  const filteredWorkouts = filterWorkoutsByCategories(workouts ?? [], selectedCategories);
 
+  // Efeitos
   useFocusEffect(
     useCallback(() => {
       fetchWorkouts(userId!);
@@ -84,33 +105,11 @@ export default function WorkoutScreen() {
     }, [userId])
   );
 
-  // Criar categorias dos grupos musculares existentes nas tarefas
-  const taskMuscles = Array.from(
-    new Set(
-      workout
-        .flatMap((task) => task.type?.split(',').map((s: string) => s.trim()) ?? [])
-        .filter((t) => t.length > 0)
-    )
-  );
-
-  const categories = [
-    ...workoutCategories.map(cat => cat.name),
-    ...taskMuscles.filter(muscle => !workoutCategories.some(cat => cat.name === muscle))
-  ];
-
-  const getCategoryColor = (catName: string) => {
-    const category = workoutCategories.find(c => c.name === catName);
-    return category ? category.color : theme.colors.textMuted;
-  };
-
+  // Handlers de categoria
   const handleAddCategory = async () => {
-    if (!newCategoryName.trim()) {
-      Alert.alert('Erro', 'O nome da categoria não pode ser vazio.');
-      return;
-    }
-
-    if (workoutCategories.find(cat => cat.name.toLowerCase() === newCategoryName.trim().toLowerCase())) {
-      Alert.alert('Erro', 'Essa categoria já existe.');
+    const error = validateCategoryName(newCategoryName, workoutCategories);
+    if (error) {
+      Alert.alert('Erro', error);
       return;
     }
 
@@ -125,85 +124,68 @@ export default function WorkoutScreen() {
     }
   };
 
-  // Nova função simplificada para deletar categoria
-  const handleDeleteCategory = async (categoryName: string) => {
+  const onDeleteCategory = async (categoryName: string) => {
     const categoryToDelete = workoutCategories.find(cat => cat.name === categoryName);
     if (!categoryToDelete) return;
 
-    const isCategoryInUse = workout.some(task =>
-      task.type?.split(',').map((t: string) => t.trim()).includes(categoryName)
-    );
+    const handleDelete = async () => {
+      try {
+        await deleteCategory(categoryToDelete.id);
+      } catch (err) {
+        console.error('Erro ao deletar categoria:', err);
+        Alert.alert('Erro', 'Não foi possível excluir a categoria.');
+      }
+    };
 
-    if (isCategoryInUse) {
-      Alert.alert('Erro', 'Esta categoria está associada a uma ou mais tarefas e não pode ser excluída.');
-      return;
-    }
-
-    try {
-      await deleteCategory(categoryToDelete.id);
-      // O modal será fechado automaticamente após a exclusão bem-sucedida
-    } catch (err) {
-      console.error('Erro ao deletar categoria:', err);
-      Alert.alert('Erro', 'Não foi possível excluir a categoria.');
-    }
+    handleDeleteCategory(categoryName, workouts ?? [], handleDelete);
   };
 
+  // Handlers de treino
   const handleOpenCreate = () => {
     setSelectedWorkout(null);
-    setNewWorkoutTitle('');
-    setSelectedMusclesForWorkout([]);
-    setExercises([]);
-    setNewExerciseName('');
-    setNewExerciseReps('10');
-    setNewExerciseSeries('3');
+    setWorkoutForm(getInitialWorkoutForm());
+    setExerciseForm(getInitialExerciseForm());
     setIsCreateVisible(true);
   };
 
   const handleOpenEdit = (workout: Workout) => {
     setSelectedWorkout(workout);
-    setNewWorkoutTitle(workout.name);
-    setSelectedMusclesForWorkout(workout.type ? workout.type.split(',') : []);
-    setExercises(workout.exercises || []);
-    setNewExerciseName('');
-    setNewExerciseReps('10');
-    setNewExerciseSeries('3');
+    setWorkoutForm(workoutToFormData(workout));
+    setExerciseForm(getInitialExerciseForm());
     setIsCreateVisible(true);
   };
 
   const handleSaveWorkout = async () => {
-    if (!newWorkoutTitle.trim()) {
-      Alert.alert('Erro!', 'O título do treino não pode estar vazio.');
-      return;
-    }
-
-    if (exercises.length === 0) {
-      Alert.alert('Erro!', 'Adicione pelo menos um exercício ao treino.');
+    const error = validateWorkoutForm(workoutForm);
+    if (error) {
+      Alert.alert('Erro!', error);
       return;
     }
 
     try {
-      const type = selectedMusclesForWorkout.join(',');
-      const today = new Date();
-      const formattedDate = today.toISOString().split('T')[0];
+      const type = workoutForm.muscles.join(',');
+      const formattedDate = getCurrentDateString();
 
       if (selectedWorkout) {
         await updateWorkout(selectedWorkout.id, {
-          name: newWorkoutTitle,
-          exercises,
+          name: workoutForm.title,
+          exercises: workoutForm.exercises,
           date: formattedDate,
           type,
         });
       } else {
-        await createWorkout(newWorkoutTitle, exercises, formattedDate, userId!, type);
+        await createWorkout(
+          workoutForm.title, 
+          workoutForm.exercises, 
+          formattedDate, 
+          userId!, 
+          type
+        );
       }
 
       setIsCreateVisible(false);
-      setNewWorkoutTitle('');
-      setSelectedMusclesForWorkout([]);
-      setExercises([]);
-      setNewExerciseName('');
-      setNewExerciseReps('10');
-      setNewExerciseSeries('3');
+      setWorkoutForm(getInitialWorkoutForm());
+      setExerciseForm(getInitialExerciseForm());
       await fetchWorkouts(userId!);
     } catch (err) {
       console.error(err);
@@ -211,60 +193,36 @@ export default function WorkoutScreen() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    Alert.alert(
-      'Excluir treino',
-      'Tem certeza que deseja excluir este treino?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Excluir',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteWorkout(id);
-              await fetchWorkouts(userId!);
-            } catch (err) {
-              console.error(err);
-              Alert.alert('Erro', 'Não foi possível excluir o treino.');
-            }
-          },
-        },
-      ],
-      { cancelable: true }
+  const onDeleteWorkout = async (id: string) => {
+    try {
+      await deleteWorkout(id);
+      await fetchWorkouts(userId!);
+    } catch (err) {
+      console.error(err);
+      Alert.alert('Erro', 'Não foi possível excluir o treino.');
+    }
+  };
+
+  const onDuplicateWorkout = async (itemId: string) => {
+    try {
+      await duplicateWorkout(userId!, itemId);
+      await fetchWorkouts(userId!);
+    } catch (err) {
+      console.error(err);
+      Alert.alert('Erro', 'Não foi possível duplicar o treino.');
+    }
+  };
+
+  // Handlers de filtros
+  const handleToggleCategory = (categoryName: string) => {
+    setSelectedCategories(prev =>
+      prev.includes(categoryName) 
+        ? prev.filter(c => c !== categoryName) 
+        : [...prev, categoryName]
     );
   };
 
-  const handleDuplicate = async (itemId: string) => {
-    Alert.alert(
-      'Duplicar treino',
-      'Tem certeza que deseja duplicar este treino?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Duplicar',
-          style: 'cancel',
-          onPress: async () => {
-            try {
-              await duplicateWorkout(userId!, itemId);
-              await fetchWorkouts(userId!);
-            } catch (err) {
-              console.error(err);
-              Alert.alert('Erro', 'Não foi possível duplicar o treino.');
-            }
-          },
-        },
-      ],
-      { cancelable: true }
-    );
-  }
-
-  const filteredWorkouts = selectedCategories.length === 0
-    ? workouts
-    : workouts.filter((workout) =>
-        workout.type?.split(',').some((muscle) => selectedCategories.includes(muscle))
-      );
-
+  // Componentes de renderização
   const renderLeftActions = (item: Workout) => {
     return (
       <View style={{
@@ -284,7 +242,7 @@ export default function WorkoutScreen() {
             borderTopColor: theme.colors.border,
             backgroundColor: theme.colors.primary,
           }}
-          onPress={() => handleDuplicate(item.id)}
+          onPress={() => handleDuplicateWorkout(item.id, onDuplicateWorkout)}
         >
           <Ionicons name="copy" size={24} color={theme.colors.onPrimary} />
         </TouchableOpacity>
@@ -301,7 +259,7 @@ export default function WorkoutScreen() {
             height: "100%",
             width: 100
           }}
-          onPress={() => handleDelete(item.id)}
+          onPress={() => handleDeleteWorkout(item.id, onDeleteWorkout)}
         >
           <Ionicons name="trash" size={24} color={theme.colors.deleteActionIcon} />
         </TouchableOpacity>
@@ -353,13 +311,13 @@ export default function WorkoutScreen() {
                   fontSize: 14, 
                   marginTop: 4 
                 }}>
-                  {new Date(item.date ?? '').toLocaleDateString('pt-BR')}
+                  {formatWorkoutDate(item.date ?? '')}
                 </Text>
                 <Text style={{ 
                   color: theme.colors.textExpenseDate, 
                   fontSize: 14 
                 }}>
-                  • {exerciseCount} exercício{exerciseCount !== 1 ? 's' : ''}
+                  • {getExerciseCountText(exerciseCount)}
                 </Text>
               </View>
             </Pressable>
@@ -385,7 +343,11 @@ export default function WorkoutScreen() {
                     borderRadius: 12,
                     maxWidth: 80,
                     overflow: 'hidden',
-                    backgroundColor: getCategoryColor(muscle.trim()),
+                    backgroundColor: getCategoryColor(
+                      muscle.trim(), 
+                      workoutCategories, 
+                      theme.colors.textMuted
+                    ),
                   }}
                 >
                   <Text
@@ -437,6 +399,7 @@ export default function WorkoutScreen() {
       ...(Platform.OS === 'android' && { paddingVertical: 30 })
     }}>
 
+      {/* Botão de adicionar */}
       <Pressable
         style={{
           position: 'absolute',
@@ -484,6 +447,7 @@ export default function WorkoutScreen() {
           <Text style={{
             color: theme.colors.text,
             fontSize: 18,
+            fontFamily: "Poppins_400Regular",
             fontWeight: '500',
           }}>
             Academia
@@ -505,23 +469,19 @@ export default function WorkoutScreen() {
 
       <WorkoutStatsSection />
 
-      {/* Novo Modal de Gerenciar Categorias */}
+      {/* Modal de Gerenciar Categorias */}
       <DeleteCategoryModal
         isVisible={showDeleteCategoryModal}
         onClose={() => setShowDeleteCategoryModal(false)}
         categories={workoutCategories}
-        onDeleteCategory={handleDeleteCategory}
+        onDeleteCategory={onDeleteCategory}
       />
 
       {/* Filtros de Categoria */}
       <CategoryFilters
         categories={workoutCategories}
         selectedTypes={selectedCategories}
-        onToggleCategory={(categoryName) =>
-          setSelectedCategories((prev) =>
-            prev.includes(categoryName) ? prev.filter((c) => c !== categoryName) : [...prev, categoryName]
-          )
-        }
+        onToggleCategory={handleToggleCategory}
         onAddNewCategory={() => setIsCategoryModalVisible(true)}
         addButtonText="Nova Categoria"
       />
@@ -555,25 +515,32 @@ export default function WorkoutScreen() {
         />
       )}
 
+      {/* Modal de Criação/Edição */}
       <CreateWorkoutModal
         isCreateVisible={isCreateVisible}
         setIsCreateVisible={setIsCreateVisible}
         selectedWorkout={selectedWorkout}
-        newWorkoutTitle={newWorkoutTitle}
-        setNewWorkoutTitle={setNewWorkoutTitle}
-        selectedMusclesForWorkout={selectedMusclesForWorkout}
-        setSelectedMusclesForWorkout={setSelectedMusclesForWorkout}
-        exercises={exercises}
-        setExercises={setExercises}
+        newWorkoutTitle={workoutForm.title}
+        setNewWorkoutTitle={(title) => setWorkoutForm(prev => ({ ...prev, title }))}
+        selectedMusclesForWorkout={workoutForm.muscles}
+        setSelectedMusclesForWorkout={(muscles) => {
+          const musclesArray = typeof muscles === 'function' ? muscles(workoutForm.muscles) : muscles;
+          setWorkoutForm(prev => ({ ...prev, muscles: musclesArray }));
+        }}
+        exercises={workoutForm.exercises}
+        setExercises={(exercises) => {
+          const exercisesArray = typeof exercises === 'function' ? exercises(workoutForm.exercises) : exercises;
+          setWorkoutForm(prev => ({ ...prev, exercises: exercisesArray }));
+        }}
         categories={categories}
-        getCategoryColor={getCategoryColor}
+        getCategoryColor={(name) => getCategoryColor(name, workoutCategories, theme.colors.textMuted)}
         handleSaveWorkout={handleSaveWorkout}
-        newExerciseName={newExerciseName}
-        setNewExerciseName={setNewExerciseName}
-        newExerciseReps={newExerciseReps}
-        setNewExerciseReps={setNewExerciseReps}
-        newExerciseSeries={newExerciseSeries}
-        setNewExerciseSeries={setNewExerciseSeries}
+        newExerciseName={exerciseForm.name}
+        setNewExerciseName={(name) => setExerciseForm(prev => ({ ...prev, name }))}
+        newExerciseReps={exerciseForm.reps}
+        setNewExerciseReps={(reps) => setExerciseForm(prev => ({ ...prev, reps }))}
+        newExerciseSeries={exerciseForm.series}
+        setNewExerciseSeries={(series) => setExerciseForm(prev => ({ ...prev, series }))}
         userId={userId!}
       />
     </SafeAreaView>

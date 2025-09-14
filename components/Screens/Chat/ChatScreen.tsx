@@ -14,7 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import Markdown from 'react-native-markdown-display';
 import ChatStatsSection from './comps/ChatStatsSection';
-import { useChat, Message } from '../../../hooks/useChat';
+import { useChat, Message } from './chatHelpers';
 import GradientIcon from 'components/generalComps/GradientIcon';
 
 export default function ChatScreen() {
@@ -219,7 +219,7 @@ export default function ChatScreen() {
           {typingText && typingText.length > 0 ? (
             // Se há texto sendo digitado, mostra com animação caractere por caractere
             <Markdown style={markdownStyles}>
-              {typingText + ' |'}
+              {typingText}
             </Markdown>
           ) : (
             // Estados de loading padrão
@@ -277,7 +277,7 @@ export default function ChatScreen() {
       </View>
 
       {/* Seção de estatísticas */}
-      <ChatStatsSection isTyping={isTyping}/>
+      <ChatStatsSection />
 
       {/* Área de chat */}
       <View className="flex-1 relative">
