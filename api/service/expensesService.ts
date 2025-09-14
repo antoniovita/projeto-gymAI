@@ -162,7 +162,7 @@ export const ExpenseService = {
     );
   },
 
-  // Métodos para conversão de valores (centavos para reais e vice-versa)
+  // métodos para conversão de valores (centavos para reais e vice-versa)
   convertCentsToReals: (cents: number): number => {
     return cents / 100;
   },

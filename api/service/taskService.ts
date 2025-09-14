@@ -1,6 +1,5 @@
 import { Task } from 'api/model/Task';
 import { TaskController } from '../controller/taskController';
-import { getDb } from 'database';
 
 export const TaskService = {
   createTask: async (

@@ -12,4 +12,5 @@ export const OUTLINE = {
 export const MAIN = {
   fuocoICON: require("./assets/icons/fuocoICON.png") as ImageSourcePropType,
   fuocoPISCANDO: require("./assets/icons/fuocoPISCANDO.png") as ImageSourcePropType,
+  fuocoTALKING: require("./assets/icons/fuocoTALKING.png") as ImageSourcePropType,
 };

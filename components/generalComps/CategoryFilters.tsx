@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../../hooks/useTheme'; // Add this import
+import { useTheme } from '../../hooks/useTheme';
 
 interface Category {
   id: string;

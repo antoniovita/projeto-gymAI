@@ -66,8 +66,6 @@ export const UserController = {
     }
   },
 
-  // tenho que ler essa funcao para entender o q ela esta fazendo exatamente aqui
-  // mas ela esta funcionadno perfeitamente
   addExperience: async (
   id: string,
   xpToAdd: number,
@@ -95,13 +93,11 @@ export const UserController = {
         return total;
       };
 
-      // se está ganhando XP - verifica se sobe de nível
       if (xpToAdd >= 0) {
         while (newXp >= totalXpToReachLevel(newLevel + 1)) {
           newLevel++;
         }
       } else {
-        // se está perdendo XP - verifica se desce de nível
         while (newLevel > 1 && newXp < totalXpToReachLevel(newLevel)) {
           newLevel--;
         }

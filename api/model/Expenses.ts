@@ -1,7 +1,7 @@
 import uuid from 'react-native-uuid';
 import * as SQLite from 'expo-sqlite';
 
-// Enum para tipos de transação
+// enum para tipos de transação
 export enum ExpenseType {
   GAIN = 'GAIN',
   LOSS = 'LOSS'
@@ -121,7 +121,7 @@ export const ExpenseModel = {
     return result.changes;
   },
 
-  // Métodos utilitários para cálculos
+  // métodos utilitários para cálculos
   getTotalByExpenseType: async (
     db: SQLite.SQLiteDatabase,
     userId: string,

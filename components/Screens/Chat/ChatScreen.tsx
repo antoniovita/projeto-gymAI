@@ -23,6 +23,7 @@ export default function ChatScreen() {
   const {
     // estados do chat
     messages,
+    isThinking,
     isTyping,
     typingText,
     flatListRef,
@@ -208,7 +209,7 @@ export default function ChatScreen() {
 
   // Função para renderizar o indicador de digitação com animação
   const renderTypingIndicator = () => {
-    const showTyping = isTyping || isGenerating;
+    const showTyping = isTyping || isThinking;
     
     if (!showTyping) return null;
     
@@ -225,8 +226,7 @@ export default function ChatScreen() {
             <View className="flex-row items-center">
               <Ionicons name="ellipsis-horizontal" size={20} color="white" />
               <Text className="text-white ml-2 text-[16px] font-poppins">
-                {isTyping ? 'Pensando...' : 
-                 'Processando...'}
+                {isThinking && 'Pensando...'}
               </Text>
             </View>
           )}
@@ -277,7 +277,7 @@ export default function ChatScreen() {
       </View>
 
       {/* Seção de estatísticas */}
-      <ChatStatsSection />
+      <ChatStatsSection isTyping={isTyping}/>
 
       {/* Área de chat */}
       <View className="flex-1 relative">

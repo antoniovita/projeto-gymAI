@@ -31,6 +31,7 @@ export interface Message {
 export const useChat = () => {
 
   const [messages, setMessages] = useState<Message[]>([]);
+  const [isThinking, setIsThinking] = useState(false); // Novo estado para "pensando"
   const [isTyping, setIsTyping] = useState(false);
   const [typingText, setTypingText] = useState('');
   
@@ -73,42 +74,41 @@ export const useChat = () => {
     }
   }, []);
 
-
   const typeOut = useCallback(async (finalText: string, baseMessages: Message[]) => {
-  return new Promise<void>((resolve) => {
-    let index = 0;
-    setTypingText('');
+    return new Promise<void>((resolve) => {
+      let index = 0;
+      setTypingText('');
+      setIsThinking(false); // Para de "pensar" quando começa a digitar
+      setIsTyping(true); // Começa a digitar
 
-    const typingSpeed = Math.random() * 40;
+      const typingSpeed = Math.random() * 40;
 
-    if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
+      if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
 
-    typingIntervalRef.current = setInterval(async () => {
-      setTypingText((prev) => {
-        const next = finalText.slice(0, index + 1);
-        index++;
+      typingIntervalRef.current = setInterval(async () => {
+        setTypingText((prev) => {
+          const next = finalText.slice(0, index + 1);
+          index++;
 
-        if (index >= finalText.length) {
-          if (typingIntervalRef.current) {
-            clearInterval(typingIntervalRef.current);
-            typingIntervalRef.current = null;
+          if (index >= finalText.length) {
+            if (typingIntervalRef.current) {
+              clearInterval(typingIntervalRef.current);
+              typingIntervalRef.current = null;
+            }
+            setTimeout(async () => {
+              const systemReply: Message = { role: 'assistant', content: finalText };
+              const finalMessages = [...baseMessages, systemReply];
+              await saveMessages(finalMessages);
+              setIsTyping(false); // Para de digitar
+              setTypingText('');
+              resolve();
+            }, 200);
           }
-          setTimeout(async () => {
-            const systemReply: Message = { role: 'assistant', content: finalText };
-            const finalMessages = [...baseMessages, systemReply];
-            await saveMessages(finalMessages);
-            setIsTyping(false);
-            setTypingText('');
-            resolve();
-          }, 200);
-        }
-        return next;
-      });
-    }, typingSpeed);
-  });
-}, [saveMessages]);
-
-
+          return next;
+        });
+      }, typingSpeed);
+    });
+  }, [saveMessages]);
 
   const clearMessages = useCallback(async () => {
     try {
@@ -173,7 +173,8 @@ export const useChat = () => {
       clearInterval(typingIntervalRef.current);
       typingIntervalRef.current = null;
     }
-    setIsTyping(false);
+    setIsThinking(false); // Para de pensar
+    setIsTyping(false);   // Para de digitar
     setTypingText('');
   }, [isGenerating]);
 
@@ -188,7 +189,6 @@ export const useChat = () => {
       }
     };
   }, []);
-
 
   const sendMessageToLlama = useCallback(async (
     message: string,
@@ -241,7 +241,6 @@ export const useChat = () => {
     }
   }, [isReady, isGenerating]);
 
-
   const handleOtherCases = useCallback(async (input: string, intent: string, currentMessages: Message[]) => {
     try {
       console.log('[useChat] Processando com Llama para intent:', intent);
@@ -268,13 +267,17 @@ export const useChat = () => {
 
       console.log('[useChat] Enviando mensagem para o Llama...');
 
+      // Inicia o estado "pensando" antes de gerar a resposta
+      setIsThinking(true);
+      
       const response = await sendMessageToLlama(input, currentMessages, RAG);
 
       if (response) {
-
+        // typeOut vai automaticamente parar o thinking e iniciar o typing
         await typeOut(response, currentMessages);
       } else {
         console.log('[useChat] Nenhuma resposta retornada do Llama');
+        setIsThinking(false);
         setIsTyping(false);
         setTypingText('');
       }
@@ -284,11 +287,11 @@ export const useChat = () => {
       const errorMessage: Message = { role: 'assistant', content: 'Desculpe, houve um erro ao processar sua mensagem. Tente novamente.' };
       const updatedMessages = [...currentMessages, errorMessage];
       await saveMessages(updatedMessages);
+      setIsThinking(false);
       setIsTyping(false);
       setTypingText('');
     }
   }, [isReady, isInitializing, error, initializeLlama, sendMessageToLlama, saveMessages, typeOut]);
-
 
   const handleInputSubmit = useCallback(async (input: string, setInput: (value: string) => void) => {
     if (!input.trim()) return;
@@ -296,18 +299,21 @@ export const useChat = () => {
     const userMessage: Message = { role: 'user', content: input };
     const updatedMessages = [...messages, userMessage];
     
-    if (isTyping) {
+    // Não permite nova mensagem se já está processando
+    if (isThinking || isTyping) {
       return;
     }
     
     await saveMessages(updatedMessages);
     setInput('');
-    setIsTyping(true);
     
     const intent = await processMessage(input);
     console.log('[useChat] Intent detectado:', intent);
     
     if (intent === 'expense' || intent === 'task') {
+      // Inicia o thinking para respostas rápidas também
+      setIsThinking(true);
+      
       const thinkingTime = Math.random() * 1000 + 800;
       setTimeout(async () => {
         let finalText = '';
@@ -337,6 +343,8 @@ export const useChat = () => {
         // Animação de digitação para despesas e tarefas
         let index = 0;
         setTypingText('');
+        setIsThinking(false); // Para de pensar
+        setIsTyping(true);    // Começa a digitar
         const typingSpeed = Math.random() * 20 + 25;
         
         const interval = setInterval(() => {
@@ -353,7 +361,7 @@ export const useChat = () => {
                 };
                 const finalMessages = [...updatedMessages, systemReply];
                 await saveMessages(finalMessages);
-                setIsTyping(false);
+                setIsTyping(false); // Para de digitar
                 setTypingText('');
               }, 200);
             }
@@ -363,12 +371,11 @@ export const useChat = () => {
       }, thinkingTime);
     } else {
       // Para outros casos, usa o Llama diretamente
+      // O thinking será ativado dentro do handleOtherCases
       console.log('[useChat] Chamando handleOtherCases...');
       await handleOtherCases(input, intent, updatedMessages);
-      setIsTyping(false);
-      setTypingText('');
     }
-  }, [messages, isTyping, processMessage, saveMessages, handleOtherCases]);
+  }, [messages, isThinking, isTyping, processMessage, saveMessages, handleOtherCases]);
 
   // Cleanup no unmount
   useEffect(() => {
@@ -387,6 +394,7 @@ export const useChat = () => {
   return {
     // Estados do chat
     messages,
+    isThinking,  // Novo estado separado
     isTyping,
     typingText,
     flatListRef,
