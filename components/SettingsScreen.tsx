@@ -20,7 +20,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from 'hooks/useAuth';
 import { useTask } from 'hooks/useTask';
 import { useWorkout } from 'hooks/useWorkout';
-import { RootStackParamList } from 'widgets/types';
+import { RootStackParamList } from 'tabs/types';
 import GradientIcon from './generalComps/GradientIcon';
 import { useChat } from 'components/Screens/Chat/chatHelpers';
 

@@ -1,12 +1,7 @@
+import { Category } from 'api/types/categoryTypes';
 import * as SQLite from 'expo-sqlite';
 import uuid from 'react-native-uuid';
 
-export interface Category {
-  id: string;
-  name: string;
-  color: string;
-  type: string;
-}
 
 export const CategoryModel = {
   init: async (db: SQLite.SQLiteDatabase) => {

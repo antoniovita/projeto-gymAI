@@ -1,4 +1,7 @@
+//general imports
 import { useState, useEffect, useRef, useCallback } from 'react'
+
+//llama initialize and context
 import { bootstrapLlama, LlamaCtx, stopWords } from '../llm.config'
 
 export interface Message {
@@ -7,7 +10,7 @@ export interface Message {
 }
 
 export interface UseLlamaState {
-
+  
   isInitializing: boolean
   isDownloading: boolean
   downloadProgress: number

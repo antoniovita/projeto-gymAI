@@ -9,7 +9,6 @@ export type RootStackParamList = {
   RoutineScreen: undefined;
   WorkoutScreen: undefined;
   MoreScreen: undefined;
-  NoteScreen: undefined;
-  GoalScreen: undefined;
   TimerScreen: undefined;
+  SocialScreen: undefined;
 };

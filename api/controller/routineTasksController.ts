@@ -1,5 +1,8 @@
+import { RoutineTask } from 'api/types/routineTaskTypes';
 import { getDb } from '../../database';
-import { RoutineTask, RoutineTaskModel } from '../model/RoutineTasks';
+
+//types
+import { RoutineTaskModel } from '../model/RoutineTasks';
 
 export const RoutineTaskController = {
 

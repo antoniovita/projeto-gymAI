@@ -1,3 +1,4 @@
+//general imports
 import React from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView, Modal, TextInput,
@@ -5,15 +6,17 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
+
+//components
 import GradientIcon from 'components/generalComps/GradientIcon';
 import CategorySectionCreateModal from 'components/generalComps/CategorySectionCreateModal';
+
+//hooks
 import { useTheme } from 'hooks/useTheme';
 
-interface Category {
-  id: string;
-  name: string;
-  color: string;
-}
+//types
+import { Category } from 'api/types/categoryTypes';
+
 
 interface TaskModalProps {
   isVisible: boolean;

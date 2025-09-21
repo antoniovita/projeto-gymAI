@@ -8,8 +8,8 @@ import {
   Alert,
   Animated,
 } from 'react-native';
-import { Category } from '../../api/model/Category';
 import { useTheme } from 'hooks/useTheme';
+import { Category } from 'api/types/categoryTypes';
 
 const colorOptions = [
   '#EF4444', // Vermelho

@@ -1,8 +1,13 @@
+//general imports
 import { useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// auth and user services
 import { UserService } from '../api/service/userService';
 import { AuthService } from '../api/service/authService';
+
+// database
 import { deleteDatabase } from 'database';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export function useAuth() {
   const [userId, setUserId] = useState<string | null>(null);

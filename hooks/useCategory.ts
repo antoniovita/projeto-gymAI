@@ -1,4 +1,7 @@
+//general imports
 import { useState, useEffect } from 'react';
+
+//model e service
 import { Category } from '../api/model/Category';
 import { CategoryService } from '../api/service/categoryService';
 

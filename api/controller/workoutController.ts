@@ -1,5 +1,9 @@
 import { getDb } from '../../database';
-import { WorkoutModel, Exercise } from '../model/Workout';
+import { WorkoutModel } from '../model/Workout';
+
+//types
+import { Exercise } from 'api/types/workoutTypes';
+
 
 export const WorkoutController = {
 

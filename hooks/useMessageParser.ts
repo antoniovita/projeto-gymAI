@@ -1,8 +1,13 @@
+//nlp imports
 import { detectIntent } from '../nlp/intentRouter';
 import { parseDate } from '../nlp/dateParser';
 import { parseExpense } from '../nlp/expenseParser';
+
+//hooks imports
 import { useTask } from './useTask';
 import { useExpenses } from './useExpenses';
+
+//types
 import { ExpenseType } from 'api/model/Expenses';
 
 export function useMessageParser(userId: string | null) {

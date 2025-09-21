@@ -1,5 +1,8 @@
 import { getDb } from '../../database';
-import { Expense, ExpenseModel, ExpenseType } from '../model/Expenses';
+import { ExpenseModel } from '../model/Expenses';
+
+//types
+import { Expense, ExpenseType } from 'api/types/expenseTypes';
 
 export const ExpenseController = {
   createExpense: async (

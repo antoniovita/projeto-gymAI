@@ -1,16 +1,9 @@
 import uuid from 'react-native-uuid';
 import * as SQLite from 'expo-sqlite';
 
-export interface Task {
-  id: string;
-  title: string;
-  content: string;
-  datetime: string; // ISO string: "2025-06-12T07:12:00.000Z"
-  type?: string;
-  completed: 0 | 1;
-  xp_awarded: 0 | 1;
-  user_id: string;
-}
+//types
+import { Task } from 'api/types/taskTypes';
+
 
 export const TaskModel = {
   init: async (db: SQLite.SQLiteDatabase) => {

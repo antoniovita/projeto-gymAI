@@ -2,12 +2,7 @@ import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
-
-interface Category {
-  id: string;
-  name: string;
-  color: string;
-}
+import { Category } from 'api/types/categoryTypes';
 
 interface CategoryFiltersProps {
   categories: Category[];

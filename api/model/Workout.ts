@@ -1,23 +1,10 @@
 import uuid from 'react-native-uuid';
 import * as SQLite from 'expo-sqlite';
 
-export interface Exercise {
-  name: string;
-  reps: number;
-  series: number;
-  load: number;
-  completion: 0 | 1;
-  xp_granted: 0 | 1;
-}
+//types
+import { Exercise, Workout } from 'api/types/workoutTypes';
 
-export interface Workout {
-  id: string;
-  name: string;
-  exercises: Exercise[];
-  date: string;
-  type?: string;
-  user_id: string;
-}
+
 
 export const WorkoutModel = {
 

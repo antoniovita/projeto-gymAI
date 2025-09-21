@@ -1,13 +1,17 @@
+// general imports
 import React, { JSX } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Platform } from 'react-native';
-import { Ionicons } from '@expo/vector-icons'; // só pelo tipo do nome
+import { Ionicons } from '@expo/vector-icons';
+
+// components
 import GradientIcon from 'components/generalComps/GradientIcon';
 import ChatScreen from 'components/Screens/Chat/ChatScreen';
 import AgendaScreen from 'components/Screens/Agenda/AgendaScreen';
 import ExpensesScreen from 'components/Screens/Expense/ExpensesScreen';
 import MoreScreen from 'components/Screens/More/MoreScreen';
 import WorkoutScreen from 'components/Screens/Workouts/WorkoutScreen';
+import SocialScreen from 'components/Screens/Social/SocialScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -54,6 +58,9 @@ export default function MainTabs(): JSX.Element {
             case 'Workout':
               iconName = focused ? 'barbell' : 'barbell-outline';
               break;
+            case 'Social':
+              iconName = focused ? 'people' : 'people-outline';
+              break;
             default:
               iconName = 'ellipse';
           }
@@ -88,6 +95,11 @@ export default function MainTabs(): JSX.Element {
         name="Workout" 
         component={WorkoutScreen} 
         options={{ tabBarLabel: 'Treinos' }} 
+      />
+      <Tab.Screen 
+        name="Social" 
+        component={SocialScreen} 
+        options={{ tabBarLabel: 'Social' }} 
       />
       <Tab.Screen 
         name="More" 

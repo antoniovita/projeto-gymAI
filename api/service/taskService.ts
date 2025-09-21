@@ -1,5 +1,7 @@
-import { Task } from 'api/model/Task';
 import { TaskController } from '../controller/taskController';
+
+//types
+import { Task } from 'api/types/taskTypes';
 
 export const TaskService = {
   createTask: async (

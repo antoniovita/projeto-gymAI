@@ -1,4 +1,7 @@
+//general imports
 import { useState, useCallback } from 'react';
+
+//services
 import { UserService } from '../api/service/userService';
 
 interface UserStats {

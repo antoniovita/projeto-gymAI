@@ -1,3 +1,4 @@
+//general imports
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -5,8 +6,12 @@ import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { format } from 'date-fns';
-import { UnifiedTask } from '../agendaHelpers';
+
+//hooks
 import { useTheme } from 'hooks/useTheme';
+
+//types
+import { UnifiedTask } from 'api/types/taskTypes';
 
 interface SwipeableTaskItemProps {
   item: UnifiedTask;

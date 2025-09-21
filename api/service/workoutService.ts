@@ -1,5 +1,5 @@
+import { Exercise } from 'api/types/workoutTypes';
 import { WorkoutController } from '../controller/workoutController';
-import { Exercise } from '../model/Workout';
 
 export const WorkoutService = {
 

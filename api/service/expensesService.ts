@@ -1,5 +1,5 @@
 import { ExpenseController } from '../controller/expensesController';
-import { Expense, ExpenseType } from '../model/Expenses';
+import { ExpenseType, Expense } from 'api/types/expenseTypes';
 
 export const ExpenseService = {
   createExpense: async (

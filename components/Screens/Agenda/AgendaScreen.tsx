@@ -1,32 +1,41 @@
+//general imports
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useEffect, useState } from 'react';
 import {
   View, Text, SafeAreaView, Alert, FlatList,
   Pressable, Platform,
-  ImageSourcePropType,
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { LinearGradient } from 'expo-linear-gradient';
+
+//hooks
 import { useTask } from '../../../hooks/useTask';
 import { useRoutineTasks } from '../../../hooks/useRoutineTasks';
 import { useStats } from '../../../hooks/useStats';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { useAuth } from 'hooks/useAuth';
+import { useCategory } from 'hooks/useCategory';
 import { useTheme } from 'hooks/useTheme';
-import { RoutineTask } from 'api/model/RoutineTasks';
+
+// general components
 import CategoryModal from '../../generalComps/CategoryModal';
 import DeleteCategoryModal from '../../generalComps/DeleteCategoryModal';
 import LoadingSpinner from '../../generalComps/LoadingSpinner';
 import { EmptyState } from '../../generalComps/EmptyState';
 import LevelUpModal from '../../generalComps/LevelUpModal';
 import GradientIcon from '../../generalComps/GradientIcon';
-import { LinearGradient } from 'expo-linear-gradient';
+import CategoryFilters from '../../generalComps/CategoryFilters';
+
+//specific components
 import SwipeableTaskItem from './comps/SwipeableTaskItem';
-import { useCategory } from 'hooks/useCategory';
+import TaskModal from './comps/CreateTask';
+
+//constants
 import { OUTLINE } from '../../../imageConstants'
 
+//helpers
 import {
-  UnifiedTask,
   LevelUpData,
   getInitialWeekStart,
   convertRoutineToUnifiedTask,
@@ -43,8 +52,11 @@ import {
   checkAndHandleLevelUp,
   saveCurrentLevel
 } from './agendaHelpers';
-import TaskModal from './comps/CreateTask';
-import CategoryFilters from 'components/generalComps/CategoryFilters';
+
+//types
+import { UnifiedTask } from 'api/types/taskTypes';
+import { RoutineTask } from 'api/types/routineTaskTypes';
+
 
 export default function AgendaScreen() {
   const { colors } = useTheme();

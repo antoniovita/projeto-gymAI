@@ -4,7 +4,7 @@ import { MotiView, MotiImage } from 'moti';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '../../../widgets/types';
+import type { RootStackParamList } from '../../../tabs/types';
 import { Easing } from 'react-native-reanimated';
 import { useAuth } from '../../../hooks/useAuth';
 import { useAcceptTerms } from '../../../hooks/useAcceptTerms';

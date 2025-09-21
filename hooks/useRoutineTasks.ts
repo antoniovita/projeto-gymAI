@@ -1,6 +1,10 @@
+//general imports
 import { useState, useCallback } from 'react';
+
 import { DayCompletion, RoutineTask } from '../api/model/RoutineTasks';
 import { RoutineTaskService } from 'api/service/routineTaskService';
+
+//hook de stats
 import { useStats } from './useStats';
 
 // interfaces para tipagem das respostas do serviço

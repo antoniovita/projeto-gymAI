@@ -1,4 +1,7 @@
+//general imports
 import { useState } from 'react';
+
+//models and service
 import { ExpenseService } from '../api/service/expensesService'; 
 import { Expense, ExpenseType } from '../api/model/Expenses'; 
 

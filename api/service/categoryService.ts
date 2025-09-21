@@ -1,5 +1,5 @@
-import { Category } from '../model/Category';
 import { CategoryController } from '../controller/categoryController';
+import { Category } from 'api/types/categoryTypes';
 
 export const CategoryService = {
   createCategory: async (

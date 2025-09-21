@@ -22,13 +22,13 @@ import PinScreen from 'components/PinScreen';
 import RoutineScreen from 'components/Screens/Routine/RoutineScreen';
 import WorkoutScreen from 'components/Screens/Workouts/WorkoutScreen';
 import MoreScreen from 'components/Screens/More/MoreScreen';
-import NoteScreen from 'components/Screens/Notes/NoteScreen';
-import GoalScreen from 'components/Screens/Goal/GoalScreen';
 import TimerScreen from 'components/Screens/Timer/TimerScreen';
+import SocialScreen from 'components/Screens/Social/SocialScreen';
+
 
 //maintabs
-import MainTabs from './widgets/MainTabs';
-import { RootStackParamList } from 'widgets/types';
+import MainTabs from './tabs/MainTabs';
+import { RootStackParamList } from 'tabs/types';
 
 //fonts
 import {
@@ -47,14 +47,12 @@ import type { LlamaCtx } from './llm.config';
 import "./global.css";
 import { themes } from 'appearance';
 
-
-
-
 // import Purchases, { LOG_LEVEL } from 'react-native-purchases';
 
-// ⚠️ manter antes do primeiro render
+// mantem a splash screen para dar tempo do código carregar tudo, fontes, modelo, banco de dados e etc
 SplashScreen.preventAutoHideAsync();
 
+//config das notificações
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowBanner: true,
@@ -66,7 +64,7 @@ Notifications.setNotificationHandler({
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-// ===== Utils =====
+// timeout para dar tempo de tudo inicializar
 async function withTimeout<T>(p: Promise<T>, ms = 8000, label = 'operação'): Promise<T> {
   return await Promise.race<T>([
     p,
@@ -75,9 +73,9 @@ async function withTimeout<T>(p: Promise<T>, ms = 8000, label = 'operação'): P
     ) as Promise<T>,
   ]);
 }
-// =================
 
-// ===== Contexto do LLM disponível para o app inteiro =====
+
+// contexto do LLM disponível para o app inteiro 
 type LlmContextType = {
   ctx: LlamaCtx | null;
   ready: boolean;
@@ -90,10 +88,12 @@ export const LlmContext = createContext<LlmContextType>({
   progress: 0,
   error: null,
 });
-// =========================================================
+
 
 export default function App() {
 
+
+// fontes padrão
 const [fontsLoaded] = useFonts({
     Poppins_400Regular,
     Poppins_500Medium,
@@ -103,19 +103,19 @@ const [fontsLoaded] = useFonts({
   });
 
 
-
+  // estados do boot
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isDbReady, setIsDbReady] = useState<boolean | null>(null);
   const [hasPin, setHasPin] = useState<boolean | null>(null);
 
-  // ===== Estado do LLM (NÃO bloqueia splash) =====
+
+  // estado do llm, não bloqueia splashscreen, roda no fundo quando o app incializar pela primeira vez
   const [llmCtx, setLlmCtx] = useState<LlamaCtx | null>(null);
   const [isLlmReady, setIsLlmReady] = useState(false);
   const [llmProgress, setLlmProgress] = useState(0);
   const [llmError, setLlmError] = useState<string | null>(null);
-  // ===============================================
 
-  // --------- Notificações ---------
+  // obtem permissão para notificação na primeira abertura
   useEffect(() => {
     (async () => {
       try {
@@ -129,6 +129,8 @@ const [fontsLoaded] = useFonts({
     })();
   }, []);
 
+
+  // listenners de notificação para receber notificaçoes
   useEffect(() => {
     const receiveSub = Notifications.addNotificationReceivedListener(n => {
       console.log('Notificação recebida:', n);
@@ -141,9 +143,9 @@ const [fontsLoaded] = useFonts({
       responseSub.remove();
     };
   }, []);
-  // --------------------------------
 
-  // --------- Auth ---------
+
+  // auth, pega o user id para inicializar 
   useEffect(() => {
     (async () => {
       try {
@@ -155,9 +157,9 @@ const [fontsLoaded] = useFonts({
       }
     })();
   }, []);
-  // -----------------------
+  
 
-  // --------- DB ---------
+  // banco de dados - inicializa o banco de dados
   useEffect(() => {
     (async () => {
       try {
@@ -167,13 +169,13 @@ const [fontsLoaded] = useFonts({
         setIsDbReady(true);
       } catch (err) {
         console.error('Erro/timeout ao configurar o banco de dados:', err);
-        setIsDbReady(false); // segue sem DB (app decide comportamento)
+        setIsDbReady(false); 
       }
     })();
   }, []);
-  // ----------------------
 
-  // --------- PIN ---------
+
+  // useEffect do PIN, se tiver PIN coloca o pinExists como true e isso manda pra PIN screen
   useEffect(() => {
     (async () => {
       try {
@@ -182,13 +184,13 @@ const [fontsLoaded] = useFonts({
         setHasPin(pinExists);
       } catch (error) {
         console.error('Erro/timeout ao verificar PIN:', error);
-        setHasPin(false); // fallback: sem PIN
+        setHasPin(false);
       }
     })();
   }, []);
-  // -----------------------
 
-  // ===== Inicialização do LLM (paralelo, não bloqueia splash) =====
+
+  // inicialização do LLM (paralelo, não bloqueia splash)
   useEffect(() => {
     let cancelled = false;
 
@@ -223,24 +225,24 @@ const [fontsLoaded] = useFonts({
       cancelled = true;
     };
   }, [isAuthenticated]);
-  // ================================================================
 
-  // --------- Controle da Splash ---------
-  // Boot "essencial" pronto? (LLM NÃO está incluso)
+
+  // controle da splash screen no boot
+  // boot "essencial" pronto? (LLM NÃO está incluso)
   const bootReady =
     !!fontsLoaded &&
     isAuthenticated !== null &&
     isDbReady !== null &&
     hasPin !== null;
 
-  // Esconde splash quando essencial estiver pronto
+  // esconde splash quando essencial estiver pronto
   useEffect(() => {
     if (bootReady) {
       SplashScreen.hideAsync().catch(() => {});
     }
   }, [bootReady]);
 
-  // Watchdog: garante esconder em 12s, mesmo se algo travar
+  // garante esconder em 12s, mesmo se algo travar
   useEffect(() => {
     const t = setTimeout(() => {
       if (!bootReady) {
@@ -252,15 +254,16 @@ const [fontsLoaded] = useFonts({
   }, [bootReady]);
 
   const onLayoutRootView = useCallback(() => {
+
     // caso o layout já esteja na tela e o bootReady tenha virado true,
     // garantimos um hide extra (idempotente)
+
     if (bootReady) {
       SplashScreen.hideAsync().catch(() => {});
     }
   }, [bootReady]);
-  // --------------------------------------
 
-  // Enquanto carrega o essencial, mostra um painel leve
+  // enquanto carrega o essencial, mostra um painel leve
   const isBooting = !bootReady;
 
   let initialRoute: keyof RootStackParamList;
@@ -273,7 +276,7 @@ const [fontsLoaded] = useFonts({
   }
 
 
-  // Valor do contexto do LLM (reutilizável em telas)
+  // valor do contexto do LLM (reutilizável em telas)
   const llmValue = useMemo<LlmContextType>(() => ({
     ctx: llmCtx,
     ready: isLlmReady,
@@ -286,27 +289,12 @@ const [fontsLoaded] = useFonts({
       <ThemeProvider theme={themes.default}>
       <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
         <LlmContext.Provider value={llmValue}>
-          {isBooting ? (
-            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-              <Text style={{ fontSize: 18, fontFamily: 'Poppins' }}>Carregando…</Text>
-              <Text style={{ marginTop: 8, fontSize: 14, fontFamily: 'Poppins' }}>
-                fontes: {String(!!fontsLoaded)} · auth: {String(isAuthenticated)} · db: {String(isDbReady)} · pin: {String(hasPin)}
-              </Text>
-              <Text style={{ marginTop: 8, fontSize: 14, fontFamily: 'Poppins' }}>
-                IA (download em segundo plano): {llmProgress}%
-              </Text>
-              {llmError ? (
-                <Text style={{ marginTop: 8, fontSize: 12, color: 'red' }}>
-                  Erro LLM: {llmError}
-                </Text>
-              ) : null}
-            </View>
-          ) : (
             <NavigationContainer>
               <Stack.Navigator
                 initialRouteName={initialRoute}
                 screenOptions={{ headerShown: false }}
               >
+
                 <Stack.Screen name="WelcomeScreen" component={WelcomeScreen} />
                 <Stack.Screen name="MainTabs" component={MainTabs} />
                 <Stack.Screen name="SettingsScreen" component={SettingsScreen} />
@@ -316,12 +304,11 @@ const [fontsLoaded] = useFonts({
                 <Stack.Screen name="RoutineScreen" component={RoutineScreen} />
                 <Stack.Screen name="WorkoutScreen" component={WorkoutScreen} />
                 <Stack.Screen name="MoreScreen" component={MoreScreen} />
-                <Stack.Screen name="NoteScreen" component={NoteScreen} />
-                <Stack.Screen name="GoalScreen" component={GoalScreen} />
                 <Stack.Screen name="TimerScreen" component={TimerScreen} />
+                <Stack.Screen name="SocialScreen" component={SocialScreen} />
+
               </Stack.Navigator>
             </NavigationContainer>
-          )}
         </LlmContext.Provider>
       </View>
     </ThemeProvider>

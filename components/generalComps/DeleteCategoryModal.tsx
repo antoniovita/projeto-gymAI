@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { View, Text, Pressable, ScrollView, Modal, Alert, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Category } from '../../api/model/Category';
 import { useTheme } from 'hooks/useTheme';
+import { Category } from 'api/types/categoryTypes';
 
 interface DeleteCategoryModalProps {
   isVisible: boolean;

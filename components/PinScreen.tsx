@@ -17,7 +17,7 @@ import { Easing } from 'react-native-reanimated';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { useAuth } from '../hooks/useAuth'; 
 import { useNavigation, NavigationProp } from '@react-navigation/native';
-import { RootStackParamList } from 'widgets/types';
+import { RootStackParamList } from 'tabs/types';
 
 const PIN_LENGTH = 6;
 

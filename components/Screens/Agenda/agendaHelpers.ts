@@ -1,20 +1,12 @@
+//general imports
 import { format } from 'date-fns';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert } from 'react-native';
-import { RoutineTask } from 'api/model/RoutineTasks';
 
-export interface UnifiedTask {
-  id: string;
-  title: string;
-  content?: string;
-  datetime: string;
-  completed: 0 | 1;
-  type?: string;
-  isRoutine: boolean;
-  routineId?: string;
-  originalWeekDays?: string[];
-  targetDate?: string; 
-}
+//types
+import { RoutineTask } from 'api/types/routineTaskTypes';
+import { UnifiedTask } from 'api/types/taskTypes';
+
 
 export interface LevelUpData {
   previousLevel: number;

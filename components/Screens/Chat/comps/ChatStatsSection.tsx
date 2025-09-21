@@ -1,6 +1,9 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { MAIN } from "imageConstants";
+//general imports
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { View, Text, Image, Animated} from "react-native";
+
+//constants
+import { MAIN } from "imageConstants";
 
 const ChatStatsSection = () => {
   const [isBlinking, setIsBlinking] = useState(false);

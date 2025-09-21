@@ -19,7 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import { RootStackParamList } from 'widgets/types';
+import { RootStackParamList } from 'tabs/types';
 import { useAuth } from '../hooks/useAuth';
 
 type InfoScreenNavProp = NativeStackNavigationProp<RootStackParamList, 'InfoScreen'>;

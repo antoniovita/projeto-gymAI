@@ -1,5 +1,9 @@
 import { getDb } from '../../database';
-import { Task, TaskModel } from '../model/Task';
+import { TaskModel } from '../model/Task';
+
+//types
+import { Task } from 'api/types/taskTypes';
+
 
 export const TaskController = {
   createTask: async (

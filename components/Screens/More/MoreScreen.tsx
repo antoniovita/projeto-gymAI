@@ -2,7 +2,7 @@ import { View, Text, SafeAreaView, Pressable, Platform, ScrollView } from "react
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "widgets/types";
+import { RootStackParamList } from "tabs/types";
 import { StatsSection } from "./comps/StatsSection";
 import GradientIcon from "../../generalComps/GradientIcon";
 import { useTheme } from "../../../hooks/useTheme";
