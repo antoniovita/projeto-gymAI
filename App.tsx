@@ -15,13 +15,12 @@ import { initDatabase } from 'database';
 
 // components
 import WelcomeScreen from './components/Screens/Welcome/WelcomeScreen';
-import SettingsScreen from 'components/SettingsScreen';
-import InfoScreen from 'components/InfoScreen';
-import HelpScreen from 'components/HelpScreen';
-import PinScreen from 'components/PinScreen';
+import SettingsScreen from 'components/Screens/Settings/SettingsScreen';
+import InfoScreen from 'components/Screens/Settings/InfoScreen';
+import HelpScreen from 'components/Screens/Settings/HelpScreen';
+import PinScreen from 'components/Screens/Pin/PinScreen';
 import RoutineScreen from 'components/Screens/Routine/RoutineScreen';
 import WorkoutScreen from 'components/Screens/Workouts/WorkoutScreen';
-import MoreScreen from 'components/Screens/More/MoreScreen';
 import TimerScreen from 'components/Screens/Timer/TimerScreen';
 import SocialScreen from 'components/Screens/Social/SocialScreen';
 
@@ -303,7 +302,6 @@ const [fontsLoaded] = useFonts({
                 <Stack.Screen name="HelpScreen" component={HelpScreen} />
                 <Stack.Screen name="RoutineScreen" component={RoutineScreen} />
                 <Stack.Screen name="WorkoutScreen" component={WorkoutScreen} />
-                <Stack.Screen name="MoreScreen" component={MoreScreen} />
                 <Stack.Screen name="TimerScreen" component={TimerScreen} />
                 <Stack.Screen name="SocialScreen" component={SocialScreen} />
 

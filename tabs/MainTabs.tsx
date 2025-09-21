@@ -9,7 +9,6 @@ import GradientIcon from 'components/generalComps/GradientIcon';
 import ChatScreen from 'components/Screens/Chat/ChatScreen';
 import AgendaScreen from 'components/Screens/Agenda/AgendaScreen';
 import ExpensesScreen from 'components/Screens/Expense/ExpensesScreen';
-import MoreScreen from 'components/Screens/More/MoreScreen';
 import WorkoutScreen from 'components/Screens/Workouts/WorkoutScreen';
 import SocialScreen from 'components/Screens/Social/SocialScreen';
 
@@ -49,9 +48,6 @@ export default function MainTabs(): JSX.Element {
             case 'Agenda':
               iconName = focused ? 'calendar' : 'calendar-outline';
               break;
-            case 'More':
-              iconName = focused ? 'file-tray-full' : 'file-tray-full-outline';
-              break;
             case 'Expenses':
               iconName = focused ? 'wallet' : 'wallet-outline';
               break;
@@ -81,6 +77,13 @@ export default function MainTabs(): JSX.Element {
         component={ChatScreen} 
         options={{ tabBarLabel: 'Assistente' }} 
       />
+
+      <Tab.Screen 
+        name="Social" 
+        component={SocialScreen} 
+        options={{ tabBarLabel: 'Social' }} 
+      />
+      
       <Tab.Screen 
         name="Agenda" 
         component={AgendaScreen} 
@@ -95,16 +98,6 @@ export default function MainTabs(): JSX.Element {
         name="Workout" 
         component={WorkoutScreen} 
         options={{ tabBarLabel: 'Treinos' }} 
-      />
-      <Tab.Screen 
-        name="Social" 
-        component={SocialScreen} 
-        options={{ tabBarLabel: 'Social' }} 
-      />
-      <Tab.Screen 
-        name="More" 
-        component={MoreScreen} 
-        options={{ tabBarLabel: 'Mais' }} 
       />
     </Tab.Navigator>
   );

@@ -15,7 +15,7 @@ import { MotiView } from 'moti';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Easing } from 'react-native-reanimated';
 import * as LocalAuthentication from 'expo-local-authentication';
-import { useAuth } from '../hooks/useAuth'; 
+import { useAuth } from '../../../hooks/useAuth'; 
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { RootStackParamList } from 'tabs/types';
 

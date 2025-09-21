@@ -20,7 +20,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { RootStackParamList } from 'tabs/types';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../../../hooks/useAuth';
 
 type InfoScreenNavProp = NativeStackNavigationProp<RootStackParamList, 'InfoScreen'>;
 
