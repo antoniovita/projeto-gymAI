@@ -4,14 +4,8 @@ import { useState, useCallback } from 'react';
 //services
 import { UserService } from '../api/service/userService';
 
-interface UserStats {
-  id: string;
-  name: string;
-  level: number;
-  xp: number;
-  achievements: string[];
-  badges: string[];
-}
+//types
+import { UserStats } from 'api/types/userTypes';
 
 export function useStats() {
   const [loading, setLoading] = useState<boolean>(false);

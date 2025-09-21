@@ -1,4 +1,4 @@
-import { ExpenseType } from '../../../api/model/Expenses';
+import { ExpenseType } from "api/types/expenseTypes";
 
 export interface DateFilter {
   type: 'all' | 'month' | 'year' | 'custom' | 'date';

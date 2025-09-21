@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// auth and user services
+//services
 import { UserService } from '../api/service/userService';
 import { AuthService } from '../api/service/authService';
 
@@ -172,7 +172,7 @@ export function useAuth() {
   const removePin = async () => {
     setLoading(true);
     try {
-      await AuthService.removePin();
+      await AuthService.clearUserPin();
       console.log('PIN removido com sucesso');
     } catch (error) {
       console.error('Erro ao remover PIN:', error);

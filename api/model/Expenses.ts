@@ -1,9 +1,13 @@
+//general imports
 import uuid from 'react-native-uuid';
 import * as SQLite from 'expo-sqlite';
+
+//types
 import { Expense, ExpenseType } from 'api/types/expenseTypes';
 
 
 export const ExpenseModel = {
+
   createExpense: async (
     db: SQLite.SQLiteDatabase,
     name: string,
@@ -37,32 +41,6 @@ export const ExpenseModel = {
     const expenses = await db.getAllAsync(
       'SELECT * FROM expenses WHERE user_id = ?',
       userId
-    );
-    return expenses as Expense[];
-  },
-
-  getExpensesByType: async (
-    db: SQLite.SQLiteDatabase,
-    userId: string,
-    type: string
-  ): Promise<Expense[]> => {
-    const expenses = await db.getAllAsync(
-      'SELECT * FROM expenses WHERE user_id = ? AND type = ?',
-      userId,
-      type
-    );
-    return expenses as Expense[];
-  },
-
-  getExpensesByExpenseType: async (
-    db: SQLite.SQLiteDatabase,
-    userId: string,
-    expenseType: ExpenseType
-  ): Promise<Expense[]> => {
-    const expenses = await db.getAllAsync(
-      'SELECT * FROM expenses WHERE user_id = ? AND expense_type = ?',
-      userId,
-      expenseType
     );
     return expenses as Expense[];
   },
@@ -105,27 +83,4 @@ export const ExpenseModel = {
     );
     return result.changes;
   },
-
-  // métodos utilitários para cálculos
-  getTotalByExpenseType: async (
-    db: SQLite.SQLiteDatabase,
-    userId: string,
-    expenseType: ExpenseType
-  ): Promise<number> => {
-    const result = await db.getFirstAsync(
-      'SELECT SUM(amount) as total FROM expenses WHERE user_id = ? AND expense_type = ?',
-      userId,
-      expenseType
-    ) as { total: number | null };
-    return result?.total || 0;
-  },
-
-  getBalance: async (
-    db: SQLite.SQLiteDatabase,
-    userId: string
-  ): Promise<number> => {
-    const gains = await ExpenseModel.getTotalByExpenseType(db, userId, ExpenseType.GAIN);
-    const losses = await ExpenseModel.getTotalByExpenseType(db, userId, ExpenseType.LOSS);
-    return gains - losses;
-  }
 };

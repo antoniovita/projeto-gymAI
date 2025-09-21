@@ -8,7 +8,8 @@ import { useTask } from './useTask';
 import { useExpenses } from './useExpenses';
 
 //types
-import { ExpenseType } from 'api/model/Expenses';
+import { ExpenseType } from 'api/types/expenseTypes';
+
 
 export function useMessageParser(userId: string | null) {
   const { createTask } = useTask();

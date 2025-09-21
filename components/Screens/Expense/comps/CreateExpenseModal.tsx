@@ -11,10 +11,11 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import CategorySectionCreateModal from '../../../generalComps/CategorySectionCreateModal';
-import { ExpenseType } from '../../../../api/model/Expenses';
-import { Category } from 'api/model/Category';
 import { useTheme } from 'hooks/useTheme';
-// ⬇️ ajuste o path conforme seu projeto (ex.: 'src/theme', '@/theme', etc.)
+
+//types
+import { ExpenseType } from 'api/types/expenseTypes';
+import { Category } from 'api/types/categoryTypes';
 
 export interface CreateExpenseModalProps {
   isVisible: boolean;

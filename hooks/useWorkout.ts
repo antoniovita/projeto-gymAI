@@ -1,6 +1,11 @@
+//general imports
 import { useState } from 'react';
+
+//services
 import { WorkoutService } from '../api/service/workoutService';
-import { Workout, Exercise } from 'api/model/Workout';
+
+//types
+import { Exercise, Workout } from 'api/types/workoutTypes';
 
 export const useWorkout = () => {
   const [loading, setLoading] = useState(false);

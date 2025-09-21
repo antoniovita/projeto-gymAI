@@ -8,7 +8,6 @@ import { Exercise, Workout } from 'api/types/workoutTypes';
 
 export const WorkoutModel = {
 
-  // POST - criar novo workout
   createWorkout: async (
     db: SQLite.SQLiteDatabase,
     name: string,

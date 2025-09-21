@@ -1,30 +1,12 @@
+//general imports
 import uuid from 'react-native-uuid';
 import * as SQLite from 'expo-sqlite';
+
+//types
 import { DayCompletion, RoutineTask } from 'api/types/routineTaskTypes';
 
 
 export const RoutineTaskModel = {
-  init: async (db: SQLite.SQLiteDatabase) => {
-    await db.execAsync(`
-      CREATE TABLE IF NOT EXISTS routine_tasks (
-        id TEXT PRIMARY KEY,
-        title TEXT NOT NULL,
-        content TEXT,
-        type TEXT,
-        week_days TEXT NOT NULL,
-        days_completed TEXT DEFAULT "[]",
-        cancelled_days TEXT DEFAULT "[]",
-        created_at TEXT NOT NULL,
-        is_active INTEGER DEFAULT 1,
-        user_id TEXT,
-        FOREIGN KEY (user_id) REFERENCES user(id)
-      );
-    `);
-    await db.execAsync(`
-      CREATE INDEX IF NOT EXISTS idx_routine_tasks_user
-      ON routine_tasks(user_id);
-    `);
-  },
 
   createRoutineTask: async (
     db: SQLite.SQLiteDatabase,

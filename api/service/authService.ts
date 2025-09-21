@@ -1,6 +1,8 @@
 import * as SecureStore from 'expo-secure-store';
 
 export const AuthService = {
+
+//user_id
   saveUserId: async (userId: string) => {
     await SecureStore.setItemAsync('user_id', userId);
   },
@@ -13,6 +15,7 @@ export const AuthService = {
     await SecureStore.deleteItemAsync('user_id');
   },
 
+//user_name
   saveUserName: async (name: string) => {
     await SecureStore.setItemAsync('user_name', name);
   },
@@ -25,6 +28,7 @@ export const AuthService = {
     await SecureStore.deleteItemAsync('user_name');
   },
 
+//user_pin
   saveUserPin: async (pin: string) => {
     await SecureStore.setItemAsync('user_pin', pin, { requireAuthentication: false });
   },
@@ -37,18 +41,16 @@ export const AuthService = {
     await SecureStore.deleteItemAsync('user_pin');
   },
 
+//general_clear
   clearAuth: async () => {
     await SecureStore.deleteItemAsync('user_id');
     await SecureStore.deleteItemAsync('user_name');
     await SecureStore.deleteItemAsync('user_pin');
   },
 
+//isLogged condition
   isLoggedIn: async (): Promise<boolean> => {
     const id = await SecureStore.getItemAsync('user_id');
     return !!id;
   },
-
-  removePin: async () => {
-    await SecureStore.deleteItemAsync('user_pin');
-  }
 };

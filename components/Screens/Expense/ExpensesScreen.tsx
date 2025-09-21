@@ -26,7 +26,6 @@ import CreateExpenseModal from './comps/CreateExpenseModal';
 import DateFilterModal from './comps/DateFilterModal';
 import CategoryFilters from 'components/generalComps/CategoryFilters';
 import ExpenseStatsSection from './comps/ExpenseStatsSection';
-import { ExpenseType } from '../../../api/model/Expenses';
 import {
   DateFilter,
   Expense,
@@ -42,6 +41,7 @@ import {
   checkCategoryInUse,
   truncateExpenseName,
 } from './expenseHelpers';
+import { ExpenseType } from 'api/types/expenseTypes';
 
 interface ExpensesScreenProps {}
 

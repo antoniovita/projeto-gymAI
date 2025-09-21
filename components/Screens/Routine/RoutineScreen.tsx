@@ -19,12 +19,12 @@ import { Feather, Ionicons } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import { RoutineTask } from '../../../api/model/RoutineTasks';
 import { useRoutineTasks } from 'hooks/useRoutineTasks';
 import { useAuth } from 'hooks/useAuth';
 import { useNavigation } from '@react-navigation/native';
 import {getSwitchState, removeSwitchState, setSwitchState} from "../../../helpers/switchHelper"
 import { format } from 'date-fns';
+import { RoutineTask } from 'api/types/routineTaskTypes';
 
 type WeekDay = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
 type CategoryType = 'Trabalho' | 'Exercícios' | 'Saúde' | 'Estudos' | 'Casa' | 'Social' | 'Hobbie' | 'Outros';

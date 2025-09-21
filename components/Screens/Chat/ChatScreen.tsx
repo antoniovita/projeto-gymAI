@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+//general imports
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,9 +14,15 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Markdown from 'react-native-markdown-display';
-import ChatStatsSection from './comps/ChatStatsSection';
-import { useChat, Message } from './chatHelpers';
+
+//general components
 import GradientIcon from 'components/generalComps/GradientIcon';
+
+//specific components
+import ChatStatsSection from './comps/ChatStatsSection';
+
+//helpers
+import { useChat, Message } from './chatHelpers';
 
 export default function ChatScreen() {
   const [input, setInput] = useState('');

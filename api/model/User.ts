@@ -6,18 +6,6 @@ import { User } from 'api/types/userTypes';
 
 
 export const UserModel = {
-  init: async (db: SQLite.SQLiteDatabase) => {
-    await db.execAsync(`
-      CREATE TABLE IF NOT EXISTS user (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        level INTEGER DEFAULT 1,
-        xp INTEGER DEFAULT 0,
-        achievements TEXT DEFAULT '[]',
-        badges TEXT DEFAULT '[]'
-      );
-    `);
-  },
 
   createUser: async (db: SQLite.SQLiteDatabase, name: string) => {
     const userId = uuid.v4() as string;

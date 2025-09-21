@@ -1,19 +1,11 @@
-import { Category } from 'api/types/categoryTypes';
+//general imports
 import * as SQLite from 'expo-sqlite';
 import uuid from 'react-native-uuid';
 
+//types
+import { Category } from 'api/types/categoryTypes';
 
 export const CategoryModel = {
-  init: async (db: SQLite.SQLiteDatabase) => {
-    await db.execAsync(`
-      CREATE TABLE IF NOT EXISTS category (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        color TEXT NOT NULL,
-        type TEXT NOT NULL
-      );
-    `);
-  },
 
   createCategory: async (db: SQLite.SQLiteDatabase, name: string, color: string, type: string) => {
     const categoryId = uuid.v4() as string;

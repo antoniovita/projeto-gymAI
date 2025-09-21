@@ -4,12 +4,14 @@ import * as Notifications from 'expo-notifications';
 import { parseISO, formatISO, subHours, format, startOfDay, subDays } from 'date-fns';
 import { SchedulableTriggerInputTypes } from 'expo-notifications';
 
-
+//hooks
 import { useStats } from './useStats';
-import { Task } from '../api/model/Task';
+
+//services
 import { TaskService } from '../api/service/taskService';
 
-
+//types
+import { Task } from 'api/types/taskTypes';
 
 export const useTask = () => {
   const [loading, setLoading] = useState(false);

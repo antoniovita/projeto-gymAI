@@ -1,3 +1,4 @@
+//general imports
 import uuid from 'react-native-uuid';
 import * as SQLite from 'expo-sqlite';
 
@@ -6,21 +7,6 @@ import { Task } from 'api/types/taskTypes';
 
 
 export const TaskModel = {
-  init: async (db: SQLite.SQLiteDatabase) => {
-    await db.execAsync(`
-      CREATE TABLE IF NOT EXISTS tasks (
-        id TEXT PRIMARY KEY,
-        title TEXT NOT NULL,
-        content TEXT,
-        datetime TEXT NOT NULL,
-        type TEXT,
-        completed INTEGER DEFAULT 0,
-        xp_awarded INTEGER DEFAULT 0,
-        user_id TEXT,
-        FOREIGN KEY (user_id) REFERENCES user(id)
-      );
-    `);
-  },
 
   createTask: async (
     db: SQLite.SQLiteDatabase,

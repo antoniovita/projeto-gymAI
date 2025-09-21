@@ -1,9 +1,11 @@
 //general imports
 import { useState, useEffect } from 'react';
 
-//model e service
-import { Category } from '../api/model/Category';
+//services
 import { CategoryService } from '../api/service/categoryService';
+
+//types
+import { Category } from 'api/types/categoryTypes';
 
 interface UseCategoriesReturn {
   categories: Category[];
