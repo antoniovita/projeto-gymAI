@@ -1,3 +1,4 @@
+//general imports
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { View, Image, Animated } from 'react-native';
 

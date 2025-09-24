@@ -2,8 +2,7 @@
 import { useTheme } from 'hooks/useTheme';
 import { SafeAreaView, MotiView } from 'moti';
 import { Platform, Image, View, Text, Dimensions, Animated, TouchableOpacity } from 'react-native';
-import { MAIN } from 'imageConstants';
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { LOGOS, MAIN } from 'imageConstants';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -16,41 +15,6 @@ export default function WelcomeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const theme = useTheme();
   const { colors } = theme;
-  const [isBlinking, setIsBlinking] = useState(false);
-  
-  // Refs para animação de piscar
-  const blinkOpacity = useRef(new Animated.Value(1)).current;
-  const blinkTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  const performBlink = useCallback(() => {
-    setIsBlinking(true);
-    Animated.timing(blinkOpacity, {
-      toValue: 0,
-      duration: 120,
-      useNativeDriver: true,
-    }).start(() => {
-      Animated.timing(blinkOpacity, {
-        toValue: 1,
-        duration: 240,
-        useNativeDriver: true,
-      }).start(() => setIsBlinking(false));
-    });
-  }, [blinkOpacity]);
-
-  const scheduleBlink = useCallback(() => {
-    const randomInterval = Math.random() * 3000 + 2000; // Entre 2-5 segundos
-    blinkTimeoutRef.current = setTimeout(() => {
-      performBlink();
-      scheduleBlink();
-    }, randomInterval);
-  }, [performBlink]);
-
-  useEffect(() => {
-    scheduleBlink();
-    return () => {
-      if (blinkTimeoutRef.current) clearTimeout(blinkTimeoutRef.current);
-    };
-  }, [scheduleBlink]);
 
   const handleGoogleLogin = () => {
     navigation.navigate("PinScreen");
@@ -194,8 +158,8 @@ export default function WelcomeScreen() {
         {/* Botões de Login */}
         <MotiView
           from={{
-            opacity: 0,
-            translateY: 30
+            opacity: 1,
+            translateY: 200
           }}
           animate={{
             opacity: 1,
@@ -237,7 +201,7 @@ export default function WelcomeScreen() {
             }}
           >
             <Image
-              source={{ uri: 'https://developers.google.com/identity/images/g-logo.png' }}
+              source={LOGOS.google}
               style={{
                 width: 20,
                 height: 20,

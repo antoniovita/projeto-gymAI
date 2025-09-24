@@ -13,3 +13,7 @@ export const MAIN = {
   fuocoICON: require("./assets/icons/fuocoICON.png") as ImageSourcePropType,
   fuocoPISCANDO: require("./assets/icons/fuocoPISCANDO.png") as ImageSourcePropType,
 };
+
+export const LOGOS = {
+  google: require("./assets/g-logo.png")
+}

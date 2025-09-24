@@ -1,5 +1,5 @@
 //general imports
-import { useFocusEffect } from '@react-navigation/native';
+import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useCallback, useEffect, useState } from 'react';
 import {
   View, Text, SafeAreaView, Alert, FlatList,
@@ -56,9 +56,14 @@ import {
 //types
 import { UnifiedTask } from 'api/types/taskTypes';
 import { RoutineTask } from 'api/types/routineTaskTypes';
+import { RootStackParamList } from 'tabs/types';
+import { Poppins_400Regular } from '@expo-google-fonts/poppins';
 
 
 export default function AgendaScreen() {
+
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+
   const { colors } = useTheme();
   const { userId } = useAuth();
   
@@ -381,10 +386,6 @@ export default function AgendaScreen() {
     setCurrentWeekStart(prev => navigateWeek(prev, 'next'));
   };
 
-  const goToCurrentWeek = () => {
-    setCurrentWeekStart(getInitialWeekStart());
-  };
-
   // Handler para seleção de dia
   const onDaySelect = async (date: Date) => {
     setDateFilter(date);
@@ -558,7 +559,8 @@ export default function AgendaScreen() {
           <Text style={{
             color: colors.text,
             fontSize: 18,
-            fontWeight: '500'
+            fontWeight: '500',
+            fontFamily: 'Poppins_400Regular'
           }}>Agenda</Text>
         </View>
         <View style={{
@@ -567,7 +569,7 @@ export default function AgendaScreen() {
           gap: 16,
           marginRight: 4
         }}>
-          <Pressable onPress={goToCurrentWeek}>
+          <Pressable onPress={() => navigation.navigate("RoutineScreen")}>
             <GradientIcon name="today" size={22} />
           </Pressable>
           <Pressable onPress={handleRefresh}>

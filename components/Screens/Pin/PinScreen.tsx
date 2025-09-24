@@ -48,6 +48,7 @@ const PinScreen = () => {
         // Auto submit when all digits are filled
         setTimeout(() => {
           handleSubmit();
+          navigation.navigate("MainTabs")
         }, 300);
       }
     }
@@ -274,7 +275,7 @@ const PinScreen = () => {
                   width: 50,
                   height: 60,
                   borderRadius: 12,
-                  backgroundColor: digit ? colors.primary : `${colors.primary}20`,
+                  backgroundColor: digit ? colors.primary : `${colors.secondary}`,
                   color: colors.background,
                   fontSize: 24,
                   fontWeight: '700',

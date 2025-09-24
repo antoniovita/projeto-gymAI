@@ -21,6 +21,7 @@ import { TouchableOpacity } from 'react-native-gesture-handler';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { useRoutineTasks } from 'hooks/useRoutineTasks';
 import { useAuth } from 'hooks/useAuth';
+import { useTheme } from 'hooks/useTheme';
 import { useNavigation } from '@react-navigation/native';
 import {getSwitchState, removeSwitchState, setSwitchState} from "../../../helpers/switchHelper"
 import { format } from 'date-fns';
@@ -69,6 +70,7 @@ const getWeekDayFromDayName = (dayName: string): WeekDay => {
 
 const RoutineScreen: React.FC = () => {
   const navigation = useNavigation();
+  const { colors } = useTheme();
   const { userId } = useAuth();
 
   const {
@@ -264,7 +266,6 @@ const RoutineScreen: React.FC = () => {
       const hasMultipleDays = currentWeekDays.length > 1;
       
       if (hasMultipleDays) {
-
         Alert.alert(
           'Remover tarefa',
           'Como deseja remover esta tarefa?',
@@ -294,7 +295,6 @@ const RoutineScreen: React.FC = () => {
               onPress: async () => {
                 const result = await deleteRoutineTask(taskId, true);
                 if (result.success) {
-
                   await removeSwitchState(taskId);
                   setSwitchStates(prev => {
                     const newStates = { ...prev };
@@ -309,7 +309,6 @@ const RoutineScreen: React.FC = () => {
           ]
         );
       } else {
-
         Alert.alert(
           'Confirmar exclusão',
           'Tem certeza que deseja excluir esta tarefa?',
@@ -321,7 +320,6 @@ const RoutineScreen: React.FC = () => {
               onPress: async () => {
                 const result = await deleteRoutineTask(taskId, true);
                 if (result.success) {
-
                   await removeSwitchState(taskId);
                   setSwitchStates(prev => {
                     const newStates = { ...prev };
@@ -348,11 +346,9 @@ const RoutineScreen: React.FC = () => {
       const newState = !currentState;
 
       if (newState) {
-
         await setSwitchState(true, routineId);
         await activateRoutineTask(routineId);
       } else {
-
         await removeSwitchState(routineId);
         await deleteRoutineTask(routineId);
       }
@@ -370,19 +366,35 @@ const RoutineScreen: React.FC = () => {
 
   const renderLeftActions = (item: RoutineTask): React.ReactElement => {
     return (
-      <View className="flex-row items-center justify-start border-t bg-rose-500 px-4 h-full" style={{ width: 80 }}>
+      <View style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        borderTopWidth: 1,
+        borderTopColor: colors.border,
+        backgroundColor: colors.deleteAction,
+        paddingHorizontal: 16,
+        height: '100%',
+        width: 80
+      }}>
         <TouchableOpacity
-          className="flex-row items-center justify-center w-16 h-16 rounded-full"
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 64,
+            height: 64,
+            borderRadius: 32
+          }}
           onPress={() => handleDelete(item.id)}
         >
-          <Ionicons className='ml-4' name="trash" size={24} color="white" />
+          <Ionicons name="trash" size={24} color="white" style={{ marginLeft: 16 }} />
         </TouchableOpacity>
       </View>
     );
   };
 
   const renderItem = ({ item }: { item: RoutineTask }): React.ReactElement => {
-    // Usando as funções helper do hook
     const completionCount = getCompletionCount(item);
     const totalXp = getTotalXpFromRoutine(item);
     
@@ -397,44 +409,67 @@ const RoutineScreen: React.FC = () => {
           overshootLeft={false}
           overshootRight={false}
           friction={1}
-          containerStyle={{ backgroundColor: '#27272a' }}
-          childrenContainerStyle={{ backgroundColor: '#27272a' }}
+          containerStyle={{ backgroundColor: colors.background }}
+          childrenContainerStyle={{ backgroundColor: colors.background }}
           enableTrackpadTwoFingerGesture={false}
         >
-          <View className="w-full flex flex-col justify-center px-6 h-[90px] pb-4 border-b border-neutral-700 pt-4 bg-zinc-800">
-            <View className="flex flex-row justify-between">
-              <Pressable className="flex flex-col gap-1 flex-1" onPress={() => openModal(item)}>
-                <View className="flex flex-row items-center gap-2">
-                  <Text className="text-xl font-sans font-medium text-gray-300 flex-1">
+          <View style={{
+            width: '100%',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            paddingHorizontal: 24,
+            height: 90,
+            paddingBottom: 16,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border,
+            paddingTop: 16,
+            backgroundColor: colors.secondary
+          }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <Pressable 
+                style={{ flexDirection: 'column', gap: 4, flex: 1 }} 
+                onPress={() => openModal(item)}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Text style={{
+                    fontSize: 20,
+                    fontWeight: '500',
+                    color: colors.text,
+                    flex: 1
+                  }}>
                     {item.title}
                   </Text>
                 </View>
                 
-                <View className="flex flex-row items-center justify-between">
-                  <Text className="text-neutral-400 text-sm font-sans">
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Text style={{
+                    color: colors.textMuted,
+                    fontSize: 14
+                  }}>
                     {item.created_at ? new Date(item.created_at).toLocaleTimeString('pt-BR', { 
                       hour: '2-digit', 
                       minute: '2-digit' 
                     }) : 'Sem horário'}
                   </Text>
-                  
                 </View>
                 
-                <Text className="text-neutral-500 font-sans text-xs">
+                <Text style={{
+                  color: colors.textMuted,
+                  fontSize: 12
+                }}>
                   Recorrente em {weekDays.length} dias
                 </Text>
               </Pressable>
 
-              <View className='flex items-center justify-center'>
+              <View style={{ alignItems: 'center', justifyContent: 'center' }}>
                 <Switch
-                 trackColor={{ true: "#ff7a7f" }}
-                  thumbColor={ "#ffff"}
-                  ios_backgroundColor="#3e3e3e"
+                  trackColor={{ true: colors.primary, false: colors.border }}
+                  thumbColor="#ffffff"
+                  ios_backgroundColor={colors.border}
                   value={switchStates[item.id] || false}
                   onValueChange={() => handleActivate(item.id)}
                 />
               </View>
-
             </View>
           </View>
         </Swipeable>
@@ -442,8 +477,21 @@ const RoutineScreen: React.FC = () => {
     } catch (error) {
       console.error('Erro ao renderizar item:', error);
       return (
-        <View className="w-full flex flex-col justify-center px-6 h-[90px] pb-4 border-b border-neutral-700 pt-4 bg-zinc-800">
-          <Text className="text-red-400 font-sans text-sm">Erro ao carregar tarefa</Text>
+        <View style={{
+          width: '100%',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          paddingHorizontal: 24,
+          height: 90,
+          paddingBottom: 16,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+          paddingTop: 16,
+          backgroundColor: colors.secondary
+        }}>
+          <Text style={{ color: colors.deleteActionIcon, fontSize: 14 }}>
+            Erro ao carregar tarefa
+          </Text>
         </View>
       );
     }
@@ -451,9 +499,15 @@ const RoutineScreen: React.FC = () => {
 
   if (loading) {
     return (
-      <SafeAreaView className={`flex-1 ${Platform.OS == 'android' && "py-[30px]"} bg-zinc-800`}>
-        <View className="flex-1 items-center justify-center">
-          <Text className="text-white font-sans text-lg">Carregando rotinas...</Text>
+      <SafeAreaView style={{
+        flex: 1,
+        backgroundColor: colors.background,
+        paddingTop: Platform.OS === 'android' ? 30 : 0
+      }}>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ color: colors.text, fontSize: 18 }}>
+            Carregando rotinas...
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -461,15 +515,39 @@ const RoutineScreen: React.FC = () => {
 
   if (error) {
     return (
-      <SafeAreaView className={`flex-1 ${Platform.OS == 'android' && "py-[30px]"} bg-zinc-800`}>
-        <View className="flex-1 items-center justify-center px-4">
-          <Ionicons name="alert-circle-outline" size={48} color="#ef4444" />
-          <Text className="text-red-400 font-sans text-lg text-center mt-4">{error}</Text>
+      <SafeAreaView style={{
+        flex: 1,
+        backgroundColor: colors.background,
+        paddingTop: Platform.OS === 'android' ? 30 : 0
+      }}>
+        <View style={{ 
+          flex: 1, 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          paddingHorizontal: 16 
+        }}>
+          <Ionicons name="alert-circle-outline" size={48} color={colors.deleteAction} />
+          <Text style={{ 
+            color: colors.deleteAction, 
+            fontSize: 18, 
+            textAlign: 'center', 
+            marginTop: 16 
+          }}>
+            {error}
+          </Text>
           <Pressable 
             onPress={() => getAllRoutineTasksByUserId(userId!)}
-            className="mt-4 bg-rose-400 px-6 py-3 rounded-xl"
+            style={{
+              marginTop: 16,
+              backgroundColor: colors.primary,
+              paddingHorizontal: 24,
+              paddingVertical: 12,
+              borderRadius: 12
+            }}
           >
-            <Text className="text-black font-sans">Tentar novamente</Text>
+            <Text style={{ color: colors.onPrimary }}>
+              Tentar novamente
+            </Text>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -477,12 +555,25 @@ const RoutineScreen: React.FC = () => {
   }
 
   return (
-    <SafeAreaView className={`flex-1 ${Platform.OS == 'android' && "py-[30px]"} bg-zinc-800`}>
+    <SafeAreaView style={{
+      flex: 1,
+      backgroundColor: colors.background,
+      paddingTop: Platform.OS === 'android' ? 30 : 0
+    }}>
       
       <Pressable
         onPress={() => openModal()}
-        className="w-[50px] h-[50px] absolute bottom-[6%] right-6 z-20 rounded-full bg-rose-400 items-center justify-center shadow-lg"
         style={{
+          width: 50,
+          height: 50,
+          position: 'absolute',
+          bottom: '6%',
+          right: 24,
+          zIndex: 20,
+          borderRadius: 25,
+          backgroundColor: colors.primary,
+          alignItems: 'center',
+          justifyContent: 'center',
           shadowColor: "#000",
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: 0.25,
@@ -490,16 +581,38 @@ const RoutineScreen: React.FC = () => {
           elevation: 5,
         }}
       >
-        <Feather name="plus" strokeWidth={3} size={32} color="black" />
+        <Feather name="plus" strokeWidth={3} size={32} color={colors.onPrimary} />
       </Pressable>
       
-      <View className="mt-5 px-4 flex-row items-center justify-between">
-        <Pressable onPress={() => navigation.goBack()} className="flex-row items-center">
-          <Ionicons name="chevron-back" size={24} color="white" />
-          <Text className="ml-1 text-white font-sans text-[16px]">Voltar</Text>
+      <View style={{
+        marginTop: 20,
+        paddingHorizontal: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+      }}>
+        <Pressable 
+          onPress={() => navigation.goBack()} 
+          style={{ flexDirection: 'row', alignItems: 'center' }}
+        >
+          <Ionicons name="chevron-back" size={24} color={colors.text} />
+          <Text style={{ 
+            marginLeft: 4, 
+            color: colors.text, 
+            fontSize: 16 
+          }}>
+            Voltar
+          </Text>
         </Pressable>
-        <View className="absolute left-0 right-0 items-center">
-          <Text className="text-white font-sans text-[17px]">Minha Rotina</Text>
+        <View style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          alignItems: 'center'
+        }}>
+          <Text style={{ color: colors.text, fontSize: 17 }}>
+            Minha Rotina
+          </Text>
         </View>
       </View>
 
@@ -507,21 +620,30 @@ const RoutineScreen: React.FC = () => {
         horizontal 
         showsHorizontalScrollIndicator={false} 
         contentContainerStyle={{ paddingHorizontal: 16 }} 
-        className="py-2 mt-[30px]"
-        style={{ flexGrow: 0 }}
+        style={{ paddingVertical: 8, marginTop: 30, flexGrow: 0 }}
       >
         {days.map((day: string) => (
           <Pressable
             key={day}
             onPress={() => setSelectedDay(day)}
-            className={`px-4 py-1.5 rounded-full mr-2 ${selectedDay === day ? 'bg-[#ff7a7f]' : 'bg-zinc-700'}`}
+            style={{
+              paddingHorizontal: 16,
+              paddingVertical: 6,
+              borderRadius: 20,
+              marginRight: 8,
+              backgroundColor: selectedDay === day ? colors.primary : colors.secondary
+            }}
           >
-            <Text className={`font-sans ${selectedDay === day ? 'text-black' : 'text-white'}`}>{day}</Text>
+            <Text style={{
+              color: selectedDay === day ? colors.onPrimary : colors.text
+            }}>
+              {day}
+            </Text>
           </Pressable>
         ))}
       </ScrollView>
 
-      <View className="flex-1 mt-4">
+      <View style={{ flex: 1, marginTop: 16 }}>
         {filteredTasks.length > 0 ? (
           <FlatList
             data={filteredTasks}
@@ -535,12 +657,26 @@ const RoutineScreen: React.FC = () => {
             windowSize={10}
           />
         ) : (
-          <View className="flex items-center justify-center" style={{ paddingTop: 180 }}>
-            <Ionicons name="calendar-outline" size={64} color="#6b7280" />
-            <Text className="text-neutral-400 font-sans text-lg mt-4 text-center">
+          <View style={{ 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            paddingTop: 180 
+          }}>
+            <Ionicons name="calendar-outline" size={64} color={colors.textMuted} />
+            <Text style={{
+              color: colors.textMuted,
+              fontSize: 18,
+              marginTop: 16,
+              textAlign: 'center'
+            }}>
               Nenhuma rotina para {selectedDay}
             </Text>
-            <Text className="text-neutral-500 font-sans text-sm mt-2 text-center">
+            <Text style={{
+              color: colors.textMuted,
+              fontSize: 14,
+              marginTop: 8,
+              textAlign: 'center'
+            }}>
               Crie novas tarefas para organizar sua rotina
             </Text>
           </View>
@@ -560,7 +696,13 @@ const RoutineScreen: React.FC = () => {
           keyboardVerticalOffset={0}
         >
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <View className="bg-[#1e1e1e] rounded-t-3xl p-6" style={{ minHeight: '50%' }}>
+            <View style={{
+              backgroundColor: colors.modalBackground,
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              padding: 24,
+              minHeight: '50%'
+            }}>
               <ScrollView 
                 showsVerticalScrollIndicator={false} 
                 style={{ maxHeight: 300 }}
@@ -573,51 +715,79 @@ const RoutineScreen: React.FC = () => {
                     value={title}
                     onChangeText={setTitle}
                     placeholder="Nome da tarefa"
-                    placeholderTextColor="#6b7280"
-                    className="px-1 py-3 text-white text-2xl font-bold"
+                    placeholderTextColor={colors.textMuted}
+                    style={{
+                      paddingHorizontal: 4,
+                      paddingVertical: 12,
+                      color: colors.text,
+                      fontSize: 24,
+                      fontWeight: 'bold'
+                    }}
                   />
                 </View>
 
-                <View className="mb-2">
+                <View style={{ marginBottom: 8 }}>
                   <TextInput
                     value={content}
                     onChangeText={setContent}
                     placeholder="Detalhes da tarefa"
-                    placeholderTextColor="#6b7280"
+                    placeholderTextColor={colors.textMuted}
                     multiline
                     numberOfLines={3}
-                    className="rounded-xl text-lg px-1 py-3 text-white font-normal"
+                    style={{
+                      borderRadius: 12,
+                      fontSize: 18,
+                      paddingHorizontal: 4,
+                      paddingVertical: 12,
+                      color: colors.text,
+                      fontWeight: 'normal'
+                    }}
                   />
                 </View>
 
-                <View className="mb-4">
+                <View style={{ marginBottom: 16 }}>
                   <Pressable
                     onPress={() => setShowTimePicker(true)}
-                    className="px-2 py-3 flex-row items-center justify-between"
+                    style={{
+                      paddingHorizontal: 8,
+                      paddingVertical: 12,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between'
+                    }}
                   >
-                    <Text className={`font-bold text-2xl ${selectedTime ? 'text-white' : 'text-gray-400'}`}>
-                      {selectedTime ||format( new Date().toISOString(), "HH:mm")}
+                    <Text style={{
+                      fontWeight: 'bold',
+                      fontSize: 24,
+                      color: selectedTime ? colors.text : colors.textMuted
+                    }}>
+                      {selectedTime || format(new Date(), "HH:mm")}
                     </Text>
                   </Pressable>
                 </View>
 
-                <View className="mb-6 mt-2">
-                  <View className="flex-row flex-wrap">
+                <View style={{ marginBottom: 24, marginTop: 8 }}>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
                     {[1, 2, 3, 4, 5, 6, 0].map((dayNumber: number) => (
                       <Pressable
                         key={dayNumber}
                         onPress={() => toggleDayOfWeek(dayNumber)}
-                        className={`px-4 py-2 rounded-full mr-2 mb-2 ${
-                          selectedDaysOfWeek.includes(dayNumber)
-                            ? 'bg-[#ff7a7f]'
-                            : 'bg-zinc-800'
-                        }`}
+                        style={{
+                          paddingHorizontal: 16,
+                          paddingVertical: 8,
+                          borderRadius: 20,
+                          marginRight: 8,
+                          marginBottom: 8,
+                          backgroundColor: selectedDaysOfWeek.includes(dayNumber)
+                            ? colors.primary
+                            : colors.secondary
+                        }}
                       >
-                        <Text className={`font-sans ${
-                          selectedDaysOfWeek.includes(dayNumber)
-                            ? 'text-black'
-                            : 'text-white'
-                        }`}>
+                        <Text style={{
+                          color: selectedDaysOfWeek.includes(dayNumber)
+                            ? colors.onPrimary
+                            : colors.text
+                        }}>
                           {getDayName(dayNumber)}
                         </Text>
                       </Pressable>
@@ -625,8 +795,8 @@ const RoutineScreen: React.FC = () => {
                   </View>
                 </View>
 
-                <View className="mb-4">
-                  <View className="flex flex-row flex-wrap gap-2 mb-2">
+                <View style={{ marginBottom: 16 }}>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
                     {categories.map((cat: CategoryType) => {
                       const isSelected: boolean = selectedCategories.includes(cat);
                       const color: string = getCategoryColor(cat);
@@ -635,9 +805,15 @@ const RoutineScreen: React.FC = () => {
                         <Pressable
                           key={cat}
                           onPress={() => setSelectedCategories([cat])}
-                          className={`flex-row items-center gap-2 px-3 py-1 rounded-xl ${
-                            isSelected ? 'bg-rose-400' : 'bg-zinc-700/50'
-                          }`}
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 8,
+                            paddingHorizontal: 12,
+                            paddingVertical: 4,
+                            borderRadius: 12,
+                            backgroundColor: isSelected ? colors.primary : colors.secondary + '80'
+                          }}
                         >
                           <View 
                             style={{ 
@@ -650,9 +826,10 @@ const RoutineScreen: React.FC = () => {
                             }} 
                           />
                           <Text 
-                            className={`font-sans text-sm ${
-                              isSelected ? 'text-black' : 'text-white'
-                            }`}
+                            style={{
+                              fontSize: 14,
+                              color: isSelected ? colors.onPrimary : colors.text
+                            }}
                           >
                             {cat}
                           </Text>
@@ -664,21 +841,51 @@ const RoutineScreen: React.FC = () => {
 
               </ScrollView>
 
-              <View className={`${Platform.OS == 'ios' ? 'absolute bottom-[10%] self-center flex-row flex gap-3' : 'self-center flex-row flex gap-3'}`}>
+              <View style={{
+                ...(Platform.OS === 'ios' ? {
+                  position: 'absolute',
+                  bottom: '10%',
+                  alignSelf: 'center',
+                  flexDirection: 'row',
+                  gap: 12
+                } : {
+                  alignSelf: 'center',
+                  flexDirection: 'row',
+                  gap: 12
+                })
+              }}>
                 <Pressable
                   onPress={() => {
                     setShowModal(false);
                     resetForm();
                   }}
-                  className="flex-1 bg-zinc-800 rounded-xl py-4"
+                  style={{
+                    flex: 1,
+                    backgroundColor: colors.secondary,
+                    borderRadius: 12,
+                    paddingVertical: 16
+                  }}
                 >
-                  <Text className="text-white font-sans text-center">Cancelar</Text>
+                  <Text style={{ 
+                    color: colors.text, 
+                    textAlign: 'center' 
+                  }}>
+                    Cancelar
+                  </Text>
                 </Pressable>
                 <Pressable
                   onPress={handleSave}
-                  className="flex-1 bg-[#ff7a7f] rounded-xl py-4"
+                  style={{
+                    flex: 1,
+                    backgroundColor: colors.primary,
+                    borderRadius: 12,
+                    paddingVertical: 16
+                  }}
                 >
-                  <Text className="text-black font-sans text-center">
+                  <Text style={{
+                    color: colors.onPrimary,
+                    textAlign: 'center'
+                  }}>
                     {editingTask ? 'Atualizar' : 'Salvar'}
                   </Text>
                 </Pressable>
@@ -704,8 +911,8 @@ const RoutineScreen: React.FC = () => {
           }}
           onCancel={() => setShowTimePicker(false)}
           textColor="#000000"
-          accentColor="#ff7a7f"
-          buttonTextColorIOS="#ff7a7f"
+          accentColor={colors.primary}
+          buttonTextColorIOS={colors.primary}
           themeVariant="light"
           locale="pt-BR"
           is24Hour

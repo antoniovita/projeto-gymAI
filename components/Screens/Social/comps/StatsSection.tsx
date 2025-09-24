@@ -1,14 +1,22 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { View, Text, Image, TouchableOpacity, Animated } from 'react-native';
+//general imports
+import { useState, useCallback } from 'react';
+import { View, Text, Image, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
+
+//hooks
 import { useStats } from '../../../../hooks/useStats';
 import { useAuth } from '../../../../hooks/useAuth';
 import { useTask } from '../../../../hooks/useTask';
-import GradientIcon from 'components/generalComps/GradientIcon';
-import { MAIN } from 'imageConstants';
 import { useTheme } from 'hooks/useTheme';
+
+//general components
+import { Avatar } from 'components/generalComps/Avatar';
+import GradientIcon from 'components/generalComps/GradientIcon';
+
+//constants
+import { MAIN } from 'imageConstants';
 
 export const StatsSection = () => {
   const theme = useTheme();
@@ -27,41 +35,6 @@ export const StatsSection = () => {
     consecutiveDays: 0,
     completedTasksQuantity: 0,
   });
-  const [isBlinking, setIsBlinking] = useState(false);
-
-  // Refs para animação
-  const blinkOpacity = useRef(new Animated.Value(1)).current;
-  const blinkTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  const performBlink = useCallback(() => {
-    setIsBlinking(true);
-    Animated.timing(blinkOpacity, {
-      toValue: 0,
-      duration: 120,
-      useNativeDriver: true,
-    }).start(() => {
-      Animated.timing(blinkOpacity, {
-        toValue: 1,
-        duration: 240,
-        useNativeDriver: true,
-      }).start(() => setIsBlinking(false));
-    });
-  }, [blinkOpacity]);
-
-  const scheduleBlink = useCallback(() => {
-    const randomInterval = Math.random() * 3000 + 2000;
-    blinkTimeoutRef.current = setTimeout(() => {
-      performBlink();
-      scheduleBlink();
-    }, randomInterval);
-  }, [performBlink]);
-
-  useEffect(() => {
-    scheduleBlink();
-    return () => {
-      if (blinkTimeoutRef.current) clearTimeout(blinkTimeoutRef.current);
-    };
-  }, [scheduleBlink]);
 
   useFocusEffect(
     useCallback(() => {
@@ -173,16 +146,20 @@ export const StatsSection = () => {
                 style={{ width: 110, height: 110, alignSelf: 'center', marginTop: 40 }}
               />
 
-              <Animated.View
+              <View
                 style={{
                   position: 'absolute',
                   top: 40,
                   alignSelf: 'center',
-                  opacity: blinkOpacity,
                 }}
               >
-                <Image source={MAIN.fuocoICON} style={{ width: 110, height: 110 }} />
-              </Animated.View>
+                <Avatar
+                  source={MAIN.fuocoICON}
+                  blinkSource={MAIN.fuocoPISCANDO}
+                  width={110}
+                  height={110}
+                />
+              </View>
             </View>
           </View>
         </View>
